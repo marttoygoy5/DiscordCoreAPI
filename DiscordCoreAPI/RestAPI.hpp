@@ -17,6 +17,12 @@ namespace CommanderNS {
 		int msRemain = 0;
 	};
 
+	struct httpPOSTData {
+		json data;
+		int postsRemaining = 1;
+		int msRemain = 0;
+	};
+
 	struct RestAPI: implements<RestAPI, IInspectable> {
 	public:
 
@@ -83,21 +89,21 @@ namespace CommanderNS {
 			}
 		}
 
-		httpGETData httpPUTObjectData(string relativeURL, string content) {
+		httpPOSTData httpPOSTObjectData(string relativeURL, string content) {
 			try {
 				if (this != nullptr) {
-					httpGETData getData;
+					httpPOSTData getData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 					HttpResponseMessage httpResponse;
 					HttpStringContent content(to_hstring(content), UnicodeEncoding::Utf8);
-					httpResponse = httpClient.PutAsync(requestUri, content).get();
+					httpResponse = httpClient.PostAsync(requestUri, content).get();
 
 					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
-						getData.getsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+						getData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 					}
 					else {
-						getData.getsRemaining = 1;
+						getData.postsRemaining = 1;
 					}
 					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
 						getData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
@@ -106,13 +112,13 @@ namespace CommanderNS {
 						getData.msRemain = 0;
 					}
 					json jsonValue;
-					jsonValue = jsonValue.parse(winrt::to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					getData.data = jsonValue;
 					return getData;
 				}
 				else
 				{
-					return httpGETData();
+					return httpPOSTData();
 				}
 			}
 			catch (winrt::hresult_error error) {
