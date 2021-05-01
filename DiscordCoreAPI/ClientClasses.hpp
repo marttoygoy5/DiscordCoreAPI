@@ -28,24 +28,24 @@ namespace CommanderNS {
 
 		class ReactionManager: map<string, Reaction> {
 		public:
+
 			ReactionManager() {};
 			ReactionManager(com_ptr<RestAPI> pRestAPI, string channelId, string messageId) {
 				this->pRestAPI = pRestAPI;
 				this->channelId = channelId;
 				this->messageId = messageId;
 			};
+
 			IAsyncAction AddReaction(string emoji) {
 				co_await resume_background();
-				char* escapedEmoji;
-				DWORD* pValue;
-				HRESULT result = UrlEscapeA(emoji.c_str(), escapedEmoji, pValue, URL_ESCAPE_AS_UTF8);
-				if (result != S_OK) {
-					winrt::hresult_error error(result);
-					wcout << "Not Okay: " << error.message().c_str() << endl;
-				}
+				string encodedEmoji = to_string(Uri::EscapeComponent(to_hstring(emoji)));
+				cout << encodedEmoji << endl;
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, &this->reactionAddRateLimit, this->channelId, this->messageId, encodedEmoji).get();
 				co_return;
 			};
+
 		protected:
+			FoundationClasses::RateLimitation reactionAddRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 			string channelId;
 			string messageId;

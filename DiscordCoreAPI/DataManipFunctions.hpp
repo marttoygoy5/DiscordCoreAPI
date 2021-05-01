@@ -83,6 +83,40 @@ namespace CommanderNS {
 			}
 		}
 
+		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, std::string relativePath, httpPUTData* pPutDataStruct, string content) {
+			co_await resume_background();
+			try {
+				if (pRateLimitData->getsRemaining > 0) {
+					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
+					if (pPutDataStruct->postsRemaining >= 0) {
+						pRateLimitData->getsRemaining = pPutDataStruct->postsRemaining;
+					}
+					if (pPutDataStruct->msRemain >= 0) {
+						pRateLimitData->msRemain = pPutDataStruct->msRemain;
+					}
+					pRateLimitData->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+					if (pPutDataStruct->data.contains("message")){
+						std::string theValue = pPutDataStruct->data.at("message");
+						std::exception error(theValue.c_str());
+						throw error;
+					}
+				}
+				else {
+					int currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
+					std::cout << "Time remaining until we can make another get request: " << timeRemaining << " seconds." << std::endl;
+					if (timeRemaining <= 0) {
+						pRateLimitData->getsRemaining = 1;
+					}
+					co_return;
+				}
+			}
+			catch (std::exception error) {
+				std::cout << "putObjectDataAsync() Issue: " << error.what() << std::endl;
+				co_return;
+			}
+		}
+
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pUserGetRateLimit, std::string id, ClientDataTypes::UserData* pDataStructure) {
 			co_await resume_background();
 			ClientDataTypes::UserData userData = *pDataStructure;
@@ -140,6 +174,15 @@ namespace CommanderNS {
 			nlohmann::json jsonValue = postData.data;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
 			*pDataStructure = messageData;
+			co_return;
+		}
+
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessagePostRateLimit, string channelId, string messageId, string emoji) {
+			co_await resume_background();
+			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
+			httpPUTData putData;
+			checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &putData, emoji).get();
+			nlohmann::json jsonValue = putData.data;
 			co_return;
 		}
 

@@ -23,6 +23,12 @@ namespace CommanderNS {
 		int msRemain = 0;
 	};
 
+	struct httpPUTData {
+		json data;
+		int postsRemaining = 1;
+		int msRemain = 0;
+	};
+
 	struct RestAPI: implements<RestAPI, IInspectable> {
 	public:
 
@@ -127,6 +133,51 @@ namespace CommanderNS {
 				else
 				{
 					return httpPOSTData();
+				}
+			}
+			catch (winrt::hresult_error error) {
+				std::cout << "Error: " << error.message().c_str() << std::endl;
+			}
+		}
+
+		httpPUTData httpPUTObjectData(string relativeURL, string content) {
+			try {
+				if (this != nullptr) {
+					httpPUTData putData;
+					string connectionPath = to_string(this->baseURL) + relativeURL;
+					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
+					HttpContentHeaderCollection contentHeaderCollection;
+					HttpContentDispositionHeaderValue headerValue(L"payload_json");
+					contentHeaderCollection.ContentDisposition(headerValue);
+					HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
+					contentHeaderCollection.ContentType(typeHeaderValue);
+					HttpStringContent content(to_hstring(content), UnicodeEncoding::Utf8);
+					content.Headers().ContentDisposition(headerValue);
+					content.Headers().ContentType(typeHeaderValue);
+					wcout << content.ToString().c_str() << endl;
+					HttpResponseMessage httpResponse;
+					httpResponse = httpClient.PostAsync(requestUri, content).get();
+
+					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
+						putData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+					}
+					else {
+						putData.postsRemaining = 1;
+					}
+					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
+						putData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+					}
+					else {
+						putData.msRemain = 0;
+					}
+					json jsonValue;
+					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					putData.data = jsonValue;
+					return putData;
+				}
+				else
+				{
+					return httpPUTData();
 				}
 			}
 			catch (winrt::hresult_error error) {

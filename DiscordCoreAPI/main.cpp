@@ -1,6 +1,6 @@
 #include "pch.h"
-
 #include "DiscordCoreAPI.hpp"
+
 int main() {
     winrt::init_apartment();
     hstring botToken = L"ODI2ODI3MTM1NzA4NTYxNDc4.YGSIxg.xRMrt8Mte-SIF_luQYTA9YH6BoI";
@@ -20,12 +20,12 @@ int main() {
                 embedField.name = "ANOTHER FIELD!";
                 embedField.value = "WE ARE TESTING THE VALUES!";
                 createMessageData.embed.fields.push_back(embedField);
-                createMessageData.embed.color[1] = 255;
                 createMessageData.embed.color[0] = 0;
+                createMessageData.embed.color[1] = 255;
                 createMessageData.embed.color[2] = 255;
                 CommanderNS::ClientClasses::MessageManager* messageManager = (CommanderNS::ClientClasses::MessageManager*)(message.message.messageManager);
                 CommanderNS::ClientClasses::Message message = messageManager->CreateMessage(createMessageData).get();
-                message.Reactions.AddReaction(":ring:");
+                message.Reactions.AddReaction(":ring:").get();
             };
         });
     pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMember) {std::cout << guildMember.guildMember.Data.user.username << std::endl; });
