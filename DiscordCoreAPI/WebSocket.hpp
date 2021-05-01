@@ -210,7 +210,7 @@ namespace CommanderNS {
 					EventDataTypes::MessageCreationData messageCreationData;
 					ClientDataTypes::MessageData messageData;
 					DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-					messageCreationData.messageData = messageData;
+					messageCreationData.message = ClientClasses::Message(messageData);
 					this->pEventMachine->onMessageCreationEvent(messageCreationData);
 				}
 
@@ -224,7 +224,7 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("id"), &guildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
-					guildMemberAddData.guildMemberData = guildMemberData;
+					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 

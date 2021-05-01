@@ -16,7 +16,6 @@ namespace CommanderNS {
 		struct Client;
 
 		class Message {
-
 		public:
 			Message() {};
 			Message(ClientDataTypes::MessageData data) {
@@ -28,11 +27,13 @@ namespace CommanderNS {
 		class MessageManager {
 		public:
 			MessageManager() {};
-			MessageManager(string channelId) {
+			MessageManager(string channelId, string guildId) {
 				this->channelId = channelId;
+				this->guildId = guildId;
 			};
 
 		protected:
+			string guildId;
 			string channelId;
 			FoundationClasses::RateLimitation messageGetRateLimit;
 		};

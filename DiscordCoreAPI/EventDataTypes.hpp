@@ -13,11 +13,10 @@ namespace CommanderNS {
 	namespace EventDataTypes {
 		struct GuildMemberAddData {
 			std::string guildId;
-			ClientDataTypes::GuildMemberData guildMemberData;
+			ClientClasses::GuildMember guildMember;
 		};
 
 		struct MessageCreationData {
-			ClientDataTypes::MessageData messageData;
 			ClientClasses::Message message;
 		};
 	}
