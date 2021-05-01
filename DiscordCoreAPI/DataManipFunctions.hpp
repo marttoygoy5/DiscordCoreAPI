@@ -136,7 +136,6 @@ namespace CommanderNS {
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
-			cout << "HERE NOW NOW NOW NOW NOW NOW!" << endl;
 			checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, content).get();
 			nlohmann::json jsonValue = postData.data;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);

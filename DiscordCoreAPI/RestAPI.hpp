@@ -92,7 +92,6 @@ namespace CommanderNS {
 		httpPOSTData httpPOSTObjectData(string relativeURL, string content) {
 			try {
 				if (this != nullptr) {
-					cout << "THIS IS IT THIS IS IT THIS IS IT THISIS IT!" << endl;
 					httpPOSTData postData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
