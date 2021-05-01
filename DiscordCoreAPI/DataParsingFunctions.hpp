@@ -979,7 +979,7 @@ namespace CommanderNS {
                     }
                 }
             }
-
+            
             if (jsonObjectData.contains("permissions") && !jsonObjectData.at("permissions").is_null()) {
                 json theValue = jsonObjectData.at("permissions");
                 for (unsigned int x = 0; x < theValue.size(); x += 1) {
@@ -1116,7 +1116,7 @@ namespace CommanderNS {
                     }
                 }
             }
-
+            
             if (jsonObjectData.contains("members") && !jsonObjectData.at("members").is_null()) {
                 json memberArray = jsonObjectData.at("members");
                 for (unsigned int x = 0; x < memberArray.size(); x += 1) {
@@ -1133,12 +1133,13 @@ namespace CommanderNS {
                     }
                     if (isItFound == false) {
                         ClientDataTypes::GuildMemberData guildMemberData;
+                        std::cout <<"THIS IS THE x VALUE: "<< x << std::endl;
                         parseObject(memberArray.at(x), &guildMemberData);
                         guildData.members.push_back(guildMemberData);
                     }
                 }
             }
-
+            /*
             if (jsonObjectData.contains("channels") && !jsonObjectData.at("channels").is_null()) {
                 json channelArray = jsonObjectData.at("channels");
                 for (unsigned int x = 0; x < channelArray.size(); x += 1) {
@@ -1182,7 +1183,7 @@ namespace CommanderNS {
                     }
                 }
             }
-           
+           */
             if (jsonObjectData.contains("max_presences") && !jsonObjectData.at("max_presences").is_null()) {
                 int theValue = jsonObjectData.at("max_presences");
                 guildData.maxPresences = theValue;
