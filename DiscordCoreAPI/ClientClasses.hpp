@@ -24,7 +24,7 @@ namespace CommanderNS {
 			ClientDataTypes::GuildMemberData Data;
 		};
 
-		class GuildMemberManager: map<string, GuildMember> {
+		struct GuildMemberManager : map<string, GuildMember> {
 		public:
 			GuildMemberManager() {};
 			GuildMemberManager(com_ptr<RestAPI> pRestAPI) {
@@ -58,12 +58,30 @@ namespace CommanderNS {
 			ClientDataTypes::ChannelData Data;
 		};
 
-		class ChannelManager: map<string, Channel> {
+		struct ChannelManager: map<string, Channel>  {
 		public:
 
 			ChannelManager() {};
 			ChannelManager(com_ptr<RestAPI> pRestAPI) {
 				this->pRestAPI = pRestAPI;
+			};
+
+			concurrency::task<Channel> Fetch(string channelId) {
+				return concurrency::create_task([this, channelId] {
+					ClientDataTypes::ChannelData channelData;
+					try {
+						channelData = this->at(channelId).Data;
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->channelGetRateLimit, channelId, &channelData).get();
+						Channel channel(channelData);
+						this->insert(std::make_pair(channelId, channel));
+						return channel;
+					}
+					catch (std::exception error) {
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->channelGetRateLimit, channelId, &channelData).get();
+						Channel channel(channelData);
+						return channel;
+					}
+					});
 			};
 
 			concurrency::task<Channel> GetChannel(string channelId) {
@@ -82,6 +100,7 @@ namespace CommanderNS {
 		protected:
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
+			FoundationClasses::RateLimitation channelGetRateLimit;
 		};
 
 		class Guild {
@@ -92,12 +111,12 @@ namespace CommanderNS {
 				this->Channels = ChannelManager(pRestAPI);
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					Channel channel(data.channels.at(x));
-					this->Channels.insert(std::make_pair(data.channels.at(x).id, channel));
+					this->Channels.insert(make_pair(data.channels.at(x).id, channel));
 				}
 				this->Members = GuildMemberManager(pRestAPI);
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					GuildMember member(data.members.at(x));
-					this->Members.insert(std::make_pair(data.members.at(x).user.id, member));
+					this->Members.insert(make_pair(data.members.at(x).user.id, member));
 				}
 			};
 			ClientDataTypes::GuildData Data;
@@ -105,7 +124,7 @@ namespace CommanderNS {
 			GuildMemberManager Members;
 		};
 
-		class GuildManager: map<string, Guild> {
+		struct GuildManager: map<string, Guild>  {
 		public:
 
 			GuildManager() {};
@@ -138,6 +157,7 @@ namespace CommanderNS {
 					}
 					catch (exception error) {
 						cout << "GetGuild() Error: " << error.what() << endl;
+						ClientDataTypes::GuildData guildData;
 						Guild guild;
 						return guild;
 					}
@@ -146,6 +166,7 @@ namespace CommanderNS {
 
 		protected:
 			friend struct WebSocket;
+			friend struct Client;
 			FoundationClasses::RateLimitation guildGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
@@ -153,29 +174,73 @@ namespace CommanderNS {
 		class User {
 
 		public:
-			User(ClientDataTypes::UserData data) {
+			User() {};
+			User(ClientDataTypes::UserData data, com_ptr<RestAPI> pRestAPI) {
 				this->Data = data;
 			};
 			ClientDataTypes::UserData Data;
 		};
 
-		class UserManager {
+		struct UserManager: map<string, User> {
 		public:
-			std::map<std::string, User> UserCache;
+			UserManager() {};
+			UserManager(com_ptr<RestAPI> pRestAPI) {
+				this->pRestAPI = pRestAPI;
+			};
+
+			concurrency::task<User> Fetch(string userId) {
+				return concurrency::create_task([this, userId] {
+					ClientDataTypes::UserData userData;
+					try {
+						userData = this->at(userId).Data;
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
+						User user(userData, pRestAPI);
+						this->insert(std::make_pair(userId, user));
+						return user;
+					}
+					catch (std::exception error) {
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
+						User user(userData, pRestAPI);
+						return user;
+					}
+					});
+			};
+
+			concurrency::task<User> GetUser(string userId) {
+				return concurrency::create_task([this, userId] {
+					try {
+						return this->at(userId);
+					}
+					catch (exception error) {
+						cout << "GetUser() Error: " << error.what() << endl;
+						ClientDataTypes::UserData userData;
+						User user(userData, this->pRestAPI);
+						return user;
+					}
+					});
+			};
+
+		protected:
+			friend struct WebSocket;
+			friend struct Client;
+			FoundationClasses::RateLimitation userGetRateLimit;
+			com_ptr<RestAPI> pRestAPI;
 		};
 
-		class Client {
+		struct Client {
 		public:
 			Client() {};
 			Client(com_ptr<RestAPI> pRestAPI) {
 				this->Guilds = GuildManager(pRestAPI);
+				this->Users = UserManager(pRestAPI);
 			};
+			~Client() {};
 			UserManager Users;
 			GuildManager Guilds;
 
 		protected:
 
-			friend class GuildManager;
+			friend struct GuildManager;
 			friend struct WebSocket;
 		};
 

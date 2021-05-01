@@ -24,13 +24,13 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 
-		winrt::com_ptr<EventMachine> eventMachine;
+		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
 		ClientClasses::Client* pClient;
-		MessageWebSocket webSocket;
-		event_token closedToken;
-		DataWriter messageWriter;
 		event_token messageReceivedToken;
+		event_token closedToken;
+		MessageWebSocket webSocket;
+		DataWriter messageWriter;
 		hstring socketPath = L"";
 		hstring botToken = L"";
 		hstring sessionID = L"";
@@ -50,7 +50,7 @@ namespace CommanderNS {
 		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachine, com_ptr<RestAPI> pRestAPI, ClientClasses::Client* pClient) {
 			this->pClient = pClient;
 			this->pRestAPI = pRestAPI;
-			this->eventMachine = pEventMachine;
+			this->pEventMachine = pEventMachine;
 			this->botToken = botTokenNew;
 			this->intentsValue = ((1 << 0) + (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4) + (1 << 5) + (1 << 6) + (1 << 7) + (1 << 8) + (1 << 9) + (1 << 10) + (1 << 11) + (1 << 12) + (1 << 13) + (1 << 14));
 		}
@@ -158,11 +158,19 @@ namespace CommanderNS {
 				CommanderNS::DataParsingFunctions::parseObject(guildUpdateData, &guildData);
 				ClientClasses::Guild guild(guildData, this->pRestAPI);
 				this->pClient->Guilds.insert(std::make_pair(id, guild));
+				for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
+					ClientClasses::User user(guild.Data.members.at(y).user, this->pRestAPI);
+					this->pClient->Users.insert(make_pair(user.Data.id, user));
+				}
 				co_return;
 			}
 			CommanderNS::DataParsingFunctions::parseObject(guildUpdateData, &guildData);
 			ClientClasses::Guild guild(guildData, this->pRestAPI);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
+			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
+				ClientClasses::User user(guild.Data.members.at(y).user, this->pRestAPI);
+				this->pClient->Users.insert(make_pair(user.Data.id, user));
+			}
 			co_return;
 		}
 
@@ -203,7 +211,7 @@ namespace CommanderNS {
 					ClientDataTypes::MessageData messageData;
 					DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 					messageCreationData.messageData = messageData;
-					this->eventMachine->onMessageCreationEvent(messageCreationData);
+					this->pEventMachine->onMessageCreationEvent(messageCreationData);
 				}
 
 				if (payload.at("t") == "GUILD_CREATE") {
@@ -213,11 +221,11 @@ namespace CommanderNS {
 
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					ClientDataTypes::GuildMemberData guildMemberData;
-					//DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->guildMemberGetRateLimit, winrt::to_string(payload.at("d").at("guild_id")), winrt::to_string(payload.at("d").at("id")), &guildMemberData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("id"), &guildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMemberData = guildMemberData;
-					this->eventMachine->onGuildMemberAddEvent(guildMemberAddData);
+					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 
 				if (payload.at("op") == 6) {

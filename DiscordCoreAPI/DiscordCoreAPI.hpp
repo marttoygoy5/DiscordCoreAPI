@@ -29,11 +29,11 @@ namespace CommanderNS {
 
 		DiscordCoreAPI(hstring botToken) {
 			this->botToken = botToken;
-			this->webSocket = winrt::make_self<WebSocket>();
-			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocket->socketPath);
-			this->Client = ClientClasses::Client(this->restAPI);
+			this->pWebSocket = winrt::make_self<WebSocket>();
+			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocket->socketPath);
+			this->Client = ClientClasses::Client(this->pRestAPI);
 			this->eventMachine = make_self<EventMachine>();
-			this->webSocket->initialize(botToken, this->eventMachine, this->restAPI, &this->Client);
+			this->pWebSocket->initialize(botToken, this->eventMachine, this->pRestAPI, &this->Client);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
@@ -41,17 +41,19 @@ namespace CommanderNS {
 			this->run();
 		}
 
+
+		
 	protected:
 
 		hstring baseURL = L"https://discord.com/api/v9";
 		hstring botToken;
-		winrt::com_ptr<WebSocket> webSocket;
-		winrt::com_ptr<RestAPI> restAPI;
+		com_ptr<WebSocket> pWebSocket;
+		com_ptr<RestAPI> pRestAPI;
 		ClientClasses::Client Client;
 
 		void connect() {
 			try {
-				this->webSocket->connectAsync().get();
+				this->pWebSocket->connectAsync().get();
 			}
 			catch (winrt::hresult result) {
 				std::cout << result.value << std::endl;
@@ -61,7 +63,7 @@ namespace CommanderNS {
 		void run() {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				std::cout << "Name: " << this->Client.Guilds.Fetch("782757641540730900").get().Members.GetGuildMember("641183425977516042").get().Data.nick<< std::endl;
+				std::cout << "Name: " << this->Client.Guilds.GetGuild("782757641540730900").get().Channels.GetChannel("787932570667057172").get().Data.name << std::endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
 		}

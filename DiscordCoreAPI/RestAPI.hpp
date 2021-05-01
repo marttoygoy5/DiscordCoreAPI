@@ -13,8 +13,8 @@ namespace CommanderNS {
 
 	struct httpGETData {
 		nlohmann::json data;
-		int getsRemaining;
-		int msRemain;
+		int getsRemaining = 1;
+		int msRemain = 0;
 	};
 
 	struct RestAPI: implements<RestAPI, IInspectable> {
@@ -49,28 +49,34 @@ namespace CommanderNS {
 
 		httpGETData httpGETObjectData(std::string relativeURL) {
 			try {
-				httpGETData getData;
-				std::string connectionPath = winrt::to_string(this->baseURL) + relativeURL;
-				Uri requestUri = Uri(winrt::to_hstring(connectionPath.c_str()));
-				Windows::Web::Http::HttpResponseMessage httpResponse;
-				httpResponse = httpClient.GetAsync(requestUri).get();
+				if (this != nullptr) {
+					httpGETData getData;
+					std::string connectionPath = winrt::to_string(this->baseURL) + relativeURL;
+					Uri requestUri = Uri(winrt::to_hstring(connectionPath.c_str()));
+					Windows::Web::Http::HttpResponseMessage httpResponse;
+					httpResponse = httpClient.GetAsync(requestUri).get();
 
-				if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
-					getData.getsRemaining = std::stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
+						getData.getsRemaining = std::stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+					}
+					else {
+						getData.getsRemaining = 1;
+					}
+					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
+						getData.msRemain = static_cast<int>(std::stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+					}
+					else {
+						getData.msRemain = 0;
+					}
+					nlohmann::json jsonValue;
+					jsonValue = jsonValue.parse(winrt::to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					getData.data = jsonValue;
+					return getData;
 				}
-				else {
-					getData.getsRemaining = 1;
+				else
+				{
+					return httpGETData();
 				}
-				if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-					getData.msRemain = static_cast<int>(std::stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
-				}
-				else {
-					getData.msRemain = 0;
-				}
-				nlohmann::json jsonValue;
-				jsonValue = jsonValue.parse(winrt::to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-				getData.data = jsonValue;
-				return getData;
 			}
 			catch (winrt::hresult_error error) {
 				std::cout << "Error: " << error.message().c_str() << std::endl;

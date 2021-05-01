@@ -73,6 +73,18 @@ namespace CommanderNS {
 			co_return;
 		}
 
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pGuildGetRateLimit, std::string id, ClientDataTypes::ChannelData* pDataStructure) {
+			co_await resume_background();
+			ClientDataTypes::ChannelData channelData = *pDataStructure;
+			std::string relativePath = "/channels/" + id;
+			httpGETData getData;
+			checkRateLimitAndGetDataAsync(pRestAPI, pGuildGetRateLimit, relativePath, &getData).get();
+			nlohmann::json jsonValue = getData.data;
+			DataParsingFunctions::parseObject(jsonValue, &channelData);
+			*pDataStructure = channelData;
+			co_return;
+		}
+
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pGuildMemberGetRateLimit, std::string guildId, std::string id, ClientDataTypes::GuildMemberData* pDataStructure) {
 			co_await resume_background();
 			ClientDataTypes::GuildData guildData;
