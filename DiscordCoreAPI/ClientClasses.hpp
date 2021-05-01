@@ -44,13 +44,8 @@ namespace CommanderNS {
 				char* output;
 				if (curl) {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
-					if (output) {
-						printf("Encoded: %s\n", output);
-						//curl_free(output);
-					}
 				}
 				string emojiEncoded = output;
-				cout << emojiEncoded << endl;
 				DataManipFunctions::putObjectDataAsync(this->pRestAPI, &this->reactionAddRateLimit, this->channelId, this->messageId, emojiEncoded).get();
 				co_return;
 			};

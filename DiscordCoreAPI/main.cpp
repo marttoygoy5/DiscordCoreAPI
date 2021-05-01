@@ -31,8 +31,8 @@ int main() {
                 CommanderNS::ClientClasses::MessageManager* messageManager = (CommanderNS::ClientClasses::MessageManager*)(message.message.messageManager);
                 CommanderNS::ClientClasses::Message message = messageManager->CreateMessage(createMessageData).get();
                 message.Reactions.AddReaction("⚔️").get();
-                message.Reactions.AddReaction("🔫").get();
                 message.Reactions.AddReaction("🧪").get();
+                message.Reactions.AddReaction("🔫").get();
             };
         });
     pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMember) {std::cout << guildMember.guildMember.Data.user.username << std::endl; });

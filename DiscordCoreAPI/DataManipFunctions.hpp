@@ -27,7 +27,7 @@ namespace CommanderNS {
 						pRateLimitData->msRemain = pGetDataStruct->msRemain;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-					if (pGetDataStruct->data.contains("message")) {
+					if (pGetDataStruct->data.contains("message") && !pGetDataStruct->data.at("message").is_null()) {
 						std::string theValue = pGetDataStruct->data.at("message");
 						std::exception error(theValue.c_str());
 						throw error;
@@ -61,7 +61,7 @@ namespace CommanderNS {
 						pRateLimitData->msRemain = pPostDataStruct->msRemain;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-					if (pPostDataStruct->data.contains("message")){
+					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
 						std::string theValue = pPostDataStruct->data.at("message");
 						std::exception error(theValue.c_str());
 						throw error;
@@ -86,7 +86,37 @@ namespace CommanderNS {
 		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, std::string relativePath, httpPUTData* pPutDataStruct, string content) {
 			co_await resume_background();
 			try {
-				if (pRateLimitData->getsRemaining > 0) {
+				if (pRateLimitData->getsRemaining > 0 && pRateLimitData->msRemain == 0) {
+					cout << pRateLimitData->getsRemaining << "GETS REMAINING! 00000" << endl;
+					cout << pRateLimitData->msRemain << "MS REMAINING! 00000" << endl;
+					cout << "PUTING IT HERE PUTTING IT HERE!" << endl;
+					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
+					if (pPutDataStruct->postsRemaining >= 0) {
+						pRateLimitData->getsRemaining = pPutDataStruct->postsRemaining;
+					}
+					if (pPutDataStruct->msRemain >= 0) {
+						pRateLimitData->msRemain = pPutDataStruct->msRemain;
+					}
+					if (pPutDataStruct->data.contains("message")&& !pPutDataStruct->data.at("message").is_null() && to_string(pPutDataStruct->data.at("message")) != string()){
+					pRateLimitData->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+						std::string theValue = pPutDataStruct->data.at("message");
+						cout << pPutDataStruct->data.at("message") << endl;
+						std::exception error(theValue.c_str());
+						throw error;
+					}
+				}
+				else if (pRateLimitData->msRemain < 1000) {
+					cout << pRateLimitData->getsRemaining << "GETS REMAINING! 11111" << endl;
+					cout << pRateLimitData->msRemain << "MS REMAINING! 11111" << endl;
+					int currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
+					cout << timeRemaining << endl;
+					while (timeRemaining > 0) {
+						currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
+						cout << timeRemaining << endl;
+					}
+					cout << timeRemaining << endl;
 					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
 					if (pPutDataStruct->postsRemaining >= 0) {
 						pRateLimitData->getsRemaining = pPutDataStruct->postsRemaining;
@@ -95,8 +125,9 @@ namespace CommanderNS {
 						pRateLimitData->msRemain = pPutDataStruct->msRemain;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-					if (pPutDataStruct->data.contains("message")){
+					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null() && to_string(pPutDataStruct->data.at("message")) != string()) {
 						std::string theValue = pPutDataStruct->data.at("message");
+						cout << pPutDataStruct->data.at("message") << endl;
 						std::exception error(theValue.c_str());
 						throw error;
 					}
