@@ -178,6 +178,7 @@ namespace CommanderNS {
 
 			concurrency::task<Guild> Fetch(string guildId) {
 				return concurrency::create_task([this, guildId] {
+
 					ClientDataTypes::GuildData guildData;
 					try {
 						guildData = this->at(guildId).Data;

@@ -28,6 +28,8 @@ using namespace std;
 using namespace nlohmann;
 using namespace winrt;
 using namespace Windows::Foundation;
+using namespace Windows::Web::Http;
+using namespace Windows::Web::Http::Headers;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Security::Cryptography::Certificates;
