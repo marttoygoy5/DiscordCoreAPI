@@ -61,7 +61,7 @@ namespace CommanderNS {
 		void run() {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				std::cout << "Name: " << this->Client.Guilds.Fetch("782757641540730900").get().Channels.GetChannel("788099326828216340").get().Data.bitrate << std::endl;
+				std::cout << "Name: " << this->Client.Guilds.Fetch("782757641540730900").get().Members.GetGuildMember("641183425977516042").get().Data.nick<< std::endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
 		}

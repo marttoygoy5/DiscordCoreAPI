@@ -1124,7 +1124,7 @@ namespace CommanderNS {
                     for (unsigned int y = 0; y < guildData.members.size(); y += 1) {
                         if (guildData.members.at(y).user.id == memberArray.at(x).at("user").at("id")) {
                             isItFound = true;
-                            guildData.members.erase(guildData.members.begin() + y);
+                            //guildData.members.erase(guildData.members.begin() + y);
                             ClientDataTypes::GuildMemberData guildMemberData = guildData.members.at(y);
                             parseObject(memberArray.at(x), &guildMemberData);
                             guildData.members.push_back(guildMemberData);

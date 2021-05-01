@@ -58,8 +58,14 @@ namespace CommanderNS {
 				if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 					getData.getsRemaining = std::stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 				}
+				else {
+					getData.getsRemaining = 1;
+				}
 				if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
 					getData.msRemain = static_cast<int>(std::stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				}
+				else {
+					getData.msRemain = 0;
 				}
 				nlohmann::json jsonValue;
 				jsonValue = jsonValue.parse(winrt::to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
