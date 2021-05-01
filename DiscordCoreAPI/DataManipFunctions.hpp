@@ -48,21 +48,21 @@ namespace CommanderNS {
 				co_return;
 			}
 		}
-
-		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, std::string relativePath, httpPOSTData* pGetDataStruct, string content) {
+		
+		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, std::string relativePath, httpPOSTData* pPostDataStruct, string content) {
 			co_await resume_background();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
-					*pGetDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
-					if (pGetDataStruct->postsRemaining >= 0) {
-						pRateLimitData->getsRemaining = pGetDataStruct->postsRemaining;
+					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
+					if (pPostDataStruct->postsRemaining >= 0) {
+						pRateLimitData->getsRemaining = pPostDataStruct->postsRemaining;
 					}
-					if (pGetDataStruct->msRemain >= 0) {
-						pRateLimitData->msRemain = pGetDataStruct->msRemain;
+					if (pPostDataStruct->msRemain >= 0) {
+						pRateLimitData->msRemain = pPostDataStruct->msRemain;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-					if (pGetDataStruct->data.contains("message")) {
-						std::string theValue = pGetDataStruct->data.at("message");
+					if (pPostDataStruct->data.contains("message")){
+						std::string theValue = pPostDataStruct->data.at("message");
 						std::exception error(theValue.c_str());
 						throw error;
 					}
@@ -136,6 +136,7 @@ namespace CommanderNS {
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
+			cout << "HERE NOW NOW NOW NOW NOW NOW!" << endl;
 			checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, content).get();
 			nlohmann::json jsonValue = postData.data;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);

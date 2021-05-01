@@ -7,13 +7,14 @@ int main() {
     winrt::com_ptr<CommanderNS::DiscordCoreAPI> pdiscordCoreAPI = winrt::make_self<CommanderNS::DiscordCoreAPI>(botToken);
     // Do other work here.
     pdiscordCoreAPI->eventMachine->onMessageCreation([](CommanderNS::EventDataTypes::MessageCreationData message) {
-        if (message.message.Data.content.c_str()[0] == '!') {
+            cout << "TESTING TESTING" << endl;
             CommanderNS::ClientDataTypes::CreateMessageData createMessageData;
-            createMessageData.content = "TESTING TESTING!";
-            createMessageData.tts = true;
-            CommanderNS::ClientClasses::MessageManager* messageManager = (CommanderNS::ClientClasses::MessageManager*)(message.message.messageManager);
-            messageManager->CreateMessage(createMessageData);
-        };
+            if (message.message.Data.content.c_str()[0] == '!') {
+                createMessageData.content = "TESTING TESTING!";
+                createMessageData.tts = true;
+                CommanderNS::ClientClasses::MessageManager* messageManager = (CommanderNS::ClientClasses::MessageManager*)(message.message.messageManager);
+                CommanderNS::ClientClasses::Message message = messageManager->CreateMessage(createMessageData).get();
+            };
         });
     pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMember) {std::cout << guildMember.guildMember.Data.user.username << std::endl; });
     pdiscordCoreAPI->login();

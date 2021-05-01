@@ -210,8 +210,8 @@ namespace CommanderNS {
 					EventDataTypes::MessageCreationData messageCreationData;
 					ClientDataTypes::MessageData messageData;
 					DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-					shared_ptr<ClientClasses::MessageManager> pMessageManager = make_shared<ClientClasses::MessageManager>(messageData.channelId, messageData.guildId, this->pRestAPI);
-					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, pMessageManager.get());
+					ClientClasses::MessageManager* pMessageManager = new ClientClasses::MessageManager(messageData.channelId, messageData.guildId, this->pRestAPI);
+					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, pMessageManager);
 					this->pEventMachine->onMessageCreationEvent(messageCreationData);
 				}
 

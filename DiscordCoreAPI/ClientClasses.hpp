@@ -40,14 +40,15 @@ namespace CommanderNS {
 			concurrency::task<Message> CreateMessage(ClientDataTypes::CreateMessageData createMessageData) {
 				return concurrency::create_task([this, createMessageData] {
 					try {
+						cout << "HERE HERE HERE" << endl;
 						string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 						ClientDataTypes::MessageData messageData;
-						DataManipFunctions::postObjectDataAsync(this->pRestAPI, &this->messageGetRateLimit, this->channelId, &messageData, createMessagePayload);
+						DataManipFunctions::postObjectDataAsync(this->pRestAPI, &this->messageGetRateLimit, this->channelId, &messageData, createMessagePayload).get();
 						ClientClasses::Message message(messageData, this->pRestAPI, this);
 						return message;
 					}
 					catch (exception error) {
-						cout << error.what() << endl;
+						cout << "CreateMessage() Error: " << error.what() << endl;
 					}
 
 					});

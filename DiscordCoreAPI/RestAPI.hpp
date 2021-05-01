@@ -92,29 +92,38 @@ namespace CommanderNS {
 		httpPOSTData httpPOSTObjectData(string relativeURL, string content) {
 			try {
 				if (this != nullptr) {
-					httpPOSTData getData;
+					cout << "THIS IS IT THIS IS IT THIS IS IT THISIS IT!" << endl;
+					httpPOSTData postData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
-					HttpResponseMessage httpResponse;
+					HttpContentHeaderCollection contentHeaderCollection;
+					HttpContentDispositionHeaderValue headerValue(L"payload_json");
+					contentHeaderCollection.ContentDisposition(headerValue);
+					HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
+					contentHeaderCollection.ContentType(typeHeaderValue);
 					HttpStringContent content(to_hstring(content), UnicodeEncoding::Utf8);
+					content.Headers().ContentDisposition(headerValue);
+					content.Headers().ContentType(typeHeaderValue);
+					wcout << content.ToString().c_str() << endl;
+					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PostAsync(requestUri, content).get();
 
 					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
-						getData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+						postData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 					}
 					else {
-						getData.postsRemaining = 1;
+						postData.postsRemaining = 1;
 					}
 					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-						getData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+						postData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 					}
 					else {
-						getData.msRemain = 0;
+						postData.msRemain = 0;
 					}
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-					getData.data = jsonValue;
-					return getData;
+					postData.data = jsonValue;
+					return postData;
 				}
 				else
 				{

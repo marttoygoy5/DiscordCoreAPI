@@ -29,8 +29,8 @@ namespace CommanderNS {
 		static bool doWeQuit;
 
 		DiscordCoreAPI(hstring botToken) {
-			this->botToken = botToken;
 			this->pWebSocket = winrt::make_self<WebSocket>();
+			this->botToken = botToken;
 			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocket->socketPath);
 			this->Client = ClientClasses::Client(this->pRestAPI);
 			this->eventMachine = make_self<EventMachine>();
@@ -61,15 +61,18 @@ namespace CommanderNS {
 
 		void run() {
 			this->connect();
+			int value = 0;
 			while (DiscordCoreAPI::doWeQuit == false) {
-				DiscordCoreAPI::doWeQuit = false;
+				value += 1;
+				//this->Client.Guilds.Fetch("782757641540730900");
+				//DiscordCoreAPI::doWeQuit = false;
 				//cout << "Name: " << this->Client.Guilds.Fetch("782757641540730900").get().Members.Fetch("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
 		}
 	};
 
-		bool DiscordCoreAPI::doWeQuit = false;
+	bool DiscordCoreAPI::doWeQuit;
 
 		BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
 			switch (fdwCtrlType)

@@ -78,12 +78,12 @@ namespace CommanderNS {
 		std::string getCreateMessagePayload(ClientDataTypes::CreateMessageData createMessageData) {
 			json data;
 			data = {
-				{"content", createMessageData.content},
-				{"nonce", createMessageData.nonce},
-				{"tts", createMessageData.tts},
-				{"embed", "null"},
-				{"allowed_mentions", "null"},
-				{"message_reference", "null"}
+				{"content", "Hello, World!"},
+				{"tts" , false},
+				{"embed" , {
+					{"title", "Hello, Embed!"},
+				{"description" , "This is an embedded message."}
+				}},
 			};
 
 			return data.dump();
