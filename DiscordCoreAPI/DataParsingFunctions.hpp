@@ -1908,12 +1908,6 @@ namespace CommanderNS {
                 allowedMentionsData.repliedUser = theValue;
             }
 
-
-            std::vector<std::string> parse;
-            std::vector<std::string> roles;
-            std::vector<std::string> users;
-            bool repliedUser;
-
             *pDataStructure = allowedMentionsData;
         }
 

@@ -7,6 +7,7 @@
 
 #include "pch.h"
 #include "HelperFunctions.hpp"
+#include "ClientDataTypes.hpp"
 
 namespace CommanderNS {
 
@@ -72,6 +73,13 @@ namespace CommanderNS {
 				finalValue = jsonVal.at("heartbeat_interval");
 			}
 			return finalValue;
+		};
+
+		std::string getCreateMessagePayload(ClientDataTypes::CreateMessageData createMessageData) {
+			json data;
+			//data = data.parse(createMessageData);
+
+			return data.dump();
 		}
 	}
 }

@@ -489,5 +489,14 @@ namespace CommanderNS {
         struct MessageData: MessageDataOld {
             MessageDataOld referencedMessage;
         };
+
+        struct CreateMessageData {
+            string content;
+            int nonce;
+            bool tts;
+            EmbedData embed;
+            AllowedMentionsData allowedMentions;
+            MessageReferenceData messageReference;
+        };
 	}
 }

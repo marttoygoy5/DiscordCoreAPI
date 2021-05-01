@@ -8,6 +8,7 @@
 #include "pch.h"
 #include "ClientDataTypes.hpp"
 #include "DataManipFunctions.hpp"
+#include "JSONifier.hpp"
 
 namespace CommanderNS {
 
@@ -27,14 +28,32 @@ namespace CommanderNS {
 		class MessageManager {
 		public:
 			MessageManager() {};
-			MessageManager(string channelId, string guildId) {
+			MessageManager(string channelId, string guildId, com_ptr<RestAPI> pRestAPI) {
 				this->channelId = channelId;
 				this->guildId = guildId;
+				this->pRestAPI = pRestAPI;
+			};
+
+			concurrency::task<Message> CreateMessage(ClientDataTypes::CreateMessageData createMessageData) {
+				return concurrency::create_task([this, createMessageData] {
+					try {
+						string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
+						ClientDataTypes::MessageData messageData;
+						DataManipFunctions::postObjectDataAsync(this->pRestAPI, &this->messageGetRateLimit, this->channelId, &messageData, createMessagePayload);
+						Message message(messageData);
+						return message;
+					}
+					catch (exception error) {
+						cout << error.what() << endl;
+					}
+					
+				});
 			};
 
 		protected:
 			string guildId;
 			string channelId;
+			com_ptr<RestAPI> pRestAPI;
 			FoundationClasses::RateLimitation messageGetRateLimit;
 		};
 
@@ -96,10 +115,15 @@ namespace CommanderNS {
 		class Channel {
 		public:
 			Channel() {};
-			Channel(ClientDataTypes::ChannelData data) {
+			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI) {
 				this->Data = data;
+				this->pRestAPI = pRestAPI;
+				this->messageManager = MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI);
 			};
 			ClientDataTypes::ChannelData Data;
+			MessageManager messageManager;
+		protected:
+			com_ptr<RestAPI> pRestAPI;
 		};
 
 		class ChannelManager: map<string, Channel>  {
@@ -116,13 +140,13 @@ namespace CommanderNS {
 					try {
 						channelData = this->at(channelId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->channelGetRateLimit, channelId, &channelData).get();
-						Channel channel(channelData);
+						Channel channel(channelData, this->pRestAPI);
 						this->insert(std::make_pair(channelId, channel));
 						return channel;
 					}
 					catch (std::exception error) {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->channelGetRateLimit, channelId, &channelData).get();
-						Channel channel(channelData);
+						Channel channel(channelData, this->pRestAPI);
 						return channel;
 					}
 					});
@@ -154,7 +178,7 @@ namespace CommanderNS {
 				this->Data = data;
 				this->Channels = ChannelManager(pRestAPI);
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
-					Channel channel(data.channels.at(x));
+					Channel channel(data.channels.at(x), pRestAPI);
 					this->Channels.insert(make_pair(data.channels.at(x).id, channel));
 				}
 				this->Members = GuildMemberManager(pRestAPI, this->Data.id);

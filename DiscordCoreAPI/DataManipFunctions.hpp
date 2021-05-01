@@ -49,6 +49,40 @@ namespace CommanderNS {
 			}
 		}
 
+		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, std::string relativePath, httpPOSTData* pGetDataStruct, string content) {
+			co_await resume_background();
+			try {
+				if (pRateLimitData->getsRemaining > 0) {
+					*pGetDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
+					if (pGetDataStruct->postsRemaining >= 0) {
+						pRateLimitData->getsRemaining = pGetDataStruct->postsRemaining;
+					}
+					if (pGetDataStruct->msRemain >= 0) {
+						pRateLimitData->msRemain = pGetDataStruct->msRemain;
+					}
+					pRateLimitData->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+					if (pGetDataStruct->data.contains("message")) {
+						std::string theValue = pGetDataStruct->data.at("message");
+						std::exception error(theValue.c_str());
+						throw error;
+					}
+				}
+				else {
+					int currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
+					std::cout << "Time remaining until we can make another get request: " << timeRemaining << " seconds." << std::endl;
+					if (timeRemaining <= 0) {
+						pRateLimitData->getsRemaining = 1;
+					}
+					co_return;
+				}
+			}
+			catch (std::exception error) {
+				std::cout << "postObjectDataAsync() Issue: " << error.what() << std::endl;
+				co_return;
+			}
+		}
+
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pUserGetRateLimit, std::string id, ClientDataTypes::UserData* pDataStructure) {
 			co_await resume_background();
 			ClientDataTypes::UserData userData = *pDataStructure;
@@ -94,6 +128,18 @@ namespace CommanderNS {
 			nlohmann::json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &guildMemberData);
 			*pDataStructure = guildMemberData;
+			co_return;
+		}
+
+		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessagePostRateLimit, std::string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
+			co_await resume_background();
+			ClientDataTypes::MessageData messageData = *pDataStructure;
+			string relativePath = "/channels/" + channelId + "/messages";
+			httpPOSTData postData;
+			checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, content).get();
+			nlohmann::json jsonValue = postData.data;
+			DataParsingFunctions::parseObject(jsonValue, &messageData);
+			*pDataStructure = messageData;
 			co_return;
 		}
 
