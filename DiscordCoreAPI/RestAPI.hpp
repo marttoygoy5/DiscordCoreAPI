@@ -156,7 +156,7 @@ namespace CommanderNS {
 					content.Headers().ContentType(typeHeaderValue);
 					wcout << content.ToString().c_str() << endl;
 					HttpResponseMessage httpResponse;
-					httpResponse = httpClient.PostAsync(requestUri, content).get();
+					httpResponse = httpClient.PutAsync(requestUri, content).get();
 
 					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 						putData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
