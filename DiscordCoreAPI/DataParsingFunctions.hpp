@@ -2222,11 +2222,6 @@ namespace CommanderNS {
                 messageData.interaction = theValue;
             }
 
-            /*
-            InteractionData interaction;
-            */
-
-
             *pDataStructure = messageData;
         }
 	}

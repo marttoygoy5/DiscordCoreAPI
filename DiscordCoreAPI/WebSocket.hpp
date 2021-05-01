@@ -26,7 +26,7 @@ namespace CommanderNS {
 
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
-		ClientClasses::Client* pClient;
+		ClientClasses::Client* pClient = nullptr;
 		event_token messageReceivedToken;
 		event_token closedToken;
 		MessageWebSocket webSocket;
@@ -210,7 +210,8 @@ namespace CommanderNS {
 					EventDataTypes::MessageCreationData messageCreationData;
 					ClientDataTypes::MessageData messageData;
 					DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-					messageCreationData.message = ClientClasses::Message(messageData);
+					shared_ptr<ClientClasses::MessageManager> pMessageManager = make_shared<ClientClasses::MessageManager>(messageData.channelId, messageData.guildId, this->pRestAPI);
+					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, pMessageManager.get());
 					this->pEventMachine->onMessageCreationEvent(messageCreationData);
 				}
 

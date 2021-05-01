@@ -14,15 +14,18 @@ namespace CommanderNS {
 
 	namespace ClientClasses {
 
-		struct Client;
+		class Client;
 
 		class Message {
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager) {
 				this->Data = data;
+				this->messageManager = pMessageManager;
 			}
 			ClientDataTypes::MessageData Data;
+			void* messageManager;
+
 		};
 
 		class MessageManager {
@@ -40,14 +43,14 @@ namespace CommanderNS {
 						string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 						ClientDataTypes::MessageData messageData;
 						DataManipFunctions::postObjectDataAsync(this->pRestAPI, &this->messageGetRateLimit, this->channelId, &messageData, createMessagePayload);
-						Message message(messageData);
+						ClientClasses::Message message(messageData, this->pRestAPI, this);
 						return message;
 					}
 					catch (exception error) {
 						cout << error.what() << endl;
 					}
-					
-				});
+
+					});
 			};
 
 		protected:
@@ -235,7 +238,7 @@ namespace CommanderNS {
 
 		protected:
 			friend struct WebSocket;
-			friend struct Client;
+			friend class Client;
 			FoundationClasses::RateLimitation guildGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
@@ -291,7 +294,7 @@ namespace CommanderNS {
 
 		protected:
 			friend struct WebSocket;
-			friend struct Client;
+			friend class Client;
 			FoundationClasses::RateLimitation userGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
@@ -309,7 +312,7 @@ namespace CommanderNS {
 
 		protected:
 
-			friend struct GuildManager;
+			friend class GuildManager;
 			friend struct WebSocket;
 		};
 

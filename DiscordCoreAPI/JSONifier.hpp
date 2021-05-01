@@ -53,8 +53,8 @@ namespace CommanderNS {
 				}}
 			};
 			return data.dump();
-		}
-		
+		};
+
 		std::string parseSocketPath(hstring initialPayload) {
 			std::string finalString = "";
 			nlohmann::json jsonVal;
@@ -63,7 +63,7 @@ namespace CommanderNS {
 				finalString = jsonVal.at("url");
 			}
 			return finalString;
-		}
+		};
 
 		int parseHeartBeatInterval(hstring initialPayload) {
 			int finalValue = 0;
@@ -77,7 +77,14 @@ namespace CommanderNS {
 
 		std::string getCreateMessagePayload(ClientDataTypes::CreateMessageData createMessageData) {
 			json data;
-			//data = data.parse(createMessageData);
+			data = {
+				{"content", createMessageData.content},
+				{"nonce", createMessageData.nonce},
+				{"tts", createMessageData.tts},
+				{"embed", "null"},
+				{"allowed_mentions", "null"},
+				{"message_reference", "null"}
+			};
 
 			return data.dump();
 		}

@@ -78,14 +78,14 @@ namespace CommanderNS {
             string discriminator;
             string avatar;
             bool bot;
-            bool system;
-            bool mfa_enabled;
+            bool system = false;
+            bool mfa_enabled = false;
             string locale;
-            bool verified;
+            bool verified = false;
             string email;
-            int flags;
-            int premium_type;
-            int public_flags;
+            int flags = 0;
+            int premium_type = 0;
+            int public_flags = 0;
         };
 
         struct GuildMemberData {
