@@ -13,9 +13,9 @@ namespace CommanderNS {
 
 	namespace ClientClasses {
 
-		class Client;
+		struct Client;
 
-		class GuildMember {
+		struct GuildMember : IInspectable {
 		public:
 			GuildMember() {};
 			GuildMember(ClientDataTypes::GuildMemberData data) {
@@ -45,7 +45,7 @@ namespace CommanderNS {
 			};
 
 		protected:
-			friend class Guild;
+			friend struct Guild;
 			com_ptr<RestAPI> pRestAPI;
 		};
 

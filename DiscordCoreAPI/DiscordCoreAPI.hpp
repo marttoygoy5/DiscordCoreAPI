@@ -36,13 +36,11 @@ namespace CommanderNS {
 			this->pWebSocket->initialize(botToken, this->eventMachine, this->pRestAPI, &this->Client);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
-
+		
 		void login() {
 			this->run();
-		}
+		}		
 
-
-		
 	protected:
 
 		hstring baseURL = L"https://discord.com/api/v9";
