@@ -328,7 +328,7 @@ namespace CommanderNS {
                 std::string theValue = jsonObjectData.at("nick");
                 guildMemberData.nick = theValue;
             }
-
+            
             if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
                 json theValue = jsonObjectData.at("roles");
                 for (unsigned int x = 0; x < theValue.size(); x += 1) {
@@ -344,7 +344,7 @@ namespace CommanderNS {
                     }                    
                 }
             }
-
+            
             if (jsonObjectData.contains("joined_at") && !jsonObjectData.at("joined_at").is_null()) {
                 std::string theValue = jsonObjectData.at("joined_at");
                 guildMemberData.joined_at = theValue;
@@ -1094,7 +1094,7 @@ namespace CommanderNS {
                 int theValue = jsonObjectData.at("member_count");
                 guildData.memberCount = theValue;
             }
-           
+            
             if (jsonObjectData.contains("voice_states") && !jsonObjectData.at("voice_states").is_null()) {
                 json voiceStates = jsonObjectData.at("voice_states");
                 for (unsigned int x = 0; x < voiceStates.size(); x += 1) {
@@ -1116,7 +1116,7 @@ namespace CommanderNS {
                     }
                 }
             }
-            
+
             if (jsonObjectData.contains("members") && !jsonObjectData.at("members").is_null()) {
                 json memberArray = jsonObjectData.at("members");
                 for (unsigned int x = 0; x < memberArray.size(); x += 1) {
@@ -1133,13 +1133,12 @@ namespace CommanderNS {
                     }
                     if (isItFound == false) {
                         ClientDataTypes::GuildMemberData guildMemberData;
-                        std::cout <<"THIS IS THE x VALUE: "<< x << std::endl;
                         parseObject(memberArray.at(x), &guildMemberData);
                         guildData.members.push_back(guildMemberData);
                     }
                 }
             }
-            /*
+            
             if (jsonObjectData.contains("channels") && !jsonObjectData.at("channels").is_null()) {
                 json channelArray = jsonObjectData.at("channels");
                 for (unsigned int x = 0; x < channelArray.size(); x += 1) {
@@ -1183,7 +1182,7 @@ namespace CommanderNS {
                     }
                 }
             }
-           */
+           
             if (jsonObjectData.contains("max_presences") && !jsonObjectData.at("max_presences").is_null()) {
                 int theValue = jsonObjectData.at("max_presences");
                 guildData.maxPresences = theValue;
