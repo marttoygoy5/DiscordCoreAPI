@@ -1491,7 +1491,7 @@ namespace CommanderNS {
 
             if (jsonObjectData.contains("color") && !jsonObjectData.at("color").is_null()) {
                 int theValue = jsonObjectData.at("color");
-                embedData.color = theValue;
+                embedData.actualColorVal = theValue;
             }
 
             if (jsonObjectData.contains("footer") && !jsonObjectData.at("footer").is_null()) {

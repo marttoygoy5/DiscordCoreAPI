@@ -8,6 +8,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define _AMD64_
 
+#pragma comment(lib, "Shlwapi.lib")
+
 #include <winrt/base.h>
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/Windows.Foundation.h>
@@ -22,6 +24,7 @@
 #include <consoleapi.h>
 #include <iostream>
 #include <sstream>
+#include <shlwapi.h>
 #include "/json-develop/include/nlohmann/json.hpp"
 
 using namespace std;

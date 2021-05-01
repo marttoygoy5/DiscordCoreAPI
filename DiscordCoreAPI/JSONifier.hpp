@@ -66,8 +66,8 @@ namespace CommanderNS {
 		};
 
 		int parseHeartBeatInterval(hstring initialPayload) {
-			int finalValue = 0;
 			nlohmann::json jsonVal;
+			int finalValue = 0;
 			jsonVal = jsonVal.parse(winrt::to_string(initialPayload));
 			if (jsonVal.contains("heartbeat_interval")) {
 				finalValue = jsonVal.at("heartbeat_interval");
@@ -78,20 +78,22 @@ namespace CommanderNS {
 		std::string getCreateMessagePayload(ClientDataTypes::CreateMessageData createMessageData) {
 			json data;
 			auto fields = json::array();
-			/*
+			
 			for (unsigned int x = 0; x < createMessageData.embed.fields.size(); x += 1) {
 				json object = { {"inline", createMessageData.embed.fields.at(x).Inline},
 								{"value", createMessageData.embed.fields.at(x).value},
 								{"name", createMessageData.embed.fields.at(x).name} };
 				fields.push_back(object);
 			}
-			*/
+
 			data = {
-				{"content", "Hello, World!"},
+				{"content", createMessageData.content},
 				{"tts" , false},
 				{"embed" , {
 					{"title", "Hello, Embed!"},
-				{"description" , "This is an embedded message."}
+				{"description" , "This is an embedded message."},
+				{"fields", fields},
+				{"color",createMessageData.embed.actualColor()}
 			}}
 			};
 

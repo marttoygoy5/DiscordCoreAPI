@@ -16,13 +16,50 @@ namespace CommanderNS {
 
 		class Client;
 
+		class Reaction{
+		public:
+			Reaction() {};
+			Reaction(string name) {
+				this->name = name;
+			};
+		protected:
+			string name;
+		};
+
+		class ReactionManager: map<string, Reaction> {
+		public:
+			ReactionManager() {};
+			ReactionManager(com_ptr<RestAPI> pRestAPI, string channelId, string messageId) {
+				this->pRestAPI = pRestAPI;
+				this->channelId = channelId;
+				this->messageId = messageId;
+			};
+			IAsyncAction AddReaction(string emoji) {
+				co_await resume_background();
+				char* escapedEmoji;
+				DWORD* pValue;
+				HRESULT result = UrlEscapeA(emoji.c_str(), escapedEmoji, pValue, URL_ESCAPE_AS_UTF8);
+				if (result != S_OK) {
+					winrt::hresult_error error(result);
+					wcout << "Not Okay: " << error.message().c_str() << endl;
+				}
+				co_return;
+			};
+		protected:
+			com_ptr<RestAPI> pRestAPI;
+			string channelId;
+			string messageId;
+		};
+
 		class Message {
 		public:
 			Message() {};
 			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager) {
 				this->Data = data;
 				this->messageManager = pMessageManager;
+				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id);
 			}
+			ReactionManager Reactions;
 			ClientDataTypes::MessageData Data;
 			void* messageManager;
 
