@@ -327,8 +327,8 @@ namespace CommanderNS {
             if (jsonObjectData.contains("nick") && !jsonObjectData.at("nick").is_null()) {
                 std::string theValue = jsonObjectData.at("nick");
                 guildMemberData.nick = theValue;
-            }
-            
+            }            
+
             if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
                 json theValue = jsonObjectData.at("roles");
                 for (unsigned int x = 0; x < theValue.size(); x += 1) {

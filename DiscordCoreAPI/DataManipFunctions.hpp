@@ -87,27 +87,12 @@ namespace CommanderNS {
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pGuildMemberGetRateLimit, std::string guildId, std::string id, ClientDataTypes::GuildMemberData* pDataStructure) {
 			co_await resume_background();
-			ClientDataTypes::GuildData guildData;
-			std::string relativePath;
-			relativePath = "/guilds/" + guildId + "/members/" + id;
+			ClientDataTypes::GuildMemberData guildMemberData = *pDataStructure;
+			string relativePath = "/guilds/" + guildId + "/members/" + id;
 			httpGETData getData;
-			co_await checkRateLimitAndGetDataAsync(pRestAPI, pGuildMemberGetRateLimit, relativePath, &getData);
-			ClientDataTypes::GuildMemberData guildMemberData;
+			checkRateLimitAndGetDataAsync(pRestAPI, pGuildMemberGetRateLimit, relativePath, &getData).get();
 			nlohmann::json jsonValue = getData.data;
-			bool isItFound = false;
-			for (unsigned int x = 0; x < guildData.members.size(); x += 1) {
-				if (guildData.members.at(x).user.id == id) {
-					isItFound = true;
-					guildMemberData = guildData.members.at(x);
-					DataParsingFunctions::parseObject(jsonValue, &guildMemberData);
-					guildData.members.erase(guildData.members.begin() + x);
-					guildData.members.push_back(guildMemberData);
-				}
-			}
-			if (isItFound == false) {
-				DataParsingFunctions::parseObject(jsonValue, &guildMemberData);
-				guildData.members.push_back(guildMemberData);
-			}
+			DataParsingFunctions::parseObject(jsonValue, &guildMemberData);
 			*pDataStructure = guildMemberData;
 			co_return;
 		}

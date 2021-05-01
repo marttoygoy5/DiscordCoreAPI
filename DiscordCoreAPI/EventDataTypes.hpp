@@ -7,6 +7,7 @@
 
 #include "pch.h"
 #include "ClientDataTypes.hpp"
+#include "ClientClasses.hpp"
 
 namespace CommanderNS {
 	namespace EventDataTypes {
@@ -17,6 +18,7 @@ namespace CommanderNS {
 
 		struct MessageCreationData {
 			ClientDataTypes::MessageData messageData;
+			ClientClasses::Message message;
 		};
 	}
 }

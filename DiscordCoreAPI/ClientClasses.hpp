@@ -15,7 +15,29 @@ namespace CommanderNS {
 
 		struct Client;
 
-		struct GuildMember : IInspectable {
+		class Message {
+
+		public:
+			Message() {};
+			Message(ClientDataTypes::MessageData data) {
+				this->Data = data;
+			}
+			ClientDataTypes::MessageData Data;
+		};
+
+		class MessageManager {
+		public:
+			MessageManager() {};
+			MessageManager(string channelId) {
+				this->channelId = channelId;
+			};
+
+		protected:
+			string channelId;
+			FoundationClasses::RateLimitation messageGetRateLimit;
+		};
+
+		class GuildMember {
 		public:
 			GuildMember() {};
 			GuildMember(ClientDataTypes::GuildMemberData data) {
@@ -24,12 +46,31 @@ namespace CommanderNS {
 			ClientDataTypes::GuildMemberData Data;
 		};
 
-		struct GuildMemberManager : map<string, GuildMember> {
+		class GuildMemberManager : map<string, GuildMember> {
 		public:
 			GuildMemberManager() {};
-			GuildMemberManager(com_ptr<RestAPI> pRestAPI) {
+			GuildMemberManager(com_ptr<RestAPI> pRestAPI, string guildId) {
 				this->pRestAPI = pRestAPI;
+				this->guildId = guildId;
 			}
+
+			concurrency::task<GuildMember> Fetch(string guildMemberId) {
+				return concurrency::create_task([this, guildMemberId] {
+					ClientDataTypes::GuildMemberData guildMemberData;
+					try {
+						guildMemberData = this->at(guildMemberId).Data;
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
+						GuildMember guildMember(guildMemberData);
+						this->insert(std::make_pair(guildMemberId, guildMember));
+						return guildMember;
+					}
+					catch (std::exception error) {
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
+						GuildMember guildMember(guildMemberData);
+						return guildMember;
+					}
+					});
+			};
 
 			concurrency::task<GuildMember> GetGuildMember(string guildMemberId) {
 				return concurrency::create_task([this, guildMemberId] {
@@ -45,8 +86,10 @@ namespace CommanderNS {
 			};
 
 		protected:
-			friend struct Guild;
+			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
+			FoundationClasses::RateLimitation guildMemberGetRateLimit;
+			string guildId;
 		};
 
 		class Channel {
@@ -58,7 +101,7 @@ namespace CommanderNS {
 			ClientDataTypes::ChannelData Data;
 		};
 
-		struct ChannelManager: map<string, Channel>  {
+		class ChannelManager: map<string, Channel>  {
 		public:
 
 			ChannelManager() {};
@@ -113,7 +156,7 @@ namespace CommanderNS {
 					Channel channel(data.channels.at(x));
 					this->Channels.insert(make_pair(data.channels.at(x).id, channel));
 				}
-				this->Members = GuildMemberManager(pRestAPI);
+				this->Members = GuildMemberManager(pRestAPI, this->Data.id);
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					GuildMember member(data.members.at(x));
 					this->Members.insert(make_pair(data.members.at(x).user.id, member));
@@ -124,7 +167,7 @@ namespace CommanderNS {
 			GuildMemberManager Members;
 		};
 
-		struct GuildManager: map<string, Guild>  {
+		class GuildManager: map<string, Guild>  {
 		public:
 
 			GuildManager() {};
@@ -181,7 +224,7 @@ namespace CommanderNS {
 			ClientDataTypes::UserData Data;
 		};
 
-		struct UserManager: map<string, User> {
+		class UserManager: map<string, User> {
 		public:
 			UserManager() {};
 			UserManager(com_ptr<RestAPI> pRestAPI) {
@@ -227,7 +270,7 @@ namespace CommanderNS {
 			com_ptr<RestAPI> pRestAPI;
 		};
 
-		struct Client {
+		class Client {
 		public:
 			Client() {};
 			Client(com_ptr<RestAPI> pRestAPI) {
