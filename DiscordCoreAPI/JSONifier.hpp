@@ -6,7 +6,6 @@
 #pragma once
 
 #include "pch.h"
-#include "HelperFunctions.hpp"
 #include "ClientDataTypes.hpp"
 
 namespace CommanderNS {
