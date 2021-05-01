@@ -114,7 +114,7 @@ namespace CommanderNS {
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					getData.data = jsonValue;
-					return getData;
+					return getData
 				}
 				else
 				{
