@@ -39,19 +39,9 @@ namespace CommanderNS {
 
 			IAsyncAction AddReaction(string emoji){
 				co_await resume_background();
-				
-				CURL* curl = curl_easy_init();
-				char* output;
-				if (curl) {
-					output = curl_easy_escape(curl, emoji.c_str(), 0);
-					if (output) {
-						printf("Encoded: %s\n", output);
-						//curl_free(output);
-					}
-				}
-				string emojiEncoded = output;
-				cout << emojiEncoded << endl;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, &this->reactionAddRateLimit, this->channelId, this->messageId, emojiEncoded).get();
+				string urlEncodedEmoji = "%E2%9A%94%EF%B8%8F";
+				cout << urlEncodedEmoji << endl;
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, &this->reactionAddRateLimit, this->channelId, this->messageId, urlEncodedEmoji).get();
 				co_return;
 			};
 

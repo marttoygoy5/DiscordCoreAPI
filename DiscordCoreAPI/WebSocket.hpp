@@ -42,9 +42,6 @@ namespace CommanderNS {
 		DispatcherQueue dispatchQueueForHB = nullptr;
 		DispatcherQueueTimer heartbeatTimer = nullptr;
 
-		FoundationClasses::RateLimitation userGetRateLimit;
-		FoundationClasses::RateLimitation guildGetRateLimit;
-		FoundationClasses::RateLimitation roleGetRateLimit;
 		FoundationClasses::RateLimitation guildMemberGetRateLimit;
 
 		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachine, com_ptr<RestAPI> pRestAPI, ClientClasses::Client* pClient) {

@@ -1,4 +1,4 @@
-// DataManipFunctions.hpp - Header for the data manipulation functions.
+﻿// DataManipFunctions.hpp - Header for the data manipulation functions.
 // Apr 26, 2021
 // Chris M.
 // https://github.com/RealTimeChris

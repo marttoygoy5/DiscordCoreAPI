@@ -1,3 +1,8 @@
+// Main.cpp - Main source file, for "the framework".
+// May 1, 2021
+// Chris M.
+// https://github.com/RealTimeChris
+
 #include "pch.h"
 #include "DiscordCoreAPI.hpp"
 
@@ -7,7 +12,7 @@ int main() {
     winrt::com_ptr<CommanderNS::DiscordCoreAPI> pdiscordCoreAPI = winrt::make_self<CommanderNS::DiscordCoreAPI>(botToken);
     // Do other work here.
     pdiscordCoreAPI->eventMachine->onMessageCreation([](CommanderNS::EventDataTypes::MessageCreationData message) {
-            CommanderNS::ClientDataTypes::CreateMessageData createMessageData;
+        CommanderNS::ClientDataTypes::CreateMessageData createMessageData;
             if (message.message.Data.content.c_str()[0] == '!') {
                 createMessageData.content = "TESTING TESTING!";
                 createMessageData.tts = true;
@@ -15,7 +20,7 @@ int main() {
                 embedField.Inline = true;
                 embedField.name = "__**TEST FIELD!**__";
                 embedField.value = "**TEST VALUE!**";
-                createMessageData.embed.fields.push_back(embedField);
+                createMessageData.embed.fields.push_back(embedField);                
                 embedField.Inline = true;
                 embedField.name = "ANOTHER FIELD!";
                 embedField.value = "WE ARE TESTING THE VALUES!";
@@ -25,7 +30,9 @@ int main() {
                 createMessageData.embed.color[2] = 255;
                 CommanderNS::ClientClasses::MessageManager* messageManager = (CommanderNS::ClientClasses::MessageManager*)(message.message.messageManager);
                 CommanderNS::ClientClasses::Message message = messageManager->CreateMessage(createMessageData).get();
-                message.Reactions.AddReaction(":ring:").get();
+                message.Reactions.AddReaction("⚔️").get();
+                message.Reactions.AddReaction("🔫").get();
+                message.Reactions.AddReaction("🧪").get();
             };
         });
     pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMember) {std::cout << guildMember.guildMember.Data.user.username << std::endl; });

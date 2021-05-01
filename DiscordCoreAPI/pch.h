@@ -5,10 +5,21 @@
 
 #pragma once
 
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
+#ifndef _AMD64_
 #define _AMD64_
+#endif
+#ifndef WINRT_LEAN_AND_MEAN
+#define WINRT_LEAN_AND_MEAN
+#endif
+#ifndef CURL_STATICLIB
+#define CURL_STATICLIB
+#endif
 
-#pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "WebServices.lib")
+#pragma comment(lib, "libcurl.lib")
 
 #include <winrt/base.h>
 #include <winrt/Windows.Web.Http.Headers.h>
@@ -24,8 +35,9 @@
 #include <consoleapi.h>
 #include <iostream>
 #include <sstream>
-#include <shlwapi.h>
+#include <webservices.h>
 #include "/json-develop/include/nlohmann/json.hpp"
+#include <curl.h>
 
 using namespace std;
 using namespace nlohmann;

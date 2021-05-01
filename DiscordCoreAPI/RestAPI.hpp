@@ -1,4 +1,4 @@
-// RestAPI.hpp - Header for the REST API and its associated functions.
+﻿// RestAPI.hpp - Header for the REST API and its associated functions.
 // Apr 21, 2021
 // Chris M.
 // https://github.com/RealTimeChris
@@ -145,6 +145,7 @@ namespace CommanderNS {
 					httpPUTData putData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
+					cout << "STANDING HERE! STANDING HERE!" << endl;
 					HttpContentHeaderCollection contentHeaderCollection;
 					HttpContentDispositionHeaderValue headerValue(L"payload_json");
 					contentHeaderCollection.ContentDisposition(headerValue);

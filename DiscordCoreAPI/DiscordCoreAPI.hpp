@@ -64,8 +64,7 @@ namespace CommanderNS {
 			int value = 0;
 			while (DiscordCoreAPI::doWeQuit == false) {
 				value += 1;
-				//this->Client.Guilds.Fetch("782757641540730900");
-				//DiscordCoreAPI::doWeQuit = false;
+				this->Client.Guilds.Fetch("782757641540730900").get();
 				//cout << "Name: " << this->Client.Guilds.Fetch("782757641540730900").get().Members.Fetch("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
