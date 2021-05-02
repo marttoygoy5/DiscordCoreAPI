@@ -84,16 +84,27 @@ namespace CommanderNS {
 								{"name", createMessageData.embed.fields.at(x).name} };
 				fields.push_back(object);
 			}
-
+			
 			data = {
+				{"allowed_mentions", {
+					{"parse", createMessageData.allowedMentions.parse},
+					{"replied_user", createMessageData.allowedMentions.repliedUser},
+					{"roles", createMessageData.allowedMentions.roles},
+					{"users", createMessageData.allowedMentions.users}
+					}},
 				{"content", createMessageData.content},
 				{"tts" , false},
 				{"embed" , {
+					{"footer", {
+						{"icon_url", createMessageData.embed.footer.iconUrl},
+						{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
+						{"test", createMessageData.embed.footer.text}
+			}},
 					{"title", "Hello, Embed!"},
-				{"description" , "This is an embedded message."},
-				{"fields", fields},
-				{"color",createMessageData.embed.actualColor()}
-			}}
+					{"description" , "This is an embedded message."},
+					{"fields", fields},
+					{"color",createMessageData.embed.actualColorVal}
+			}} 
 			};
 
 			return data.dump();

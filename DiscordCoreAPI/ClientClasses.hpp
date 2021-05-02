@@ -17,14 +17,23 @@ namespace CommanderNS {
 
 		class Client;
 
-		class Reaction{
+		class Reaction {
 		public:
 			Reaction() {};
-			Reaction(string name) {
+			Reaction(string name, string messageId, string channelId, string userId) {
+				this->Data.emoji.requireColons = true;
+				this->Data.emoji.name = name;
 				this->name = name;
+				this->messageId = messageId;
+				this->channelId = channelId;
+				this->userId = userId;
 			};
+			ClientDataTypes::ReactionData Data;
 		protected:
 			string name;
+			string messageId;
+			string channelId;
+			string userId;
 		};
 
 		class ReactionManager: map<string, Reaction> {
@@ -32,14 +41,21 @@ namespace CommanderNS {
 
 			ReactionManager() {};
 			ReactionManager(com_ptr<RestAPI> pRestAPI, string channelId, string messageId) {
-				this->pRestAPI = pRestAPI;
 				this->channelId = channelId;
+				this->pRestAPI = pRestAPI;
 				this->messageId = messageId;
 			};
+			ClientDataTypes::ReactionData reactionData;
 
-			IAsyncAction AddReaction(string emoji){
+			IAsyncAction AddReaction(ClientDataTypes::CreateReactionData createReactionData){
+				string emoji;
+				if (createReactionData.id != string()) {
+					emoji += ":" + createReactionData.name + ":" + createReactionData.id;
+				}
+				else {
+					emoji = createReactionData.name;
+				}
 				co_await resume_background();
-				
 				CURL* curl = curl_easy_init();
 				char* output;
 				if (curl) {
@@ -60,15 +76,26 @@ namespace CommanderNS {
 		class Message {
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessageDeleteRateLimit , void* pMessageManager) {
 				this->Data = data;
 				this->messageManager = pMessageManager;
+				this->pRestAPI = pRestAPI;
 				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id);
+				this->pMessageDeleteRateLimit = pMessageDeleteRateLimit;
 			}
+
+			IAsyncAction DeleteMessage(int timeDelay = 1000) {
+				co_await resume_background();
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, this->pMessageDeleteRateLimit, Data.channelId, Data.id).get();
+				co_return;
+			};
+
+			void* messageManager;
 			ReactionManager Reactions;
 			ClientDataTypes::MessageData Data;
-			void* messageManager;
-
+		protected:
+			FoundationClasses::RateLimitation* pMessageDeleteRateLimit;
+			com_ptr<RestAPI> pRestAPI;
 		};
 
 		class MessageManager {
@@ -86,7 +113,7 @@ namespace CommanderNS {
 						string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 						ClientDataTypes::MessageData messageData;
 						DataManipFunctions::postObjectDataAsync(this->pRestAPI, &this->messageGetRateLimit, this->channelId, &messageData, createMessagePayload).get();
-						ClientClasses::Message message(messageData, this->pRestAPI, this);
+						ClientClasses::Message message(messageData, this->pRestAPI, &this->messageDeleteRateLimit, this);
 						return message;
 					}
 					catch (exception error) {
@@ -97,10 +124,13 @@ namespace CommanderNS {
 			};
 
 		protected:
+			friend struct WebSocket;
+			friend class Message;
 			string guildId;
 			string channelId;
 			com_ptr<RestAPI> pRestAPI;
 			FoundationClasses::RateLimitation messageGetRateLimit;
+			FoundationClasses::RateLimitation messageDeleteRateLimit;
 		};
 
 		class GuildMember {

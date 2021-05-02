@@ -208,7 +208,7 @@ namespace CommanderNS {
 					ClientDataTypes::MessageData messageData;
 					DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 					ClientClasses::MessageManager* pMessageManager = new ClientClasses::MessageManager(messageData.channelId, messageData.guildId, this->pRestAPI);
-					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, pMessageManager);
+					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &pMessageManager->messageDeleteRateLimit, pMessageManager);
 					this->pEventMachine->onMessageCreationEvent(messageCreationData);
 				}
 

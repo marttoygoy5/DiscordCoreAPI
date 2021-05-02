@@ -372,27 +372,27 @@ namespace CommanderNS {
             EmbedProviderData provider;
             EmbedAuthorData author;
             vector<EmbedFieldData> fields;
-            int actualColorVal;
+            int actualColorVal = actualColor();
             int actualColor() {
-                if (color[0] > 255) {
-                    color[0] = 255;
+                if (this->color[0] > 255) {
+                    this->color[0] = 255;
                 }
-                else if (color[0] < 0) {
-                    color[0] = 0;
+                else if (this->color[0] < 0) {
+                    this->color[0] = 0;
                 }
-                if (color[1] > 255) {
-                    color[1] = 255;
+                if (this->color[1] > 255) {
+                    this->color[1] = 255;
                 }
-                else if (color[1] < 0) {
-                    color[1] = 0;
+                else if (this->color[1] < 0) {
+                    this->color[1] = 0;
                 }
-                if (color[2] > 255) {
-                    color[2] = 255;
+                if (this->color[2] > 255) {
+                    this->color[2] = 255;
                 }
-                else if (color[2] < 0) {
-                    color[2] = 0;
+                else if (this->color[2] < 0) {
+                    this->color[2] = 0;
                 }
-                int colorValue = 65536 * color[0] + 256 * color[1] + color[2];
+                int colorValue = 65536 * this->color[0] + 256 * this->color[1] + this->color[2];
                 return colorValue;
             };
         };
@@ -511,6 +511,11 @@ namespace CommanderNS {
 
         struct MessageData: MessageDataOld {
             MessageDataOld referencedMessage;
+        };
+
+        struct CreateReactionData {
+            string name;
+            string id;
         };
 
         struct CreateMessageData {

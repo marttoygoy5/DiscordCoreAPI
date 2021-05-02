@@ -28,6 +28,12 @@ namespace CommanderNS {
 		int msRemain = 0;
 	};
 
+	struct httpDELETEData {
+		json data;
+		int postsRemaining = 1;
+		int msRemain = 0;
+	};
+
 	struct RestAPI: implements<RestAPI, IInspectable> {
 	public:
 
@@ -49,6 +55,7 @@ namespace CommanderNS {
 				hstring httpResponseBody = httpResponse.Content().ReadAsStringAsync().get().c_str();
 				std::wstringstream stream;
 				stream << JSONifier::parseSocketPath(httpResponseBody.c_str()).c_str();
+				cout << JSONifier::parseSocketPath(httpResponseBody.c_str()).c_str() << endl;
 				stream << L"/?v=8&encoding=json";
 				*socketPath = stream.str();
 			}
@@ -153,7 +160,6 @@ namespace CommanderNS {
 					HttpStringContent content(to_hstring(content), UnicodeEncoding::Utf8);
 					content.Headers().ContentDisposition(headerValue);
 					content.Headers().ContentType(typeHeaderValue);
-					wcout << content.ToString().c_str() << endl;
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PutAsync(requestUri, content).get();
 
@@ -177,6 +183,47 @@ namespace CommanderNS {
 				else
 				{
 					return httpPUTData();
+				}
+			}
+			catch (winrt::hresult_error error) {
+				std::cout << "Error: " << error.message().c_str() << std::endl;
+			}
+		}
+
+		httpDELETEData httpDELETEObjectData(string relativeURL) {
+			try {
+				if (this != nullptr) {
+					httpDELETEData deleteData;
+					string connectionPath = to_string(this->baseURL) + relativeURL;
+					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
+					HttpContentHeaderCollection contentHeaderCollection;
+					HttpContentDispositionHeaderValue headerValue(L"payload_json");
+					contentHeaderCollection.ContentDisposition(headerValue);
+					HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
+					contentHeaderCollection.ContentType(typeHeaderValue);
+					HttpResponseMessage httpResponse;
+					httpResponse = httpClient.DeleteAsync(requestUri).get();
+
+					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
+						deleteData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+					}
+					else {
+						deleteData.postsRemaining = 1;
+					}
+					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
+						deleteData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+					}
+					else {
+						deleteData.msRemain = 0;
+					}
+					json jsonValue;
+					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					deleteData.data = jsonValue;
+					return deleteData;
+				}
+				else
+				{
+					return httpDELETEData();
 				}
 			}
 			catch (winrt::hresult_error error) {

@@ -20,8 +20,8 @@
 
 #include <winrt/base.h>
 #include <winrt/Windows.Web.Http.Headers.h>
-#include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Foundation.h>
 #include <winrt/windows.networking.sockets.h>
 #include <winrt/windows.storage.streams.h>
 #include <winrt/windows.system.h>
@@ -32,7 +32,7 @@
 #include <consoleapi.h>
 #include <iostream>
 #include <sstream>
-#include "/json-develop/include/nlohmann/json.hpp"
+#include </json-develop/include/nlohmann/json.hpp>
 #include <curl.h>
 
 using namespace std;
@@ -49,3 +49,4 @@ using namespace winrt::Windows::System;
 using namespace winrt::Windows::UI::Xaml;
 using namespace Windows::Foundation;
 using namespace Windows::Storage;
+using namespace concurrency;
