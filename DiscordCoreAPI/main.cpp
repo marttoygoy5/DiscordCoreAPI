@@ -30,23 +30,9 @@ int main() {
             createMessageData.embed.color[2] = 255;
             CommanderNS::ClientClasses::MessageManager* messageManager = (CommanderNS::ClientClasses::MessageManager*)(message.message.messageManager);
             CommanderNS::ClientClasses::Message message = messageManager->CreateMessage(createMessageData).get();
-            try {
-                cout << "THREAD ID 0000: " << this_thread::get_id() << endl;
-                message.Reactions.AddReaction("⚔️").get();
-            }
-            catch (exception error) {
-            }
-            try {
-                cout << "THREAD ID 0011: " << this_thread::get_id() << endl;
-                message.Reactions.AddReaction("🧪").get();
-            }
-            catch (exception error) {
-            }
-            try {
-                message.Reactions.AddReaction("🔫").get();
-            }
-            catch (exception error) {
-            }
+            message.Reactions.AddReaction("⚔️").get();
+            message.Reactions.AddReaction("🧪").get();
+            message.Reactions.AddReaction("🔫").get();
         };
         });
     pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMember) {std::cout << guildMember.guildMember.Data.user.username << std::endl; });

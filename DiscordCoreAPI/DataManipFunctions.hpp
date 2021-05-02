@@ -180,16 +180,18 @@ namespace CommanderNS {
 		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionPostRateLimit, string channelId, string messageId, string emoji) {
 			co_await resume_background();
 
+			pReactionPostRateLimit->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+
 			int currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
 			float timeRemaining = (static_cast<float>(pReactionPostRateLimit->msRemain) - static_cast<float>(currentTime - pReactionPostRateLimit->currentMsTime)) / 1000;
 
 			if (pReactionPostRateLimit->msRemain > 0 && pReactionPostRateLimit->getsRemaining == 0) {
-				pReactionPostRateLimit->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
 				while (timeRemaining > 0) {
 					currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
 					timeRemaining = (static_cast<float>(pReactionPostRateLimit->msRemain) - static_cast<float>(currentTime - pReactionPostRateLimit->currentMsTime)) / 1000;
 				}
 				pReactionPostRateLimit->getsRemaining += 1;
+
 			}
 			FoundationClasses::RateLimitation dummbRate;
 
