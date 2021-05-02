@@ -51,7 +51,7 @@ namespace CommanderNS {
 			};
 			ClientDataTypes::ReactionData reactionData;
 
-			IAsyncAction AddReaction(ClientDataTypes::CreateReactionData createReactionData){
+			IAsyncAction AddReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
 				co_await resume_background();
 				string emoji;
 				if (createReactionData.id != string()) {
@@ -88,7 +88,7 @@ namespace CommanderNS {
 				this->pMessageDeleteRateLimit = pMessageDeleteRateLimit;
 			}
 
-			IAsyncAction DeleteMessage(int timeDelay = 1000) {
+			IAsyncAction DeleteMessageAsync(int timeDelay = 1000) {
 				co_await resume_background();
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, Message::pMessageDeleteRateLimit, Data.channelId, Data.id).get();
 				co_return;
@@ -113,7 +113,7 @@ namespace CommanderNS {
 				MessageManager::messageGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 
-			task<ClientClasses::Message> CreateMessage(ClientDataTypes::CreateMessageData createMessageData) {
+			task<ClientClasses::Message> CreateMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
 				return concurrency::create_task([this, createMessageData] {
 					try {
 						string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);

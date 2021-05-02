@@ -98,7 +98,6 @@ namespace CommanderNS {
 		}
 
 		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
-			apartment_context mainThread;
 			co_await resume_background();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
@@ -109,7 +108,7 @@ namespace CommanderNS {
 						exception error(theValue.c_str());
 						throw error;
 					}
-					co_await mainThread;
+					co_return;
 				}
 				else {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -121,7 +120,6 @@ namespace CommanderNS {
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content, pRateLimitData);
-					
 					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						string theValue = pPutDataStruct->data.at("message");
 						exception error(theValue.c_str());
@@ -150,6 +148,7 @@ namespace CommanderNS {
 						exception error(theValue.c_str());
 						throw error;
 					}
+					co_return;
 				}
 				else {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -224,8 +223,8 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(jsonValue, &guildMemberData);
 			*pDataStructure = guildMemberData;
 			co_return;
-		}
 
+		}
 		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
 			co_await resume_background();
 			ClientDataTypes::MessageData messageData = *pDataStructure;
@@ -237,34 +236,6 @@ namespace CommanderNS {
 			*pDataStructure = messageData;
 			co_return;
 		}
-		/*
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji) {
-			co_await resume_background();
-
-			pReactionPostRateLimit->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-
-			int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			float timeRemaining = (static_cast<float>(pReactionPostRateLimit->msRemain) - static_cast<float>(currentTime - pReactionPostRateLimit->currentMsTime)) / 1000;
-
-			if (pReactionPostRateLimit->msRemain > 0 && pReactionPostRateLimit->getsRemaining == 0) {
-				while (timeRemaining > 0) {
-					currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					timeRemaining = (static_cast<float>(pReactionPostRateLimit->msRemain) - static_cast<float>(currentTime - pReactionPostRateLimit->currentMsTime)) / 1000;
-				}
-				pReactionPostRateLimit->getsRemaining += 1;
-
-			}
-			shared_ptr<FoundationClasses::RateLimitation> dummbRate = make_shared<FoundationClasses::RateLimitation>();
-
-			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
-			httpPUTData putData;
-			checkRateLimitAndPutDataAsync(pRestAPI, dummbRate, relativePath, &putData, emoji).get();
-			pReactionPostRateLimit->getsRemaining -= 1;
-			pReactionPostRateLimit->msRemain = 250;
-			json jsonValue = putData.data;
-			co_return;
-		}
-		*/
 
 		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji) {
 			co_await resume_background();
@@ -284,30 +255,29 @@ namespace CommanderNS {
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRoleGetRateLimit, string id, vector<ClientDataTypes::RoleData>* pDataStructure) {
 			co_await resume_background();
-			ClientDataTypes::GuildData guildData;
-			string relativePath;
-			relativePath = "/guilds/" + id + "/roles";
+			vector<ClientDataTypes::RoleData> roleData = *pDataStructure;
+			string relativePath = "/guilds/" + id + "/roles";
 			httpGETData getData;
-			co_await checkRateLimitAndGetDataAsync(pRestAPI, pRoleGetRateLimit, relativePath, &getData);
+			checkRateLimitAndGetDataAsync(pRestAPI, pRoleGetRateLimit, relativePath, &getData).get();
 			json jsonValue = getData.data;
 			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
 				bool isItFound = false;
-				for (unsigned int y = 0; y < guildData.roles.size(); y += 1) {
-					if (guildData.roles.at(y).id == jsonValue.at(x).at("id")) {
+				for (unsigned int y = 0; y < roleData.size(); y += 1) {
+					if (roleData.at(y).id == jsonValue.at(x).at("id")) {
 						isItFound = true;
-						ClientDataTypes::RoleData roleData = guildData.roles.at(y);
-						DataParsingFunctions::parseObject(jsonValue.at(x), &roleData);
-						guildData.roles.erase(guildData.roles.begin() + y);
-						guildData.roles.push_back(roleData);
+						ClientDataTypes::RoleData roleDataNew = roleData.at(y);
+						DataParsingFunctions::parseObject(jsonValue.at(x), &roleDataNew);
+						roleData.erase(roleData.begin() + y);
+						roleData.push_back(roleDataNew);
 					}
 				}
 				if (isItFound == false) {
-					ClientDataTypes::RoleData roleData;
-					DataParsingFunctions::parseObject(jsonValue.at(x), &roleData);
-					guildData.roles.push_back(roleData);
+					ClientDataTypes::RoleData roleDataNew;
+					DataParsingFunctions::parseObject(jsonValue.at(x), &roleDataNew);
+					roleData.push_back(roleDataNew);
 				}
 			}
-			*pDataStructure = guildData.roles;
+			*pDataStructure = roleData;
 			co_return;
 		}
 	}
