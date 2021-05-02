@@ -210,8 +210,8 @@ namespace CommanderNS {
 					ClientClasses::MessageManager* pMessageManager = new ClientClasses::MessageManager(messageData.channelId, messageData.guildId, this->pRestAPI);
 					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &pMessageManager->messageDeleteRateLimit, pMessageManager);
 					this->pEventMachine->onMessageCreationEvent(messageCreationData);
-				}
 
+				}
 				if (payload.at("t") == "GUILD_CREATE") {
 					this->onGuildCreate(payload.at("d"));
 					return;
