@@ -73,14 +73,14 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.GetAsync(requestUri).get();
 
-					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
-						getData.getsRemaining = std::stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
+						getData.getsRemaining = std::stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
 						getData.getsRemaining = 0;
 					}
-					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-						getData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
+						getData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
 						getData.msRemain = 250;
@@ -117,14 +117,14 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PostAsync(requestUri, content).get();
 
-					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
-						postData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
+						postData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
 						postData.postsRemaining = 0;
 					}
-					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-						postData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
+						postData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
 						postData.msRemain = 250;
@@ -147,6 +147,7 @@ namespace CommanderNS {
 		httpPUTData httpPUTObjectData(string relativeURL, string content) {
 			try {
 				if (this != nullptr) {
+					cout << "HTTP OUT CALLED WITH RELATIVE URL: " << relativeURL << endl;
 					httpPUTData putData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
@@ -161,14 +162,14 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PutAsync(requestUri, content).get();
 
-					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
-						putData.putsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
+						putData.putsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
 						putData.putsRemaining = 0;
 					}
-					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-						putData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
+						putData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
 						putData.msRemain = 250;
@@ -202,14 +203,14 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.DeleteAsync(requestUri).get();
 
-					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
-						deleteData.deletesRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
+						deleteData.deletesRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
 						deleteData.deletesRemaining = 0;
 					}
-					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-						deleteData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
+						deleteData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
 						deleteData.msRemain = 250;
