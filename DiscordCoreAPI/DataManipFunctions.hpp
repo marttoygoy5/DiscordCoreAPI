@@ -49,6 +49,11 @@ namespace CommanderNS {
 						pRateLimitData->msRemain = pGetDataStruct->msRemain;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					if (pGetDataStruct->data.contains("message") && !pGetDataStruct->data.at("message").is_null()) {
+						string theValue = pGetDataStruct->data.at("message");
+						exception error(theValue.c_str());
+						throw error;
+					}
 					co_return;
 				}
 			}
@@ -92,6 +97,11 @@ namespace CommanderNS {
 						pRateLimitData->msRemain = pPostDataStruct->msRemain;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
+						string theValue = pPostDataStruct->data.at("message");
+						exception error(theValue.c_str());
+						throw error;
+					}
 					co_return;
 				}
 			}
@@ -106,6 +116,7 @@ namespace CommanderNS {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
+					cout << "SUCCCESFUL PUT 01: " << endl;
 					if (pPutDataStruct->putsRemaining >= 0) {
 						pRateLimitData->getsRemaining = pPutDataStruct->putsRemaining;
 					}
@@ -131,15 +142,21 @@ namespace CommanderNS {
 					while (timeRemaining > 0) {
 						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
-					}
 					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
+					}
+					cout << "SUCCCESFUL PUT 02: " << endl;
 					if (pPutDataStruct->putsRemaining >= 0) {
 						pRateLimitData->getsRemaining = pPutDataStruct->putsRemaining;
 					}
-					if (pPutDataStruct->msRemain >= 0) {
 						pRateLimitData->msRemain = pPutDataStruct->msRemain;
+					if (pPutDataStruct->msRemain >= 0) {
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
+						string theValue = pPutDataStruct->data.at("message");
+						exception error(theValue.c_str());
+						throw error;
+					}
 					co_return;
 				}
 			}
@@ -186,6 +203,11 @@ namespace CommanderNS {
 						pRateLimitData->msRemain = pDeleteDataStruct->msRemain;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					if (pDeleteDataStruct->data.contains("message") && !pDeleteDataStruct->data.at("message").is_null()) {
+						string theValue = pDeleteDataStruct->data.at("message");
+						exception error(theValue.c_str());
+						throw error;
+					}
 					co_return;
 				}
 			}
