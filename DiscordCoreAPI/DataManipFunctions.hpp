@@ -114,9 +114,11 @@ namespace CommanderNS {
 					if (pPutDataStruct->putsRemaining >= 0) {
 						pRateLimitData->getsRemaining = pPutDataStruct->putsRemaining;
 					}
+					cout << "GETS REMAINING 00: " << pRateLimitData->getsRemaining << endl;
 					if (pPutDataStruct->msRemain >= 0) {
 						pRateLimitData->msRemain = pPutDataStruct->msRemain;
 					}
+					cout << "MS REMAINING 00: " << pRateLimitData->msRemain << endl;
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						string theValue = pPutDataStruct->data.at("message");
@@ -128,6 +130,9 @@ namespace CommanderNS {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 
+					cout << "GETS REMAINING 01: " << pRateLimitData->getsRemaining << endl;
+					cout << "MS REMAINING 01: " << pRateLimitData->msRemain << endl;
+					cout << "TIME REMAINING 01: " << timeRemaining << endl;
 					if (pRateLimitData->msRemain > 0 && pRateLimitData->getsRemaining == 0) {
 						while (timeRemaining > 0) {
 							currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());

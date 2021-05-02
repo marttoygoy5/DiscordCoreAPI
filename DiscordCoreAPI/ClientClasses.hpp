@@ -53,8 +53,6 @@ namespace CommanderNS {
 
 			IAsyncAction AddReaction(ClientDataTypes::CreateReactionData createReactionData){
 				co_await resume_background();
-				concurrency::critical_section readerWriterLock;
-				readerWriterLock.lock();
 				string emoji;
 				if (createReactionData.id != string()) {
 					emoji += ":" + createReactionData.name + ":" + createReactionData.id;
@@ -92,8 +90,6 @@ namespace CommanderNS {
 
 			IAsyncAction DeleteMessage(int timeDelay = 1000) {
 				co_await resume_background();
-				concurrency::critical_section readerWriterLock;
-				readerWriterLock.lock();
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, Message::pMessageDeleteRateLimit, Data.channelId, Data.id).get();
 				co_return;
 			};
@@ -120,8 +116,6 @@ namespace CommanderNS {
 			task<ClientClasses::Message> CreateMessage(ClientDataTypes::CreateMessageData createMessageData) {
 				return concurrency::create_task([this, createMessageData] {
 					cout << "THREAD ID 02: " << this_thread::get_id() << endl;
-					concurrency::critical_section readerWriterLock;
-					readerWriterLock.lock();
 					try {
 						string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 						ClientDataTypes::MessageData messageData;
@@ -166,8 +160,6 @@ namespace CommanderNS {
 
 			concurrency::task<GuildMember> Fetch(string guildMemberId) {
 				return concurrency::create_task([this, guildMemberId] {
-					concurrency::critical_section readerWriterLock;
-					readerWriterLock.lock();
 					ClientDataTypes::GuildMemberData guildMemberData;
 					try {
 						guildMemberData = this->at(guildMemberId).Data;
@@ -186,8 +178,6 @@ namespace CommanderNS {
 
 			concurrency::task<GuildMember> GetGuildMember(string guildMemberId) {
 				return concurrency::create_task([this, guildMemberId] {
-					concurrency::critical_section readerWriterLock;
-					readerWriterLock.lock();
 					try {
 						return this->at(guildMemberId);
 					}
@@ -213,10 +203,10 @@ namespace CommanderNS {
 			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
-				this->messageManager = MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI);
+				this->messageManager = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI);
 			};
 			ClientDataTypes::ChannelData Data;
-			MessageManager messageManager;
+			MessageManager* messageManager;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
 		};
@@ -232,8 +222,6 @@ namespace CommanderNS {
 
 			concurrency::task<Channel> Fetch(string channelId) {
 				return concurrency::create_task([this, channelId] {
-					concurrency::critical_section readerWriterLock;
-					readerWriterLock.lock();
 					ClientDataTypes::ChannelData channelData;
 					try {
 						channelData = this->at(channelId).Data;
@@ -252,8 +240,6 @@ namespace CommanderNS {
 
 			concurrency::task<Channel> GetChannel(string channelId) {
 				return concurrency::create_task([this, channelId] {
-					concurrency::critical_section readerWriterLock;
-					readerWriterLock.lock();
 					try {
 						return this->at(channelId);
 					}
@@ -303,8 +289,6 @@ namespace CommanderNS {
 
 			concurrency::task<Guild> Fetch(string guildId) {
 				return concurrency::create_task([this, guildId] {
-					concurrency::critical_section readerWriterLock;
-					readerWriterLock.lock();
 
 					ClientDataTypes::GuildData guildData;
 					try {
@@ -324,8 +308,6 @@ namespace CommanderNS {
 
 			concurrency::task<Guild> GetGuild(string guildId) {
 				return concurrency::create_task([this, guildId] {
-					concurrency::critical_section readerWriterLock;
-					readerWriterLock.lock();
 					try {
 						return this->at(guildId);
 					}
@@ -365,8 +347,6 @@ namespace CommanderNS {
 
 			concurrency::task<User> Fetch(string userId) {
 				return concurrency::create_task([this, userId] {
-					concurrency::critical_section readerWriterLock;
-					readerWriterLock.lock();
 					ClientDataTypes::UserData userData;
 					try {
 						userData = this->at(userId).Data;
@@ -385,8 +365,6 @@ namespace CommanderNS {
 
 			concurrency::task<User> GetUser(string userId) {
 				return concurrency::create_task([this, userId] {
-					concurrency::critical_section readerWriterLock;
-					readerWriterLock.lock();
 					try {
 						return this->at(userId);
 					}
@@ -425,12 +403,12 @@ namespace CommanderNS {
 			friend struct WebSocket;
 		};
 
-		shared_ptr<FoundationClasses::RateLimitation> GuildManager::guildGetRateLimit;
-		shared_ptr<FoundationClasses::RateLimitation> MessageManager::messageDeleteRateLimit;
-		shared_ptr<FoundationClasses::RateLimitation> MessageManager::messageGetRateLimit;
-		shared_ptr<FoundationClasses::RateLimitation> ReactionManager::reactionAddRateLimit;
 		shared_ptr<FoundationClasses::RateLimitation> GuildMemberManager::guildMemberGetRateLimit;
+		shared_ptr<FoundationClasses::RateLimitation> MessageManager::messageDeleteRateLimit;
+		shared_ptr<FoundationClasses::RateLimitation> ReactionManager::reactionAddRateLimit;
+		shared_ptr<FoundationClasses::RateLimitation> MessageManager::messageGetRateLimit;
 		shared_ptr<FoundationClasses::RateLimitation> ChannelManager::channelGetRateLimit;
+		shared_ptr<FoundationClasses::RateLimitation> GuildManager::guildGetRateLimit;
 		shared_ptr<FoundationClasses::RateLimitation> UserManager::userGetRateLimit;
 
 	};
