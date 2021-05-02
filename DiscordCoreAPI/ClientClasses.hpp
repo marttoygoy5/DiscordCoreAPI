@@ -115,7 +115,6 @@ namespace CommanderNS {
 
 			task<ClientClasses::Message> CreateMessage(ClientDataTypes::CreateMessageData createMessageData) {
 				return concurrency::create_task([this, createMessageData] {
-					cout << "THREAD ID 02: " << this_thread::get_id() << endl;
 					try {
 						string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 						ClientDataTypes::MessageData messageData;

@@ -27,6 +27,7 @@ namespace CommanderNS {
 						exception error(theValue.c_str());
 						throw error;
 					}
+					co_return;
 				}
 				else {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -67,6 +68,7 @@ namespace CommanderNS {
 						exception error(theValue.c_str());
 						throw error;
 					}
+					co_return;
 				}
 				else {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -96,6 +98,7 @@ namespace CommanderNS {
 		}
 
 		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
+			apartment_context mainThread;
 			co_await resume_background();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
@@ -106,7 +109,7 @@ namespace CommanderNS {
 						exception error(theValue.c_str());
 						throw error;
 					}
-					co_return;
+					co_await mainThread;
 				}
 				else {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -225,7 +228,6 @@ namespace CommanderNS {
 
 		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
 			co_await resume_background();
-			cout << "THREAD ID 02: " << this_thread::get_id() << endl;
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
@@ -266,7 +268,6 @@ namespace CommanderNS {
 
 		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji) {
 			co_await resume_background();
-			cout << "THREAD ID 02: " << this_thread::get_id() << endl;
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
 			httpPUTData putData;
 			checkRateLimitAndPutDataAsync(pRestAPI, pReactionPostRateLimit, relativePath, &putData, emoji).get();
