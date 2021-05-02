@@ -37,20 +37,18 @@ namespace CommanderNS {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 
-					if (pRateLimitData->msRemain > 0 && pRateLimitData->getsRemaining == 0) {
-						while (timeRemaining > 0) {
-							currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-							timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
-						}
-						*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath);
-						if (pGetDataStruct->getsRemaining >= 0) {
-							pRateLimitData->getsRemaining = pGetDataStruct->getsRemaining;
-						}
-						if (pGetDataStruct->msRemain >= 0) {
-							pRateLimitData->msRemain = pGetDataStruct->msRemain;
-						}
-						pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					while (timeRemaining > 0) {
+						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
+					*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath);
+					if (pGetDataStruct->getsRemaining >= 0) {
+						pRateLimitData->getsRemaining = pGetDataStruct->getsRemaining;
+					}
+					if (pGetDataStruct->msRemain >= 0) {
+						pRateLimitData->msRemain = pGetDataStruct->msRemain;
+					}
+					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					co_return;
 				}
 			}
@@ -82,21 +80,18 @@ namespace CommanderNS {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 
-					if (pRateLimitData->msRemain > 0 && pRateLimitData->getsRemaining == 0) {
-						while (timeRemaining > 0) {
-							currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-							timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
-						}
-						*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
-						if (pPostDataStruct->postsRemaining >= 0) {
-							pRateLimitData->getsRemaining = pPostDataStruct->postsRemaining;
-						}
-						if (pPostDataStruct->msRemain >= 0) {
-							pRateLimitData->msRemain = pPostDataStruct->msRemain;
-						}
-						pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-
+					while (timeRemaining > 0) {
+						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
+					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
+					if (pPostDataStruct->postsRemaining >= 0) {
+						pRateLimitData->getsRemaining = pPostDataStruct->postsRemaining;
+					}
+					if (pPostDataStruct->msRemain >= 0) {
+						pRateLimitData->msRemain = pPostDataStruct->msRemain;
+					}
+					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					co_return;
 				}
 			}
@@ -133,20 +128,18 @@ namespace CommanderNS {
 					cout << "GETS REMAINING 01: " << pRateLimitData->getsRemaining << endl;
 					cout << "MS REMAINING 01: " << pRateLimitData->msRemain << endl;
 					cout << "TIME REMAINING 01: " << timeRemaining << endl;
-					if (pRateLimitData->msRemain > 0 && pRateLimitData->getsRemaining == 0) {
-						while (timeRemaining > 0) {
-							currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-							timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
-						}
-						*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
-						if (pPutDataStruct->putsRemaining >= 0) {
-							pRateLimitData->getsRemaining = pPutDataStruct->putsRemaining;
-						}
-						if (pPutDataStruct->msRemain >= 0) {
-							pRateLimitData->msRemain = pPutDataStruct->msRemain;
-						}
-						pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					while (timeRemaining > 0) {
+						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
+					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
+					if (pPutDataStruct->putsRemaining >= 0) {
+						pRateLimitData->getsRemaining = pPutDataStruct->putsRemaining;
+					}
+					if (pPutDataStruct->msRemain >= 0) {
+						pRateLimitData->msRemain = pPutDataStruct->msRemain;
+					}
+					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					co_return;
 				}
 			}
@@ -180,21 +173,19 @@ namespace CommanderNS {
 				else {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
-
-					if (pRateLimitData->msRemain > 0 && pRateLimitData->getsRemaining == 0) {
-						while (timeRemaining > 0) {
-							currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-							timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
-						}
-						*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath);
-						if (pDeleteDataStruct->deletesRemaining >= 0) {
-							pRateLimitData->getsRemaining = pDeleteDataStruct->deletesRemaining;
-						}
-						if (pDeleteDataStruct->msRemain >= 0) {
-							pRateLimitData->msRemain = pDeleteDataStruct->msRemain;
-						}
-						pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					
+					while (timeRemaining > 0) {
+						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
+					*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath);
+					if (pDeleteDataStruct->deletesRemaining >= 0) {
+						pRateLimitData->getsRemaining = pDeleteDataStruct->deletesRemaining;
+					}
+					if (pDeleteDataStruct->msRemain >= 0) {
+						pRateLimitData->msRemain = pDeleteDataStruct->msRemain;
+					}
+					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					co_return;
 				}
 			}
