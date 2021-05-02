@@ -7,31 +7,24 @@
 
 #include "pch.h"
 #include "JSONifier.hpp"
+#include "FoundationClasses.hpp"
 
 namespace CommanderNS {
 
 	struct httpGETData {
 		json data;
-		int getsRemaining = 1;
-		int msRemain = 0;
 	};
 
 	struct httpPOSTData {
 		json data;
-		int postsRemaining = 1;
-		int msRemain = 0;
 	};
 
 	struct httpPUTData {
 		json data;
-		int putsRemaining = 1;
-		int msRemain = 0;
 	};
 
 	struct httpDELETEData {
 		json data;
-		int deletesRemaining = 1;
-		int msRemain = 0;
 	};
 
 	struct RestAPI: implements<RestAPI, IInspectable> {
@@ -64,7 +57,7 @@ namespace CommanderNS {
 			}
 		}
 
-		httpGETData httpGETObjectData(std::string relativeURL) {
+		httpGETData httpGETObjectData(std::string relativeURL, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpGETData getData;
@@ -73,17 +66,19 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.GetAsync(requestUri).get();
 
+					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						getData.getsRemaining = std::stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+						pRateLimitData->getsRemaining = std::stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
-						getData.getsRemaining = 0;
+						pRateLimitData->getsRemaining = 0;
 					}
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						getData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+						pRateLimitData->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
-						getData.msRemain = 250;
+						pRateLimitData->msRemain = 250;
 					}
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -100,7 +95,7 @@ namespace CommanderNS {
 			}
 		}
 
-		httpPOSTData httpPOSTObjectData(string relativeURL, string content) {
+		httpPOSTData httpPOSTObjectData(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpPOSTData postData;
@@ -117,17 +112,19 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PostAsync(requestUri, content).get();
 
+					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						postData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+						pRateLimitData->getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
-						postData.postsRemaining = 0;
+						pRateLimitData->getsRemaining = 0;
 					}
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						postData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+						pRateLimitData->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
-						postData.msRemain = 250;
+						pRateLimitData->msRemain = 250;
 					}
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -144,10 +141,9 @@ namespace CommanderNS {
 			}
 		}
 
-		httpPUTData httpPUTObjectData(string relativeURL, string content) {
+		httpPUTData httpPUTObjectData(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
 				if (this != nullptr) {
-					cout << "HTTP OUT CALLED WITH RELATIVE URL: " << relativeURL << endl;
 					httpPUTData putData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
@@ -162,17 +158,19 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PutAsync(requestUri, content).get();
 
+					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						putData.putsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+						pRateLimitData->getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
-						putData.putsRemaining = 0;
+						pRateLimitData->getsRemaining = 0;
 					}
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						putData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+						pRateLimitData->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
-						putData.msRemain = 250;
+						pRateLimitData->msRemain = 250;
 					}
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -189,7 +187,7 @@ namespace CommanderNS {
 			}
 		}
 
-		httpDELETEData httpDELETEObjectData(string relativeURL) {
+		httpDELETEData httpDELETEObjectData(string relativeURL, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpDELETEData deleteData;
@@ -203,17 +201,19 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.DeleteAsync(requestUri).get();
 
+					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						deleteData.deletesRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+						pRateLimitData->getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
-						deleteData.deletesRemaining = 0;
+						pRateLimitData->getsRemaining = 0;
 					}
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						deleteData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+						pRateLimitData->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
-						deleteData.msRemain = 250;
+						pRateLimitData->msRemain = 250;
 					}
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));

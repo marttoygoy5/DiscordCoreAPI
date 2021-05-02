@@ -20,15 +20,10 @@ namespace CommanderNS {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath);
-					if (pGetDataStruct->getsRemaining >= 0) {
-						pRateLimitData->getsRemaining = pGetDataStruct->getsRemaining;
-					}
-					if (pGetDataStruct->msRemain >= 0) {
-						pRateLimitData->msRemain = pGetDataStruct->msRemain;
-					}
-						string theValue = pGetDataStruct->data.at("message");
+					*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath, pRateLimitData);
+
 					if (pGetDataStruct->data.contains("message") && !pGetDataStruct->data.at("message").is_null()) {
+						string theValue = pGetDataStruct->data.at("message");
 						exception error(theValue.c_str());
 						throw error;
 					}
@@ -42,13 +37,7 @@ namespace CommanderNS {
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath);
-					if (pGetDataStruct->getsRemaining >= 0) {
-						pRateLimitData->getsRemaining = pGetDataStruct->getsRemaining;
-					}
-					if (pGetDataStruct->msRemain >= 0) {
-						pRateLimitData->msRemain = pGetDataStruct->msRemain;
-					}
+					*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath, pRateLimitData);
 					if (pGetDataStruct->data.contains("message") && !pGetDataStruct->data.at("message").is_null()) {
 						string theValue = pGetDataStruct->data.at("message");
 						exception error(theValue.c_str());
@@ -71,13 +60,7 @@ namespace CommanderNS {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
-					if (pPostDataStruct->postsRemaining >= 0) {
-						pRateLimitData->getsRemaining = pPostDataStruct->postsRemaining;
-					}
-					if (pPostDataStruct->msRemain >= 0) {
-						pRateLimitData->msRemain = pPostDataStruct->msRemain;
-					}
+					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content, pRateLimitData);
 					
 					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
 						string theValue = pPostDataStruct->data.at("message");
@@ -94,13 +77,7 @@ namespace CommanderNS {
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
-					if (pPostDataStruct->postsRemaining >= 0) {
-						pRateLimitData->getsRemaining = pPostDataStruct->postsRemaining;
-					}
-					if (pPostDataStruct->msRemain >= 0) {
-						pRateLimitData->msRemain = pPostDataStruct->msRemain;
-					}
+					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content, pRateLimitData);
 					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
 						string theValue = pPostDataStruct->data.at("message");
 						exception error(theValue.c_str());
@@ -122,46 +99,25 @@ namespace CommanderNS {
 			co_await resume_background();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
-					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
-					cout << "SUCCCESFUL PUT 00: " << endl;
-					if (pPutDataStruct->putsRemaining >= 0) {
-						pRateLimitData->getsRemaining = pPutDataStruct->putsRemaining;
-					}
-					cout << "GETS REMAINING 00: " << pRateLimitData->getsRemaining << endl;
-					if (pPutDataStruct->msRemain >= 0) {
-						pRateLimitData->msRemain = pPutDataStruct->msRemain;
-					}
-					cout << "MS REMAINING 00: " << pRateLimitData->msRemain << endl;
+					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content, pRateLimitData);
+
 					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						string theValue = pPutDataStruct->data.at("message");
 						exception error(theValue.c_str());
 						throw error;
 					}
+					co_return;
 				}
 				else {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 
-					cout << "GETS REMAINING 01: " << pRateLimitData->getsRemaining << endl;
-					cout << "MS REMAINING 01: " << pRateLimitData->msRemain << endl;
-					cout << "TIME REMAINING 01: " << timeRemaining << endl;
 					while (timeRemaining > 0) {
 						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
-					cout << "SUCCCESFUL PUT 01: " << endl;
-					if (pPutDataStruct->putsRemaining >= 0) {
-						pRateLimitData->getsRemaining = pPutDataStruct->putsRemaining;
-					}
-						pRateLimitData->msRemain = pPutDataStruct->msRemain;
-					if (pPutDataStruct->msRemain >= 0) {
-					}
-					cout << "GETS REMAINING 02: " << pRateLimitData->getsRemaining << endl;
-					cout << "MS REMAINING 02: " << pRateLimitData->msRemain << endl;
-					cout << "TIME REMAINING 02: " << timeRemaining << endl;
+					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content, pRateLimitData);
 					
 					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						string theValue = pPutDataStruct->data.at("message");
@@ -185,13 +141,7 @@ namespace CommanderNS {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath);
-					if (pDeleteDataStruct->deletesRemaining >= 0) {
-						pRateLimitData->getsRemaining = pDeleteDataStruct->deletesRemaining;
-					}
-					if (pDeleteDataStruct->msRemain >= 0) {
-						pRateLimitData->msRemain = pDeleteDataStruct->msRemain;
-					}
+					*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath, pRateLimitData);
 					if (pDeleteDataStruct->data.contains("message") && !pDeleteDataStruct->data.at("message").is_null()) {
 						string theValue = pDeleteDataStruct->data.at("message");
 						exception error(theValue.c_str());
@@ -207,13 +157,7 @@ namespace CommanderNS {
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath);
-					if (pDeleteDataStruct->deletesRemaining >= 0) {
-						pRateLimitData->getsRemaining = pDeleteDataStruct->deletesRemaining;
-					}
-					if (pDeleteDataStruct->msRemain >= 0) {
-						pRateLimitData->msRemain = pDeleteDataStruct->msRemain;
-					}
+					*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath, pRateLimitData);
 					if (pDeleteDataStruct->data.contains("message") && !pDeleteDataStruct->data.at("message").is_null()) {
 						string theValue = pDeleteDataStruct->data.at("message");
 						exception error(theValue.c_str());
