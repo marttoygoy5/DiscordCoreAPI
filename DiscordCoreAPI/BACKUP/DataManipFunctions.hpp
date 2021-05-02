@@ -17,15 +17,13 @@ namespace CommanderNS {
 
 		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
 			co_await resume_background();
-			concurrency::critical_section readerWriterLock;
-			readerWriterLock.lock();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath);
 					if (pGetDataStruct->getsRemaining >= 0) {
 						pRateLimitData->getsRemaining = pGetDataStruct->getsRemaining;
-					}
 					if (pGetDataStruct->msRemain >= 0) {
+					}
 						pRateLimitData->msRemain = pGetDataStruct->msRemain;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -46,8 +44,7 @@ namespace CommanderNS {
 							currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 						}
-						pRateLimitData->getsRemaining += 1;
-
+						*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath);
 					}
 					co_return;
 				}
@@ -61,8 +58,6 @@ namespace CommanderNS {
 		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
 			co_await resume_background();
 			cout << "THREAD ID 03: " << this_thread::get_id() << endl;
-			concurrency::critical_section readerWriterLock;
-			readerWriterLock.lock();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
@@ -90,8 +85,7 @@ namespace CommanderNS {
 							currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 						}
-						pRateLimitData->getsRemaining += 1;
-
+						*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
 					}
 					co_return;
 				}
@@ -102,10 +96,9 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
+		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> cpRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
 			co_await resume_background();
-			concurrency::critical_section readerWriterLock;
-			readerWriterLock.lock();
+			com_ptr<RestAPI> pRestAPI = cpRestAPI;
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
@@ -133,8 +126,7 @@ namespace CommanderNS {
 							currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 						}
-						pRateLimitData->getsRemaining += 1;
-
+						*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
 					}
 					co_return;
 				}
@@ -150,8 +142,6 @@ namespace CommanderNS {
 
 		IAsyncAction checkRateLimitAndDeleteDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpDELETEData* pDeleteDataStruct) {
 			co_await resume_background();
-			concurrency::critical_section readerWriterLock;
-			readerWriterLock.lock();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath);
@@ -179,8 +169,7 @@ namespace CommanderNS {
 							currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 						}
-						pRateLimitData->getsRemaining += 1;
-
+						*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath);
 					}
 					co_return;
 				}
@@ -254,7 +243,7 @@ namespace CommanderNS {
 			*pDataStructure = messageData;
 			co_return;
 		}
-		/*
+/*
 		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji) {
 			co_await resume_background();
 

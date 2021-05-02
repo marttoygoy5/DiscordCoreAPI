@@ -233,7 +233,6 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 		friend struct WebSocket;
-
 		hstring botToken;
 		hstring baseURL;
 		hstring initialConnectionPath;

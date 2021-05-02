@@ -8,6 +8,8 @@
 
 task<void> createdMessageEvent(CommanderNS::EventDataTypes::MessageCreationData messageData) {
     co_await resume_background();
+    concurrency::critical_section criticalSection;
+    criticalSection.lock();
     if (messageData.message.Data.content.c_str()[0] == '!') {
         CommanderNS::ClientDataTypes::CreateMessageData createMessageData;
         createMessageData.content = "TESTING TESTING!";
@@ -24,7 +26,7 @@ task<void> createdMessageEvent(CommanderNS::EventDataTypes::MessageCreationData 
         createMessageData.embed.color[0] = 0;
         createMessageData.embed.color[1] = 255;
         createMessageData.embed.color[2] = 255;
-        CommanderNS::ClientClasses::MessageManager* messageManager = (CommanderNS::ClientClasses::MessageManager*)(messageData.message.messageManager);
+        shared_ptr<CommanderNS::ClientClasses::MessageManager> messageManager = messageData.message.pMessageManager;
         CommanderNS::ClientClasses::Message message = messageManager->CreateMessage(createMessageData).get();
         messageData.message.DeleteMessage().get();
         message.Reactions.AddReaction({ "ZeedenAndDoom" ,"805151947131715654" }).get();
@@ -33,7 +35,6 @@ task<void> createdMessageEvent(CommanderNS::EventDataTypes::MessageCreationData 
         co_return;
     }
 };
-
 /*
 void createdMessageEvent(CommanderNS::EventDataTypes::MessageCreationData messageData) {
     cout << "THREAD ID 01: " << this_thread::get_id() << endl;
@@ -74,8 +75,8 @@ int main() {
     // Do other work here.    
 
 
-    pdiscordCoreAPI->eventMachine->onMessageCreation(createdMessageEvent);
-    pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMember) {std::cout << guildMember.guildMember.Data.user.username << std::endl; });
+    //pdiscordCoreAPI->eventMachine->onMessageCreation(createdMessageEvent);
+    //pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMember) {std::cout << guildMember.guildMember.Data.user.username << std::endl; });
     pdiscordCoreAPI->login();
     return 1;
 }
