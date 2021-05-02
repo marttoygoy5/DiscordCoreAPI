@@ -18,6 +18,23 @@
 #define CURL_STATICLIB
 #endif
 
+#include <ppl.h>
+#include <pplcancellation_token.h>
+#include <internal_split_ordered_list.h>
+#include <internal_concurrent_hash.h>
+#include <pplinterface.h>
+
+#include <concurrent_vector.h>
+#include <concurrent_unordered_set.h>
+#include <concurrent_unordered_map.h>
+#include <concurrent_queue.h>
+#include <concurrent_priority_queue.h>
+#include <concrtrm.h>
+#include <concrt.h>
+#include <agents.h>
+#include <ppltasks.h>
+
+
 #include <winrt/base.h>
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/Windows.Foundation.Collections.h>

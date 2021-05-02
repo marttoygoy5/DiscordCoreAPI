@@ -43,7 +43,6 @@ namespace CommanderNS {
 		}
 
 	protected:
-
 		hstring baseURL = L"https://discord.com/api/v9";
 		hstring botToken;
 		com_ptr<WebSocket> pWebSocket;

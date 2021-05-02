@@ -15,8 +15,10 @@ namespace CommanderNS {
 
 	namespace DataManipFunctions {
 
-		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
+		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
 			co_await resume_background();
+			concurrency::critical_section readerWriterLock;
+			readerWriterLock.lock();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath);
@@ -49,8 +51,11 @@ namespace CommanderNS {
 			}
 		}
 		
-		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
+		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
 			co_await resume_background();
+			cout << "THREAD ID 03: " << this_thread::get_id() << endl;
+			concurrency::critical_section readerWriterLock;
+			readerWriterLock.lock();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content);
@@ -83,8 +88,10 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
+		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
 			co_await resume_background();
+			concurrency::critical_section readerWriterLock;
+			readerWriterLock.lock();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
@@ -120,8 +127,10 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndDeleteDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpDELETEData* pDeleteDataStruct) {
+		IAsyncAction checkRateLimitAndDeleteDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpDELETEData* pDeleteDataStruct) {
 			co_await resume_background();
+			concurrency::critical_section readerWriterLock;
+			readerWriterLock.lock();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath);
@@ -134,7 +143,6 @@ namespace CommanderNS {
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (pDeleteDataStruct->data.contains("message") && !pDeleteDataStruct->data.at("message").is_null()) {
 						string theValue = pDeleteDataStruct->data.at("message");
-						cout << "TESTING TESTING: " << pDeleteDataStruct->data.at("message") << endl;
 						exception error(theValue.c_str());
 						throw error;
 					}
@@ -158,7 +166,7 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pUserGetRateLimit, string id, ClientDataTypes::UserData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pUserGetRateLimit, string id, ClientDataTypes::UserData* pDataStructure) {
 			co_await resume_background();
 			ClientDataTypes::UserData userData = *pDataStructure;
 			string relativePath = "/users/" + id;
@@ -170,7 +178,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pGuildGetRateLimit, string id, ClientDataTypes::GuildData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pGuildGetRateLimit, string id, ClientDataTypes::GuildData* pDataStructure) {
 			co_await resume_background();
 			ClientDataTypes::GuildData guildData = *pDataStructure;
 			string relativePath = "/guilds/" + id;
@@ -182,7 +190,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pGuildGetRateLimit, string id, ClientDataTypes::ChannelData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pGuildGetRateLimit, string id, ClientDataTypes::ChannelData* pDataStructure) {
 			co_await resume_background();
 			ClientDataTypes::ChannelData channelData = *pDataStructure;
 			string relativePath = "/channels/" + id;
@@ -194,7 +202,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pGuildMemberGetRateLimit, string guildId, string id, ClientDataTypes::GuildMemberData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pGuildMemberGetRateLimit, string guildId, string id, ClientDataTypes::GuildMemberData* pDataStructure) {
 			co_await resume_background();
 			ClientDataTypes::GuildMemberData guildMemberData = *pDataStructure;
 			string relativePath = "/guilds/" + guildId + "/members/" + id;
@@ -206,8 +214,9 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
+		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
 			co_await resume_background();
+			cout << "THREAD ID 02: " << this_thread::get_id() << endl;
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
@@ -218,7 +227,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionPostRateLimit, string channelId, string messageId, string emoji) {
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji) {
 			co_await resume_background();
 
 			pReactionPostRateLimit->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -234,18 +243,18 @@ namespace CommanderNS {
 				pReactionPostRateLimit->getsRemaining += 1;
 
 			}
-			FoundationClasses::RateLimitation dummbRate;
+			shared_ptr<FoundationClasses::RateLimitation> dummbRate = make_shared<FoundationClasses::RateLimitation>();
 
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
 			httpPUTData putData;
-			checkRateLimitAndPutDataAsync(pRestAPI, &dummbRate, relativePath, &putData, emoji).get();
+			checkRateLimitAndPutDataAsync(pRestAPI, dummbRate, relativePath, &putData, emoji).get();
 			pReactionPostRateLimit->getsRemaining -= 1;
 			pReactionPostRateLimit->msRemain = 250;
 			json jsonValue = putData.data;
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessageDeleteRateLimit, string channelId, string messageId) {
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit, string channelId, string messageId) {
 			co_await resume_background();
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
 			httpDELETEData deleteData;
@@ -253,7 +262,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRoleGetRateLimit, string id, vector<ClientDataTypes::RoleData>* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRoleGetRateLimit, string id, vector<ClientDataTypes::RoleData>* pDataStructure) {
 			co_await resume_background();
 			ClientDataTypes::GuildData guildData;
 			string relativePath;

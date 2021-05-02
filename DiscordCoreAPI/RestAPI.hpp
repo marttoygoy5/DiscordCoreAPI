@@ -55,7 +55,6 @@ namespace CommanderNS {
 				hstring httpResponseBody = httpResponse.Content().ReadAsStringAsync().get().c_str();
 				std::wstringstream stream;
 				stream << JSONifier::parseSocketPath(httpResponseBody.c_str()).c_str();
-				cout << JSONifier::parseSocketPath(httpResponseBody.c_str()).c_str() << endl;
 				stream << L"/?v=8&encoding=json";
 				*socketPath = stream.str();
 			}
@@ -97,7 +96,7 @@ namespace CommanderNS {
 				}
 			}
 			catch (winrt::hresult_error error) {
-				std::cout << "Error: " << error.message().c_str() << std::endl;
+				cout << "Error: " << error.message().c_str() << std::endl;
 			}
 		}
 
@@ -115,7 +114,6 @@ namespace CommanderNS {
 					HttpStringContent content(to_hstring(content), UnicodeEncoding::Utf8);
 					content.Headers().ContentDisposition(headerValue);
 					content.Headers().ContentType(typeHeaderValue);
-					wcout << content.ToString().c_str() << endl;
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PostAsync(requestUri, content).get();
 
@@ -142,7 +140,7 @@ namespace CommanderNS {
 				}
 			}
 			catch (winrt::hresult_error error) {
-				std::cout << "Error: " << error.message().c_str() << std::endl;
+				cout << "Error: " << error.message().c_str() << std::endl;
 			}
 		}
 
@@ -186,7 +184,7 @@ namespace CommanderNS {
 				}
 			}
 			catch (winrt::hresult_error error) {
-				std::cout << "Error: " << error.message().c_str() << std::endl;
+				cout << "Error: " << error.message().c_str() << std::endl;
 			}
 		}
 
@@ -227,7 +225,7 @@ namespace CommanderNS {
 				}
 			}
 			catch (winrt::hresult_error error) {
-				std::cout << "Error: " << error.message().c_str() << std::endl;
+				cout << "Error: " << error.message().c_str() << std::endl;
 			}
 		}
 

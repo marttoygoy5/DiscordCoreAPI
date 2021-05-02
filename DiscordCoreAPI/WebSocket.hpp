@@ -208,10 +208,10 @@ namespace CommanderNS {
 					ClientDataTypes::MessageData messageData;
 					DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 					ClientClasses::MessageManager* pMessageManager = new ClientClasses::MessageManager(messageData.channelId, messageData.guildId, this->pRestAPI);
-					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &pMessageManager->messageDeleteRateLimit, pMessageManager);
+					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
 					this->pEventMachine->onMessageCreationEvent(messageCreationData);
-
 				}
+
 				if (payload.at("t") == "GUILD_CREATE") {
 					this->onGuildCreate(payload.at("d"));
 					return;
@@ -219,7 +219,7 @@ namespace CommanderNS {
 
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					ClientDataTypes::GuildMemberData guildMemberData;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("id"), &guildMemberData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, ClientClasses::GuildMemberManager::guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("id"), &guildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
