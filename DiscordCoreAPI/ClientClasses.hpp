@@ -51,7 +51,7 @@ namespace CommanderNS {
 			};
 
 		protected:
-			FoundationClasses::RateLimitation reactionAddRateLimit;
+			FoundationClasses::RateLimitation reactionAddRateLimit{ 250,1, 0 };
 			com_ptr<RestAPI> pRestAPI;
 			string channelId;
 			string messageId;

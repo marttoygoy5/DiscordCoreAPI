@@ -159,14 +159,12 @@ namespace CommanderNS {
 
 					if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 						putData.postsRemaining = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
-						cout << putData.postsRemaining << endl;
 					}
 					else {
 						putData.postsRemaining = 1;
 					}
 					if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
 						putData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
-						cout << putData.msRemain << endl;
 					}
 					else {
 						putData.msRemain = 0;

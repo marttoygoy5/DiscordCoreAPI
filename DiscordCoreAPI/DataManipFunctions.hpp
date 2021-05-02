@@ -86,37 +86,7 @@ namespace CommanderNS {
 		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, std::string relativePath, httpPUTData* pPutDataStruct, string content) {
 			co_await resume_background();
 			try {
-				if (pRateLimitData->getsRemaining > 0 && pRateLimitData->msRemain == 0) {
-					cout << pRateLimitData->getsRemaining << "GETS REMAINING! 00000" << endl;
-					cout << pRateLimitData->msRemain << "MS REMAINING! 00000" << endl;
-					cout << "PUTING IT HERE PUTTING IT HERE!" << endl;
-					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
-					if (pPutDataStruct->postsRemaining >= 0) {
-						pRateLimitData->getsRemaining = pPutDataStruct->postsRemaining;
-					}
-					if (pPutDataStruct->msRemain >= 0) {
-						pRateLimitData->msRemain = pPutDataStruct->msRemain;
-					}
-					if (pPutDataStruct->data.contains("message")&& !pPutDataStruct->data.at("message").is_null() && to_string(pPutDataStruct->data.at("message")) != string()){
-					pRateLimitData->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-						std::string theValue = pPutDataStruct->data.at("message");
-						cout << pPutDataStruct->data.at("message") << endl;
-						std::exception error(theValue.c_str());
-						throw error;
-					}
-				}
-				else if (pRateLimitData->msRemain < 1000) {
-					cout << pRateLimitData->getsRemaining << "GETS REMAINING! 11111" << endl;
-					cout << pRateLimitData->msRemain << "MS REMAINING! 11111" << endl;
-					int currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
-					cout << timeRemaining << endl;
-					while (timeRemaining > 0) {
-						currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
-						cout << timeRemaining << endl;
-					}
-					cout << timeRemaining << endl;
+				if (pRateLimitData->getsRemaining > 0) {
 					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content);
 					if (pPutDataStruct->postsRemaining >= 0) {
 						pRateLimitData->getsRemaining = pPutDataStruct->postsRemaining;
@@ -125,9 +95,8 @@ namespace CommanderNS {
 						pRateLimitData->msRemain = pPutDataStruct->msRemain;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null() && to_string(pPutDataStruct->data.at("message")) != string()) {
+					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						std::string theValue = pPutDataStruct->data.at("message");
-						cout << pPutDataStruct->data.at("message") << endl;
 						std::exception error(theValue.c_str());
 						throw error;
 					}
@@ -143,7 +112,7 @@ namespace CommanderNS {
 				}
 			}
 			catch (std::exception error) {
-				std::cout << "putObjectDataAsync() Issue: " << error.what() << std::endl;
+				std::cout << "postObjectDataAsync() Issue: " << error.what() << std::endl;
 				co_return;
 			}
 		}
@@ -208,11 +177,27 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessagePostRateLimit, string channelId, string messageId, string emoji) {
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionPostRateLimit, string channelId, string messageId, string emoji) {
 			co_await resume_background();
+
+			int currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+			float timeRemaining = (static_cast<float>(pReactionPostRateLimit->msRemain) - static_cast<float>(currentTime - pReactionPostRateLimit->currentMsTime)) / 1000;
+
+			if (pReactionPostRateLimit->msRemain > 0 && pReactionPostRateLimit->getsRemaining == 0) {
+				pReactionPostRateLimit->currentMsTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+				while (timeRemaining > 0) {
+					currentTime = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+					timeRemaining = (static_cast<float>(pReactionPostRateLimit->msRemain) - static_cast<float>(currentTime - pReactionPostRateLimit->currentMsTime)) / 1000;
+				}
+				pReactionPostRateLimit->getsRemaining += 1;
+			}
+			FoundationClasses::RateLimitation dummbRate;
+
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
 			httpPUTData putData;
-			checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &putData, emoji).get();
+			checkRateLimitAndPostDataAsync(pRestAPI, &dummbRate, relativePath, &putData, emoji).get();
+			pReactionPostRateLimit->getsRemaining -= 1;
+			pReactionPostRateLimit->msRemain = 250;
 			nlohmann::json jsonValue = putData.data;
 			co_return;
 		}
