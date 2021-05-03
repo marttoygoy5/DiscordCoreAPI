@@ -18,6 +18,7 @@
 #define CURL_STATICLIB
 #endif
 
+#include <synchapi.h>
 #include <ppl.h>
 #include <pplcancellation_token.h>
 #include <internal_split_ordered_list.h>

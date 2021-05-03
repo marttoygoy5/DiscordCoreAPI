@@ -17,8 +17,11 @@ namespace CommanderNS {
 
 	struct httpPOSTData {
 		json data;
+		int msRemain = 0;
+		int getsRemaining = 1;
+		int currentMsTime = 0;
 	};
-
+	
 	struct httpPUTData {
 		json data;
 	};
@@ -91,7 +94,7 @@ namespace CommanderNS {
 				}
 			}
 			catch (winrt::hresult_error error) {
-				cout << "Error: " << error.message().c_str() << std::endl;
+				wcout << L"Error: " << error.message().c_str() << std::endl;
 			}
 		}
 
@@ -137,9 +140,11 @@ namespace CommanderNS {
 				}
 			}
 			catch (winrt::hresult_error error) {
-				cout << "Error: " << error.message().c_str() << std::endl;
+				wcout << L"Error: " << error.message().c_str() << std::endl;
 			}
 		}
+
+		task<httpPOSTData> getHttpPOSTData (string relativeURL, string content)
 
 		httpPUTData httpPUTObjectData(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
@@ -183,7 +188,7 @@ namespace CommanderNS {
 				}
 			}
 			catch (winrt::hresult_error error) {
-				cout << "Error: " << error.message().c_str() << std::endl;
+				wcout << L"Error: " << error.message().c_str() << std::endl;
 			}
 		}
 
@@ -226,7 +231,7 @@ namespace CommanderNS {
 				}
 			}
 			catch (winrt::hresult_error error) {
-				cout << "Error: " << error.message().c_str() << std::endl;
+				wcout << L"Error: " << error.message().c_str() << std::endl;
 			}
 		}
 

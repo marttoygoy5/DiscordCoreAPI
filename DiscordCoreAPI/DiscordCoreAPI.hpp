@@ -66,11 +66,11 @@ namespace CommanderNS {
 				this->Client.Guilds.Fetch("782757641540730900").get();
 				vector<ClientDataTypes::RoleData> roleData;
 				FoundationClasses::RateLimitation rateLimit;
-				DataManipFunctions::getObjectDataAsync(this->pRestAPI, make_shared<FoundationClasses::RateLimitation>(), "782757641540730900", &roleData);
-				cout << roleData.size() << endl;
-				for (unsigned int x = 0; x < roleData.size(); x += 1) {
-					cout << roleData.at(x).color << endl;
-				}
+				//DataManipFunctions::getObjectDataAsync(this->pRestAPI, make_shared<FoundationClasses::RateLimitation>(), "782757641540730900", &roleData);
+				//cout << roleData.size() << endl;
+				//for (unsigned int x = 0; x < roleData.size(); x += 1) {
+//					cout << roleData.at(x).color << endl;
+	//			}
 				//cout << "Name: " << this->Client.Guilds.Fetch("782757641540730900").get().Members.Fetch("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
