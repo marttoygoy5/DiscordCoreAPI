@@ -12,7 +12,6 @@
 #include "ClientDataTypes.hpp"
 #include "DataManipFunctions.hpp"
 #include "JSONifier.hpp"
-#include "URLEncode.hpp"
 
 namespace CommanderNS {
 
