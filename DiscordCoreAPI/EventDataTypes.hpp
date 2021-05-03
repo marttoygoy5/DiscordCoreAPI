@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef _EVENT_DATA_TYPES_
+#define _EVENT_DATA_TYPES_
+
 #include "pch.h"
 #include "ClientDataTypes.hpp"
 #include "ClientClasses.hpp"
@@ -21,3 +24,4 @@ namespace CommanderNS {
 		};
 	}
 }
+#endif

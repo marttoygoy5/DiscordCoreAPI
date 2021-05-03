@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef _CLIENT_CLASSES_
+#define _CLIENT_CLASSES_
+
 #include "pch.h"
 #include "ClientDataTypes.hpp"
 #include "DataManipFunctions.hpp"
@@ -52,11 +55,6 @@ namespace CommanderNS {
 			ClientDataTypes::ReactionData reactionData;
 
 			task<void> AddReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
-				cout << "ID 01: " << this_thread::get_id() << endl;
-				//DispatcherQueueController queueController = this->pQueueController->CreateOnDedicatedThread();
-				//DispatcherQueue queue = queueController.DispatcherQueue();
-				//co_await resume_background();
-				cout << "ID 01: " << this_thread::get_id() << endl;
 				string emoji;
 				if (createReactionData.id != string()) {
 					emoji += ":" + createReactionData.name + ":" + createReactionData.id;
@@ -70,8 +68,7 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, ReactionManager::reactionAddRateLimit, this->channelId, this->messageId, emojiEncoded).get();
-				//co_await resume_foreground(queue);
+				DataManipFunctions::putObjectDataAsyncTest(this->pRestAPI, ReactionManager::reactionAddRateLimit, this->channelId, this->messageId, emojiEncoded).get();
 				co_return;
 			};
 
@@ -96,13 +93,7 @@ namespace CommanderNS {
 			}
 
 			IAsyncAction DeleteMessageAsync(int timeDelay = 1000) {
-				cout << "ID 02: " << this_thread::get_id() << endl;
-				//DispatcherQueueController queueController = this->pQueueController->CreateOnDedicatedThread();
-				//DispatcherQueue queue = queueController.DispatcherQueue();
-				//co_await resume_background();
-				cout << "ID 02: " << this_thread::get_id() << endl;
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, Message::pMessageDeleteRateLimit, Data.channelId, Data.id).get();
-				//co_await resume_foreground(queue);
 				co_return;
 			};
 
@@ -128,11 +119,6 @@ namespace CommanderNS {
 			};
 
 			task<ClientClasses::Message> CreateMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
-				//cout << "ID 00: " << this_thread::get_id() << endl;
-				//DispatcherQueueController queueController = this->pQueueController->CreateOnDedicatedThread();
-				//DispatcherQueue queue = queueController.DispatcherQueue();
-				//co_await resume_background();
-				cout << "ID 00: " << this_thread::get_id() << endl;
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
@@ -437,3 +423,4 @@ namespace CommanderNS {
 
 	};
 }
+#endif

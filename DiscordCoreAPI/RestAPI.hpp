@@ -5,14 +5,14 @@
 
 #pragma once
 
+#ifndef _REST_API_
+#define _REST_API_
+
 #include "pch.h"
 #include "JSONifier.hpp"
 #include "FoundationClasses.hpp"
 
 namespace CommanderNS {
-
-	using namespace concurrency;
-	using namespace Windows::Devices::Enumeration;
 
 	struct httpGETData {
 		json data;
@@ -20,13 +20,13 @@ namespace CommanderNS {
 
 	struct httpPOSTData {
 		json data;
-		int msRemain = 0;
-		int getsRemaining = 1;
-		int currentMsTime = 0;
 	};
-	
+
 	struct httpPUTData {
 		json data;
+		int msRemain = 0;
+		int currentMsTime = 0;
+		int getsRemaining = 1;
 	};
 
 	struct httpDELETEData {
@@ -36,51 +36,47 @@ namespace CommanderNS {
 	struct RestAPI : implements<RestAPI, IInspectable> {
 	public:
 
-		 static task<httpPOSTData> theTask(RestAPI* pRestAPI, string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitation) {
-			try {
-				if (pRestAPI != nullptr) {
-					httpPOSTData postData;
-					string connectionPath = to_string(pRestAPI->baseURL) + relativeURL;
-					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
-					HttpContentHeaderCollection contentHeaderCollection;
-					HttpContentDispositionHeaderValue headerValue(L"payload_json");
-					contentHeaderCollection.ContentDisposition(headerValue);
-					HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
-					contentHeaderCollection.ContentType(typeHeaderValue);
-					HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
-					contents.Headers().ContentDisposition(headerValue);
-					contents.Headers().ContentType(typeHeaderValue);
-					HttpResponseMessage httpResponse;
-					httpResponse = pRestAPI->httpClient.PostAsync(requestUri, contents).get();
-
-					postData.currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-
-					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						postData.getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
-					}
-					else {
-						postData.getsRemaining = 0;
-					}
-					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						postData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
-					}
-					else {
-						postData.msRemain = 250;
-					}
-					json jsonValue;
-					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-					postData.data = jsonValue;
-					co_return postData;
-				}
-				else
-				{
-					co_return httpPOSTData();
-				}
-			}
-			catch (winrt::hresult_error error) {
-				wcout << L"Error: " << error.message().c_str() << std::endl;
-			}
-
+		 static task<httpPUTData> theTask(RestAPI* pRestAPI, string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitation) {
+			 try {
+				 if (pRestAPI != nullptr) {
+					 httpPUTData putData;
+					 string connectionPath = to_string(pRestAPI->baseURL) + relativeURL;
+					 Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
+					 HttpContentHeaderCollection contentHeaderCollection;
+					 HttpContentDispositionHeaderValue headerValue(L"payload_json");
+					 contentHeaderCollection.ContentDisposition(headerValue);
+					 HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
+					 contentHeaderCollection.ContentType(typeHeaderValue);
+					 HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
+					 contents.Headers().ContentDisposition(headerValue);
+					 contents.Headers().ContentType(typeHeaderValue);
+					 HttpResponseMessage httpResponse;
+					 httpResponse = pRestAPI->httpClient.PutAsync(requestUri, contents).get();
+					 putData.currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					 if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
+						 putData.getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+					 }
+					 else {
+						 putData.getsRemaining = 0;
+					 }
+					 if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
+						 pRateLimitation->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+					 }
+					 else {
+						 putData.msRemain = 250;
+					 }
+					 json jsonValue;
+					 jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					 putData.data = jsonValue;
+					 co_return putData;
+				 }
+				 else {
+					 co_return httpPUTData();
+				 }
+			 }
+			 catch (winrt::hresult_error error) {
+				 wcout << L"Error: " << error.message().c_str() << std::endl;
+			 }
 		};
 
 		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
@@ -106,7 +102,6 @@ namespace CommanderNS {
 			}
 			catch (winrt::hresult_error ex) {
 				std::wcout << "Error: " << ex.message().c_str() << std::endl;
-
 			}
 		}
 
@@ -118,9 +113,7 @@ namespace CommanderNS {
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.GetAsync(requestUri).get();
-
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
 						pRateLimitData->getsRemaining = std::stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
@@ -138,8 +131,7 @@ namespace CommanderNS {
 					getData.data = jsonValue;
 					return getData;
 				}
-				else
-				{
+				else {
 					return httpGETData();
 				}
 			}
@@ -164,9 +156,7 @@ namespace CommanderNS {
 					contents.Headers().ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PostAsync(requestUri, contents).get();
-
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
 						pRateLimitData->getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
@@ -184,8 +174,7 @@ namespace CommanderNS {
 					postData.data = jsonValue;
 					return postData;
 				}
-				else
-				{
+				else {
 					return httpPOSTData();
 				}
 			}
@@ -210,9 +199,7 @@ namespace CommanderNS {
 					contents.Headers().ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PutAsync(requestUri, contents).get();
-
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
 						pRateLimitData->getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
@@ -230,8 +217,7 @@ namespace CommanderNS {
 					putData.data = jsonValue;
 					return putData;
 				}
-				else
-				{
+				else {
 					return httpPUTData();
 				}
 			}
@@ -253,9 +239,7 @@ namespace CommanderNS {
 					contentHeaderCollection.ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.DeleteAsync(requestUri).get();
-
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
 						pRateLimitData->getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
@@ -273,8 +257,7 @@ namespace CommanderNS {
 					deleteData.data = jsonValue;
 					return deleteData;
 				}
-				else
-				{
+				else {
 					return httpDELETEData();
 				}
 			}
@@ -296,3 +279,4 @@ namespace CommanderNS {
 		HttpClient httpClient;
 	};
 };
+#endif

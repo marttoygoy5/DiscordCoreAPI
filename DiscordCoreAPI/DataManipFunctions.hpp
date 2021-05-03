@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef _DATA_MANIP_FUNCTIONS_
+#define _DATA_MANIP_FUNCTIONS_
+
 #include "pch.h"
 #include "RestAPI.hpp"
 #include "FoundationClasses.hpp"
@@ -19,7 +22,6 @@ namespace CommanderNS {
 			//co_await resume_background();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
-					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath, pRateLimitData);
 
 					if (pGetDataStruct->data.contains("message") && !pGetDataStruct->data.at("message").is_null()) {
@@ -55,16 +57,18 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndPostDataAsyncTest(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
+		IAsyncAction checkRateLimitAndPutDataAsyncTest(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPUTData* pPostDataStruct, string content) {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
-					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					RestAPI::theTask(pRestAPI.get(), relativePath, content, pRateLimitData).then([pRateLimitData](httpPOSTData postData) ->void {
-						pRateLimitData->currentMsTime = postData.currentMsTime;
-						pRateLimitData->getsRemaining = postData.getsRemaining;
-						pRateLimitData->msRemain = postData.msRemain;
+					
+					cout << "THREAD ID 00: " << this_thread::get_id() << endl;
+					RestAPI::theTask(pRestAPI.get(), relativePath, content, pRateLimitData).then([pRateLimitData](httpPUTData putData) ->void {
+						pRateLimitData->currentMsTime = putData.currentMsTime;
+						pRateLimitData->getsRemaining = putData.getsRemaining;
+						pRateLimitData->msRemain = putData.msRemain;
+						cout << "THREAD ID 03: " << this_thread::get_id() << endl;
 						}, task_continuation_context::use_default());
-
+					cout << "THREAD ID 04: " << this_thread::get_id() << endl;
 					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
 						string theValue = pPostDataStruct->data.at("message");
 						exception error(theValue.c_str());
@@ -80,10 +84,10 @@ namespace CommanderNS {
 						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
-					RestAPI::theTask(pRestAPI.get(), relativePath, content, pRateLimitData).then([pRateLimitData](httpPOSTData postData) ->void {
-						pRateLimitData->currentMsTime = postData.currentMsTime;
-						pRateLimitData->getsRemaining = postData.getsRemaining;
-						pRateLimitData->msRemain = postData.msRemain;
+					RestAPI::theTask(pRestAPI.get(), relativePath, content, pRateLimitData).then([pRateLimitData](httpPUTData putData) ->void {
+						pRateLimitData->currentMsTime = putData.currentMsTime;
+						pRateLimitData->getsRemaining = putData.getsRemaining;
+						pRateLimitData->msRemain = putData.msRemain;
 						}, task_continuation_context::use_default());
 					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
 						string theValue = pPostDataStruct->data.at("message");
@@ -106,7 +110,6 @@ namespace CommanderNS {
 			//co_await resume_background();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
-					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content, pRateLimitData);
 
 					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
@@ -184,7 +187,6 @@ namespace CommanderNS {
 			//co_await resume_background();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
-					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					*pDeleteDataStruct = pRestAPI->httpDELETEObjectData(relativePath, pRateLimitData);
 					if (pDeleteDataStruct->data.contains("message") && !pDeleteDataStruct->data.at("message").is_null()) {
 						string theValue = pDeleteDataStruct->data.at("message");
@@ -316,6 +318,14 @@ namespace CommanderNS {
 			co_return;
 		}
 
+		IAsyncAction putObjectDataAsyncTest(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji) {
+			//co_await resume_background();
+			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
+			httpPUTData putData;
+			checkRateLimitAndPutDataAsyncTest(pRestAPI, pReactionPostRateLimit, relativePath, &putData, emoji).get();
+			co_return;
+		}
+
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit, string channelId, string messageId) {
 			//co_await resume_background();
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
@@ -325,3 +335,4 @@ namespace CommanderNS {
 		}
 	}
 };
+#endif

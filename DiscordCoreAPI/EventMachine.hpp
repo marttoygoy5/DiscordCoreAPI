@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef _EVENT_MACHINE_
+#define _EVENT_MACHINE_
+
 #include "pch.h"
 #include "ClientDataTypes.hpp"
 #include "EventDataTypes.hpp"
@@ -13,6 +16,12 @@ namespace CommanderNS {
 
 	struct EventMachine : implements<EventMachine, IInspectable> {
 	public:
+
+		IAsyncAction Initialize() {
+			co_await resume_background();
+			this->onMsgCreateQueueController = DispatcherQueueController::CreateOnDedicatedThread();
+			this->onMsgCreateQueue = this->onMsgCreateQueueController.DispatcherQueue();
+		}
 
 		winrt::event_token onGuildMemberAdd(winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData> const& handler) {
 			return onGuildMemberAddEvent.add(handler);
@@ -30,6 +39,9 @@ namespace CommanderNS {
 			onMessageCreationEvent.remove(token);
 		}
 
+		DispatcherQueueController onMsgCreateQueueController{ nullptr };
+		DispatcherQueue onMsgCreateQueue{ nullptr };
+
 	protected:
 		friend struct WebSocket;
 
@@ -37,5 +49,5 @@ namespace CommanderNS {
 
 		winrt::event < winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData>> onGuildMemberAddEvent;
 	};
-
 }
+#endif

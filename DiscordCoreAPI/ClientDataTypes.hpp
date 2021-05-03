@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef _CLIENT_DATA_TYPES_
+#define _CLIENT_DATA_TYPES_
+
 #include "pch.h"
 
 namespace CommanderNS {
@@ -528,3 +531,4 @@ namespace CommanderNS {
         };
 	}
 }
+#endif

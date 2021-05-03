@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef _FOUNDATION_CLASSES
+#define _FOUNDATION_CLASSES
+
 namespace CommanderNS {
 
 	namespace FoundationClasses {
@@ -16,3 +19,4 @@ namespace CommanderNS {
 		};
 	};
 };
+#endif

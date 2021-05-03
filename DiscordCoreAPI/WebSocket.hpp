@@ -5,15 +5,18 @@
 
 #pragma once
 
-#include "pch.h"
-#include "DataManipFunctions.hpp"
+#ifndef _WEB_SOCKET_
+#define _WEB_SOCKET_
+
 #include "DataParsingFunctions.hpp"
 #include "EventMachine.hpp"
+#include "pch.h"
+#include "DataManipFunctions.hpp"
 #include "ClientClasses.hpp"
 
 namespace CommanderNS {
 
-	struct WebSocket: implements<WebSocket, IInspectable> {
+	struct WebSocket : implements<WebSocket, IInspectable> {
 	public:
 
 		~WebSocket() {
@@ -44,7 +47,7 @@ namespace CommanderNS {
 
 		FoundationClasses::RateLimitation guildMemberGetRateLimit;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachine, com_ptr<RestAPI> pRestAPI, ClientClasses::Client* pClient) {
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachine, com_ptr<RestAPI> pRestAPI, ClientClasses::Client* pClient){
 			this->pClient = pClient;
 			this->pRestAPI = pRestAPI;
 			this->pEventMachine = pEventMachine;
@@ -274,3 +277,4 @@ namespace CommanderNS {
 		};
 	};
 };
+#endif

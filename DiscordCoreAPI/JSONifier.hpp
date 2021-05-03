@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef _JSONIFIER_
+#define _JSONIFIER_
+
 #include "pch.h"
 #include "ClientDataTypes.hpp"
 
@@ -111,3 +114,4 @@ namespace CommanderNS {
 		}
 	}
 }
+#endif

@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef _DATA_PARSING_FUNCTIONS_
+#define _DATA_PARSING_FUNCTIONS_
+
 #include "pch.h"
 #include "ClientDataTypes.hpp"
 
@@ -2226,3 +2229,4 @@ namespace CommanderNS {
         }
 	}
 };
+#endif

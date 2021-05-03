@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef _DISCORD_CORE_API_
+#define _DISCORD_CORE_API_
+
 #include "pch.h"
 #include "WebSocket.hpp"
 #include "RestAPI.hpp"
@@ -34,11 +37,12 @@ namespace CommanderNS {
 			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocket->socketPath);
 			this->Client = ClientClasses::Client(this->pRestAPI);
 			this->eventMachine = make_self<EventMachine>();
+			this->eventMachine->Initialize().get();
 			this->pWebSocket->initialize(botToken, this->eventMachine, this->pRestAPI, &this->Client);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
-		
-		void login() {
+		void login() {		 
+
 			this->run();
 		}
 
@@ -63,9 +67,8 @@ namespace CommanderNS {
 			int value = 0;
 			while (DiscordCoreAPI::doWeQuit == false) {
 				value += 1;
-				this->Client.Guilds.Fetch("782757641540730900").get();
-				vector<ClientDataTypes::RoleData> roleData;
-				FoundationClasses::RateLimitation rateLimit;
+				//CommanderNS::ClientClasses::Guild guild = this->Client.Guilds.Fetch("782757641540730900").get();
+				//cout << guild.Members.GetGuildMember("821912684878364723").get().Data.user.username << endl;
 				//DataManipFunctions::getObjectDataAsync(this->pRestAPI, make_shared<FoundationClasses::RateLimitation>(), "782757641540730900", &roleData);
 				//cout << roleData.size() << endl;
 				//for (unsigned int x = 0; x < roleData.size(); x += 1) {
@@ -115,3 +118,4 @@ namespace CommanderNS {
 			}
 		}
 };
+#endif
