@@ -153,7 +153,7 @@ namespace CommanderNS {
 			}
 			catch (std::exception error) {
 				CommanderNS::DataParsingFunctions::parseObject(guildUpdateData, &guildData);
-				ClientClasses::Guild guild(guildData, this->pRestAPI);
+				ClientClasses::Guild guild(guildData, this->pRestAPI, this->pClient->Guilds.at(guildData.id).pQueue);
 				this->pClient->Guilds.insert(std::make_pair(id, guild));
 				for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 					ClientClasses::User user(guild.Data.members.at(y).user, this->pRestAPI);
@@ -162,7 +162,7 @@ namespace CommanderNS {
 				co_return;
 			}
 			CommanderNS::DataParsingFunctions::parseObject(guildUpdateData, &guildData);
-			ClientClasses::Guild guild(guildData, this->pRestAPI);
+			ClientClasses::Guild guild(guildData, this->pRestAPI, this->pClient->Guilds.at(guildData.id).pQueue);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user, this->pRestAPI);
@@ -209,7 +209,7 @@ namespace CommanderNS {
 					DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 					auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
 					ClientClasses::MessageManager* pMessageManager = tempPtr;
-					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
+					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager, this->pClient->Guilds.at(messageData.guildId).pQueue);
 					this->pEventMachine->onMessageCreationEvent(messageCreationData);
 				}
 

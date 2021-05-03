@@ -119,6 +119,7 @@ namespace CommanderNS {
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
 					}
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+
 					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content, pRateLimitData);
 					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						string theValue = pPutDataStruct->data.at("message");
@@ -225,34 +226,7 @@ namespace CommanderNS {
 			co_return;
 
 		}
-		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
-			co_await resume_background();
-			ClientDataTypes::MessageData messageData = *pDataStructure;
-			string relativePath = "/channels/" + channelId + "/messages";
-			httpPOSTData postData;
-			checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, content).get();
-			json jsonValue = postData.data;
-			DataParsingFunctions::parseObject(jsonValue, &messageData);
-			*pDataStructure = messageData;
-			co_return;
-		}
-
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji) {
-			co_await resume_background();
-			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
-			httpPUTData putData;
-			checkRateLimitAndPutDataAsync(pRestAPI, pReactionPostRateLimit, relativePath, &putData, emoji).get();
-			co_return;
-		}
-
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit, string channelId, string messageId) {
-			co_await resume_background();
-			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
-			httpDELETEData deleteData;
-			checkRateLimitAndDeleteDataAsync(pRestAPI, pMessageDeleteRateLimit, relativePath, &deleteData).get();
-			co_return;
-		}
-
+		
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRoleGetRateLimit, string id, vector<ClientDataTypes::RoleData>* pDataStructure) {
 			co_await resume_background();
 			vector<ClientDataTypes::RoleData> roleData = *pDataStructure;
@@ -278,6 +252,34 @@ namespace CommanderNS {
 				}
 			}
 			*pDataStructure = roleData;
+			co_return;
+		}
+
+		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
+			co_await resume_background();
+			ClientDataTypes::MessageData messageData = *pDataStructure;
+			string relativePath = "/channels/" + channelId + "/messages";
+			httpPOSTData postData;
+			checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, content).get();
+			json jsonValue = postData.data;
+			DataParsingFunctions::parseObject(jsonValue, &messageData);
+			*pDataStructure = messageData;
+			co_return;
+		}
+
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji) {
+			co_await resume_background();
+			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
+			httpPUTData putData;
+			checkRateLimitAndPutDataAsync(pRestAPI, pReactionPostRateLimit, relativePath, &putData, emoji).get();
+			co_return;
+		}
+
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit, string channelId, string messageId) {
+			co_await resume_background();
+			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
+			httpDELETEData deleteData;
+			checkRateLimitAndDeleteDataAsync(pRestAPI, pMessageDeleteRateLimit, relativePath, &deleteData).get();
 			co_return;
 		}
 	}
