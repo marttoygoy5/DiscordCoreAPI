@@ -11,6 +11,9 @@
 
 namespace CommanderNS {
 
+	using namespace concurrency;
+	using namespace Windows::Devices::Enumeration;
+
 	struct httpGETData {
 		json data;
 	};
@@ -30,8 +33,55 @@ namespace CommanderNS {
 		json data;
 	};
 
-	struct RestAPI: implements<RestAPI, IInspectable> {
+	struct RestAPI : implements<RestAPI, IInspectable> {
 	public:
+
+		 static task<httpPOSTData> theTask(RestAPI* pRestAPI, string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitation) {
+			try {
+				if (pRestAPI != nullptr) {
+					httpPOSTData postData;
+					string connectionPath = to_string(pRestAPI->baseURL) + relativeURL;
+					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
+					HttpContentHeaderCollection contentHeaderCollection;
+					HttpContentDispositionHeaderValue headerValue(L"payload_json");
+					contentHeaderCollection.ContentDisposition(headerValue);
+					HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
+					contentHeaderCollection.ContentType(typeHeaderValue);
+					HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
+					contents.Headers().ContentDisposition(headerValue);
+					contents.Headers().ContentType(typeHeaderValue);
+					HttpResponseMessage httpResponse;
+					httpResponse = pRestAPI->httpClient.PostAsync(requestUri, contents).get();
+
+					postData.currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
+						postData.getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+					}
+					else {
+						postData.getsRemaining = 0;
+					}
+					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
+						postData.msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+					}
+					else {
+						postData.msRemain = 250;
+					}
+					json jsonValue;
+					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					postData.data = jsonValue;
+					co_return postData;
+				}
+				else
+				{
+					co_return httpPOSTData();
+				}
+			}
+			catch (winrt::hresult_error error) {
+				wcout << L"Error: " << error.message().c_str() << std::endl;
+			}
+
+		};
 
 		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
 			try {
@@ -109,11 +159,11 @@ namespace CommanderNS {
 					contentHeaderCollection.ContentDisposition(headerValue);
 					HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
 					contentHeaderCollection.ContentType(typeHeaderValue);
-					HttpStringContent content(to_hstring(content), UnicodeEncoding::Utf8);
-					content.Headers().ContentDisposition(headerValue);
-					content.Headers().ContentType(typeHeaderValue);
+					HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
+					contents.Headers().ContentDisposition(headerValue);
+					contents.Headers().ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
-					httpResponse = httpClient.PostAsync(requestUri, content).get();
+					httpResponse = httpClient.PostAsync(requestUri, contents).get();
 
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 
@@ -144,8 +194,6 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpPOSTData> getHttpPOSTData (string relativeURL, string content)
-
 		httpPUTData httpPUTObjectData(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
 				if (this != nullptr) {
@@ -157,11 +205,11 @@ namespace CommanderNS {
 					contentHeaderCollection.ContentDisposition(headerValue);
 					HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
 					contentHeaderCollection.ContentType(typeHeaderValue);
-					HttpStringContent content(to_hstring(content), UnicodeEncoding::Utf8);
-					content.Headers().ContentDisposition(headerValue);
-					content.Headers().ContentType(typeHeaderValue);
+					HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
+					contents.Headers().ContentDisposition(headerValue);
+					contents.Headers().ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
-					httpResponse = httpClient.PutAsync(requestUri, content).get();
+					httpResponse = httpClient.PutAsync(requestUri, contents).get();
 
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 

@@ -207,7 +207,7 @@ namespace CommanderNS {
 			};
 
 		protected:
-			friend class WebSocket;
+			friend struct WebSocket;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
 			static shared_ptr<FoundationClasses::RateLimitation> guildMemberGetRateLimit;

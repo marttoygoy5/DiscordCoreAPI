@@ -54,14 +54,61 @@ namespace CommanderNS {
 				co_return;
 			}
 		}
-		
+
+		IAsyncAction checkRateLimitAndPostDataAsyncTest(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
+			try {
+				if (pRateLimitData->getsRemaining > 0) {
+					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					RestAPI::theTask(pRestAPI.get(), relativePath, content, pRateLimitData).then([pRateLimitData](httpPOSTData postData) ->void {
+						pRateLimitData->currentMsTime = postData.currentMsTime;
+						pRateLimitData->getsRemaining = postData.getsRemaining;
+						pRateLimitData->msRemain = postData.msRemain;
+						}, task_continuation_context::use_default());
+
+					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
+						string theValue = pPostDataStruct->data.at("message");
+						exception error(theValue.c_str());
+						throw error;
+					}
+					co_return;
+				}
+				else {
+					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
+
+					while (timeRemaining > 0) {
+						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(currentTime - pRateLimitData->currentMsTime)) / 1000;
+					}
+					RestAPI::theTask(pRestAPI.get(), relativePath, content, pRateLimitData).then([pRateLimitData](httpPOSTData postData) ->void {
+						pRateLimitData->currentMsTime = postData.currentMsTime;
+						pRateLimitData->getsRemaining = postData.getsRemaining;
+						pRateLimitData->msRemain = postData.msRemain;
+						}, task_continuation_context::use_default());
+					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
+						string theValue = pPostDataStruct->data.at("message");
+						exception error(theValue.c_str());
+						throw error;
+					}
+					co_return;
+				}
+			}
+			catch (exception error) {
+				if (error.what() == "Unknown exception") {
+					co_return;
+				}
+				cout << "postObjectDataAsync() Issue: " << error.what() << endl;
+				co_return;
+			}
+		}
+
 		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
 			//co_await resume_background();
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					*pPostDataStruct = pRestAPI->httpPOSTObjectData(relativePath, content, pRateLimitData);
-					
+
 					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
 						string theValue = pPostDataStruct->data.at("message");
 						exception error(theValue.c_str());
