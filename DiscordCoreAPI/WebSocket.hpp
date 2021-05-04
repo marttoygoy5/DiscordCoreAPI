@@ -184,7 +184,7 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager, &this->pClient->Guilds.at(messageData.guildId).queueController);
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
 			messageCreationData.threadContext = this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
