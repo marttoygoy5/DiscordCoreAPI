@@ -289,8 +289,8 @@ namespace CommanderNS {
 		class GuildManager: map<string, Guild>  {
 
 		public:
-
 			GuildManager() {};
+
 			GuildManager(com_ptr<RestAPI> pRestAPI) {
 				this->pQueueController = pQueueController;
 				this->pRestAPI = pRestAPI;

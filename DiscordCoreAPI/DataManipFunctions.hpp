@@ -32,7 +32,6 @@ namespace CommanderNS {
 				else {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
-
 					while (timeRemaining > 0) {
 						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
@@ -107,11 +106,9 @@ namespace CommanderNS {
 					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
 					while (timeRemaining > 0) {
-
 						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
 					}
-
 					*pPutDataStruct = pRestAPI->httpPUTObjectData(relativePath, content, pRateLimitData);
 					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						string theValue = pPutDataStruct->data.at("message");
@@ -259,9 +256,6 @@ namespace CommanderNS {
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
 			checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, content).get();
-			cout << pMessagePostRateLimit->currentMsTime << endl;
-			cout << pMessagePostRateLimit->msRemain << endl;
-			cout << pMessagePostRateLimit->getsRemaining << endl;
 			json jsonValue = postData.data;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
 			*pDataStructure = messageData;
