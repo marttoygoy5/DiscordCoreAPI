@@ -29,7 +29,6 @@ task<void> createdMessageEventTask(CommanderNS::EventDataTypes::MessageCreationD
             createMessageData.embed.color[2] = 255;
             CommanderNS::ClientClasses::MessageManager* messageManager = (CommanderNS::ClientClasses::MessageManager*)(messageData.message.messageManager);
             CommanderNS::ClientClasses::Message message = messageManager->CreateMessageAsync(createMessageData).get();
-            CommanderNS::ClientClasses::Channel channel = pDiscordCoreAPI->Client.Guilds.Fetch(messageData.message.Data.guildId).get().Channels.Fetch(messageData.message.Data.channelId).get();
             messageData.message.DeleteMessageAsync().get();
             message.Reactions.AddReactionAsync({ "ZeedenAndDoom" ,"805151947131715654" })
                 .then([message]() ->CommanderNS::ClientClasses::Message {return message; })
@@ -47,6 +46,7 @@ task<void> createdMessageEventTask(CommanderNS::EventDataTypes::MessageCreationD
 
     }
 };
+
 task<void> scheduleMessageTask(CommanderNS::EventDataTypes::MessageCreationData messageData) {
     DispatcherQueue threadQueue = *messageData.threadContext.threadQueue.get();
     cout << this_thread::get_id() << endl;
@@ -59,12 +59,12 @@ task<void> scheduleMessageTask(CommanderNS::EventDataTypes::MessageCreationData 
 
 int main() {
     winrt::init_apartment();
-    hstring botToken = L"ODI2ODI3MTM1NzA4NTYxNDc4.YGSIxg.OJV3HZo6NIrwqmYX9aV77PvmG8o";
+    hstring botToken = L"ODI2ODI3MTM1NzA4NTYxNDc4.YGSIxg.RZhQ39oj6uB80Te03Q7Shos134c";
     winrt::com_ptr<CommanderNS::DiscordCoreAPI> pdiscordCoreAPI = winrt::make_self<CommanderNS::DiscordCoreAPI>(botToken);
     pDiscordCoreAPI.attach(pdiscordCoreAPI.get());
     // Do other work here
     pDiscordCoreAPI->eventMachine->onMessageCreation(scheduleMessageTask);
-    pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMember) {std::cout << guildMember.guildMember.Data.user.username << std::endl; });
+    pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMemberAddData) {std::cout << guildMemberAddData.guildMember.Data.user.username << std::endl; });
     pdiscordCoreAPI->login().get();
     return 1;
 }

@@ -217,7 +217,7 @@ namespace CommanderNS {
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					cout << payload.at("d") << endl;
 					ClientDataTypes::GuildMemberData guildMemberData;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, ClientClasses::GuildMemberManager::guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("id"), &guildMemberData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, ClientClasses::GuildMemberManager::guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("user").at("id"), &guildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
