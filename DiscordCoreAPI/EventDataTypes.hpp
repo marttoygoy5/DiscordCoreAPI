@@ -11,6 +11,7 @@
 #include "pch.h"
 #include "ClientDataTypes.hpp"
 #include "ClientClasses.hpp"
+#include "SystemThreads.hpp"
 
 namespace CommanderNS {
 	namespace EventDataTypes {
@@ -21,6 +22,7 @@ namespace CommanderNS {
 
 		struct MessageCreationData {
 			ClientClasses::Message message;
+			ThreadContext threadContext;
 		};
 	}
 }

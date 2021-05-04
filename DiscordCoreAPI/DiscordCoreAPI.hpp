@@ -17,6 +17,7 @@
 #include "EventDataTypes.hpp"
 #include "FoundationClasses.hpp"
 #include "ClientDataTypes.hpp"
+#include "SystemThreads.hpp"
 #include "ClientClasses.hpp"
 
 namespace CommanderNS {
@@ -27,22 +28,25 @@ namespace CommanderNS {
 
 	public:
 
-		winrt::com_ptr<EventMachine> eventMachine;
+		com_ptr<EventMachine> eventMachine{ nullptr };
+		SystemThreads* systemThreads{ nullptr };
 
 		static bool doWeQuit;
 
 		DiscordCoreAPI(hstring botToken) {
+			this->systemThreads = new SystemThreads;
+			this->systemThreads->initialize();
 			this->pWebSocket = winrt::make_self<WebSocket>();
 			this->botToken = botToken;
 			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocket->socketPath);
 			this->Client = ClientClasses::Client(this->pRestAPI);
 			this->eventMachine = make_self<EventMachine>();
-			this->pWebSocket->initialize(botToken, this->eventMachine, this->pRestAPI, &this->Client);
+			this->pWebSocket->initialize(botToken, this->eventMachine, this->systemThreads, this->pRestAPI, &this->Client);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
 		void login() {
-			this->run();
+			this->run().get();
 		}
 
 	protected:
@@ -61,7 +65,8 @@ namespace CommanderNS {
 			}
 		}
 
-		void run() {
+		task<void> run() {
+			co_await resume_foreground(this->systemThreads->MessageThreadQueue);
 			this->connect();
 			int value = 0;
 			while (DiscordCoreAPI::doWeQuit == false) {

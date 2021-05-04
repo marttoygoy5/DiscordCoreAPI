@@ -9,6 +9,7 @@
 #define _EVENT_MACHINE_
 
 #include "pch.h"
+#include "SystemThreads.hpp"
 #include "ClientDataTypes.hpp"
 #include "EventDataTypes.hpp"
 
@@ -16,12 +17,12 @@ namespace CommanderNS {
 
 	struct EventMachine : implements<EventMachine, winrt::Windows::Foundation::IInspectable> {
 	public:
-
+		
 		winrt::event_token onGuildMemberAdd(winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData> const& handler) {
 			return onGuildMemberAddEvent.add(handler);
 		}
-
 		void onGuildMemberAdd(winrt::event_token const& token) {
+
 			onGuildMemberAddEvent.remove(token);
 		}
 
@@ -34,6 +35,7 @@ namespace CommanderNS {
 		}
 
 	protected:
+
 		friend struct WebSocket;
 
 		winrt::event < winrt::delegate<CommanderNS::EventDataTypes::MessageCreationData>> onMessageCreationEvent;

@@ -8,11 +8,12 @@
 #ifndef _WEB_SOCKET_
 #define _WEB_SOCKET_
 
+#include "pch.h"
 #include "DataParsingFunctions.hpp"
 #include "EventMachine.hpp"
-#include "pch.h"
 #include "DataManipFunctions.hpp"
 #include "ClientClasses.hpp"
+#include "SystemThreads.hpp"
 
 namespace CommanderNS {
 
@@ -26,7 +27,7 @@ namespace CommanderNS {
 	protected:
 
 		friend struct DiscordCoreAPI;
-
+		SystemThreads* pSystemThreads;
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
 		ClientClasses::Client* pClient = nullptr;
@@ -47,7 +48,8 @@ namespace CommanderNS {
 
 		FoundationClasses::RateLimitation guildMemberGetRateLimit;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, SystemThreads* pSystemThreads, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
+			this->pSystemThreads = pSystemThreads;
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
 			this->pEventMachine = pEventMachineNew;
@@ -93,7 +95,6 @@ namespace CommanderNS {
 
 		IAsyncAction connectAsync() {
 			try {
-				this->dispatchQueueController = DispatcherQueueController(nullptr);
 				this->dispatchQueueController = this->dispatchQueueController.CreateOnDedicatedThread();
 				this->dispatchQueueForHB = this->dispatchQueueController.DispatcherQueue();
 				this->heartbeatTimer = this->dispatchQueueForHB.CreateTimer();
@@ -192,6 +193,7 @@ namespace CommanderNS {
 		}
 
 		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
+			resume_foreground(this->pSystemThreads->MessageThreadQueue);
 			try {
 				DataReader dataReader{ args.GetDataReader() };
 				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
@@ -213,6 +215,7 @@ namespace CommanderNS {
 					auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
 					ClientClasses::MessageManager* pMessageManager = tempPtr;
 					messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager, &this->pClient->Guilds.at(messageData.guildId).queueController);
+					messageCreationData.threadContext = this->pSystemThreads->Threads.at(0);
 					this->pEventMachine->onMessageCreationEvent(messageCreationData);
 				}
 
