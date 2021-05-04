@@ -178,8 +178,8 @@ namespace CommanderNS {
 		}
 
 		task<void> onMessageCreate(json payload) {
-			EventDataTypes::MessageCreationData messageCreationData;
 			co_await resume_foreground(*this->pSystemThreads->Threads.at(2).threadQueue.get());
+			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
@@ -215,6 +215,7 @@ namespace CommanderNS {
 				}
 
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
+					cout << payload.at("d") << endl;
 					ClientDataTypes::GuildMemberData guildMemberData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, ClientClasses::GuildMemberManager::guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("id"), &guildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;

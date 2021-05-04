@@ -44,9 +44,9 @@ task<void> createdMessageEventTask(CommanderNS::EventDataTypes::MessageCreationD
     }
     catch (exception error) {
         cout << "ERROR INFO: " << error.what() << endl;
+
     }
 };
-
 task<void> scheduleMessageTask(CommanderNS::EventDataTypes::MessageCreationData messageData) {
     DispatcherQueue threadQueue = *messageData.threadContext.threadQueue.get();
     cout << this_thread::get_id() << endl;
@@ -59,7 +59,7 @@ task<void> scheduleMessageTask(CommanderNS::EventDataTypes::MessageCreationData 
 
 int main() {
     winrt::init_apartment();
-    hstring botToken = L"ODI2ODI3MTM1NzA4NTYxNDc4.YGSIxg.rXnNRXWX3UOtOaP6YOiTMdoDXfk";
+    hstring botToken = L"ODI2ODI3MTM1NzA4NTYxNDc4.YGSIxg.OJV3HZo6NIrwqmYX9aV77PvmG8o";
     winrt::com_ptr<CommanderNS::DiscordCoreAPI> pdiscordCoreAPI = winrt::make_self<CommanderNS::DiscordCoreAPI>(botToken);
     pDiscordCoreAPI.attach(pdiscordCoreAPI.get());
     // Do other work here

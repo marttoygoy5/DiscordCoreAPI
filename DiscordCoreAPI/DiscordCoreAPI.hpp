@@ -47,7 +47,7 @@ namespace CommanderNS {
 		}
 
 		task<void> login() {
-			co_await resume_foreground(*this->systemThreads->Threads.at(1).threadQueue.get());// this->systemThreads->mainThread;
+			co_await resume_foreground(*this->systemThreads->Threads.at(1).threadQueue.get());
 			task_handle taskHandle = make_task([this]() {this->loginToWrap().get(); });
 			this->systemThreads->Threads.at(1).taskGroup->run_and_wait(taskHandle);
 			co_return;
@@ -70,7 +70,7 @@ namespace CommanderNS {
 		}
 
 		task<void> run() {
-			co_await this->systemThreads->mainThread;
+			co_await resume_foreground(*this->systemThreads->Threads.at(3).threadQueue.get());
 			this->connect();
 			int value = 0;
 			while (DiscordCoreAPI::doWeQuit == false) {
@@ -80,9 +80,7 @@ namespace CommanderNS {
 				vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				shared_ptr<FoundationClasses::RateLimitation>rateLimitData = make_shared<FoundationClasses::RateLimitation>();
 				ClientDataTypes::GuildData guildData;
-				co_await resume_foreground(*this->systemThreads->Threads.at(1).threadQueue.get());
 				DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
-				co_await this->systemThreads->mainThread;
 				for (unsigned int x = 0; x < roleData.size(); x += 1) {
 					//cout << roleData.at(x).name << endl;
 				}
