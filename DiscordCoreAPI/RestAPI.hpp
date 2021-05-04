@@ -24,9 +24,6 @@ namespace CommanderNS {
 
 	struct httpPUTData {
 		json data;
-		int msRemain = 0;
-		int currentMsTime = 0;
-		int getsRemaining = 1;
 	};
 
 	struct httpDELETEData {
@@ -35,49 +32,6 @@ namespace CommanderNS {
 
 	struct RestAPI : implements<RestAPI, IInspectable> {
 	public:
-
-		 static task<httpPUTData> theTask(RestAPI* pRestAPI, string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitation) {
-			 try {
-				 if (pRestAPI != nullptr) {
-					 httpPUTData putData;
-					 string connectionPath = to_string(pRestAPI->baseURL) + relativeURL;
-					 Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
-					 HttpContentHeaderCollection contentHeaderCollection;
-					 HttpContentDispositionHeaderValue headerValue(L"payload_json");
-					 contentHeaderCollection.ContentDisposition(headerValue);
-					 HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
-					 contentHeaderCollection.ContentType(typeHeaderValue);
-					 HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
-					 contents.Headers().ContentDisposition(headerValue);
-					 contents.Headers().ContentType(typeHeaderValue);
-					 HttpResponseMessage httpResponse;
-					 httpResponse = pRestAPI->httpClient.PutAsync(requestUri, contents).get();
-					 putData.currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					 if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						 putData.getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
-					 }
-					 else {
-						 putData.getsRemaining = 0;
-					 }
-					 if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						 pRateLimitation->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
-					 }
-					 else {
-						 putData.msRemain = 250;
-					 }
-					 json jsonValue;
-					 jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-					 putData.data = jsonValue;
-					 co_return putData;
-				 }
-				 else {
-					 co_return httpPUTData();
-				 }
-			 }
-			 catch (winrt::hresult_error error) {
-				 wcout << L"Error: " << error.message().c_str() << std::endl;
-			 }
-		};
 
 		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
 			try {
@@ -199,19 +153,27 @@ namespace CommanderNS {
 					contents.Headers().ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PutAsync(requestUri, contents).get();
-					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					critical_section critSection;
+					scoped_lock lock(critSection);
+					int currentMSTimeLocal;
+					int getsRemainingLocal;
+					int msRemainLocal;
+					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						pRateLimitData->getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+						getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
-						pRateLimitData->getsRemaining = 0;
+						getsRemainingLocal = 0;
 					}
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						pRateLimitData->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+						msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
-						pRateLimitData->msRemain = 250;
+						msRemainLocal = 250;
 					}
+					pRateLimitData->currentMsTime = currentMSTimeLocal;
+					pRateLimitData->getsRemaining = getsRemainingLocal;
+					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					putData.data = jsonValue;

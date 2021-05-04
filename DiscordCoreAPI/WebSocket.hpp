@@ -47,10 +47,10 @@ namespace CommanderNS {
 
 		FoundationClasses::RateLimitation guildMemberGetRateLimit;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachine, com_ptr<RestAPI> pRestAPI, ClientClasses::Client* pClient){
-			this->pClient = pClient;
-			this->pRestAPI = pRestAPI;
-			this->pEventMachine = pEventMachine;
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
+			this->pClient = pClientNew;
+			this->pRestAPI = pRestAPINew;
+			this->pEventMachine = pEventMachineNew;
 			this->botToken = botTokenNew;
 			this->intentsValue = ((1 << 0) + (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4) + (1 << 5) + (1 << 6) + (1 << 7) + (1 << 8) + (1 << 9) + (1 << 10) + (1 << 11) + (1 << 12) + (1 << 13) + (1 << 14));
 		}

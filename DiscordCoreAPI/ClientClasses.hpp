@@ -62,12 +62,12 @@ namespace CommanderNS {
 					emoji = createReactionData.name;
 				}
 				CURL* curl = curl_easy_init();
-				char* output;
+				char* output = nullptr;
 				if (curl) {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::putObjectDataAsyncTest(this->pRestAPI, ReactionManager::reactionAddRateLimit, this->channelId, this->messageId, emojiEncoded).get();
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, ReactionManager::reactionAddRateLimit, this->channelId, this->messageId, emojiEncoded).get();
 				co_return;
 			};
 
@@ -119,6 +119,8 @@ namespace CommanderNS {
 
 			task<ClientClasses::Message> CreateMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
 				try {
+					critical_section critSection;
+					scoped_lock scopedLock(critSection);
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
 					DataManipFunctions::postObjectDataAsync(this->pRestAPI, MessageManager::messageGetRateLimit, this->channelId, &messageData, createMessagePayload).get();
@@ -219,7 +221,7 @@ namespace CommanderNS {
 		public:
 
 			ChannelManager() {};
-			ChannelManager(com_ptr<RestAPI> pRestAPI, DispatcherQueueController* pQueueController) {
+			ChannelManager(com_ptr<RestAPI> pRestAPI) {
 				this->pRestAPI = pRestAPI;
 				ChannelManager::channelGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
@@ -267,7 +269,7 @@ namespace CommanderNS {
 			Guild(ClientDataTypes::GuildData data, com_ptr<RestAPI> pRestAPI) {
 				this->Data = data;
 				this->queueController = DispatcherQueueController::CreateOnDedicatedThread();
-				this->Channels = ChannelManager(pRestAPI, &this->queueController);
+				this->Channels = ChannelManager(pRestAPI);
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					Channel channel(data.channels.at(x), pRestAPI, &this->queueController);
 					this->Channels.insert(make_pair(data.channels.at(x).id, channel));
