@@ -30,7 +30,7 @@ namespace CommanderNS {
 		json data;
 	};
 
-	struct RestAPI : implements<RestAPI, IInspectable> {
+	struct RestAPI : implements<RestAPI, winrt::Windows::Foundation::IInspectable> {
 	public:
 
 		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
@@ -67,19 +67,25 @@ namespace CommanderNS {
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.GetAsync(requestUri).get();
-					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					int currentMSTimeLocal;
+					int getsRemainingLocal;
+					int msRemainLocal;
+					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						pRateLimitData->getsRemaining = std::stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+						getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
-						pRateLimitData->getsRemaining = 0;
+						getsRemainingLocal = 0;
 					}
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						pRateLimitData->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+						msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
-						pRateLimitData->msRemain = 250;
+						msRemainLocal = 250;
 					}
+					pRateLimitData->currentMsTime = currentMSTimeLocal;
+					pRateLimitData->getsRemaining = getsRemainingLocal;
+					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					getData.data = jsonValue;
@@ -110,19 +116,25 @@ namespace CommanderNS {
 					contents.Headers().ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PostAsync(requestUri, contents).get();
-					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					int currentMSTimeLocal;
+					int getsRemainingLocal;
+					int msRemainLocal;
+					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						pRateLimitData->getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+						getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
-						pRateLimitData->getsRemaining = 0;
+						getsRemainingLocal = 0;
 					}
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						pRateLimitData->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+						msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
-						pRateLimitData->msRemain = 250;
+						msRemainLocal = 250;
 					}
+					pRateLimitData->currentMsTime = currentMSTimeLocal;
+					pRateLimitData->getsRemaining = getsRemainingLocal;
+					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					postData.data = jsonValue;
@@ -153,8 +165,6 @@ namespace CommanderNS {
 					contents.Headers().ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.PutAsync(requestUri, contents).get();
-					critical_section critSection;
-					scoped_lock lock(critSection);
 					int currentMSTimeLocal;
 					int getsRemainingLocal;
 					int msRemainLocal;
@@ -201,19 +211,25 @@ namespace CommanderNS {
 					contentHeaderCollection.ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
 					httpResponse = httpClient.DeleteAsync(requestUri).get();
-					pRateLimitData->currentMsTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					int currentMSTimeLocal;
+					int getsRemainingLocal;
+					int msRemainLocal;
+					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-						pRateLimitData->getsRemaining = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+						getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
 					}
 					else {
-						pRateLimitData->getsRemaining = 0;
+						getsRemainingLocal = 0;
 					}
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-						pRateLimitData->msRemain = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+						msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
-						pRateLimitData->msRemain = 250;
+						msRemainLocal = 250;
 					}
+					pRateLimitData->currentMsTime = currentMSTimeLocal;
+					pRateLimitData->getsRemaining = getsRemainingLocal;
+					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
 					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					deleteData.data = jsonValue;

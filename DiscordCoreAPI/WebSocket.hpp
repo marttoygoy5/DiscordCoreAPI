@@ -16,7 +16,7 @@
 
 namespace CommanderNS {
 
-	struct WebSocket : implements<WebSocket, IInspectable> {
+	struct WebSocket : implements<WebSocket, winrt::Windows::Foundation::IInspectable> {
 	public:
 
 		~WebSocket() {

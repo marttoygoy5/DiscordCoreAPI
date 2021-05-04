@@ -14,7 +14,7 @@
 
 namespace CommanderNS {
 
-	struct EventMachine : implements<EventMachine, IInspectable> {
+	struct EventMachine : implements<EventMachine, winrt::Windows::Foundation::IInspectable> {
 	public:
 
 		winrt::event_token onGuildMemberAdd(winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData> const& handler) {
