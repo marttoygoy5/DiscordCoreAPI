@@ -375,7 +375,6 @@ namespace CommanderNS {
             EmbedProviderData provider;
             EmbedAuthorData author;
             vector<EmbedFieldData> fields;
-            int actualColorVal = actualColor();
             int actualColor() {
                 if (this->color[0] > 255) {
                     this->color[0] = 255;
@@ -398,6 +397,7 @@ namespace CommanderNS {
                 int colorValue = 65536 * this->color[0] + 256 * this->color[1] + this->color[2];
                 return colorValue;
             };
+            int actualColorVal = actualColor();
         };
 
         struct ReactionData {

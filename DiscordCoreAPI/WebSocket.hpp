@@ -48,8 +48,8 @@ namespace CommanderNS {
 
 		FoundationClasses::RateLimitation guildMemberGetRateLimit;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, SystemThreads* pSystemThreads, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
-			this->pSystemThreads = pSystemThreads;
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, SystemThreads* pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
+			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
 			this->pEventMachine = pEventMachineNew;
@@ -129,14 +129,12 @@ namespace CommanderNS {
 			// Buffer any data we want to send.
 			this->messageWriter.WriteString(winrt::to_hstring(message));
 
-			try
-			{
+			try {
 				// Send the data as one complete message.
 				co_await this->messageWriter.StoreAsync();
 
 			}
-			catch (winrt::hresult_error const& ex)
-			{
+			catch (winrt::hresult_error const& ex) {
 				std::wcout << ex.message().c_str() << std::endl;
 				co_return;
 			}
@@ -152,24 +150,11 @@ namespace CommanderNS {
 			co_await resume_background();
 			CommanderNS::ClientDataTypes::GuildData guildData;
 			std::string id = guildUpdateData.at("id");
-			try {
-				guildData = this->pClient->Guilds.at(id).Data;
-			}
-			catch (std::exception error) {
-				CommanderNS::DataParsingFunctions::parseObject(guildUpdateData, &guildData);
-				ClientClasses::Guild guild(guildData, this->pRestAPI);
-				this->pClient->Guilds.insert(std::make_pair(id, guild));
-				for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
-					ClientClasses::User user(guild.Data.members.at(y).user, this->pRestAPI);
-					this->pClient->Users.insert(make_pair(user.Data.id, user));
-				}
-				co_return;
-			}
 			CommanderNS::DataParsingFunctions::parseObject(guildUpdateData, &guildData);
 			ClientClasses::Guild guild(guildData, this->pRestAPI);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
-				ClientClasses::User user(guild.Data.members.at(y).user, this->pRestAPI);
+				ClientClasses::User user(guild.Data.members.at(y).user);
 				this->pClient->Users.insert(make_pair(user.Data.id, user));
 			}
 			co_return;
@@ -193,20 +178,19 @@ namespace CommanderNS {
 		}
 
 		task<void> onMessageCreate(json payload) {
-			co_await resume_foreground(this->pSystemThreads->MessageThreadQueue);
 			EventDataTypes::MessageCreationData messageCreationData;
+			co_await resume_foreground(*this->pSystemThreads->Threads.at(2).threadQueue.get());
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
 			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager, &this->pClient->Guilds.at(messageData.guildId).queueController);
-			messageCreationData.threadContext = this->pSystemThreads->Threads.at(0);
+			messageCreationData.threadContext = this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
 		}
 
 		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
-			resume_foreground(this->pSystemThreads->MessageThreadQueue);
 			try {
 				DataReader dataReader{ args.GetDataReader() };
 				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
@@ -222,7 +206,7 @@ namespace CommanderNS {
 				}
 
 				if (payload.at("t") == "MESSAGE_CREATE") {
-					onMessageCreate(payload).get();
+					onMessageCreate(payload);
 				}
 
 				if (payload.at("t") == "GUILD_CREATE") {

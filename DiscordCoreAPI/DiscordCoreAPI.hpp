@@ -36,7 +36,7 @@ namespace CommanderNS {
 
 		DiscordCoreAPI(hstring botToken) {
 			this->systemThreads = new SystemThreads;
-			this->systemThreads->initialize();
+			this->systemThreads->initialize().get();
 			this->pWebSocket = winrt::make_self<WebSocket>();
 			this->botToken = botToken;
 			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocket->socketPath);
@@ -46,8 +46,11 @@ namespace CommanderNS {
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
-		void login() {
-			this->run().get();
+		task<void> login() {
+			co_await resume_foreground(*this->systemThreads->Threads.at(1).threadQueue.get());// this->systemThreads->mainThread;
+			task_handle taskHandle = make_task([this]() {this->loginToWrap().get(); });
+			this->systemThreads->Threads.at(1).taskGroup->run_and_wait(taskHandle);
+			co_return;
 		}
 
 	protected:
@@ -67,7 +70,7 @@ namespace CommanderNS {
 		}
 
 		task<void> run() {
-
+			co_await this->systemThreads->mainThread;
 			this->connect();
 			int value = 0;
 			while (DiscordCoreAPI::doWeQuit == false) {
@@ -77,15 +80,20 @@ namespace CommanderNS {
 				vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				shared_ptr<FoundationClasses::RateLimitation>rateLimitData = make_shared<FoundationClasses::RateLimitation>();
 				ClientDataTypes::GuildData guildData;
+				co_await resume_foreground(*this->systemThreads->Threads.at(1).threadQueue.get());
 				DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
+				co_await this->systemThreads->mainThread;
 				for (unsigned int x = 0; x < roleData.size(); x += 1) {
-					cout << roleData.at(x).name << endl;
+					//cout << roleData.at(x).name << endl;
 				}
 				cout << "Name: " << this->Client.Guilds.Fetch("782757641540730900").get().Members.Fetch("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
 		}
 
+		task<void> loginToWrap() {
+			this->run().get();
+		}
 	};
 
 	bool DiscordCoreAPI::doWeQuit;

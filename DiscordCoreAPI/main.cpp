@@ -31,16 +31,14 @@ task<void> createdMessageEventTask(CommanderNS::EventDataTypes::MessageCreationD
             CommanderNS::ClientClasses::Message message = messageManager->CreateMessageAsync(createMessageData).get();
             CommanderNS::ClientClasses::Channel channel = pDiscordCoreAPI->Client.Guilds.Fetch(messageData.message.Data.guildId).get().Channels.Fetch(messageData.message.Data.channelId).get();
             messageData.message.DeleteMessageAsync().get();
-            message.Reactions.AddReactionAsync({ "ZeedenAndDoom" ,"805151947131715654" }).get();
-            message.Reactions.AddReactionAsync({ "🔫" })
+            message.Reactions.AddReactionAsync({ "ZeedenAndDoom" ,"805151947131715654" })
                 .then([message]() ->CommanderNS::ClientClasses::Message {return message; })
+                .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "🔫" }).get(); return message; })
                 .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "🧪" }).get(); return message; })
-                .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "❤" }).get(); return message; }).get();
-                /*
+                .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "❤" }).get(); return message; })
                 .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "🌎" }).get(); return message; })
                 .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "🚀" }).get(); return message; })
                 .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "❗" }).get(); return message; }).get();
-                */
             co_return;
         }
     }
@@ -61,12 +59,12 @@ task<void> scheduleMessageTask(CommanderNS::EventDataTypes::MessageCreationData 
 
 int main() {
     winrt::init_apartment();
-    hstring botToken = L"ODI2ODI3MTM1NzA4NTYxNDc4.YGSIxg.Z4P92uhTrO5IKieT3zFKOS_UpEk";
+    hstring botToken = L"ODI2ODI3MTM1NzA4NTYxNDc4.YGSIxg.rXnNRXWX3UOtOaP6YOiTMdoDXfk";
     winrt::com_ptr<CommanderNS::DiscordCoreAPI> pdiscordCoreAPI = winrt::make_self<CommanderNS::DiscordCoreAPI>(botToken);
     pDiscordCoreAPI.attach(pdiscordCoreAPI.get());
     // Do other work here
     pDiscordCoreAPI->eventMachine->onMessageCreation(scheduleMessageTask);
     pdiscordCoreAPI->eventMachine->onGuildMemberAdd([](CommanderNS::EventDataTypes::GuildMemberAddData guildMember) {std::cout << guildMember.guildMember.Data.user.username << std::endl; });
-    pdiscordCoreAPI->login();
+    pdiscordCoreAPI->login().get();
     return 1;
 }

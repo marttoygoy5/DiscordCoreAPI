@@ -162,16 +162,17 @@ namespace CommanderNS {
 			concurrency::task<GuildMember> Fetch(string guildMemberId) {
 				return concurrency::create_task([this, guildMemberId] {
 					ClientDataTypes::GuildMemberData guildMemberData;
-					try {
+					if (this->contains(guildMemberId)) {
 						guildMemberData = this->at(guildMemberId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
 						GuildMember guildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
 						return guildMember;
 					}
-					catch (std::exception error) {
+					else {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
 						GuildMember guildMember(guildMemberData);
+						this->insert(std::make_pair(guildMemberId, guildMember));
 						return guildMember;
 					}
 					});
@@ -179,11 +180,11 @@ namespace CommanderNS {
 
 			concurrency::task<GuildMember> GetGuildMember(string guildMemberId) {
 				return concurrency::create_task([this, guildMemberId] {
-					try {
+					if (this->contains(guildMemberId)) {
 						return this->at(guildMemberId);
 					}
-					catch (exception error) {
-						cout << "GetGuildMember() Error: " << error.what() << endl;
+					else {
+						cout << "Sorry, but they aren't here!" << endl;
 						GuildMember guildMember;
 						return guildMember;
 					}
@@ -226,28 +227,30 @@ namespace CommanderNS {
 			concurrency::task<Channel> Fetch(string channelId) {
 				return concurrency::create_task([this, channelId] {
 					ClientDataTypes::ChannelData channelData;
-					try {
+					if (this->contains(channelId)) {
 						channelData = this->at(channelId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, ChannelManager::channelGetRateLimit, channelId, &channelData).get();
 						Channel channel(channelData, this->pRestAPI, this->pQueueController);
 						this->insert(std::make_pair(channelId, channel));
 						return channel;
 					}
-					catch (std::exception error) {
+					else {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, ChannelManager::channelGetRateLimit, channelId, &channelData).get();
 						Channel channel(channelData, this->pRestAPI, this->pQueueController);
+						this->insert(std::make_pair(channelId, channel));
 						return channel;
 					}
 					});
+
 			};
 
 			concurrency::task<Channel> GetChannel(string channelId) {
 				return concurrency::create_task([this, channelId] {
-					try {
+					if (this->contains(channelId)) {
 						return this->at(channelId);
 					}
-					catch (exception error) {
-						cout << "GetChannel() Error: " << error.what() << endl;
+					else {
+						cout << "Sorry, but they aren't here!" << endl;
 						Channel channel;
 						return channel;
 					}
@@ -283,7 +286,7 @@ namespace CommanderNS {
 			DispatcherQueueController queueController{nullptr};
 		};
 
-		class GuildManager: map<string, Guild>  {
+		class GuildManager : map<string, Guild> {
 
 		public:
 			GuildManager() {};
@@ -298,29 +301,29 @@ namespace CommanderNS {
 				return concurrency::create_task([this, guildId] {
 
 					ClientDataTypes::GuildData guildData;
-					try {
+					if (this->contains(guildId)) {
 						guildData = this->at(guildId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildManager::guildGetRateLimit, guildId, &guildData).get();
 						Guild guild(guildData, this->pRestAPI);
 						this->insert(std::make_pair(guildId, guild));
 						return guild;
 					}
-					catch (std::exception error) {
+					else {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildManager::guildGetRateLimit, guildId, &guildData).get();
 						Guild guild(guildData, this->pRestAPI);
 						return guild;
 					}
-					});
-			};
+					}
+				);
+			}
 
 			concurrency::task<Guild> GetGuild(string guildId) {
 				return concurrency::create_task([this, guildId] {
-					try {
+					if (this->contains(guildId)) {
 						return this->at(guildId);
 					}
-					catch (exception error) {
-						cout << "GetGuild() Error: " << error.what() << endl;
-						ClientDataTypes::GuildData guildData;
+					else {
+						cout << "Sorry, but they aren't here! " << endl;
 						Guild guild;
 						return guild;
 					}
@@ -339,7 +342,7 @@ namespace CommanderNS {
 
 		public:
 			User() {};
-			User(ClientDataTypes::UserData data, com_ptr<RestAPI> pRestAPI) {
+			User(ClientDataTypes::UserData data) {
 				this->Data = data;
 			};
 			ClientDataTypes::UserData Data;
@@ -359,13 +362,14 @@ namespace CommanderNS {
 					try {
 						userData = this->at(userId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, UserManager::userGetRateLimit, userId, &userData).get();
-						User user(userData, pRestAPI);
+						User user(userData);
 						this->insert(std::make_pair(userId, user));
 						return user;
 					}
 					catch (std::exception error) {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, UserManager::userGetRateLimit, userId, &userData).get();
-						User user(userData, pRestAPI);
+						User user(userData);
+						this->insert(std::make_pair(userId, user));
 						return user;
 					}
 					});
@@ -373,13 +377,13 @@ namespace CommanderNS {
 
 			concurrency::task<User> GetUser(string userId) {
 				return concurrency::create_task([this, userId] {
-					try {
+					if (this->contains(userId)) {
 						return this->at(userId);
 					}
-					catch (exception error) {
-						cout << "GetUser() Error: " << error.what() << endl;
+					else {
+						cout << "Sorry, but they aren't here!" << endl;
 						ClientDataTypes::UserData userData;
-						User user(userData, this->pRestAPI);
+						User user(userData);
 						return user;
 					}
 					});

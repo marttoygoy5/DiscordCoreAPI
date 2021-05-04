@@ -219,8 +219,8 @@ namespace CommanderNS {
 			*pDataStructure = guildMemberData;
 			critSection.unlock();
 			co_return;
-		}
-		
+		}		
+
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRoleGetRateLimit, string id, vector<ClientDataTypes::RoleData>* pDataStructure) {
 			critical_section critSection;
 			critSection.try_lock_for(pRoleGetRateLimit->msRemain + 50);
@@ -271,8 +271,8 @@ namespace CommanderNS {
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
 			httpPUTData putData;
 			checkRateLimitAndPutDataAsync(pRestAPI, pReactionPostRateLimit, relativePath, &putData, emoji).get();
-			critSection.unlock();
 			co_return;
+			critSection.unlock();
 		}
 
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit, string channelId, string messageId) {

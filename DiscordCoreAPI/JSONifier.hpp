@@ -88,6 +88,8 @@ namespace CommanderNS {
 				fields.push_back(object);
 			}
 			
+			int colorValue = createMessageData.embed.actualColor();
+
 			data = {
 				{"allowed_mentions", {
 					{"parse", createMessageData.allowedMentions.parse},
@@ -106,7 +108,7 @@ namespace CommanderNS {
 					{"title", "Hello, Embed!"},
 					{"description" , "This is an embedded message."},
 					{"fields", fields},
-					{"color",createMessageData.embed.actualColorVal}
+					{"color",colorValue}
 			}} 
 			};
 

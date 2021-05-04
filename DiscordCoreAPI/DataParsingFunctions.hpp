@@ -1127,7 +1127,7 @@ namespace CommanderNS {
                     for (unsigned int y = 0; y < guildData.members.size(); y += 1) {
                         if (guildData.members.at(y).user.id == memberArray.at(x).at("user").at("id")) {
                             isItFound = true;
-                            //guildData.members.erase(guildData.members.begin() + y);
+                            guildData.members.erase(guildData.members.begin() + y);
                             ClientDataTypes::GuildMemberData guildMemberData = guildData.members.at(y);
                             parseObject(memberArray.at(x), &guildMemberData);
                             guildData.members.push_back(guildMemberData);
@@ -1996,12 +1996,12 @@ namespace CommanderNS {
                 std::string theValue = jsonObjectData.at("channel_id");
                 messageData.channelId = theValue;
             }
-
+            
             if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
                 std::string theValue = jsonObjectData.at("guild_id");
                 messageData.guildId = theValue;
             }
-
+            
             if (jsonObjectData.contains("author") && !jsonObjectData.at("author").is_null()) {
                 ClientDataTypes::UserData theValue = messageData.author;
                 parseObject(jsonObjectData.at("author"), &theValue);
@@ -2023,7 +2023,7 @@ namespace CommanderNS {
                 std::string theValue = jsonObjectData.at("edited_timestamp");
                 messageData.editedTimestamp = theValue;
             }
-            
+
             if (jsonObjectData.contains("tts") && !jsonObjectData.at("tts").is_null()) {
                 bool theValue = jsonObjectData.at("tts");
                 messageData.tts = theValue;
@@ -2033,7 +2033,7 @@ namespace CommanderNS {
                 bool theValue = jsonObjectData.at("mention_everyone");
                 messageData.mentionEveryone = theValue;
             } 
-
+            
             if (jsonObjectData.contains("mentions") && !jsonObjectData.at("mentions").is_null()) {
                 json userArray = jsonObjectData.at("mentions");
                 for (unsigned int x = 0; x < userArray.size(); x += 1) {
@@ -2224,8 +2224,9 @@ namespace CommanderNS {
                 parseObject(jsonObjectData.at("interaction"), &theValue);
                 messageData.interaction = theValue;
             }
-
+            
             *pDataStructure = messageData;
+            
         }
 	}
 };

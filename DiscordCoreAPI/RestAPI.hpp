@@ -35,8 +35,14 @@ namespace CommanderNS {
 
 		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
 			try {
-				this->httpClient = HttpClient();
-				this->headers = this->httpClient.DefaultRequestHeaders();
+				this->getHttpClient = HttpClient();
+				this->getHeaders = this->getHttpClient.DefaultRequestHeaders();
+				this->putHttpClient = HttpClient();
+				this->putHeaders = this->putHttpClient.DefaultRequestHeaders();
+				this->postHttpClient = HttpClient();
+				this->postHeaders = this->postHttpClient.DefaultRequestHeaders();
+				this->deleteHttpClient = HttpClient();
+				this->deleteHeaders = this->deleteHttpClient.DefaultRequestHeaders();
 				this->baseURL = baseURL;
 				this->botToken = botToken;
 				this->initialConnectionPath = this->baseURL + L"/gateway/bot";
@@ -44,10 +50,13 @@ namespace CommanderNS {
 				hstring headerString2 = headerString + botToken;
 				HttpCredentialsHeaderValue credentialValue(nullptr);
 				credentialValue = credentialValue.Parse(headerString2.c_str());
-				this->headers.Authorization(credentialValue);
+				this->getHeaders.Authorization(credentialValue);
+				this->putHeaders.Authorization(credentialValue);
+				this->postHeaders.Authorization(credentialValue);
+				this->deleteHeaders.Authorization(credentialValue);
 				this->baseURI = Uri(this->initialConnectionPath.c_str());
 				HttpResponseMessage httpResponse;
-				httpResponse = httpClient.GetAsync(this->baseURI).get();
+				httpResponse = getHttpClient.GetAsync(this->baseURI).get();
 				hstring httpResponseBody = httpResponse.Content().ReadAsStringAsync().get().c_str();
 				std::wstringstream stream;
 				stream << JSONifier::parseSocketPath(httpResponseBody.c_str()).c_str();
@@ -66,7 +75,7 @@ namespace CommanderNS {
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 					HttpResponseMessage httpResponse;
-					httpResponse = httpClient.GetAsync(requestUri).get();
+					httpResponse = getHttpClient.GetAsync(requestUri).get();
 					int currentMSTimeLocal;
 					int getsRemainingLocal;
 					int msRemainLocal;
@@ -87,7 +96,9 @@ namespace CommanderNS {
 					pRateLimitData->getsRemaining = getsRemainingLocal;
 					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
-					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
+						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					}
 					getData.data = jsonValue;
 					return getData;
 				}
@@ -115,7 +126,7 @@ namespace CommanderNS {
 					contents.Headers().ContentDisposition(headerValue);
 					contents.Headers().ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
-					httpResponse = httpClient.PostAsync(requestUri, contents).get();
+					httpResponse = postHttpClient.PostAsync(requestUri, contents).get();
 					int currentMSTimeLocal;
 					int getsRemainingLocal;
 					int msRemainLocal;
@@ -136,7 +147,9 @@ namespace CommanderNS {
 					pRateLimitData->getsRemaining = getsRemainingLocal;
 					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
-					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
+						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					}
 					postData.data = jsonValue;
 					return postData;
 				}
@@ -164,7 +177,7 @@ namespace CommanderNS {
 					contents.Headers().ContentDisposition(headerValue);
 					contents.Headers().ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
-					httpResponse = httpClient.PutAsync(requestUri, contents).get();
+					httpResponse = putHttpClient.PutAsync(requestUri, contents).get();
 					int currentMSTimeLocal;
 					int getsRemainingLocal;
 					int msRemainLocal;
@@ -185,7 +198,9 @@ namespace CommanderNS {
 					pRateLimitData->getsRemaining = getsRemainingLocal;
 					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
-					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
+						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					}
 					putData.data = jsonValue;
 					return putData;
 				}
@@ -210,7 +225,7 @@ namespace CommanderNS {
 					HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
 					contentHeaderCollection.ContentType(typeHeaderValue);
 					HttpResponseMessage httpResponse;
-					httpResponse = httpClient.DeleteAsync(requestUri).get();
+					httpResponse = deleteHttpClient.DeleteAsync(requestUri).get();
 					int currentMSTimeLocal;
 					int getsRemainingLocal;
 					int msRemainLocal;
@@ -231,7 +246,9 @@ namespace CommanderNS {
 					pRateLimitData->getsRemaining = getsRemainingLocal;
 					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
-					jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
+						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+					}
 					deleteData.data = jsonValue;
 					return deleteData;
 				}
@@ -253,8 +270,14 @@ namespace CommanderNS {
 		hstring baseURL;
 		hstring initialConnectionPath;
 		Uri baseURI = Uri{ nullptr };
-		HttpRequestHeaderCollection headers{ nullptr };
-		HttpClient httpClient;
+		HttpRequestHeaderCollection getHeaders{ nullptr };
+		HttpRequestHeaderCollection putHeaders{ nullptr };
+		HttpRequestHeaderCollection postHeaders{ nullptr };
+		HttpRequestHeaderCollection deleteHeaders{ nullptr };
+		HttpClient getHttpClient;
+		HttpClient putHttpClient;
+		HttpClient postHttpClient;
+		HttpClient deleteHttpClient;
 	};
 };
 #endif
