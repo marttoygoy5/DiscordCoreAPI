@@ -42,13 +42,11 @@ namespace CommanderNS {
 
 		class ReactionManager: map<string, Reaction> {
 		public:
-
 			ReactionManager() {};
-			ReactionManager(com_ptr<RestAPI> pRestAPI, string channelId, string messageId, DispatcherQueueController* pQueueController) {
+			ReactionManager(com_ptr<RestAPI> pRestAPI, string channelId) {
 				this->channelId = channelId;
-				this->pQueueController = pQueueController;
 				this->pRestAPI = pRestAPI;
-				this->messageId = messageId;
+				//this->messageId = messageId;
 				ReactionManager::reactionAddRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 			ClientDataTypes::ReactionData reactionData;
@@ -67,26 +65,24 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, ReactionManager::reactionAddRateLimit, this->channelId, this->messageId, emojiEncoded).get();
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, ReactionManager::reactionAddRateLimit, this->channelId, createReactionData.messageId, emojiEncoded).get();
 				co_return;
 			};
 
 		protected:
 			static shared_ptr<FoundationClasses::RateLimitation> reactionAddRateLimit;
-			DispatcherQueueController* pQueueController;
 			com_ptr<RestAPI> pRestAPI;
 			string channelId;
-			string messageId;
+			//string messageId;
 		};
 
 		class Message {
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit, void* pMessageManager, DispatcherQueueController* pQueueController) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit, void* pMessageManager) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
-				this->pQueueController = pQueueController;
-				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id, this->pQueueController);
+				//this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id, this->pQueueController);
 				this->messageManager = pMessageManager;
 				this->pMessageDeleteRateLimit = pMessageDeleteRateLimit;
 			}
@@ -97,10 +93,9 @@ namespace CommanderNS {
 			};
 
 			void* messageManager;
-			ReactionManager Reactions;
+			//ReactionManager Reactions;
 			ClientDataTypes::MessageData Data;
 		protected:
-			DispatcherQueueController* pQueueController;
 			com_ptr<RestAPI> pRestAPI;
 			shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit;
 		};
@@ -108,11 +103,10 @@ namespace CommanderNS {
 		class MessageManager {
 		public:
 			MessageManager() {};
-			MessageManager(string channelId, string guildId, com_ptr<RestAPI> pRestAPI, DispatcherQueueController* pQueueController) {
-				this->channelId = channelId;
+			MessageManager(com_ptr<RestAPI> pRestAPI, string guildId, string channelId) {
 				this->guildId = guildId;
+				this->channelId = channelId;
 				this->pRestAPI = pRestAPI;
-				this->pQueueController = pQueueController;
 				MessageManager::messageDeleteRateLimit = make_shared<FoundationClasses::RateLimitation>();
 				MessageManager::messageGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
@@ -122,7 +116,8 @@ namespace CommanderNS {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
 					DataManipFunctions::postObjectDataAsync(this->pRestAPI, MessageManager::messageGetRateLimit, this->channelId, &messageData, createMessagePayload).get();
-					Message message(messageData, this->pRestAPI, MessageManager::messageDeleteRateLimit, this, this->pQueueController);
+					Message message(messageData, this->pRestAPI, MessageManager::messageDeleteRateLimit, this);
+					//co_await resume_foreground(queue);
 					co_return message;
 				}
 				catch (exception error) {
@@ -131,7 +126,6 @@ namespace CommanderNS {
 			};
 
 		protected:
-			DispatcherQueueController* pQueueController;
 			friend struct WebSocket;
 			friend class Message;
 			string guildId;
@@ -144,10 +138,12 @@ namespace CommanderNS {
 		class GuildMember {
 		public:
 			GuildMember() {};
-			GuildMember(ClientDataTypes::GuildMemberData data) {
+			GuildMember(ClientDataTypes::GuildMemberData data, string guildId) {
+				this->guildId = guildId;
 				this->Data = data;
 			}
 			ClientDataTypes::GuildMemberData Data;
+			string guildId;
 		};
 
 		class GuildMemberManager : map<string, GuildMember> {
@@ -159,25 +155,25 @@ namespace CommanderNS {
 				GuildMemberManager::guildMemberGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			}
 
-			concurrency::task<GuildMember> Fetch(string guildMemberId) {
+			task<GuildMember> Fetch(string guildMemberId) {
 				return concurrency::create_task([this, guildMemberId] {
 					ClientDataTypes::GuildMemberData guildMemberData;
 					try {
 						guildMemberData = this->at(guildMemberId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
-						GuildMember guildMember(guildMemberData);
+						GuildMember guildMember(guildMemberData, this->guildId);
 						this->insert(std::make_pair(guildMemberId, guildMember));
 						return guildMember;
 					}
 					catch (std::exception error) {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
-						GuildMember guildMember(guildMemberData);
+						GuildMember guildMember(guildMemberData, this->guildId);
 						return guildMember;
 					}
 					});
 			};
 
-			concurrency::task<GuildMember> GetGuildMember(string guildMemberId) {
+			task<GuildMember> GetGuildMember(string guildMemberId) {
 				return concurrency::create_task([this, guildMemberId] {
 					try {
 						return this->at(guildMemberId);
@@ -201,16 +197,16 @@ namespace CommanderNS {
 		class Channel {
 		public:
 			Channel() {};
-			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI, DispatcherQueueController* pQueueController) {
+			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
-				this->pQueueController = pQueueController;
-				this->messageManager = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI, this->pQueueController);
+				this->reactions = ReactionManager(pRestAPI, data.id);
+				this->messageManager = MessageManager(pRestAPI, data.guildId, data.id);
 			};
 			ClientDataTypes::ChannelData Data;
-			MessageManager* messageManager;
+			ReactionManager reactions;
+			MessageManager messageManager;
 		protected:
-			DispatcherQueueController* pQueueController;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
@@ -229,13 +225,13 @@ namespace CommanderNS {
 					try {
 						channelData = this->at(channelId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, ChannelManager::channelGetRateLimit, channelId, &channelData).get();
-						Channel channel(channelData, this->pRestAPI, this->pQueueController);
+						Channel channel(channelData, this->pRestAPI);
 						this->insert(std::make_pair(channelId, channel));
 						return channel;
 					}
 					catch (std::exception error) {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, ChannelManager::channelGetRateLimit, channelId, &channelData).get();
-						Channel channel(channelData, this->pRestAPI, this->pQueueController);
+						Channel channel(channelData, this->pRestAPI);
 						return channel;
 					}
 					});
@@ -253,8 +249,8 @@ namespace CommanderNS {
 					}
 					});
 			};
+
 		protected:
-			DispatcherQueueController* pQueueController;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
 			static shared_ptr<FoundationClasses::RateLimitation> channelGetRateLimit;
@@ -265,22 +261,20 @@ namespace CommanderNS {
 			Guild() {};
 			Guild(ClientDataTypes::GuildData data, com_ptr<RestAPI> pRestAPI) {
 				this->Data = data;
-				this->queueController = DispatcherQueueController::CreateOnDedicatedThread();
 				this->Channels = ChannelManager(pRestAPI);
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
-					Channel channel(data.channels.at(x), pRestAPI, &this->queueController);
+					Channel channel(data.channels.at(x), pRestAPI);
 					this->Channels.insert(make_pair(data.channels.at(x).id, channel));
 				}
 				this->Members = GuildMemberManager(pRestAPI, this->Data.id);
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
-					GuildMember member(data.members.at(x));
+					GuildMember member(data.members.at(x), this->Data.id);
 					this->Members.insert(make_pair(data.members.at(x).user.id, member));
 				}
 			};
 			ClientDataTypes::GuildData Data;
 			ChannelManager Channels;
 			GuildMemberManager Members;
-			DispatcherQueueController queueController{nullptr};
 		};
 
 		class GuildManager: map<string, Guild>  {
@@ -289,7 +283,6 @@ namespace CommanderNS {
 			GuildManager() {};
 
 			GuildManager(com_ptr<RestAPI> pRestAPI) {
-				this->pQueueController = pQueueController;
 				this->pRestAPI = pRestAPI;
 				GuildManager::guildGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
@@ -332,14 +325,13 @@ namespace CommanderNS {
 			friend class Client;
 			static shared_ptr<FoundationClasses::RateLimitation> guildGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
-			DispatcherQueueController* pQueueController;
 		};
 
 		class User {
 
 		public:
 			User() {};
-			User(ClientDataTypes::UserData data, com_ptr<RestAPI> pRestAPI) {
+			User(ClientDataTypes::UserData data) {
 				this->Data = data;
 			};
 			ClientDataTypes::UserData Data;
@@ -359,13 +351,13 @@ namespace CommanderNS {
 					try {
 						userData = this->at(userId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, UserManager::userGetRateLimit, userId, &userData).get();
-						User user(userData, pRestAPI);
+						User user(userData);
 						this->insert(std::make_pair(userId, user));
 						return user;
 					}
 					catch (std::exception error) {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, UserManager::userGetRateLimit, userId, &userData).get();
-						User user(userData, pRestAPI);
+						User user(userData);
 						return user;
 					}
 					});
@@ -379,7 +371,7 @@ namespace CommanderNS {
 					catch (exception error) {
 						cout << "GetUser() Error: " << error.what() << endl;
 						ClientDataTypes::UserData userData;
-						User user(userData, this->pRestAPI);
+						User user(userData);
 						return user;
 					}
 					});
@@ -404,7 +396,8 @@ namespace CommanderNS {
 			User User;
 			UserManager Users;
 			GuildManager Guilds;
-
+			ChannelManager Channels;
+			MessageManager Messages;
 		protected:
 
 			friend class GuildManager;

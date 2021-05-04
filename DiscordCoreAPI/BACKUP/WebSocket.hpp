@@ -27,7 +27,7 @@ namespace CommanderNS {
 	protected:
 
 		friend struct DiscordCoreAPI;
-		SystemThreads* pSystemThreads;
+		com_ptr<SystemThreads> pSystemThreads;
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
 		ClientClasses::Client* pClient = nullptr;
@@ -48,7 +48,7 @@ namespace CommanderNS {
 
 		FoundationClasses::RateLimitation guildMemberGetRateLimit;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, SystemThreads* pSystemThreads, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreads, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
 			this->pSystemThreads = pSystemThreads;
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
@@ -149,7 +149,7 @@ namespace CommanderNS {
 		}
 
 		fire_and_forget onGuildCreate(nlohmann::json guildUpdateData) {
-			co_await resume_background();
+			co_await resume_foreground(this->pSystemThreads->MessageThreadQueue);
 			CommanderNS::ClientDataTypes::GuildData guildData;
 			std::string id = guildUpdateData.at("id");
 			try {
@@ -160,7 +160,7 @@ namespace CommanderNS {
 				ClientClasses::Guild guild(guildData, this->pRestAPI);
 				this->pClient->Guilds.insert(std::make_pair(id, guild));
 				for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
-					ClientClasses::User user(guild.Data.members.at(y).user, this->pRestAPI);
+					ClientClasses::User user(guild.Data.members.at(y).user);
 					this->pClient->Users.insert(make_pair(user.Data.id, user));
 				}
 				co_return;
@@ -169,7 +169,7 @@ namespace CommanderNS {
 			ClientClasses::Guild guild(guildData, this->pRestAPI);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
-				ClientClasses::User user(guild.Data.members.at(y).user, this->pRestAPI);
+				ClientClasses::User user(guild.Data.members.at(y).user);
 				this->pClient->Users.insert(make_pair(user.Data.id, user));
 			}
 			co_return;
@@ -193,20 +193,18 @@ namespace CommanderNS {
 		}
 
 		task<void> onMessageCreate(json payload) {
-			co_await resume_foreground(this->pSystemThreads->MessageThreadQueue);
+			co_await resume_foreground(this->pSystemThreads->Threads.at(0).threadQueue);
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
-			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager, &this->pClient->Guilds.at(messageData.guildId).queueController);
+			ClientClasses::MessageManager* pMessageManager = &tempPtr;
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
 			messageCreationData.threadContext = this->pSystemThreads->Threads.at(0);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
-			co_return;
 		}
 
 		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
-			resume_foreground(this->pSystemThreads->MessageThreadQueue);
 			try {
 				DataReader dataReader{ args.GetDataReader() };
 				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
@@ -235,7 +233,7 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, ClientClasses::GuildMemberManager::guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("id"), &guildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
-					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
+					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData, guildMemberAddData.guildId);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 

@@ -31,11 +31,11 @@ task<void> createdMessageEventTask(CommanderNS::EventDataTypes::MessageCreationD
             CommanderNS::ClientClasses::Message message = messageManager->CreateMessageAsync(createMessageData).get();
             CommanderNS::ClientClasses::Channel channel = pDiscordCoreAPI->Client.Guilds.Fetch(messageData.message.Data.guildId).get().Channels.Fetch(messageData.message.Data.channelId).get();
             messageData.message.DeleteMessageAsync().get();
-            message.Reactions.AddReactionAsync({ "ZeedenAndDoom" ,"805151947131715654" }).get();
-            message.Reactions.AddReactionAsync({ "🔫" })
-                .then([message]() ->CommanderNS::ClientClasses::Message {return message; })
-                .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "🧪" }).get(); return message; })
-                .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "❤" }).get(); return message; }).get();
+            channel.reactions.AddReactionAsync({ "ZeedenAndDoom" ,"805151947131715654" }).get();
+            channel.reactions.AddReactionAsync({ "🔫" })
+                .then([channel]() ->CommanderNS::ClientClasses::Channel {return channel; })
+                .then([](CommanderNS::ClientClasses::Channel channel) {channel.reactions.AddReactionAsync({ "🧪" }).get(); return channel; })
+                .then([](CommanderNS::ClientClasses::Channel channel) {channel.reactions.AddReactionAsync({ "❤" }).get(); return channel; }).get();
                 /*
                 .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "🌎" }).get(); return message; })
                 .then([](CommanderNS::ClientClasses::Message message) {message.Reactions.AddReactionAsync({ "🚀" }).get(); return message; })
@@ -50,7 +50,7 @@ task<void> createdMessageEventTask(CommanderNS::EventDataTypes::MessageCreationD
 };
 
 task<void> scheduleMessageTask(CommanderNS::EventDataTypes::MessageCreationData messageData) {
-    DispatcherQueue threadQueue = *messageData.threadContext.threadQueue.get();
+    DispatcherQueue threadQueue = messageData.threadContext.threadQueue;
     cout << this_thread::get_id() << endl;
     co_await resume_foreground(threadQueue);
     cout << this_thread::get_id() << endl;

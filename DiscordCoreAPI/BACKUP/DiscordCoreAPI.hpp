@@ -24,18 +24,18 @@ namespace CommanderNS {
 
 	BOOL WINAPI CtrlHandler(DWORD fdwCtrlType);
 
-	struct DiscordCoreAPI : public implements<DiscordCoreAPI, winrt::Windows::Foundation::IInspectable> {
+	struct DiscordCoreAPI : implements<DiscordCoreAPI, winrt::Windows::Foundation::IInspectable> {
 
 	public:
 
 		ClientClasses::Client Client;
 		com_ptr<EventMachine> eventMachine{ nullptr };
-		SystemThreads* systemThreads{ nullptr };
+		com_ptr<SystemThreads> systemThreads{ nullptr };
 
 		static bool doWeQuit;
 
 		DiscordCoreAPI(hstring botToken) {
-			this->systemThreads = new SystemThreads;
+			this->systemThreads = make_self<SystemThreads>();
 			this->systemThreads->initialize();
 			this->pWebSocket = winrt::make_self<WebSocket>();
 			this->botToken = botToken;
@@ -61,13 +61,12 @@ namespace CommanderNS {
 				this->pWebSocket->connectAsync().get();
 			}
 			catch (winrt::hresult result) {
-
 				std::cout << result.value << std::endl;
 			}
 		}
 
 		task<void> run() {
-
+			//co_await resume_foreground(this->systemThreads->MessageThreadQueue);
 			this->connect();
 			int value = 0;
 			while (DiscordCoreAPI::doWeQuit == false) {
@@ -85,7 +84,6 @@ namespace CommanderNS {
 			}
 			std::cout << "Goodbye!" << std::endl;
 		}
-
 	};
 
 	bool DiscordCoreAPI::doWeQuit;
