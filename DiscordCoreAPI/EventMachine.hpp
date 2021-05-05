@@ -46,9 +46,9 @@ namespace CommanderNS {
 
 		friend struct WebSocket;
 
-		winrt::event < winrt::delegate<CommanderNS::EventDataTypes::MessageCreationData>> onMessageCreationEvent;
+		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::MessageCreationData>> onMessageCreationEvent;
 
-		winrt::event < winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData>> onGuildMemberAddEvent;
+		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData>> onGuildMemberAddEvent;
 
 		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::ReactionAddData>> onReactionAddEvent;
 	};

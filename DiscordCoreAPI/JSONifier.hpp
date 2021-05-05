@@ -99,11 +99,36 @@ namespace CommanderNS {
 					}},
 				{"content", createMessageData.content},
 				{"tts" , false},
-				{"embed" , {
+				{"embed" , 
+							{{"author", {
+							{"icon_url", createMessageData.embed.author.iconUrl},
+							{"name", createMessageData.embed.author.name},
+							{"url", createMessageData.embed.author.url },
+							{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
+					}}, 
+					{"image", {
+						{"height", createMessageData.embed.image.height},
+						{"width", createMessageData.embed.image.width},
+						{"url", createMessageData.embed.image.url},
+						{"proxy_url",createMessageData.embed.image.proxyUrl}
+			}},
+				{ "provider" , {
+					{"name", createMessageData.embed.provider.name},
+					{"url", createMessageData.embed.provider.url}
+
+			}},
+				{"thumbnail", {
+					{"height", createMessageData.embed.thumbnail.height},
+					{"width", createMessageData.embed.thumbnail.width},
+					{"url", createMessageData.embed.thumbnail.url},
+					{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
+				}},
+
+					
 					{"footer", {
 						{"icon_url", createMessageData.embed.footer.iconUrl},
 						{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
-						{"test", createMessageData.embed.footer.text}
+						{"text", createMessageData.embed.footer.text}
 			}},
 					{"title", "Hello, Embed!"},
 					{"description" , "This is an embedded message."},
