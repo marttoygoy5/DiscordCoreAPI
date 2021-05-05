@@ -38,7 +38,6 @@ namespace CommanderNS {
 				this->channelId = channelId;
 				this->messageId = messageId;
 				this->pRestAPI = pRestAPI;
-				this->reactionAddRemoveRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 
 			task<void> AddReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
@@ -55,7 +54,7 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, this->reactionAddRemoveRateLimit, this->channelId, this->messageId, emojiEncoded).get();
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->channelId, this->messageId, emojiEncoded).get();
 				co_return;
 			};
 
@@ -73,12 +72,12 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, this->reactionAddRemoveRateLimit, this->channelId, this->messageId, deleteReactionData.userId, emojiEncoded).get();
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->channelId, this->messageId, deleteReactionData.userId, emojiEncoded).get();
 				co_return;
 			}
 
 		protected:
-			shared_ptr<FoundationClasses::RateLimitation> reactionAddRemoveRateLimit;
+			static FoundationClasses::RateLimitation reactionAddRemoveRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 			string channelId;
 			string messageId;
@@ -87,16 +86,15 @@ namespace CommanderNS {
 		class Message {
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit, void* pMessageManager) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessageDeleteRateLimit, void* pMessageManager) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
 				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id);
 				this->messageManager = pMessageManager;
-				this->pMessageDeleteRateLimit = pMessageDeleteRateLimit;
 			}
 
 			IAsyncAction DeleteMessageAsync(int timeDelay = 1000) {
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, this->pMessageDeleteRateLimit, Data.channelId, Data.id).get();
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &Message::messageDeleteRateLimit, Data.channelId, Data.id).get();
 				co_return;
 			};
 
@@ -105,35 +103,44 @@ namespace CommanderNS {
 			ClientDataTypes::MessageData Data;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
-			shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit;
+			static FoundationClasses::RateLimitation messageDeleteRateLimit;
 		};
 
-		class MessageManager {
+		class MessageManager: map<string, Message> {
 		public:
 			MessageManager() {};
 			MessageManager(string channelId, string guildId, com_ptr<RestAPI> pRestAPI) {
 				this->channelId = channelId;
 				this->guildId = guildId;
 				this->pRestAPI = pRestAPI;
-				this->messageDeleteRateLimit = make_shared<FoundationClasses::RateLimitation>();
-				this->messageGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
+			};
+			
+			task<Message> Fetch(string channelId, string messageId) {
+				ClientDataTypes::MessageData messageData;
+				DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
+				Message message(messageData, this->pRestAPI, &MessageManager::messageGetRateLimit, this);
+				this->insert(std::make_pair(messageId, message));
+				co_return message;
 			};
 
-			task<Message> Fetch(string channelId, string messageId) {
-				return concurrency::create_task([this, channelId, messageId] {
-					ClientDataTypes::MessageData messageData;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, this->messageGetRateLimit, this->channelId, messageId, &messageData).get();
-					Message message(messageData, this->pRestAPI, this->messageGetRateLimit, this);
-					return message;
-					});
-			};
+			task<Message> getMessage(string channelId, string messageId) {
+				Message currentMessage;
+				if (this->contains(messageId)) {
+					currentMessage = this->at(messageId);
+					co_return currentMessage;
+				}
+				else {
+					currentMessage = this->Fetch(channelId, messageId).get();
+					co_return currentMessage;
+				}
+			}
 
 			task<ClientClasses::Message> CreateMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
-					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->messageGetRateLimit, this->channelId, &messageData, createMessagePayload).get();
-					Message message(messageData, this->pRestAPI, this->messageDeleteRateLimit, this);
+					DataManipFunctions::postObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, &messageData, createMessagePayload).get();
+					Message message(messageData, this->pRestAPI, &MessageManager::messageDeleteRateLimit, this);
 					co_return message;
 				}
 				catch (exception error) {
@@ -147,8 +154,8 @@ namespace CommanderNS {
 			string guildId;
 			string channelId;
 			com_ptr<RestAPI> pRestAPI;
-			shared_ptr<FoundationClasses::RateLimitation> messageGetRateLimit;
-			shared_ptr<FoundationClasses::RateLimitation> messageDeleteRateLimit;
+			static FoundationClasses::RateLimitation messageGetRateLimit;
+			static FoundationClasses::RateLimitation messageDeleteRateLimit;
 		};
 
 		class GuildMember {
@@ -166,20 +173,19 @@ namespace CommanderNS {
 			GuildMemberManager(com_ptr<RestAPI> pRestAPI, string guildId) {
 				this->pRestAPI = pRestAPI;
 				this->guildId = guildId;
-				GuildMemberManager::guildMemberGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			}
 
 			task<GuildMember> Fetch(string guildMemberId) {
 					ClientDataTypes::GuildMemberData guildMemberData;
 					if (this->contains(guildMemberId)) {
 						guildMemberData = this->at(guildMemberId).Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, this->guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
 						GuildMember guildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
 						co_return guildMember;
 					}
 					else {
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, this->guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
 						GuildMember guildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
 						co_return guildMember;
@@ -201,7 +207,7 @@ namespace CommanderNS {
 			friend struct WebSocket;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			shared_ptr<FoundationClasses::RateLimitation> guildMemberGetRateLimit;
+			static FoundationClasses::RateLimitation guildMemberGetRateLimit;
 			string guildId;
 		};
 
@@ -225,20 +231,19 @@ namespace CommanderNS {
 			ChannelManager() {};
 			ChannelManager(com_ptr<RestAPI> pRestAPI) {
 				this->pRestAPI = pRestAPI;
-				ChannelManager::channelGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 
 			task<Channel> Fetch(string channelId) {
 					ClientDataTypes::ChannelData channelData;
 					if (this->contains(channelId)) {
 						channelData = this->at(channelId).Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, ChannelManager::channelGetRateLimit, channelId, &channelData).get();
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
 						Channel channel(channelData, this->pRestAPI);
 						this->insert(std::make_pair(channelId, channel));
 						co_return channel;
 					}
 					else {
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, ChannelManager::channelGetRateLimit, channelId, &channelData).get();
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
 						Channel channel(channelData, this->pRestAPI);
 						this->insert(std::make_pair(channelId, channel));
 						co_return channel;
@@ -260,7 +265,7 @@ namespace CommanderNS {
 		protected:
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			shared_ptr<FoundationClasses::RateLimitation> channelGetRateLimit;
+			static FoundationClasses::RateLimitation channelGetRateLimit;
 		};
 
 		class Guild {
@@ -290,20 +295,19 @@ namespace CommanderNS {
 			GuildManager() {};
 			GuildManager(com_ptr<RestAPI> pRestAPI) {
 				this->pRestAPI = pRestAPI;
-				GuildManager::guildGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 
 			task<Guild> Fetch(string guildId) {
 				ClientDataTypes::GuildData guildData;
 				if (this->contains(guildId)) {
 					guildData = this->at(guildId).Data;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildManager::guildGetRateLimit, guildId, &guildData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
 					Guild guild(guildData, this->pRestAPI);
 					this->insert(std::make_pair(guildId, guild));
 					co_return guild;
 				}
 				else {
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildManager::guildGetRateLimit, guildId, &guildData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
 					Guild guild(guildData, this->pRestAPI);
 					co_return guild;
 				}
@@ -323,7 +327,7 @@ namespace CommanderNS {
 		protected:
 			friend struct WebSocket;
 			friend struct Client;
-			shared_ptr<FoundationClasses::RateLimitation> guildGetRateLimit;
+			static FoundationClasses::RateLimitation guildGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
@@ -342,20 +346,19 @@ namespace CommanderNS {
 			UserManager() {};
 			UserManager(com_ptr<RestAPI> pRestAPI) {
 				this->pRestAPI = pRestAPI;
-				UserManager::userGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 
 			task<User> Fetch(string userId) {
 					ClientDataTypes::UserData userData;
 					try {
 						userData = this->at(userId).Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, UserManager::userGetRateLimit, userId, &userData).get();
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
 						User user(userData);
 						this->insert(std::make_pair(userId, user));
 						co_return user;
 					}
 					catch (std::exception error) {
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, UserManager::userGetRateLimit, userId, &userData).get();
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
 						User user(userData);
 						this->insert(std::make_pair(userId, user));
 						co_return user;
@@ -377,7 +380,7 @@ namespace CommanderNS {
 		protected:
 			friend struct WebSocket;
 			friend struct Client;
-			shared_ptr<FoundationClasses::RateLimitation> userGetRateLimit;
+			FoundationClasses::RateLimitation userGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
@@ -399,6 +402,13 @@ namespace CommanderNS {
 			friend class GuildManager;
 			friend struct WebSocket;
 		};
+		FoundationClasses::RateLimitation ReactionManager::reactionAddRemoveRateLimit;
+		FoundationClasses::RateLimitation Message::messageDeleteRateLimit;
+		FoundationClasses::RateLimitation GuildManager::guildGetRateLimit;
+		FoundationClasses::RateLimitation ChannelManager::channelGetRateLimit;
+		FoundationClasses::RateLimitation GuildMemberManager::guildMemberGetRateLimit;
+		FoundationClasses::RateLimitation MessageManager::messageGetRateLimit;
+		FoundationClasses::RateLimitation MessageManager::messageDeleteRateLimit;
 	};
 }
 #endif

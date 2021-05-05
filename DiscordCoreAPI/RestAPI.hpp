@@ -89,7 +89,7 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpGETData> httpGETObjectDataAsync(std::string relativeURL, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
+		task<httpGETData> httpGETObjectDataAsync(std::string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpGETData getData;
@@ -132,7 +132,7 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpPOSTData> httpPOSTObjectDataAsync(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
+		task<httpPOSTData> httpPOSTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpPOSTData postData;
@@ -183,7 +183,7 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpPUTData> httpPUTObjectDataAsync(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
+		task<httpPUTData> httpPUTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpPUTData putData;
@@ -234,8 +234,8 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpDELETEData> httpDELETEObjectDataAsync(string relativeURL, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
-			try {
+		task<httpDELETEData> httpDELETEObjectDataAsync(string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
+			try{
 				if (this != nullptr) {
 					httpDELETEData deleteData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
@@ -257,14 +257,17 @@ namespace CommanderNS {
 					else {
 						getsRemainingLocal = 0;
 					}
+					cout << "GETS REMAINING: " << getsRemainingLocal << endl;
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
 						msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
 						msRemainLocal = 250;
 					}
-					pRateLimitData->currentMsTime = currentMSTimeLocal;
+					cout << "MS REMAINING: " << msRemainLocal << endl;
+					cout << "CURRENT TIME: " << currentMSTimeLocal << endl;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
+					pRateLimitData->currentMsTime = currentMSTimeLocal;
 					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -274,6 +277,7 @@ namespace CommanderNS {
 					co_return deleteData;
 				}
 				else {
+					
 					co_return httpDELETEData();
 				}
 			}
