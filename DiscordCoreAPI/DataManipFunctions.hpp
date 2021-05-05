@@ -25,24 +25,26 @@ namespace CommanderNS {
 					if (pGetDataStruct->data.contains("message") && !pGetDataStruct->data.at("message").is_null()) {
 						string theValue = pGetDataStruct->data.at("message");
 						exception error(theValue.c_str());
-						cout << error.what();
-						checkRateLimitAndGetDataAsync(pRestAPI, pRateLimitData, relativePath, pGetDataStruct).get();
+						throw error;
 					}
 					co_return;
 				}
 				else {
-					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
-					while (timeRemaining > 0) {
+					float currentTimePassed = currentTime - pRateLimitData->currentMsTime;
+					timeRemaining = pRateLimitData->msRemain - currentTimePassed;
+					while (timeRemaining > 0.0f) {
 						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
+						currentTimePassed = currentTime - pRateLimitData->currentMsTime;
+						timeRemaining = pRateLimitData->msRemain - currentTimePassed;
 					}
 					*pGetDataStruct = pRestAPI->httpGETObjectDataAsync(relativePath, pRateLimitData).get();
 					if (pGetDataStruct->data.contains("message") && !pGetDataStruct->data.at("message").is_null()) {
 						string theValue = pGetDataStruct->data.at("message");
 						exception error(theValue.c_str());
-						cout << error.what();
-						checkRateLimitAndGetDataAsync(pRestAPI, pRateLimitData, relativePath, pGetDataStruct).get();
+						throw error;
 					}
 					co_return;
 				}
@@ -64,24 +66,26 @@ namespace CommanderNS {
 					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
 						string theValue = pPostDataStruct->data.at("message");
 						exception error(theValue.c_str());
-						cout << error.what();
-						checkRateLimitAndPostDataAsync(pRestAPI, pRateLimitData, relativePath, pPostDataStruct, content).get();
+						throw error;
 					}
 					co_return;
 				}
 				else {
-					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
-					while (timeRemaining > 0) {
+					float currentTimePassed = currentTime - pRateLimitData->currentMsTime;
+					timeRemaining = pRateLimitData->msRemain - currentTimePassed;
+					while (timeRemaining > 0.0f) {
 						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
+						currentTimePassed = currentTime - pRateLimitData->currentMsTime;
+						timeRemaining = pRateLimitData->msRemain - currentTimePassed;
 					}
 					*pPostDataStruct = pRestAPI->httpPOSTObjectDataAsync(relativePath, content, pRateLimitData).get();
 					if (pPostDataStruct->data.contains("message") && !pPostDataStruct->data.at("message").is_null()) {
 						string theValue = pPostDataStruct->data.at("message");
 						exception error(theValue.c_str());
-						cout << error.what();
-						checkRateLimitAndPostDataAsync(pRestAPI, pRateLimitData, relativePath, pPostDataStruct, content).get();
+						throw error;
 					}
 					co_return;
 				}
@@ -102,24 +106,17 @@ namespace CommanderNS {
 					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						string theValue = pPutDataStruct->data.at("message");
 						exception error(theValue.c_str());
-						cout << error.what();
-						checkRateLimitAndPutDataAsync(pRestAPI, pRateLimitData, relativePath, pPutDataStruct, content).get();
+						throw error;
 					}
 					co_return;
 				}
 				else {
-					int currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
-					while (timeRemaining > 0) {
-						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
-					}
+					
 					*pPutDataStruct = pRestAPI->httpPUTObjectDataAsync(relativePath, content, pRateLimitData).get();
 					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						string theValue = pPutDataStruct->data.at("message");
 						exception error(theValue.c_str());
-						cout << error.what();
-						checkRateLimitAndPutDataAsync(pRestAPI, pRateLimitData, relativePath, pPutDataStruct, content).get();
+						throw error;
 					}
 					co_return;
 				}
@@ -135,17 +132,12 @@ namespace CommanderNS {
 
 		IAsyncAction checkRateLimitAndDeleteDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpDELETEData* pDeleteDataStruct) {
 			try {
-				cout << "MS REMAINING 000: " << pRateLimitData->msRemain << endl;
-				cout << "CURRENT MS TIME 000: " << pRateLimitData->currentMsTime << endl;
 				if (pRateLimitData->getsRemaining > 0) {
 					*pDeleteDataStruct = pRestAPI->httpDELETEObjectDataAsync(relativePath, pRateLimitData).get();
 					if (pDeleteDataStruct->data.contains("message") && !pDeleteDataStruct->data.at("message").is_null()) {
 						string theValue = pDeleteDataStruct->data.at("message");
 						exception error(theValue.c_str());
-						cout << error.what();
-						checkRateLimitAndDeleteDataAsync(pRestAPI, pRateLimitData, relativePath, pDeleteDataStruct).get();
-						cout << "MS REMAINING 001: " << pRateLimitData->msRemain << endl;
-						cout << "CURRENT MS TIME 001: " << pRateLimitData->currentMsTime << endl;
+						throw error;
 					}
 					co_return;
 				}
@@ -154,25 +146,17 @@ namespace CommanderNS {
 					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
 					float currentTimePassed = currentTime - pRateLimitData->currentMsTime;
 					timeRemaining = pRateLimitData->msRemain - currentTimePassed;
-					cout << "MS REMAINING: " <<pRateLimitData->msRemain<< endl;
-					cout << "CURRENT MS TIME: " << pRateLimitData->currentMsTime << endl;
-					cout << "CURRENT TIME PASSED:  " << currentTimePassed<< endl;
-					cout << "TIME REMAINING: " << timeRemaining << endl;
 					while (timeRemaining > 0.0f) {
 						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
 						currentTimePassed = currentTime - pRateLimitData->currentMsTime;
 						timeRemaining = pRateLimitData->msRemain - currentTimePassed;
-						cout << "TIME REMAINING 02: " << timeRemaining << endl;
 					}
 					*pDeleteDataStruct = pRestAPI->httpDELETEObjectDataAsync(relativePath, pRateLimitData).get();
 					if (pDeleteDataStruct->data.contains("message") && !pDeleteDataStruct->data.at("message").is_null()) {
 						string theValue = pDeleteDataStruct->data.at("message");
 						exception error(theValue.c_str());
-						cout << error.what();
-						checkRateLimitAndDeleteDataAsync(pRestAPI, pRateLimitData, relativePath, pDeleteDataStruct).get();
-						cout << "MS REMAINING 002: " << pRateLimitData->msRemain << endl;
-						cout << "CURRENT MS TIME 002: " << pRateLimitData->currentMsTime << endl;
+						throw error;
 					}
 					co_return;
 				}
