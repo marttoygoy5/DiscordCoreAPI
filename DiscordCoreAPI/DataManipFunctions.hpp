@@ -111,7 +111,16 @@ namespace CommanderNS {
 					co_return;
 				}
 				else {
-					
+					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
+					float currentTimePassed = currentTime - pRateLimitData->currentMsTime;
+					timeRemaining = pRateLimitData->msRemain - currentTimePassed;
+					while (timeRemaining > 0.0f) {
+						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
+						currentTimePassed = currentTime - pRateLimitData->currentMsTime;
+						timeRemaining = pRateLimitData->msRemain - currentTimePassed;
+					}
 					*pPutDataStruct = pRestAPI->httpPUTObjectDataAsync(relativePath, content, pRateLimitData).get();
 					if (pPutDataStruct->data.contains("message") && !pPutDataStruct->data.at("message").is_null()) {
 						string theValue = pPutDataStruct->data.at("message");
