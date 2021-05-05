@@ -18,6 +18,8 @@ namespace CommanderNS {
 
 	namespace DataManipFunctions {
 
+		typedef string emojiNameString;
+
 		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
@@ -196,7 +198,7 @@ namespace CommanderNS {
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pChannelGetRateLimit, string id, ClientDataTypes::ChannelData* pDataStructure) {
 			critical_section critSection;
 			critSection.try_lock_for(pChannelGetRateLimit->msRemain + 50);
-			ClientDataTypes::ChannelData channelData = *pDataStructure; 
+			ClientDataTypes::ChannelData channelData = *pDataStructure;
 			string relativePath = "/channels/" + id;
 			httpGETData getData;
 			checkRateLimitAndGetDataAsync(pRestAPI, pChannelGetRateLimit, relativePath, &getData).get();
@@ -219,7 +221,21 @@ namespace CommanderNS {
 			*pDataStructure = guildMemberData;
 			critSection.unlock();
 			co_return;
-		}		
+		}
+
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageGetRateLimit, string channelId, string id, ClientDataTypes::MessageData* pDataStructure) {
+			critical_section critSection;
+			critSection.try_lock_for(pMessageGetRateLimit->msRemain + 50);
+			ClientDataTypes::MessageData messageData = *pDataStructure;
+			string relativePath = "/channels/" + channelId + "/messages/" + id;
+			httpGETData getData;
+			checkRateLimitAndGetDataAsync(pRestAPI, pMessageGetRateLimit, relativePath, &getData).get();
+			json jsonValue = getData.data;
+			DataParsingFunctions::parseObject(jsonValue, &messageData);
+			*pDataStructure = messageData;
+			critSection.unlock();
+			co_return;
+		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRoleGetRateLimit, string id, vector<ClientDataTypes::RoleData>* pDataStructure) {
 			critical_section critSection;
@@ -281,6 +297,16 @@ namespace CommanderNS {
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
 			httpDELETEData deleteData;
 			checkRateLimitAndDeleteDataAsync(pRestAPI, pMessageDeleteRateLimit, relativePath, &deleteData).get();
+			critSection.unlock();
+			co_return;
+		}
+
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionDeleteRateLimit, string channelId, string messageId, string userId, emojiNameString emoji){
+			critical_section critSection;
+			critSection.try_lock_for(pReactionDeleteRateLimit->msRemain + 50);
+			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/" + userId;
+			httpDELETEData deleteData;
+			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData);
 			critSection.unlock();
 			co_return;
 		}

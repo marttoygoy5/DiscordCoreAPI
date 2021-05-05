@@ -190,6 +190,24 @@ namespace CommanderNS {
 			co_return;
 		}
 
+		task<void> onMessageReactionAdd(json payload) {
+			ClientDataTypes::ReactionAddEventData reactionAddEventData;
+			DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
+			ClientDataTypes::ReactionData reactionData;
+			EventDataTypes::ReactionAddData reactionAddData;
+			reactionData.channelId = reactionAddEventData.channelId;
+			reactionData.emoji = reactionAddEventData.emoji;
+			reactionData.guildId = reactionAddEventData.guildId;
+			reactionData.member = reactionAddEventData.member;
+			reactionData.messageId = reactionAddEventData.messageId;
+			reactionData.userId = reactionAddEventData.userId;
+			ClientClasses::Reaction reaction(reactionData);
+			reactionAddData.reaction = reaction;
+			reactionAddData.threadContext = this->pSystemThreads->Threads.at(3);
+			this->pEventMachine->onReactionAddEvent(reactionAddData);
+			co_return;
+		}
+
 		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
 				DataReader dataReader{ args.GetDataReader() };
@@ -212,15 +230,19 @@ namespace CommanderNS {
 				if (payload.at("t") == "GUILD_CREATE") {
 					this->onGuildCreate(payload.at("d"));
 					return;
-				}
+				}								
 
+				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
+					onMessageReactionAdd(payload);
+				}
+				
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
-					cout << payload.at("d") << endl;
 					ClientDataTypes::GuildMemberData guildMemberData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, ClientClasses::GuildMemberManager::guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("user").at("id"), &guildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
+					guildMemberAddData.threadContext = this->pSystemThreads->Threads.at(2);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 
@@ -262,7 +284,7 @@ namespace CommanderNS {
 					std::string identity = JSONifier::getIdentifyPayload(winrt::to_string(this->botToken), this->intentsValue);
 					this->sendAsync(identity);
 				}
-
+				
 				std::cout << "Message received from MessageWebSocket: " << winrt::to_string(message) << std::endl << std::endl;
 			}
 			catch (winrt::hresult_error const& ex) {

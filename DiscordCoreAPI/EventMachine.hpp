@@ -21,8 +21,8 @@ namespace CommanderNS {
 		winrt::event_token onGuildMemberAdd(winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData> const& handler) {
 			return onGuildMemberAddEvent.add(handler);
 		}
-		void onGuildMemberAdd(winrt::event_token const& token) {
 
+		void onGuildMemberAdd(winrt::event_token const& token) {
 			onGuildMemberAddEvent.remove(token);
 		}
 
@@ -34,6 +34,14 @@ namespace CommanderNS {
 			onMessageCreationEvent.remove(token);
 		}
 
+		winrt::event_token onReactionAdd(winrt::delegate<CommanderNS::EventDataTypes::ReactionAddData> const& handler) {
+			return onReactionAddEvent.add(handler);
+		}
+
+		void onReactionAdd(winrt::event_token const& token) {
+			onReactionAddEvent.remove(token);
+		}
+
 	protected:
 
 		friend struct WebSocket;
@@ -41,6 +49,8 @@ namespace CommanderNS {
 		winrt::event < winrt::delegate<CommanderNS::EventDataTypes::MessageCreationData>> onMessageCreationEvent;
 
 		winrt::event < winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData>> onGuildMemberAddEvent;
+
+		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::ReactionAddData>> onReactionAddEvent;
 	};
 }
 #endif

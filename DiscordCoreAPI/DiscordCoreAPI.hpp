@@ -70,25 +70,22 @@ namespace CommanderNS {
 		}
 
 		task<void> run() {
-			co_await resume_foreground(*this->systemThreads->Threads.at(3).threadQueue.get());
 			this->connect();
-			int value = 0;
 			while (DiscordCoreAPI::doWeQuit == false) {
-				value += 1;
-				CommanderNS::ClientClasses::Guild guild = this->Client.Guilds.Fetch("782757641540730900").get();
-				cout << guild.Members.GetGuildMember("821912684878364723").get().Data.user.username << endl;
+				//CommanderNS::ClientClasses::Guild guild = this->Client.Guilds.Fetch("782757641540730900").get();
+//				cout << guild.Members.GetGuildMember("821912684878364723").get().Data.user.username << endl;
 				vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				shared_ptr<FoundationClasses::RateLimitation>rateLimitData = make_shared<FoundationClasses::RateLimitation>();
 				ClientDataTypes::GuildData guildData;
-				DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
+				//DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
 				for (unsigned int x = 0; x < roleData.size(); x += 1) {
 					//cout << roleData.at(x).name << endl;
 				}
-				cout << "Name: " << this->Client.Guilds.Fetch("782757641540730900").get().Members.Fetch("644754671088566275").get().Data.user.username << endl;
+				//cout << "Name: " << this->Client.Guilds.Fetch("782757641540730900").get().Members.Fetch("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
-		}
 
+		}
 		task<void> loginToWrap() {
 			this->run().get();
 		}

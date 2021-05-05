@@ -14,14 +14,22 @@
 #include "SystemThreads.hpp"
 
 namespace CommanderNS {
+
 	namespace EventDataTypes {
+
 		struct GuildMemberAddData {
-			std::string guildId;
 			ClientClasses::GuildMember guildMember;
+			std::string guildId;
+			ThreadContext threadContext;
 		};
 
 		struct MessageCreationData {
 			ClientClasses::Message message;
+			ThreadContext threadContext;
+		};
+
+		struct ReactionAddData {
+			ClientClasses::Reaction reaction;
 			ThreadContext threadContext;
 		};
 	}

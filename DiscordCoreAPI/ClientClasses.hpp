@@ -24,20 +24,10 @@ namespace CommanderNS {
 		class Reaction {
 		public:
 			Reaction() {};
-			Reaction(string name, string messageId, string channelId, string userId) {
-				this->Data.emoji.requireColons = true;
-				this->Data.emoji.name = name;
-				this->name = name;
-				this->messageId = messageId;
-				this->channelId = channelId;
-				this->userId = userId;
+			Reaction(ClientDataTypes::ReactionData data) {
+				this->Data = data;
 			};
 			ClientDataTypes::ReactionData Data;
-		protected:
-			string name;
-			string messageId;
-			string channelId;
-			string userId;
 		};
 
 		class ReactionManager: map<string, Reaction> {
@@ -48,7 +38,7 @@ namespace CommanderNS {
 				this->channelId = channelId;
 				this->pRestAPI = pRestAPI;
 				this->messageId = messageId;
-				ReactionManager::reactionAddRateLimit = make_shared<FoundationClasses::RateLimitation>();
+				ReactionManager::reactionAddRemoveRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 			ClientDataTypes::ReactionData reactionData;
 
@@ -66,12 +56,30 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, ReactionManager::reactionAddRateLimit, this->channelId, this->messageId, emojiEncoded).get();
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, ReactionManager::reactionAddRemoveRateLimit, this->channelId, this->messageId, emojiEncoded).get();
 				co_return;
 			};
 
+			task<void> DeleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
+				string emoji;
+				if (deleteReactionData.emojiId != string()) {
+					emoji += ":" + deleteReactionData.emojiName + ":" + deleteReactionData.emojiId;
+				}
+				else {
+					emoji = deleteReactionData.emojiName;
+				}
+				CURL* curl = curl_easy_init();
+				char* output = nullptr;
+				if (curl) {
+					output = curl_easy_escape(curl, emoji.c_str(), 0);
+				}
+				string emojiEncoded = output;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, this->reactionAddRemoveRateLimit, this->channelId, this->messageId, deleteReactionData.userId, emojiEncoded).get();
+				co_return;
+			}
+
 		protected:
-			static shared_ptr<FoundationClasses::RateLimitation> reactionAddRateLimit;
+			static shared_ptr<FoundationClasses::RateLimitation> reactionAddRemoveRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 			string channelId;
 			string messageId;
@@ -110,6 +118,15 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 				MessageManager::messageDeleteRateLimit = make_shared<FoundationClasses::RateLimitation>();
 				MessageManager::messageGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
+			};
+
+			task<Message> Fetch(string channelId, string messageId) {
+				return concurrency::create_task([this, channelId, messageId] {
+					ClientDataTypes::MessageData messageData;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, this->messageGetRateLimit, this->channelId, messageId, &messageData).get();
+					Message message(messageData, this->pRestAPI, this->messageGetRateLimit, this);
+					return message;
+					});
 			};
 
 			task<ClientClasses::Message> CreateMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
@@ -404,7 +421,7 @@ namespace CommanderNS {
 
 		shared_ptr<FoundationClasses::RateLimitation> GuildMemberManager::guildMemberGetRateLimit;
 		shared_ptr<FoundationClasses::RateLimitation> MessageManager::messageDeleteRateLimit;
-		shared_ptr<FoundationClasses::RateLimitation> ReactionManager::reactionAddRateLimit;
+		shared_ptr<FoundationClasses::RateLimitation> ReactionManager::reactionAddRemoveRateLimit;
 		shared_ptr<FoundationClasses::RateLimitation> MessageManager::messageGetRateLimit;
 		shared_ptr<FoundationClasses::RateLimitation> ChannelManager::channelGetRateLimit;
 		shared_ptr<FoundationClasses::RateLimitation> GuildManager::guildGetRateLimit;

@@ -404,6 +404,11 @@ namespace CommanderNS {
             int count;
             bool me;
             EmojiData emoji;
+            string userId;
+            string channelId;
+            string messageId;
+            string guildId;
+            GuildMemberData member;
         };
 
         struct MessageActivityData {
@@ -521,6 +526,15 @@ namespace CommanderNS {
             string id;
         };
 
+        struct ReactionAddEventData {
+            string userId;
+            string channelId;
+            string messageId;
+            string guildId;
+            GuildMemberData member;
+            EmojiData emoji;
+        };
+
         struct CreateMessageData {
             string content;
             int nonce;
@@ -528,6 +542,14 @@ namespace CommanderNS {
             EmbedData embed;
             AllowedMentionsData allowedMentions;
             MessageReferenceData messageReference;
+        };
+
+        struct DeleteReactionData {
+            string channelId;
+            string messageId;
+            string emojiName;
+            string emojiId;
+            string userId;
         };
 	}
 }

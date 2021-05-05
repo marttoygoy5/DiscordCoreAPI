@@ -391,9 +391,9 @@ namespace CommanderNS {
 
             if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
                 std::string theValue = jsonObjectData.at("name");
-                emojiData.id = theValue;
+                emojiData.name = theValue;
             }
-
+            
             if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
                 json roles = jsonObjectData.at("roles");
                 for (unsigned int x = 0; x < roles.size(); x += 1) {
@@ -415,7 +415,7 @@ namespace CommanderNS {
                     }
                 }
             }
-
+            
             if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
                 ClientDataTypes::UserData theUser = emojiData.user;
                 parseObject(jsonObjectData.at("user"), &theUser);
@@ -1979,6 +1979,44 @@ namespace CommanderNS {
             *pDataStructure = interactionData;
         }
 
+        void parseObject(json jsonObjectData, ClientDataTypes::ReactionAddEventData* pDataStructure) {
+            ClientDataTypes::ReactionAddEventData reactionAddData = *pDataStructure;
+            
+            if (jsonObjectData.contains("user_id") && !jsonObjectData.at("user_id").is_null()) {
+                std::string theValue = jsonObjectData.at("user_id");
+                reactionAddData.userId = theValue;
+            }
+
+            if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
+                std::string theValue = jsonObjectData.at("channel_id");
+                reactionAddData.channelId = theValue;
+            }
+
+            if (jsonObjectData.contains("message_id") && !jsonObjectData.at("message_id").is_null()) {
+                std::string theValue = jsonObjectData.at("message_id");
+                reactionAddData.messageId = theValue;
+            }
+
+            if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
+                std::string theValue = jsonObjectData.at("guild_id");
+                reactionAddData.guildId = theValue;
+            }
+
+            if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
+                ClientDataTypes::GuildMemberData theValue = reactionAddData.member;
+                parseObject(jsonObjectData.at("member"), &theValue);
+                reactionAddData.member = theValue;
+            }
+
+            if (jsonObjectData.contains("emoji") && !jsonObjectData.at("emoji").is_null()) {
+                ClientDataTypes::EmojiData theValue = reactionAddData.emoji;
+                parseObject(jsonObjectData.at("emoji"), &theValue);
+                reactionAddData.emoji = theValue;
+            }
+
+            *pDataStructure = reactionAddData;
+        }
+
         void parseObject(json jsonObjectData, ClientDataTypes::MessageData* pDataStructure) {
             ClientDataTypes::MessageData messageData = *pDataStructure;
 
@@ -2226,7 +2264,6 @@ namespace CommanderNS {
             }
             
             *pDataStructure = messageData;
-            
         }
 	}
 };
