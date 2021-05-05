@@ -145,13 +145,14 @@ namespace CommanderNS {
 			this->sendHeartBeat();
 		}
 
-		fire_and_forget onGuildCreate(json guildUpdateData) {
+		fire_and_forget onGuildCreate(json payload) {
 			co_await resume_background();
 			CommanderNS::ClientDataTypes::GuildData guildData;
-			string id = guildUpdateData.at("id");
-			CommanderNS::DataParsingFunctions::parseObject(guildUpdateData, &guildData);
+			string id = payload.at("d").at("id");
+			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
 			ClientClasses::Guild guild(guildData, this->pRestAPI);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
+			cout << "GUILD: " << guild.Data.ownerID << endl;
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user);
 				this->pClient->Users.insert(make_pair(user.Data.id, user));
@@ -186,8 +187,8 @@ namespace CommanderNS {
 			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &this->pClient->Guilds.at(messageData.guildId).Channels.Fetch(messageData.channelId).get().messageManager->messageDeleteRateLimit, pMessageManager);
 			messageCreationData.threadContext = this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
-			co_return;		}
-
+			co_return;
+		}
 
 		task<void> onMessageReactionAdd(json payload) {
 			try{
@@ -233,8 +234,7 @@ namespace CommanderNS {
 				}
 
 				if (payload.at("t") == "GUILD_CREATE") {
-					onGuildCreate(payload.at("d"));
-					return;
+					onGuildCreate(payload);
 				}								
 
 				if (payload.at("t") == "MESSAGE_REACTION_ADD") {

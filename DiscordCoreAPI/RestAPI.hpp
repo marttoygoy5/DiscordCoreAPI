@@ -18,41 +18,20 @@ namespace CommanderNS {
 		json data;
 	};
 
-	struct getWorkload {
-		std::function<void(void)> function;
-	};
-
 	struct httpPOSTData {
 		json data;
-	};
-
-	struct postWorkload {
-		std::function<void(void)> function;
 	};
 
 	struct httpPUTData {
 		json data;
 	};
 
-	struct putWorkload {
-		std::function<void(void)> function;
-	};
-
 	struct httpDELETEData {
 		json data;
 	};
 
-	struct deleteWorkload {
-		std::function<void(void)> function;
-	};
-
 	struct RestAPI : implements<RestAPI, winrt::Windows::Foundation::IInspectable> {
 	public:
-
-		vector<putWorkload> httpPUTQueue;
-		vector<getWorkload> httpGETQueue;
-		vector<postWorkload> httpPOSTQueue;
-		vector<deleteWorkload> httpDELETEQueue;
 
 		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
 			try {
@@ -257,15 +236,12 @@ namespace CommanderNS {
 					else {
 						getsRemainingLocal = 0;
 					}
-					cout << "GETS REMAINING: " << getsRemainingLocal << endl;
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
 						msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
 					}
 					else {
 						msRemainLocal = 250;
 					}
-					cout << "MS REMAINING: " << msRemainLocal << endl;
-					cout << "CURRENT TIME: " << currentMSTimeLocal << endl;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
 					pRateLimitData->currentMsTime = currentMSTimeLocal;
 					pRateLimitData->msRemain = msRemainLocal;

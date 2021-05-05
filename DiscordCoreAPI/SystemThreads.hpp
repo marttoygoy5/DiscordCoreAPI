@@ -35,12 +35,10 @@ namespace CommanderNS {
                 DQTYPE_THREAD_CURRENT,
                 DQTAT_COM_STA
             };
-
             ABI::Windows::System::IDispatcherQueueController* ptrNew{};
             winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));
             DispatcherQueueController queueController = { ptrNew, take_ownership_from_abi };
             mainThreadContext.threadQueue = make_shared<DispatcherQueue>(queueController.DispatcherQueue());
-
             SchedulerPolicy policy;
             policy.SetConcurrencyLimits(1, 1);
             policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);

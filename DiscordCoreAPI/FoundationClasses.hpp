@@ -13,9 +13,9 @@ namespace CommanderNS {
 	namespace FoundationClasses {
 
 		struct RateLimitation {
-			int msRemain = 0;
+			int msRemain = 1;
 			int getsRemaining = 1;
-			int currentMsTime = 0;
+			int currentMsTime = 1;
 		};
 	};
 };
