@@ -18,7 +18,16 @@ namespace CommanderNS {
 
 	namespace DataManipFunctions {
 
-		typedef string emojiNameString;
+		task<FoundationClasses::RateLimitation> RateLimitWrapper(shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
+			critical_section critSection;
+			critSection.lock();
+			FoundationClasses::RateLimitation rateLimitData;
+			rateLimitData.currentMsTime = pRateLimitData->currentMsTime;
+			rateLimitData.getsRemaining = pRateLimitData->getsRemaining;
+			rateLimitData.msRemain = pRateLimitData->msRemain;
+			critSection.unlock();
+			co_return rateLimitData;
+		}
 
 		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
 			try {
@@ -301,12 +310,12 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionDeleteRateLimit, string channelId, string messageId, string userId, emojiNameString emoji){
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionDeleteRateLimit, string channelId, string messageId, string userId, string emoji){
 			critical_section critSection;
 			critSection.try_lock_for(pReactionDeleteRateLimit->msRemain + 50);
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/" + userId;
 			httpDELETEData deleteData;
-			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData);
+			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
 			critSection.unlock();
 			co_return;
 		}

@@ -27,7 +27,8 @@ namespace CommanderNS {
 	protected:
 
 		friend struct DiscordCoreAPI;
-		SystemThreads* pSystemThreads;
+
+		com_ptr<SystemThreads> pSystemThreads;
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
 		ClientClasses::Client* pClient = nullptr;
@@ -46,9 +47,7 @@ namespace CommanderNS {
 		DispatcherQueue dispatchQueueForHB = nullptr;
 		DispatcherQueueTimer heartbeatTimer = nullptr;
 
-		FoundationClasses::RateLimitation guildMemberGetRateLimit;
-
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, SystemThreads* pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
 			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
@@ -184,28 +183,34 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, this->pClient->Guilds.at(messageData.guildId).Channels.Fetch(messageData.channelId).get().messageManager->messageDeleteRateLimit, pMessageManager);
 			messageCreationData.threadContext = this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
 		}
 
 		task<void> onMessageReactionAdd(json payload) {
-			ClientDataTypes::ReactionAddEventData reactionAddEventData;
-			DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
-			ClientDataTypes::ReactionData reactionData;
-			EventDataTypes::ReactionAddData reactionAddData;
-			reactionData.channelId = reactionAddEventData.channelId;
-			reactionData.emoji = reactionAddEventData.emoji;
-			reactionData.guildId = reactionAddEventData.guildId;
-			reactionData.member = reactionAddEventData.member;
-			reactionData.messageId = reactionAddEventData.messageId;
-			reactionData.userId = reactionAddEventData.userId;
-			ClientClasses::Reaction reaction(reactionData);
-			reactionAddData.reaction = reaction;
-			reactionAddData.threadContext = this->pSystemThreads->Threads.at(3);
-			this->pEventMachine->onReactionAddEvent(reactionAddData);
-			co_return;
+			try{
+				co_await resume_foreground(*this->pSystemThreads->Threads.at(3).threadQueue.get());
+				ClientDataTypes::ReactionAddEventData reactionAddEventData;
+				DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
+				ClientDataTypes::ReactionData reactionData;
+				EventDataTypes::ReactionAddData reactionAddData;
+				reactionData.channelId = reactionAddEventData.channelId;
+				reactionData.emoji = reactionAddEventData.emoji;
+				reactionData.guildId = reactionAddEventData.guildId;
+				reactionData.member = reactionAddEventData.member;
+				reactionData.messageId = reactionAddEventData.messageId;
+				reactionData.userId = reactionAddEventData.userId;
+				ClientClasses::Reaction reaction(reactionData);
+				reactionAddData.reaction = reaction;
+				reactionAddData.threadContext = this->pSystemThreads->Threads.at(3);
+				this->pEventMachine->onReactionAddEvent(reactionAddData);
+				co_return;
+			}
+			catch (exception error) {
+				cout << "Error: " << error.what() << endl;
+			}
 		}
 
 		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
@@ -238,7 +243,7 @@ namespace CommanderNS {
 				
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					ClientDataTypes::GuildMemberData guildMemberData;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, ClientClasses::GuildMemberManager::guildMemberGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("user").at("id"), &guildMemberData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, this->pClient->Guilds.guildGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("user").at("id"), &guildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);

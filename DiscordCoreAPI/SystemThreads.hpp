@@ -18,7 +18,7 @@ namespace CommanderNS {
         shared_ptr<DispatcherQueue> threadQueue{ nullptr };
     };
     
-    class SystemThreads  {
+    struct SystemThreads : implements<SystemThreads, winrt::Windows::Foundation::IInspectable> {
     public:
 
         apartment_context mainThread;

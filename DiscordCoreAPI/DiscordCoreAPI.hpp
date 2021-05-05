@@ -30,12 +30,12 @@ namespace CommanderNS {
 
 		ClientClasses::Client Client;
 		com_ptr<EventMachine> eventMachine{ nullptr };
-		SystemThreads* systemThreads{ nullptr };
+		com_ptr<SystemThreads> systemThreads{ nullptr };
 
 		static bool doWeQuit;
 
 		DiscordCoreAPI(hstring botToken) {
-			this->systemThreads = new SystemThreads;
+			this->systemThreads = make_self<SystemThreads>();
 			this->systemThreads->initialize().get();
 			this->pWebSocket = winrt::make_self<WebSocket>();
 			this->botToken = botToken;
