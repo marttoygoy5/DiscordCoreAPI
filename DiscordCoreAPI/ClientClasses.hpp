@@ -42,11 +42,11 @@ namespace CommanderNS {
 
 			task<void> AddReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
 				string emoji;
-				if (createReactionData.id != string()) {
-					emoji += ":" + createReactionData.name + ":" + createReactionData.id;
+				if (createReactionData.emojiId != string()) {
+					emoji += ":" + createReactionData.emojiName + ":" + createReactionData.emojiId;
 				}
 				else {
-					emoji = createReactionData.name;
+					emoji = createReactionData.emojiName;
 				}
 				CURL* curl = curl_easy_init();
 				char* output = nullptr;
@@ -76,9 +76,27 @@ namespace CommanderNS {
 				co_return;
 			}
 
+			task<void> DeleteOwnReaction(ClientDataTypes::DeleteReactionData deleteReactionData) {
+				string emoji;
+				if (deleteReactionData.emojiId != string()) {
+					emoji += ":" + deleteReactionData.emojiName + ":" + deleteReactionData.emojiId;
+				}
+				else {
+					emoji = deleteReactionData.emojiName;
+				}
+				CURL* curl = curl_easy_init();
+				char* output = nullptr;
+				if (curl) {
+					output = curl_easy_escape(curl, emoji.c_str(), 0);
+				}
+				string emojiEncoded = output;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->channelId, this->messageId, deleteReactionData.userId, emojiEncoded).get();
+				co_return;
+			}
+
 		protected:
-			static FoundationClasses::RateLimitation reactionAddRemoveRateLimit;
 			com_ptr<RestAPI> pRestAPI;
+			static FoundationClasses::RateLimitation reactionAddRemoveRateLimit;
 			string channelId;
 			string messageId;
 		};
@@ -256,7 +274,7 @@ namespace CommanderNS {
 					co_return this->at(channelId);
 				}
 				else {
-					cout << "Sorry, but they aren't here!" << endl;
+					cout << "GetChannel() Error: Sorry, but they aren't here!" << endl;
 					Channel channel;
 					co_return channel;
 				}
@@ -290,7 +308,6 @@ namespace CommanderNS {
 		};
 
 		class GuildManager : map<string, Guild> {
-
 		public:
 			GuildManager() {};
 			GuildManager(com_ptr<RestAPI> pRestAPI) {
@@ -318,7 +335,7 @@ namespace CommanderNS {
 						co_return this->at(guildId);
 					}
 					else {
-						cout << "Sorry, but they aren't here! " << endl;
+						cout << "GetGuild() Error: Sorry, but they aren't here! " << endl;
 						Guild guild;
 						co_return guild;
 					}
@@ -391,14 +408,25 @@ namespace CommanderNS {
 				this->Guilds = GuildManager(pRestAPI);
 				this->Users = UserManager(pRestAPI);
 				this->User = User;
+				this->pRestAPI = pRestAPI;
+				this->GetCurrentUser();
+				cout << this->User.Data.avatarURL() << endl;
 			};
 			~Client() {};
 			User User;
 			UserManager Users;
 			GuildManager Guilds;
 
-		protected:
+			task<void> GetCurrentUser() {
+				ClientDataTypes::UserData userData;
+				DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->Users.userGetRateLimit, &userData).get();
+				ClientClasses::User user(userData);
+				this->User = user;
+				co_return;
+			}
 
+		protected:
+			com_ptr<RestAPI> pRestAPI;
 			friend class GuildManager;
 			friend struct WebSocket;
 		};

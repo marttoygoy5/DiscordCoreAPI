@@ -89,6 +89,11 @@ namespace CommanderNS {
             int flags = 0;
             int premium_type = 0;
             int public_flags = 0;
+            string avatarURL(){
+                string urlString = "https://cdn.discordapp.com/avatars/" +
+                    this->id + "/" + this->avatar + ".png";
+                return urlString;
+            }
         };
 
         struct GuildMemberData {
@@ -522,8 +527,8 @@ namespace CommanderNS {
         };
 
         struct CreateReactionData {
-            string name;
-            string id;
+            string emojiName;
+            string emojiId;
         };
 
         struct ReactionAddEventData {
@@ -545,8 +550,13 @@ namespace CommanderNS {
         };
 
         struct DeleteReactionData {
-            string channelId;
-            string messageId;
+            string emojiName;
+            string emojiId;
+            string userId;
+        };
+
+        struct DeleteOwnReactionData {
+            string encodedEmoji;
             string emojiName;
             string emojiId;
             string userId;

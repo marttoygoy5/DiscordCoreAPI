@@ -152,7 +152,6 @@ namespace CommanderNS {
 			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
 			ClientClasses::Guild guild(guildData, this->pRestAPI);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
-			cout << "GUILD: " << guild.Data.ownerID << endl;
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user);
 				this->pClient->Users.insert(make_pair(user.Data.id, user));
@@ -235,6 +234,7 @@ namespace CommanderNS {
 
 				if (payload.at("t") == "GUILD_CREATE") {
 					onGuildCreate(payload);
+					return;
 				}								
 
 				if (payload.at("t") == "MESSAGE_REACTION_ADD") {

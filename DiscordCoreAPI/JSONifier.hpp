@@ -102,7 +102,15 @@ namespace CommanderNS {
 				{"embed" , 
 							{
 								{"timestamp",createMessageData.embed.timestamp},
+								{"type",createMessageData.embed.type},
+								{"url",createMessageData.embed.url},
 				{"title", createMessageData.embed.title},
+				{"video", {
+					{"height", createMessageData.embed.video.height},
+					{"width", createMessageData.embed.video.width},
+					{"url", createMessageData.embed.video.url},
+					{"proxy_url", createMessageData.embed.video.proxyUrl},
+			}},
 				{"author", {
 							{"icon_url", createMessageData.embed.author.iconUrl},
 							{"name", createMessageData.embed.author.name},
@@ -131,8 +139,7 @@ namespace CommanderNS {
 						{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
 						{"text", createMessageData.embed.footer.text}
 			}},
-					{"title", "Hello, Embed!"},
-					{"description" , "This is an embedded message."},
+					{"description" , createMessageData.embed.description},
 					{"fields", fields},
 					{"color",colorValue}
 			}} 

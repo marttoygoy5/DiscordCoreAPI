@@ -167,6 +167,17 @@ namespace CommanderNS {
 			}
 		}
 
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pUserGetRateLimit, ClientDataTypes::UserData* pDataStructure) {
+			ClientDataTypes::UserData userData = *pDataStructure;
+			string relativePath = "/users/@me";
+			httpGETData getData;
+			checkRateLimitAndGetDataAsync(pRestAPI, pUserGetRateLimit, relativePath, &getData).get();
+			json jsonValue = getData.data;
+			DataParsingFunctions::parseObject(jsonValue, &userData);
+			*pDataStructure = userData;
+			co_return;
+		}
+
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pUserGetRateLimit, string id, ClientDataTypes::UserData* pDataStructure) {
 			ClientDataTypes::UserData userData = *pDataStructure;
 			string relativePath = "/users/" + id;
@@ -276,6 +287,13 @@ namespace CommanderNS {
 
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionDeleteRateLimit, string channelId, string messageId, string userId, string emoji){
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/" + userId;
+			httpDELETEData deleteData;
+			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
+			co_return;
+		}
+
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionDeleteRateLimit,string channelId, string messageId, ClientDataTypes::DeleteOwnReactionData pDeleteData) {
+			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + pDeleteData.encodedEmoji + "/@me";
 			httpDELETEData deleteData;
 			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
 			co_return;
