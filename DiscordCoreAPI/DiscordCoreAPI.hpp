@@ -28,7 +28,7 @@ namespace CommanderNS {
 
 	public:
 
-		ClientClasses::Client Client;
+		com_ptr<ClientClasses::Client> Client{ nullptr };
 		com_ptr<EventMachine> eventMachine{ nullptr };
 		com_ptr<SystemThreads> systemThreads{ nullptr };
 
@@ -40,9 +40,9 @@ namespace CommanderNS {
 			this->pWebSocket = winrt::make_self<WebSocket>();
 			this->botToken = botToken;
 			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocket->socketPath);
-			this->Client = ClientClasses::Client(this->pRestAPI);
+			this->Client = make_self<ClientClasses::Client>(this->pRestAPI);
 			this->eventMachine = make_self<EventMachine>();
-			this->pWebSocket->initialize(botToken, this->eventMachine, this->systemThreads, this->pRestAPI, &this->Client);
+			this->pWebSocket->initialize(botToken, this->eventMachine, this->systemThreads, this->pRestAPI, this->Client);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
@@ -56,17 +56,17 @@ namespace CommanderNS {
 			task_handle taskHandle = make_task([this]() {this->loginToWrap().get(); });
 			this->systemThreads->Threads.at(1).taskGroup->run_and_wait(taskHandle);
 			co_return;
-		}
-		*/
+		}		*/
+
 	protected:
 		hstring baseURL = L"https://discord.com/api/v9";
 		hstring botToken;
-		com_ptr<WebSocket> pWebSocket;
-		com_ptr<RestAPI> pRestAPI;
+		com_ptr<WebSocket> pWebSocket{ nullptr };
+		com_ptr<RestAPI> pRestAPI{ nullptr };
 
 		void connect() {
-			try {
 				this->pWebSocket->connectAsync().get();
+			try {
 			}
 			catch (winrt::hresult result) {
 
@@ -77,19 +77,19 @@ namespace CommanderNS {
 		task<void> run() {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				CommanderNS::ClientClasses::Guild guild = this->Client.Guilds.GetGuild("782757641540730900").get();
-				cout << guild.Members.GetGuildMember("821912684878364723").get().Data.user.username << endl;
+				cout << this_thread::get_id() << endl;
+				CommanderNS::ClientClasses::Guild guild = this->Client->Guilds.GetGuild("782757641540730900").get();
+				//cout << guild.Members.GetGuildMember("821912684878364723").get().Data.user.username << endl;
 				vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				shared_ptr<FoundationClasses::RateLimitation>rateLimitData = make_shared<FoundationClasses::RateLimitation>();
 				ClientDataTypes::GuildData guildData;
-				DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
+				//DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
 				for (unsigned int x = 0; x < roleData.size(); x += 1) {
 					cout << roleData.at(x).name << endl;
 				}
-				cout << "Name: " << this->Client.Guilds.GetGuild("782757641540730900").get().Members.GetGuildMember("644754671088566275").get().Data.user.username << endl;
+				//cout << "Name: " << this->Client->Guilds.GetGuild("782757641540730900").get().Members.GetGuildMember("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
-
 		}
 		void loginToWrap() {
 			this->run().get();

@@ -18,20 +18,41 @@ namespace CommanderNS {
 		json data;
 	};
 
+	struct getWorkload {
+		std::function<void(void)> function;
+	};
+
 	struct httpPOSTData {
 		json data;
+	};
+
+	struct postWorkload {
+		std::function<void(void)> function;
 	};
 
 	struct httpPUTData {
 		json data;
 	};
 
+	struct putWorkload {
+		std::function<void(void)> function;
+	};
+
 	struct httpDELETEData {
 		json data;
 	};
 
+	struct deleteWorkload {
+		std::function<void(void)> function;
+	};
+
 	struct RestAPI : implements<RestAPI, winrt::Windows::Foundation::IInspectable> {
 	public:
+
+		vector<putWorkload> httpPUTQueue;
+		vector<getWorkload> httpGETQueue;
+		vector<postWorkload> httpPOSTQueue;
+		vector<deleteWorkload> httpDELETEQueue;
 
 		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
 			try {
@@ -68,7 +89,7 @@ namespace CommanderNS {
 			}
 		}
 
-		httpGETData httpGETObjectData(std::string relativeURL, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
+		task<httpGETData> httpGETObjectDataAsync(std::string relativeURL, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpGETData getData;
@@ -100,10 +121,10 @@ namespace CommanderNS {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					}
 					getData.data = jsonValue;
-					return getData;
+					co_return getData;
 				}
 				else {
-					return httpGETData();
+					co_return httpGETData();
 				}
 			}
 			catch (winrt::hresult_error error) {
@@ -111,7 +132,7 @@ namespace CommanderNS {
 			}
 		}
 
-		httpPOSTData httpPOSTObjectData(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
+		task<httpPOSTData> httpPOSTObjectDataAsync(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpPOSTData postData;
@@ -151,10 +172,10 @@ namespace CommanderNS {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					}
 					postData.data = jsonValue;
-					return postData;
+					co_return postData;
 				}
 				else {
-					return httpPOSTData();
+					co_return httpPOSTData();
 				}
 			}
 			catch (winrt::hresult_error error) {
@@ -162,7 +183,7 @@ namespace CommanderNS {
 			}
 		}
 
-		httpPUTData httpPUTObjectData(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
+		task<httpPUTData> httpPUTObjectDataAsync(string relativeURL, string content, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpPUTData putData;
@@ -202,10 +223,10 @@ namespace CommanderNS {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					}
 					putData.data = jsonValue;
-					return putData;
+					co_return putData;
 				}
 				else {
-					return httpPUTData();
+					co_return httpPUTData();
 				}
 			}
 			catch (winrt::hresult_error error) {
@@ -213,7 +234,7 @@ namespace CommanderNS {
 			}
 		}
 
-		httpDELETEData httpDELETEObjectData(string relativeURL, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
+		task<httpDELETEData> httpDELETEObjectDataAsync(string relativeURL, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpDELETEData deleteData;
@@ -250,10 +271,10 @@ namespace CommanderNS {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 					}
 					deleteData.data = jsonValue;
-					return deleteData;
+					co_return deleteData;
 				}
 				else {
-					return httpDELETEData();
+					co_return httpDELETEData();
 				}
 			}
 			catch (winrt::hresult_error error) {
@@ -265,8 +286,8 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 		friend struct WebSocket;
-
 		hstring botToken;
+
 		hstring baseURL;
 		hstring initialConnectionPath;
 		Uri baseURI = Uri{ nullptr };

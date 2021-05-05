@@ -31,7 +31,7 @@ namespace CommanderNS {
 		com_ptr<SystemThreads> pSystemThreads;
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
-		ClientClasses::Client* pClient = nullptr;
+		com_ptr<ClientClasses::Client> pClient;
 		event_token messageReceivedToken;
 		event_token closedToken;
 		MessageWebSocket webSocket;
@@ -47,7 +47,7 @@ namespace CommanderNS {
 		DispatcherQueue dispatchQueueForHB = nullptr;
 		DispatcherQueueTimer heartbeatTimer = nullptr;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, ClientClasses::Client* pClientNew){
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew){
 			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
@@ -145,10 +145,10 @@ namespace CommanderNS {
 			this->sendHeartBeat();
 		}
 
-		fire_and_forget onGuildCreate(nlohmann::json guildUpdateData) {
+		fire_and_forget onGuildCreate(json guildUpdateData) {
 			co_await resume_background();
 			CommanderNS::ClientDataTypes::GuildData guildData;
-			std::string id = guildUpdateData.at("id");
+			string id = guildUpdateData.at("id");
 			CommanderNS::DataParsingFunctions::parseObject(guildUpdateData, &guildData);
 			ClientClasses::Guild guild(guildData, this->pRestAPI);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
@@ -171,8 +171,8 @@ namespace CommanderNS {
 				this->sendAsync(heartbeat);
 				this->didWeReceiveHeartbeatAck = false;
 			}
-			catch (winrt::hresult_error error) {
-				std::wcout << error.message().c_str() << std::endl;
+			catch (hresult_error error) {
+				wcout << error.message().c_str() << std::endl;
 			}
 		}
 
@@ -186,12 +186,12 @@ namespace CommanderNS {
 			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, this->pClient->Guilds.at(messageData.guildId).Channels.Fetch(messageData.channelId).get().messageManager->messageDeleteRateLimit, pMessageManager);
 			messageCreationData.threadContext = this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
-			co_return;
-		}
+			co_return;		}
+
 
 		task<void> onMessageReactionAdd(json payload) {
 			try{
-				co_await resume_foreground(*this->pSystemThreads->Threads.at(3).threadQueue.get());
+				co_await resume_foreground(*this->pSystemThreads->Threads.at(2).threadQueue.get());
 				ClientDataTypes::ReactionAddEventData reactionAddEventData;
 				DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
 				ClientDataTypes::ReactionData reactionData;
@@ -204,7 +204,7 @@ namespace CommanderNS {
 				reactionData.userId = reactionAddEventData.userId;
 				ClientClasses::Reaction reaction(reactionData);
 				reactionAddData.reaction = reaction;
-				reactionAddData.threadContext = this->pSystemThreads->Threads.at(3);
+				reactionAddData.threadContext = this->pSystemThreads->Threads.at(2);
 				this->pEventMachine->onReactionAddEvent(reactionAddData);
 				co_return;
 			}
@@ -233,7 +233,7 @@ namespace CommanderNS {
 				}
 
 				if (payload.at("t") == "GUILD_CREATE") {
-					this->onGuildCreate(payload.at("d"));
+					onGuildCreate(payload.at("d"));
 					return;
 				}								
 

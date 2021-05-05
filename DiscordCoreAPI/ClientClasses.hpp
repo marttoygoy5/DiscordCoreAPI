@@ -17,7 +17,7 @@ namespace CommanderNS {
 
 	namespace ClientClasses {
 
-		class Client;
+		struct Client;
 
 		class MessageManager;
 
@@ -40,7 +40,6 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 				this->reactionAddRemoveRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
-			ClientDataTypes::ReactionData reactionData;
 
 			task<void> AddReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
 				string emoji;
@@ -170,36 +169,32 @@ namespace CommanderNS {
 				GuildMemberManager::guildMemberGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			}
 
-			concurrency::task<GuildMember> Fetch(string guildMemberId) {
-				return concurrency::create_task([this, guildMemberId] {
+			task<GuildMember> Fetch(string guildMemberId) {
 					ClientDataTypes::GuildMemberData guildMemberData;
 					if (this->contains(guildMemberId)) {
 						guildMemberData = this->at(guildMemberId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, this->guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
 						GuildMember guildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
-						return guildMember;
+						co_return guildMember;
 					}
 					else {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, this->guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
 						GuildMember guildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
-						return guildMember;
+						co_return guildMember;
 					}
-					});
 			};
 
-			concurrency::task<GuildMember> GetGuildMember(string guildMemberId) {
-				return concurrency::create_task([this, guildMemberId] {
+			task<GuildMember> GetGuildMember(string guildMemberId) {
 					if (this->contains(guildMemberId)) {
-						return this->at(guildMemberId);
+						co_return this->at(guildMemberId);
 					}
 					else {
 						cout << "Sorry, but they aren't here!" << endl;
 						GuildMember guildMember;
-						return guildMember;
+						co_return guildMember;
 					}
-					});
 			};
 
 		protected:
@@ -233,38 +228,35 @@ namespace CommanderNS {
 				ChannelManager::channelGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 
-			concurrency::task<Channel> Fetch(string channelId) {
-				return concurrency::create_task([this, channelId] {
+			task<Channel> Fetch(string channelId) {
 					ClientDataTypes::ChannelData channelData;
 					if (this->contains(channelId)) {
 						channelData = this->at(channelId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, ChannelManager::channelGetRateLimit, channelId, &channelData).get();
 						Channel channel(channelData, this->pRestAPI);
 						this->insert(std::make_pair(channelId, channel));
-						return channel;
+						co_return channel;
 					}
 					else {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, ChannelManager::channelGetRateLimit, channelId, &channelData).get();
 						Channel channel(channelData, this->pRestAPI);
 						this->insert(std::make_pair(channelId, channel));
-						return channel;
+						co_return channel;
 					}
-					});
 
 			};
 
-			concurrency::task<Channel> GetChannel(string channelId) {
-				return concurrency::create_task([this, channelId] {
-					if (this->contains(channelId)) {
-						return this->at(channelId);
-					}
-					else {
-						cout << "Sorry, but they aren't here!" << endl;
-						Channel channel;
-						return channel;
-					}
-					});
+			task<Channel> GetChannel(string channelId) {
+				if (this->contains(channelId)) {
+					co_return this->at(channelId);
+				}
+				else {
+					cout << "Sorry, but they aren't here!" << endl;
+					Channel channel;
+					co_return channel;
+				}
 			};
+
 		protected:
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
@@ -296,14 +288,12 @@ namespace CommanderNS {
 
 		public:
 			GuildManager() {};
-
 			GuildManager(com_ptr<RestAPI> pRestAPI) {
 				this->pRestAPI = pRestAPI;
 				GuildManager::guildGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 
 			task<Guild> Fetch(string guildId) {
-
 				ClientDataTypes::GuildData guildData;
 				if (this->contains(guildId)) {
 					guildData = this->at(guildId).Data;
@@ -332,7 +322,7 @@ namespace CommanderNS {
 
 		protected:
 			friend struct WebSocket;
-			friend class Client;
+			friend struct Client;
 			shared_ptr<FoundationClasses::RateLimitation> guildGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
@@ -355,47 +345,43 @@ namespace CommanderNS {
 				UserManager::userGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 
-			concurrency::task<User> Fetch(string userId) {
-				return concurrency::create_task([this, userId] {
+			task<User> Fetch(string userId) {
 					ClientDataTypes::UserData userData;
 					try {
 						userData = this->at(userId).Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, UserManager::userGetRateLimit, userId, &userData).get();
 						User user(userData);
 						this->insert(std::make_pair(userId, user));
-						return user;
+						co_return user;
 					}
 					catch (std::exception error) {
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, UserManager::userGetRateLimit, userId, &userData).get();
 						User user(userData);
 						this->insert(std::make_pair(userId, user));
-						return user;
+						co_return user;
 					}
-					});
 			};
 
-			concurrency::task<User> GetUser(string userId) {
-				return concurrency::create_task([this, userId] {
+			task<User> GetUser(string userId) {
 					if (this->contains(userId)) {
-						return this->at(userId);
+						co_return this->at(userId);
 					}
 					else {
 						cout << "Sorry, but they aren't here!" << endl;
 						ClientDataTypes::UserData userData;
 						User user(userData);
-						return user;
+						co_return user;
 					}
-					});
 			};
 
 		protected:
 			friend struct WebSocket;
-			friend class Client;
+			friend struct Client;
 			shared_ptr<FoundationClasses::RateLimitation> userGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
-		class Client {
+		struct Client: implements<Client, winrt::Windows::Foundation::IInspectable> {
 		public:
 			Client() {};
 			Client(com_ptr<RestAPI> pRestAPI) {

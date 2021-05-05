@@ -13,25 +13,34 @@
 namespace CommanderNS {
 
     struct ThreadContext {
-        shared_ptr<task_group> taskGroup;
         Scheduler* scheduler;
+        shared_ptr<task_group> taskGroup;
         shared_ptr<DispatcherQueue> threadQueue{ nullptr };
-    };
-    
+    };    
+
     struct SystemThreads : implements<SystemThreads, winrt::Windows::Foundation::IInspectable> {
     public:
 
-        apartment_context mainThread;
+        ThreadContext mainThreadContext;
 
         vector<ThreadContext> Threads;
-
-        ThreadContext mainThreadContext;
 
         SystemThreads() {
             this->MaxThreads = thread::hardware_concurrency();
         };
 
         task<void> initialize() {
+            DispatcherQueueOptions options{
+                sizeof(DispatcherQueueOptions),
+                DQTYPE_THREAD_CURRENT,
+                DQTAT_COM_STA
+            };
+
+            ABI::Windows::System::IDispatcherQueueController* ptrNew{};
+            winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));
+            DispatcherQueueController queueController = { ptrNew, take_ownership_from_abi };
+            mainThreadContext.threadQueue = make_shared<DispatcherQueue>(queueController.DispatcherQueue());
+
             SchedulerPolicy policy;
             policy.SetConcurrencyLimits(1, 1);
             policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
