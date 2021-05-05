@@ -100,7 +100,10 @@ namespace CommanderNS {
 				{"content", createMessageData.content},
 				{"tts" , false},
 				{"embed" , 
-							{{"author", {
+							{
+								{"timestamp",createMessageData.embed.timestamp},
+				{"title", createMessageData.embed.title},
+				{"author", {
 							{"icon_url", createMessageData.embed.author.iconUrl},
 							{"name", createMessageData.embed.author.name},
 							{"url", createMessageData.embed.author.url },
@@ -123,8 +126,6 @@ namespace CommanderNS {
 					{"url", createMessageData.embed.thumbnail.url},
 					{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
 				}},
-
-					
 					{"footer", {
 						{"icon_url", createMessageData.embed.footer.iconUrl},
 						{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
