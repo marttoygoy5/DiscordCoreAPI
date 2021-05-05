@@ -18,17 +18,6 @@ namespace CommanderNS {
 
 	namespace DataManipFunctions {
 
-		task<FoundationClasses::RateLimitation> RateLimitWrapper(shared_ptr<FoundationClasses::RateLimitation> pRateLimitData) {
-			critical_section critSection;
-			critSection.lock();
-			FoundationClasses::RateLimitation rateLimitData;
-			rateLimitData.currentMsTime = pRateLimitData->currentMsTime;
-			rateLimitData.getsRemaining = pRateLimitData->getsRemaining;
-			rateLimitData.msRemain = pRateLimitData->msRemain;
-			critSection.unlock();
-			co_return rateLimitData;
-		}
-
 		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
@@ -47,8 +36,6 @@ namespace CommanderNS {
 						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = (static_cast<float>(pRateLimitData->msRemain) - static_cast<float>(static_cast<float>(currentTime) - static_cast<float>(pRateLimitData->currentMsTime))) / 1000;
 					}
-
-
 					*pGetDataStruct = pRestAPI->httpGETObjectData(relativePath, pRateLimitData);
 					if (pGetDataStruct->data.contains("message") && !pGetDataStruct->data.at("message").is_null()) {
 						string theValue = pGetDataStruct->data.at("message");
@@ -177,8 +164,6 @@ namespace CommanderNS {
 		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pUserGetRateLimit, string id, ClientDataTypes::UserData* pDataStructure) {
-			critical_section critSection;
-			critSection.try_lock_for(pUserGetRateLimit->msRemain + 50);
 			ClientDataTypes::UserData userData = *pDataStructure;
 			string relativePath = "/users/" + id;
 			httpGETData getData;
@@ -186,13 +171,10 @@ namespace CommanderNS {
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &userData);
 			*pDataStructure = userData;
-			critSection.unlock();
 			co_return;
 		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pGuildGetRateLimit, string id, ClientDataTypes::GuildData* pDataStructure) {
-			critical_section critSection;
-			critSection.try_lock_for(pGuildGetRateLimit->msRemain + 50);
 			ClientDataTypes::GuildData guildData = *pDataStructure;
 			string relativePath = "/guilds/" + id;
 			httpGETData getData;
@@ -200,13 +182,10 @@ namespace CommanderNS {
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &guildData);
 			*pDataStructure = guildData;
-			critSection.unlock();
 			co_return;
 		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pChannelGetRateLimit, string id, ClientDataTypes::ChannelData* pDataStructure) {
-			critical_section critSection;
-			critSection.try_lock_for(pChannelGetRateLimit->msRemain + 50);
 			ClientDataTypes::ChannelData channelData = *pDataStructure;
 			string relativePath = "/channels/" + id;
 			httpGETData getData;
@@ -214,13 +193,10 @@ namespace CommanderNS {
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &channelData);
 			*pDataStructure = channelData;
-			critSection.unlock();
 			co_return;
 		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pGuildMemberGetRateLimit, string guildId, string id, ClientDataTypes::GuildMemberData* pDataStructure) {
-			critical_section critSection;
-			critSection.try_lock_for(pGuildMemberGetRateLimit->msRemain + 50);
 			ClientDataTypes::GuildMemberData guildMemberData = *pDataStructure;
 			string relativePath = "/guilds/" + guildId + "/members/" + id;
 			httpGETData getData;
@@ -228,13 +204,10 @@ namespace CommanderNS {
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &guildMemberData);
 			*pDataStructure = guildMemberData;
-			critSection.unlock();
 			co_return;
 		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageGetRateLimit, string channelId, string id, ClientDataTypes::MessageData* pDataStructure) {
-			critical_section critSection;
-			critSection.try_lock_for(pMessageGetRateLimit->msRemain + 50);
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages/" + id;
 			httpGETData getData;
@@ -242,13 +215,10 @@ namespace CommanderNS {
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
 			*pDataStructure = messageData;
-			critSection.unlock();
 			co_return;
 		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pRoleGetRateLimit, string id, vector<ClientDataTypes::RoleData>* pDataStructure) {
-			critical_section critSection;
-			critSection.try_lock_for(pRoleGetRateLimit->msRemain + 50);
 			vector<ClientDataTypes::RoleData> roleData = *pDataStructure;
 			string relativePath = "/guilds/" + id + "/roles";
 			httpGETData getData;
@@ -272,13 +242,10 @@ namespace CommanderNS {
 				}
 			}
 			*pDataStructure = roleData;
-			critSection.unlock();
 			co_return;
 		}
 
 		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
-			critical_section critSection;
-			critSection.try_lock_for(pMessagePostRateLimit->msRemain + 50);
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
@@ -286,37 +253,27 @@ namespace CommanderNS {
 			json jsonValue = postData.data;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
 			*pDataStructure = messageData;
-			critSection.unlock();
 			co_return;
 		}
 
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji) {
-			critical_section critSection;
-			critSection.try_lock_for(pReactionPostRateLimit->msRemain + 50);
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionPostRateLimit, string channelId, string messageId, string emoji){
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
 			httpPUTData putData;
 			checkRateLimitAndPutDataAsync(pRestAPI, pReactionPostRateLimit, relativePath, &putData, emoji).get();
 			co_return;
-			critSection.unlock();
 		}
 
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pMessageDeleteRateLimit, string channelId, string messageId) {
-			critical_section critSection;
-			critSection.try_lock_for(pMessageDeleteRateLimit->msRemain + 50);
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
 			httpDELETEData deleteData;
 			checkRateLimitAndDeleteDataAsync(pRestAPI, pMessageDeleteRateLimit, relativePath, &deleteData).get();
-			critSection.unlock();
 			co_return;
 		}
 
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<FoundationClasses::RateLimitation> pReactionDeleteRateLimit, string channelId, string messageId, string userId, string emoji){
-			critical_section critSection;
-			critSection.try_lock_for(pReactionDeleteRateLimit->msRemain + 50);
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/" + userId;
 			httpDELETEData deleteData;
 			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
-			critSection.unlock();
 			co_return;
 		}
 	}

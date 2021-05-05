@@ -302,37 +302,32 @@ namespace CommanderNS {
 				GuildManager::guildGetRateLimit = make_shared<FoundationClasses::RateLimitation>();
 			};
 
-			concurrency::task<Guild> Fetch(string guildId) {
-				return concurrency::create_task([this, guildId] {
+			task<Guild> Fetch(string guildId) {
 
-					ClientDataTypes::GuildData guildData;
-					if (this->contains(guildId)) {
-						guildData = this->at(guildId).Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildManager::guildGetRateLimit, guildId, &guildData).get();
-						Guild guild(guildData, this->pRestAPI);
-						this->insert(std::make_pair(guildId, guild));
-						return guild;
-					}
-					else {
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildManager::guildGetRateLimit, guildId, &guildData).get();
-						Guild guild(guildData, this->pRestAPI);
-						return guild;
-					}
-					}
-				);
+				ClientDataTypes::GuildData guildData;
+				if (this->contains(guildId)) {
+					guildData = this->at(guildId).Data;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildManager::guildGetRateLimit, guildId, &guildData).get();
+					Guild guild(guildData, this->pRestAPI);
+					this->insert(std::make_pair(guildId, guild));
+					co_return guild;
+				}
+				else {
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, GuildManager::guildGetRateLimit, guildId, &guildData).get();
+					Guild guild(guildData, this->pRestAPI);
+					co_return guild;
+				}
 			}
 
-			concurrency::task<Guild> GetGuild(string guildId) {
-				return concurrency::create_task([this, guildId] {
+			task<Guild> GetGuild(string guildId) {
 					if (this->contains(guildId)) {
-						return this->at(guildId);
+						co_return this->at(guildId);
 					}
 					else {
 						cout << "Sorry, but they aren't here! " << endl;
 						Guild guild;
-						return guild;
+						co_return guild;
 					}
-					});
 			};
 
 		protected:
