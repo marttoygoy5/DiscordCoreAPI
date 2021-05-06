@@ -70,6 +70,8 @@ namespace CommanderNS {
 		task<httpGETData> httpGETObjectDataAsync(std::string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
+					critical_section lock;
+					scoped_lock lock2(lock);
 					httpGETData getData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
@@ -113,6 +115,8 @@ namespace CommanderNS {
 		task<httpPOSTData> httpPOSTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
+					critical_section lock;
+					scoped_lock lock2(lock);
 					httpPOSTData postData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
@@ -164,6 +168,8 @@ namespace CommanderNS {
 		task<httpPUTData> httpPUTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
+					critical_section lock;
+					scoped_lock lock2(lock);
 					httpPUTData putData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
@@ -215,6 +221,8 @@ namespace CommanderNS {
 		task<httpDELETEData> httpDELETEObjectDataAsync(string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
 			try{
 				if (this != nullptr) {
+					critical_section lock;
+					scoped_lock lock2(lock);
 					httpDELETEData deleteData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));

@@ -50,13 +50,6 @@ namespace CommanderNS {
 			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this] {loginToWrap(); });
 			co_return;
 		}
-		/*
-		task<void> login() {
-			co_await resume_foreground(*this->systemThreads->Threads.at(1).threadQueue.get());
-			task_handle taskHandle = make_task([this]() {this->loginToWrap().get(); });
-			this->systemThreads->Threads.at(1).taskGroup->run_and_wait(taskHandle);
-			co_return;
-		}		*/
 
 	protected:
 		hstring baseURL = L"https://discord.com/api/v9";
@@ -91,6 +84,7 @@ namespace CommanderNS {
 			std::cout << "Goodbye!" << std::endl;
 			co_return;
 		}
+
 		void loginToWrap() {
 			this->run().get();
 		}

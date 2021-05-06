@@ -177,15 +177,15 @@ namespace CommanderNS {
 		}
 
 		task<void> onMessageCreate(json payload) {
-			co_await resume_foreground(*this->pSystemThreads->Threads.at(2).threadQueue.get());
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			auto tempPtr = this->pClient->Guilds.GetGuildAsync(messageData.guildId).get().Channels.GetChannelAsync(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
 			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
-			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(2);
+			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(1);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
+			cout << "WERE HERE WERE HERE WERE HERE!" << endl;
 			co_return;
 		}
 
@@ -199,13 +199,13 @@ namespace CommanderNS {
 				this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager);
 			this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager->erase(messageData.id);
 			messageDeletionData.message = message;
-			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(3);
+			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
+			co_return;
 		}
 
 		task<void> onMessageReactionAdd(json payload) {
 			try{
-				co_await resume_foreground(*this->pSystemThreads->Threads.at(2).threadQueue.get());
 				ClientDataTypes::ReactionAddEventData reactionAddEventData;
 				DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
 				ClientDataTypes::ReactionData reactionData;
@@ -218,7 +218,7 @@ namespace CommanderNS {
 				reactionData.userId = reactionAddEventData.userId;
 				ClientClasses::Reaction reaction(reactionData);
 				reactionAddData.reaction = reaction;
-				reactionAddData.threadContext = &this->pSystemThreads->Threads.at(2);
+				reactionAddData.threadContext = &this->pSystemThreads->Threads.at(3);
 				this->pEventMachine->onReactionAddEvent(reactionAddData);
 				co_return;
 			}

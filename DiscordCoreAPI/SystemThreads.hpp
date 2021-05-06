@@ -9,8 +9,8 @@
 #define _SYSTEM_THREADS_
 
 #include "pch.h"
-
 namespace CommanderNS {
+
 
     struct ThreadContext {
         Scheduler* scheduler;
@@ -22,9 +22,9 @@ namespace CommanderNS {
     struct SystemThreads : implements<SystemThreads, winrt::Windows::Foundation::IInspectable> {
     public:
 
-        ThreadContext mainThreadContext;
+        static ThreadContext mainThreadContext;
 
-        vector<ThreadContext> Threads;
+        concurrent_vector<ThreadContext> Threads;
 
         SystemThreads() {
             this->MaxThreads = thread::hardware_concurrency();
@@ -75,5 +75,6 @@ namespace CommanderNS {
 
     };
     
+    ThreadContext SystemThreads::mainThreadContext;
 }
 #endif

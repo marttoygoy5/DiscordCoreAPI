@@ -119,14 +119,15 @@ namespace CommanderNS {
 			}
 
 			void deleteObjectDelegate(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
+				cout << "WEVE BEEN CALLED WEVE BEENC ALLED!" << endl;
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &Message::messageDeleteRateLimit, this->Data.channelId, this->Data.id).get();
 			}
 
 			task<void> DeleteAfter(unsigned int delay, ThreadContext* thread) {
-				co_await resume_foreground(*thread->threadQueue.get());
 				thread->queueTimer.Interval(std::chrono::milliseconds(delay));
 				thread->queueTimer.Tick({ this, &Message::deleteObjectDelegate });
 				thread->queueTimer.Start();
+				cout << "THIS IS IT THIS IS IT!" << endl;
 				co_return;
 			}
 
@@ -188,6 +189,8 @@ namespace CommanderNS {
 				}
 				catch (exception error) {
 					cout << "CreateMessage() Error: " << error.what() << endl;
+					Message message;
+					co_return message;
 				}
 			};
 
@@ -243,6 +246,8 @@ namespace CommanderNS {
 					}
 					else {
 						cout << "Sorry, but they aren't here!" << endl;
+						GuildMember guildMember;
+						co_return guildMember;
 					}
 			};
 
@@ -302,6 +307,8 @@ namespace CommanderNS {
 				}
 				else {
 					cout << "GetChannel() Error: Sorry, but they aren't here!" << endl;
+					Channel channel;
+					co_return channel;
 				}
 			};
 
@@ -363,6 +370,8 @@ namespace CommanderNS {
 					}
 					else {
 						cout << "GetGuild() Error: Sorry, but they aren't here! " << endl;
+						Guild guild;
+						co_return guild;
 					}
 			};
 
@@ -423,6 +432,8 @@ namespace CommanderNS {
 					}
 					else {
 						cout << "Sorry, but they aren't here!" << endl;
+						User user;
+						co_return user;
 					}
 			};
 
