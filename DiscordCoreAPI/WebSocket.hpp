@@ -32,6 +32,7 @@ namespace CommanderNS {
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
 		com_ptr<ClientClasses::Client> pClient;
+		shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 		event_token messageReceivedToken;
 		event_token closedToken;
 		MessageWebSocket webSocket;
@@ -47,12 +48,13 @@ namespace CommanderNS {
 		DispatcherQueue dispatchQueueForHB = nullptr;
 		DispatcherQueueTimer heartbeatTimer = nullptr;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew) {
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler) {
 			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
 			this->pEventMachine = pEventMachineNew;
 			this->botToken = botTokenNew;
+			this->pHttpHandler = pHttpHandler;
 			this->intentsValue = ((1 << 0) + (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4) + (1 << 5) + (1 << 6) + (1 << 7) + (1 << 8) + (1 << 9) + (1 << 10) + (1 << 11) + (1 << 12) + (1 << 13) + (1 << 14));
 		}
 
@@ -150,7 +152,7 @@ namespace CommanderNS {
 			CommanderNS::ClientDataTypes::GuildData guildData;
 			string id = payload.at("d").at("id");
 			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
-			ClientClasses::Guild guild(guildData, this->pRestAPI, this->pClient);
+			ClientClasses::Guild guild(guildData, this->pRestAPI, this->pSystemThreads, this->pHttpHandler);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user);
@@ -177,7 +179,6 @@ namespace CommanderNS {
 		}
 
 		task<void> onMessageCreate(json payload) {
-			co_await resume_foreground(*this->pSystemThreads->Threads.at(1).threadQueue.get());
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);

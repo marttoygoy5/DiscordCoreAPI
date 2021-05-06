@@ -10,7 +10,6 @@
 
 #include "pch.h"
 #include "FoundationClasses.hpp"
-#include "FoundationClasses.hpp"
 #include "SystemThreads.hpp"
 #include "RestAPI.hpp"
 
@@ -38,7 +37,7 @@ namespace CommanderNS {
 			string content;
 		};
 
-		class RequestSender : concurrency::agent {
+		class RequestSender : public concurrency::agent {
 		public:
 			explicit RequestSender(ITarget<WorkloadData>& target, ISource<HTTPData>& source, Scheduler* scheduler) 
 				:
@@ -46,7 +45,6 @@ namespace CommanderNS {
 				_target(target),
 				_source(source)
 			{}
-
 
 			void sendWorkload(WorkloadData workload) {
 				workload.outputTarget = (ITarget<CommanderNS::HttpAgents::HTTPData>*)this;
@@ -66,7 +64,7 @@ namespace CommanderNS {
 			};
 		};
 
-		class HTTPHandler : concurrency::agent {
+		class HTTPHandler : public concurrency::agent {
 		public:
 			explicit HTTPHandler(Scheduler* scheduler, com_ptr<RestAPI> pRestAPI)
 				:agent(*scheduler)
@@ -74,14 +72,8 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			}
 
-			unbounded_buffer<HTTPData> _target = unbounded_buffer<HTTPData>();
-			unbounded_buffer<WorkloadData> _source = unbounded_buffer<WorkloadData>();
-		protected:
-			com_ptr<RestAPI> pRestAPI;
-			map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
-			map<string, FoundationClasses::RateLimitData> rateLimitData;
-
 			void run() {
+				cout << "CHECKING CHECKING 00000000000000000000000000000!" << endl;
 				transformer<WorkloadData, WorkloadData> collectTimeLimitData([this](WorkloadData workload) -> WorkloadData {
 					if (this->rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
 						workload.rateLimitData.bucket = this->rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
@@ -89,7 +81,7 @@ namespace CommanderNS {
 					}
 					return workload;
 					});
-
+				cout << "CHECKING CHECKING CHECKING CHECKING CHECKING CHECKING!" << endl;
 				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
 					HTTPData returnData;
 					float targetTime = static_cast<float>(workload.rateLimitData.timeStartedAt) + static_cast<float> (workload.rateLimitData.msRemain);
@@ -133,6 +125,14 @@ namespace CommanderNS {
 
 				WorkloadData workload = receive(this->_source);
 			};
+
+			unbounded_buffer<HTTPData> _target = unbounded_buffer<HTTPData>();
+			unbounded_buffer<WorkloadData> _source = unbounded_buffer<WorkloadData>();
+		protected:
+			com_ptr<RestAPI> pRestAPI;
+			map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
+			map<string, FoundationClasses::RateLimitData> rateLimitData;
+
 		};
 
 	};

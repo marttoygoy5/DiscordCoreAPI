@@ -272,11 +272,11 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, HttpAgents::WorkloadData workloadData, ISource<HttpAgents::HTTPData>& source, ITarget<HttpAgents::WorkloadData>& target, Scheduler* pScheduler) {
+		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, HttpAgents::WorkloadData workloadData, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, Scheduler* pScheduler) {
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
-			HttpAgents::RequestSender requestSender(target, source, pScheduler);
+			HttpAgents::RequestSender requestSender(pHttpHandler->_source, pHttpHandler->_target, pScheduler);
 			requestSender.sendWorkload(workloadData);
 			//checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, workloadData.content).get();
 			//json jsonValue = postData.data;

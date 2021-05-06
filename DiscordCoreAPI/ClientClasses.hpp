@@ -136,7 +136,6 @@ namespace CommanderNS {
 				thread->queueTimer.Interval(std::chrono::milliseconds(delay));
 				thread->queueTimer.Tick({ this, &Message::deleteObjectDelegate });
 				thread->queueTimer.Start();
-				cout << "THIS IS IT THIS IS IT!" << endl;
 				co_return;
 			}
 
@@ -197,7 +196,8 @@ namespace CommanderNS {
 					HttpAgents::WorkloadData workloadData;
 					workloadData.content = createMessagePayload;
 					workloadData.workloadType = HttpAgents::WorkloadType::GET;
-					DataManipFunctions::postObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, &messageData, workloadData, this->pHttpHandler->_target, this->pHttpHandler->_source, this->pSystemThreads->Threads.at(2).scheduler).get();
+					this->pHttpHandler.get()
+					DataManipFunctions::postObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, &messageData, workloadData, this->pHttpHandler, this->pSystemThreads->Threads.at(2).scheduler).get();
 					Message message(messageData, this->pRestAPI, &MessageManager::messageDeleteRateLimit, this);
 					co_return message;
 				}

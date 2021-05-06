@@ -43,8 +43,8 @@ namespace CommanderNS {
 			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocket->socketPath);
 			this->client = make_self<ClientClasses::Client>(this->restAPI, this->httpHandler, this->systemThreads);
 			this->eventMachine = make_self<EventMachine>();
-			this->webSocket->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client);
-			this->httpHandler = make_shared<HttpAgents::HTTPHandler>(this->systemThreads->mainThreadContext.scheduler, this->restAPI);
+			this->webSocket->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->httpHandler);
+			this->httpHandler = make_shared<HttpAgents::HTTPHandler>(this->systemThreads->Threads.at(2).scheduler, this->restAPI);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
