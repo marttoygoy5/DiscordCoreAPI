@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef _FOUNDATION_CLASSES
-#define _FOUNDATION_CLASSES
+#ifndef _FOUNDATION_CLASSES_
+#define _FOUNDATION_CLASSES_
 
 namespace CommanderNS {
 

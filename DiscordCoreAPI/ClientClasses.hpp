@@ -41,6 +41,8 @@ namespace CommanderNS {
 			};
 
 			task<void> AddReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
+				critical_section critSection;
+				scoped_lock lock(critSection);
 				string emoji;
 				if (createReactionData.emojiId != string()) {
 					emoji += ":" + createReactionData.emojiName + ":" + createReactionData.emojiId;
@@ -59,6 +61,8 @@ namespace CommanderNS {
 			};
 
 			task<void> DeleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
+				critical_section critSection;
+				scoped_lock lock(critSection);
 				deleteReactionData.messageId = this->messageId;
 				deleteReactionData.channelId = this->channelId;
 				
@@ -81,6 +85,8 @@ namespace CommanderNS {
 			}
 
 			task<void> DeleteOwnReactionAsync(ClientDataTypes::DeleteOwnReactionData deleteReactionData) {
+				critical_section critSection;
+				scoped_lock lock(critSection);
 				deleteReactionData.channelId = this->channelId;
 				deleteReactionData.messageId = this->messageId;
 				string emoji;
@@ -102,13 +108,14 @@ namespace CommanderNS {
 			}
 
 		protected:
+			friend class Message;
 			com_ptr<RestAPI> pRestAPI;
 			static FoundationClasses::RateLimitation reactionAddRemoveRateLimit;
 			string channelId;
 			string messageId;
 		};
 
-		class Message {
+		class Message:winrt::Windows::Foundation::IUnknown{
 		public:
 			Message() {};
 			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessageDeleteRateLimit, void* pMessageManager) {
@@ -118,9 +125,9 @@ namespace CommanderNS {
 				this->messageManager = pMessageManager;
 			}
 
-			void deleteObjectDelegate(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
-				cout << "WEVE BEEN CALLED WEVE BEENC ALLED!" << endl;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &Message::messageDeleteRateLimit, this->Data.channelId, this->Data.id).get();
+			task<void> deleteObjectDelegate(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args){
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->Data.channelId, this->Data.id).get();
+				co_return;
 			}
 
 			task<void> DeleteAfter(unsigned int delay, ThreadContext* thread) {

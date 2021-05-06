@@ -11,6 +11,7 @@
 #include "pch.h"
 #include "JSONifier.hpp"
 #include "FoundationClasses.hpp"
+#include "HttpAgents.hpp"
 
 namespace CommanderNS {
 
@@ -70,8 +71,6 @@ namespace CommanderNS {
 		task<httpGETData> httpGETObjectDataAsync(std::string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
-					critical_section lock;
-					scoped_lock lock2(lock);
 					httpGETData getData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
@@ -109,14 +108,13 @@ namespace CommanderNS {
 			}
 			catch (winrt::hresult_error error) {
 				wcout << L"Error: " << error.message().c_str() << std::endl;
+				co_return httpGETData();
 			}
 		}
 
 		task<httpPOSTData> httpPOSTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
-					critical_section lock;
-					scoped_lock lock2(lock);
 					httpPOSTData postData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
@@ -162,14 +160,13 @@ namespace CommanderNS {
 			}
 			catch (winrt::hresult_error error) {
 				wcout << L"Error: " << error.message().c_str() << std::endl;
+				co_return httpPOSTData();
 			}
 		}
 
 		task<httpPUTData> httpPUTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
-					critical_section lock;
-					scoped_lock lock2(lock);
 					httpPUTData putData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
@@ -215,14 +212,13 @@ namespace CommanderNS {
 			}
 			catch (winrt::hresult_error error) {
 				wcout << L"Error: " << error.message().c_str() << std::endl;
+				co_return httpPUTData();
 			}
 		}
 
 		task<httpDELETEData> httpDELETEObjectDataAsync(string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
 			try{
 				if (this != nullptr) {
-					critical_section lock;
-					scoped_lock lock2(lock);
 					httpDELETEData deleteData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
@@ -260,12 +256,12 @@ namespace CommanderNS {
 					co_return deleteData;
 				}
 				else {
-					
 					co_return httpDELETEData();
 				}
 			}
 			catch (winrt::hresult_error error) {
 				wcout << L"Error: " << error.message().c_str() << std::endl;
+				co_return httpDELETEData();
 			}
 		}
 
@@ -273,6 +269,8 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 		friend struct WebSocket;
+		friend class HttpAgents::DataManager;
+		friend class HttpAgents::DataReceiver;
 
 		hstring botToken;
 		hstring baseURL;

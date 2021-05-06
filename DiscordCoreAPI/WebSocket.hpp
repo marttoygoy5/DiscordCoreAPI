@@ -177,6 +177,7 @@ namespace CommanderNS {
 		}
 
 		task<void> onMessageCreate(json payload) {
+			co_await resume_foreground(*this->pSystemThreads->Threads.at(1).threadQueue.get());
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
@@ -190,6 +191,7 @@ namespace CommanderNS {
 		}
 
 		task<void> onMessageDelete(json payload){
+			co_await resume_foreground(*this->pSystemThreads->Threads.at(1).threadQueue.get());
 			EventDataTypes::MessageDeletionData messageDeletionData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
@@ -199,13 +201,14 @@ namespace CommanderNS {
 				this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager);
 			this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager->erase(messageData.id);
 			messageDeletionData.message = message;
-			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(2);
+			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(1);
 			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
 			co_return;
 		}
 
 		task<void> onMessageReactionAdd(json payload) {
 			try{
+				co_await resume_foreground(*this->pSystemThreads->Threads.at(1).threadQueue.get());
 				ClientDataTypes::ReactionAddEventData reactionAddEventData;
 				DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
 				ClientDataTypes::ReactionData reactionData;
@@ -218,9 +221,8 @@ namespace CommanderNS {
 				reactionData.userId = reactionAddEventData.userId;
 				ClientClasses::Reaction reaction(reactionData);
 				reactionAddData.reaction = reaction;
-				reactionAddData.threadContext = &this->pSystemThreads->Threads.at(3);
+				reactionAddData.threadContext = &this->pSystemThreads->Threads.at(1);
 				this->pEventMachine->onReactionAddEvent(reactionAddData);
-				co_return;
 			}
 			catch (exception error) {
 				cout << "Error: " << error.what() << endl;

@@ -19,6 +19,7 @@
 #include "ClientDataTypes.hpp"
 #include "SystemThreads.hpp"
 #include "ClientClasses.hpp"
+#include "HttpAgents.hpp"
 
 namespace CommanderNS {
 
@@ -56,6 +57,8 @@ namespace CommanderNS {
 		hstring botToken;
 		com_ptr<WebSocket> pWebSocket{ nullptr };
 		com_ptr<RestAPI> pRestAPI{ nullptr };
+		HttpAgents::DataManager* pDataManager;
+		HttpAgents::DataReceiver* pDataReceiver;
 
 		void connect() {
 				this->pWebSocket->connectAsync().get();
@@ -71,8 +74,8 @@ namespace CommanderNS {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
 				//cout << this_thread::get_id() << endl;
-				CommanderNS::ClientClasses::Guild guild = this->Client->Guilds.FetchAsync("782757641540730900").get();
-				cout << guild.Members.GetGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
+				//CommanderNS::ClientClasses::Guild guild = this->Client->Guilds.FetchAsync("782757641540730900").get();
+				//cout << guild.Members.GetGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
 				vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				//ClientDataTypes::GuildData guildData;
 				//DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
