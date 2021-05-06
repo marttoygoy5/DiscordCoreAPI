@@ -31,6 +31,7 @@ namespace CommanderNS {
         };
 
         task<void> initialize() {
+
             DispatcherQueueOptions options{
                 sizeof(DispatcherQueueOptions),
                 DQTYPE_THREAD_CURRENT,
@@ -47,31 +48,26 @@ namespace CommanderNS {
             policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
             CurrentScheduler::Create(policy);
             mainThreadContext.scheduler = CurrentScheduler::Get();
-            shared_ptr<task_group> newTaskGroup = make_shared<task_group>();
-            mainThreadContext.taskGroup = newTaskGroup;
+            mainThreadContext.taskGroup = make_shared<task_group>();;
             for (unsigned int x = 0; x < this->MaxThreads - 2; x += 1) {
                 co_await resume_background();
                 ThreadContext threadContext;
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
-                DispatcherQueue threadQueue = threadQueueController.DispatcherQueue();
                 SchedulerPolicy policy;
                 policy.SetConcurrencyLimits(1, 1);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
-                co_await resume_foreground(threadQueue);
-                Scheduler* newScheduler = Scheduler::Create(policy);
-                threadContext.scheduler = newScheduler;
-                threadContext.threadQueue = make_shared<DispatcherQueue>(threadQueue);
+                threadContext.threadQueue = make_shared<DispatcherQueue>(threadQueueController.DispatcherQueue());
+                co_await resume_foreground(*threadContext.threadQueue.get());
+                CurrentScheduler::Create(policy);
+                threadContext.scheduler = CurrentScheduler::Get();
                 threadContext.queueTimer = threadContext.threadQueue->CreateTimer();
-                shared_ptr<task_group> newTaskGroup = make_shared<task_group>();
-                threadContext.taskGroup = newTaskGroup;
-                newScheduler->Attach();
+                threadContext.taskGroup = make_shared<task_group>();
                 this->Threads.push_back(threadContext);
             }
         }
 
         ~SystemThreads() {
-          
         };
 
     protected:
