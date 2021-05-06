@@ -133,7 +133,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};			
 
-			task<Message> Fetch(string channelId, string messageId) {
+			task<Message> FetchAsync(string channelId, string messageId) {
 				ClientClasses::Message message;
 				if (this->contains(messageId)) {
 					message = this->at(messageId);
@@ -204,7 +204,7 @@ namespace CommanderNS {
 				this->guildId = guildId;
 			}
 
-			task<GuildMember> Fetch(string guildMemberId) {
+			task<GuildMember> FetchAsync(string guildMemberId) {
 					ClientClasses::GuildMember guildMember;
 					if (this->contains(guildMemberId)) {
 						guildMember = this->at(guildMemberId);
@@ -223,7 +223,7 @@ namespace CommanderNS {
 					}
 			};
 
-			task<GuildMember> GetGuildMember(string guildMemberId) {
+			task<GuildMember> GetGuildMemberAsync(string guildMemberId) {
 					if (this->contains(guildMemberId)) {
 						co_return this->at(guildMemberId);
 					}
@@ -262,7 +262,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 
-			task<Channel> Fetch(string channelId) {
+			task<Channel> FetchAsync(string channelId) {
 					ClientClasses::Channel channel;
 					if (this->contains(channelId)) {
 						channel = this->at(channelId);
@@ -282,7 +282,7 @@ namespace CommanderNS {
 
 			};
 
-			task<Channel> GetChannel(string channelId) {
+			task<Channel> GetChannelAsync(string channelId) {
 				if (this->contains(channelId)) {
 					co_return this->at(channelId);
 				}
@@ -325,7 +325,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 
-			task<Guild> Fetch(string guildId) {
+			task<Guild> FetchAsync(string guildId) {
 				ClientClasses::Guild guild;
 				if (this->contains(guildId)) {
 					guild = this->at(guildId);
@@ -343,7 +343,7 @@ namespace CommanderNS {
 				}
 			}
 
-			task<Guild> GetGuild(string guildId) {
+			task<Guild> GetGuildAsync(string guildId) {
 					if (this->contains(guildId)) {
 						co_return this->at(guildId);
 					}
@@ -384,7 +384,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 
-			task<User> Fetch(string userId) {
+			task<User> FetchAsync(string userId) {
 					ClientClasses::User user;
 					try {
 						user = this->at(userId);
@@ -403,7 +403,7 @@ namespace CommanderNS {
 					}
 			};
 
-			task<User> GetUser(string userId) {
+			task<User> GetUserAsync(string userId) {
 					if (this->contains(userId)) {
 						co_return this->at(userId);
 					}
@@ -431,8 +431,8 @@ namespace CommanderNS {
 			};
 			~Client() {};
 			User User;
-			UserManager Users;
 			GuildManager Guilds;
+			UserManager Users;
 
 		protected:
 			task<void> GetCurrentUser() {
