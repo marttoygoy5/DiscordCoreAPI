@@ -109,8 +109,9 @@ namespace CommanderNS {
 
 		protected:
 			friend class Message;
+			friend class HttpAgents::HTTPHandler;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitation reactionAddRemoveRateLimit;
+			static FoundationClasses::RateLimitData reactionAddRemoveRateLimit;
 			string channelId;
 			string messageId;
 		};
@@ -118,7 +119,7 @@ namespace CommanderNS {
 		class Message:winrt::Windows::Foundation::IUnknown{
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessageDeleteRateLimit, void* pMessageManager) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessageDeleteRateLimit, void* pMessageManager) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
 				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id);
@@ -142,8 +143,9 @@ namespace CommanderNS {
 			ReactionManager Reactions;
 			ClientDataTypes::MessageData Data;
 		protected:
+			friend class HttpAgents::HTTPHandler;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitation messageDeleteRateLimit;
+			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		};
 
 		class MessageManager: map<string, Message> {
@@ -203,12 +205,13 @@ namespace CommanderNS {
 
 		protected:
 			friend struct WebSocket;
+			friend class HttpAgents::HTTPHandler;
 			friend class Message;
 			string guildId;
 			string channelId;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitation messageGetRateLimit;
-			static FoundationClasses::RateLimitation messageDeleteRateLimit;
+			static FoundationClasses::RateLimitData messageGetRateLimit;
+			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		};
 
 		class GuildMember {
@@ -260,9 +263,10 @@ namespace CommanderNS {
 
 		protected:
 			friend struct WebSocket;
+			friend class HttpAgents::HTTPHandler;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitation guildMemberGetRateLimit;
+			static FoundationClasses::RateLimitData guildMemberGetRateLimit;
 			string guildId;
 		};
 
@@ -320,9 +324,10 @@ namespace CommanderNS {
 			};
 
 		protected:
+			friend class HttpAgents::HTTPHandler;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitation channelGetRateLimit;
+			static FoundationClasses::RateLimitData channelGetRateLimit;
 		};
 
 		class Guild {
@@ -384,8 +389,9 @@ namespace CommanderNS {
 
 		protected:
 			friend struct WebSocket;
+			friend class HttpAgents::HTTPHandler;
 			friend struct Client;
-			static FoundationClasses::RateLimitation guildGetRateLimit;
+			static FoundationClasses::RateLimitData guildGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
@@ -445,9 +451,10 @@ namespace CommanderNS {
 			};
 
 		protected:
+			friend class HttpAgents::HTTPHandler;
 			friend struct WebSocket;
 			friend struct Client;
-			FoundationClasses::RateLimitation userGetRateLimit;
+			FoundationClasses::RateLimitData userGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
@@ -479,13 +486,13 @@ namespace CommanderNS {
 			friend class GuildManager;
 			friend struct WebSocket;
 		};
-		FoundationClasses::RateLimitation ReactionManager::reactionAddRemoveRateLimit;
-		FoundationClasses::RateLimitation Message::messageDeleteRateLimit;
-		FoundationClasses::RateLimitation GuildManager::guildGetRateLimit;
-		FoundationClasses::RateLimitation ChannelManager::channelGetRateLimit;
-		FoundationClasses::RateLimitation GuildMemberManager::guildMemberGetRateLimit;
-		FoundationClasses::RateLimitation MessageManager::messageGetRateLimit;
-		FoundationClasses::RateLimitation MessageManager::messageDeleteRateLimit;
+		FoundationClasses::RateLimitData ReactionManager::reactionAddRemoveRateLimit;
+		FoundationClasses::RateLimitData Message::messageDeleteRateLimit;
+		FoundationClasses::RateLimitData GuildManager::guildGetRateLimit;
+		FoundationClasses::RateLimitData ChannelManager::channelGetRateLimit;
+		FoundationClasses::RateLimitData GuildMemberManager::guildMemberGetRateLimit;
+		FoundationClasses::RateLimitData MessageManager::messageGetRateLimit;
+		FoundationClasses::RateLimitData MessageManager::messageDeleteRateLimit;
 	};
 }
 #endif

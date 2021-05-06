@@ -269,8 +269,6 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 		friend struct WebSocket;
-		friend class HttpAgents::DataManager;
-		friend class HttpAgents::DataReceiver;
 
 		hstring botToken;
 		hstring baseURL;

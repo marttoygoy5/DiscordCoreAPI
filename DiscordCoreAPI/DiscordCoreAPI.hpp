@@ -57,8 +57,6 @@ namespace CommanderNS {
 		hstring botToken;
 		com_ptr<WebSocket> pWebSocket{ nullptr };
 		com_ptr<RestAPI> pRestAPI{ nullptr };
-		HttpAgents::DataManager* pDataManager;
-		HttpAgents::DataReceiver* pDataReceiver;
 
 		void connect() {
 				this->pWebSocket->connectAsync().get();
