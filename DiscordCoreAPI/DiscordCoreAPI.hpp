@@ -29,7 +29,7 @@ namespace CommanderNS {
 
 	public:
 
-		com_ptr<ClientClasses::Client> Client{ nullptr };
+		com_ptr<ClientClasses::Client> client{ nullptr };
 		com_ptr<EventMachine> eventMachine{ nullptr };
 		com_ptr<SystemThreads> systemThreads{ nullptr };
 
@@ -38,12 +38,13 @@ namespace CommanderNS {
 		DiscordCoreAPI(hstring botToken) {
 			this->systemThreads = make_self<SystemThreads>();
 			this->systemThreads->initialize().get();
-			this->pWebSocket = winrt::make_self<WebSocket>();
+			this->webSocket = winrt::make_self<WebSocket>();
 			this->botToken = botToken;
-			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocket->socketPath);
-			this->Client = make_self<ClientClasses::Client>(this->pRestAPI);
+			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocket->socketPath);
+			this->client = make_self<ClientClasses::Client>(this->restAPI, this->httpHandler, this->systemThreads);
 			this->eventMachine = make_self<EventMachine>();
-			this->pWebSocket->initialize(botToken, this->eventMachine, this->systemThreads, this->pRestAPI, this->Client);
+			this->webSocket->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client);
+			this->httpHandler = make_shared<HttpAgents::HTTPHandler>(this->systemThreads->mainThreadContext.scheduler, this->restAPI);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
@@ -55,11 +56,12 @@ namespace CommanderNS {
 	protected:
 		hstring baseURL = L"https://discord.com/api/v9";
 		hstring botToken;
-		com_ptr<WebSocket> pWebSocket{ nullptr };
-		com_ptr<RestAPI> pRestAPI{ nullptr };
+		com_ptr<WebSocket> webSocket{ nullptr };
+		com_ptr<RestAPI> restAPI{ nullptr };
+		shared_ptr<HttpAgents::HTTPHandler> httpHandler{ nullptr };
 
 		void connect() {
-				this->pWebSocket->connectAsync().get();
+			this->webSocket->connectAsync().get();
 			try {
 			}
 			catch (winrt::hresult result) {

@@ -150,7 +150,7 @@ namespace CommanderNS {
 			CommanderNS::ClientDataTypes::GuildData guildData;
 			string id = payload.at("d").at("id");
 			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
-			ClientClasses::Guild guild(guildData, this->pRestAPI);
+			ClientClasses::Guild guild(guildData, this->pRestAPI, this->pClient);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user);

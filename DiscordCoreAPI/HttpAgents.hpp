@@ -19,10 +19,11 @@ namespace CommanderNS {
 	namespace HttpAgents {
 
 		enum class WorkloadType {
-			GET = 0,
-			PUT = 1,
-			POST = 2,
-			DELETED = 3
+			UNSET = 0,
+			GET = 1,
+			PUT = 2,
+			POST = 3,
+			DELETED = 4
 		};
 
 		struct HTTPData {
@@ -31,78 +32,109 @@ namespace CommanderNS {
 
 		struct WorkloadData {
 			string relativeURL;
-			WorkloadType workloadType;
+			WorkloadType workloadType = WorkloadType::UNSET;
 			FoundationClasses::RateLimitData rateLimitData;
 			ITarget<HTTPData>* outputTarget;
+			string content;
 		};
 
 		class RequestSender : concurrency::agent {
 		public:
-			explicit RequestSender(ITarget<WorkloadData>& target, ISource<HTTPData>& source, Scheduler& scheduler) 
+			explicit RequestSender(ITarget<WorkloadData>& target, ISource<HTTPData>& source, Scheduler* scheduler) 
 				:
-				agent(scheduler),
+				agent(*scheduler),
 				_target(target),
 				_source(source)
 			{}
 
-		protected:
-			void run(WorkloadData workloadData) {
-				
-				workloadData.outputTarget = (ITarget<CommanderNS::HttpAgents::HTTPData>*)this;
-				send(_target, workloadData);
-			};
 
+			void sendWorkload(WorkloadData workload) {
+				workload.outputTarget = (ITarget<CommanderNS::HttpAgents::HTTPData>*)this;
+				send(_target, workload);
+			}
+
+			json getData() {
+				return receive(_source).data;
+			}
+
+		protected:
 			ITarget<WorkloadData>& _target;
 			ISource<HTTPData>& _source;
+
+			void run() {
+				return;
+			};
 		};
 
 		class HTTPHandler : concurrency::agent {
 		public:
-			explicit HTTPHandler(Scheduler& scheduler)
-				:agent(scheduler)
+			explicit HTTPHandler(Scheduler* scheduler, com_ptr<RestAPI> pRestAPI)
+				:agent(*scheduler)
 			{
+				this->pRestAPI = pRestAPI;
 			}
 
-			~HTTPHandler(){
-				delete this->_source;
-				delete this->_target;
-			}
-			unbounded_buffer<HTTPData>* _target = new unbounded_buffer<HTTPData>();
-			unbounded_buffer<WorkloadData>* _source = new unbounded_buffer<WorkloadData>();
+			unbounded_buffer<HTTPData> _target = unbounded_buffer<HTTPData>();
+			unbounded_buffer<WorkloadData> _source = unbounded_buffer<WorkloadData>();
 		protected:
+			com_ptr<RestAPI> pRestAPI;
+			map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
+			map<string, FoundationClasses::RateLimitData> rateLimitData;
 
 			void run() {
-				// Receive a workload.
-				WorkloadData workload = receive(this->_source);
-
-				transformer<WorkloadData, WorkloadData> collectTimeLimitData([](WorkloadData workloadData) -> WorkloadData
-					{
-						if (workloadData.rateLimitData.rateLimitType == FoundationClasses::RateLimitType::CHANNEL_GET){
-							workloadData.rateLimitData = ClientClasses::ChannelManager::channelGetRateLimit;
-						}
-						else if (workloadData.rateLimitData.rateLimitType == FoundationClasses::RateLimitType::GUILD_GET) {
-							workloadData.rateLimitData = ClientClasses::GuildManager::guildGetRateLimit;
-						}
-						else if (workloadData.rateLimitData.rateLimitType == FoundationClasses::RateLimitType::MESSAGE_CREATE) {
-							workloadData.rateLimitData = ClientClasses::MessageManager::messageCreateRateLimit;
-						}
-						else if (workloadData.rateLimitData.rateLimitType == FoundationClasses::RateLimitType::MESSAGE_DELETE) {
-							workloadData.rateLimitData = ClientClasses::MessageManager::messageDeleteRateLimit;
-						}
-						else if (workloadData.rateLimitData.rateLimitType == FoundationClasses::RateLimitType::MESSAGE_GET) {
-							workloadData.rateLimitData = ClientClasses::MessageManager::messageGetRateLimit;
-						}
-						return workloadData;
+				transformer<WorkloadData, WorkloadData> collectTimeLimitData([this](WorkloadData workload) -> WorkloadData {
+					if (this->rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
+						workload.rateLimitData.bucket = this->rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
+						workload.rateLimitData = this->rateLimitData.at(workload.rateLimitData.bucket);
+					}
+					return workload;
 					});
-				transformer<WorkloadData, WorkloadData> collectHTTPData([](WorkloadData workloadData) -> WorkloadData{
 
-					return workloadData;
-				});
-			}
+				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
+					HTTPData returnData;
+					float targetTime = static_cast<float>(workload.rateLimitData.timeStartedAt) + static_cast<float> (workload.rateLimitData.msRemain);
+					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float timeRemaining = targetTime - currentTime;
+					while (timeRemaining > 0.0f) {
+						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						timeRemaining = targetTime - currentTime;
+					}
+
+					if (workload.workloadType == WorkloadType::GET) {
+						httpGETData getData;
+						getData = this->pRestAPI->httpGETObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
+						returnData.data = getData.data;
+					}
+					else if (workload.workloadType == WorkloadType::POST) {
+						httpPOSTData postData;
+						postData = this->pRestAPI->httpPOSTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
+						returnData.data = postData.data;
+					}
+					else if (workload.workloadType == WorkloadType::PUT) {
+						httpPUTData putData;
+						putData = this->pRestAPI->httpPUTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
+						returnData.data = putData.data;
+					}
+					else if (workload.workloadType == WorkloadType::DELETED) {
+						httpDELETEData deleteData;
+						deleteData = this->pRestAPI->httpDELETEObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
+						returnData.data = deleteData.data;
+					}
+
+					this->rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
+					this->rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
+
+					return returnData;
+					});
+
+				this->_source.link_target(&collectTimeLimitData);
+				collectTimeLimitData.link_target(&collectHTTPData);
+				collectHTTPData.link_target(&this->_target);
+
+				WorkloadData workload = receive(this->_source);
+			};
 		};
 
 	};
-
-
-}
+};
 #endif

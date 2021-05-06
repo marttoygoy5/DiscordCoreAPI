@@ -13,12 +13,13 @@
 #include "FoundationClasses.hpp"
 #include "DataParsingFunctions.hpp"
 #include "ClientDataTypes.hpp"
+#include "HttpAgents.hpp"
 
 namespace CommanderNS {
 
 	namespace DataManipFunctions {
 
-		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
+		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pGetDataStruct = pRestAPI->httpGETObjectDataAsync(relativePath, pRateLimitData).get();
@@ -30,7 +31,7 @@ namespace CommanderNS {
 					co_return;
 				}
 				else {
-					float targetTime = static_cast<float>(pRateLimitData->currentMsTime) + static_cast<float> (pRateLimitData->msRemain);
+					float targetTime = static_cast<float>(pRateLimitData->timeStartedAt) + static_cast<float> (pRateLimitData->msRemain);
 					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = targetTime - currentTime;
 					while (timeRemaining > 0.0f) {
@@ -55,7 +56,7 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
+		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 
@@ -68,7 +69,7 @@ namespace CommanderNS {
 					co_return;
 				}
 				else {
-					float targetTime = static_cast<float>(pRateLimitData->currentMsTime) + static_cast<float> (pRateLimitData->msRemain);
+					float targetTime = static_cast<float>(pRateLimitData->timeStartedAt) + static_cast<float> (pRateLimitData->msRemain);
 					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = targetTime - currentTime;
 					while (timeRemaining > 0.0f) {
@@ -93,7 +94,7 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
+		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
 			try {
 					*pPutDataStruct = pRestAPI->httpPUTObjectDataAsync(relativePath, content, pRateLimitData).get();
 				if (pRateLimitData->getsRemaining > 0) {
@@ -105,7 +106,7 @@ namespace CommanderNS {
 					co_return;
 				}
 				else {
-					float targetTime = static_cast<float>(pRateLimitData->currentMsTime) + static_cast<float> (pRateLimitData->msRemain);
+					float targetTime = static_cast<float>(pRateLimitData->timeStartedAt) + static_cast<float> (pRateLimitData->msRemain);
 					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = targetTime - currentTime;
 					while (timeRemaining > 0.0f) {
@@ -130,7 +131,7 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndDeleteDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpDELETEData* pDeleteDataStruct) {
+		IAsyncAction checkRateLimitAndDeleteDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pRateLimitData, string relativePath, httpDELETEData* pDeleteDataStruct) {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pDeleteDataStruct = pRestAPI->httpDELETEObjectDataAsync(relativePath, pRateLimitData).get();
@@ -142,7 +143,7 @@ namespace CommanderNS {
 					co_return;
 				}
 				else {
-					float targetTime = static_cast<float>(pRateLimitData->currentMsTime) + static_cast<float> (pRateLimitData->msRemain);
+					float targetTime = static_cast<float>(pRateLimitData->timeStartedAt) + static_cast<float> (pRateLimitData->msRemain);
 					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = targetTime - currentTime;
 					while (timeRemaining > 0.0f) {
@@ -167,7 +168,7 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pUserGetRateLimit, ClientDataTypes::UserData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pUserGetRateLimit, ClientDataTypes::UserData* pDataStructure) {
 			ClientDataTypes::UserData userData = *pDataStructure;
 			string relativePath = "/users/@me";
 			httpGETData getData;
@@ -178,7 +179,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pUserGetRateLimit, string id, ClientDataTypes::UserData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pUserGetRateLimit, string id, ClientDataTypes::UserData* pDataStructure) {
 			ClientDataTypes::UserData userData = *pDataStructure;
 			string relativePath = "/users/" + id;
 			httpGETData getData;
@@ -189,7 +190,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pGuildGetRateLimit, string id, ClientDataTypes::GuildData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pGuildGetRateLimit, string id, ClientDataTypes::GuildData* pDataStructure) {
 			ClientDataTypes::GuildData guildData = *pDataStructure;
 			string relativePath = "/guilds/" + id;
 			httpGETData getData;
@@ -200,7 +201,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pChannelGetRateLimit, string id, ClientDataTypes::ChannelData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pChannelGetRateLimit, string id, ClientDataTypes::ChannelData* pDataStructure) {
 			ClientDataTypes::ChannelData channelData = *pDataStructure;
 			string relativePath = "/channels/" + id;
 			httpGETData getData;
@@ -211,7 +212,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pGuildMemberGetRateLimit, string guildId, string id, ClientDataTypes::GuildMemberData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pGuildMemberGetRateLimit, string guildId, string id, ClientDataTypes::GuildMemberData* pDataStructure) {
 			ClientDataTypes::GuildMemberData guildMemberData = *pDataStructure;
 			string relativePath = "/guilds/" + guildId + "/members/" + id;
 			httpGETData getData;
@@ -222,7 +223,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessageGetRateLimit, string channelId, string id, ClientDataTypes::MessageData* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessageGetRateLimit, string channelId, string id, ClientDataTypes::MessageData* pDataStructure) {
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages/" + id;
 			httpGETData getData;
@@ -233,7 +234,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRoleGetRateLimit, string id, vector<ClientDataTypes::RoleData>* pDataStructure) {
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pRoleGetRateLimit, string id, vector<ClientDataTypes::RoleData>* pDataStructure) {
 			vector<ClientDataTypes::RoleData> roleData = *pDataStructure;
 			string relativePath = "/guilds/" + id + "/roles";
 			httpGETData getData;
@@ -260,7 +261,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
+		IAsyncAction postObjectDataAsyncBACKUP(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
@@ -271,28 +272,42 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionPostRateLimit, string channelId, string messageId, string emoji){
+		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, HttpAgents::WorkloadData workloadData, ISource<HttpAgents::HTTPData>& source, ITarget<HttpAgents::WorkloadData>& target, Scheduler* pScheduler) {
+			ClientDataTypes::MessageData messageData = *pDataStructure;
+			string relativePath = "/channels/" + channelId + "/messages";
+			httpPOSTData postData;
+			HttpAgents::RequestSender requestSender(target, source, pScheduler);
+			requestSender.sendWorkload(workloadData);
+			//checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, workloadData.content).get();
+			//json jsonValue = postData.data;
+			json jsonValue = requestSender.getData();
+			DataParsingFunctions::parseObject(jsonValue, &messageData);
+			*pDataStructure = messageData;
+			co_return;
+		}
+
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pReactionPostRateLimit, string channelId, string messageId, string emoji){
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
 			httpPUTData putData;
 			checkRateLimitAndPutDataAsync(pRestAPI, pReactionPostRateLimit, relativePath, &putData, emoji).get();
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessageDeleteRateLimit, string channelId, string messageId) {
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessageDeleteRateLimit, string channelId, string messageId) {
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
 			httpDELETEData deleteData;
 			checkRateLimitAndDeleteDataAsync(pRestAPI, pMessageDeleteRateLimit, relativePath, &deleteData).get();
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionDeleteRateLimit, ClientDataTypes::DeleteReactionData deleteReactionData){
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pReactionDeleteRateLimit, ClientDataTypes::DeleteReactionData deleteReactionData){
 			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji+ "/" + deleteReactionData.userId;
 			httpDELETEData deleteData;
 			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionDeleteRateLimit, ClientDataTypes::DeleteOwnReactionData deletionData) {
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pReactionDeleteRateLimit, ClientDataTypes::DeleteOwnReactionData deletionData) {
 			string relativePath = "/channels/" + deletionData.channelId + "/messages/" + deletionData.messageId + "/reactions/" + deletionData.encodedEmoji + "/@me";
 			httpDELETEData deleteData;
 			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
