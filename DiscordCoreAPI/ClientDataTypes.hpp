@@ -80,6 +80,7 @@ namespace CommanderNS {
             string id;
             string discriminator;
             string avatar;
+            string avatarURL;
             bool bot;
             bool system = false;
             bool mfa_enabled = false;
@@ -89,11 +90,6 @@ namespace CommanderNS {
             int flags = 0;
             int premium_type = 0;
             int public_flags = 0;
-            string avatarURL(){
-                string urlString = "https://cdn.discordapp.com/avatars/" +
-                    this->id + "/" + this->avatar + ".png";
-                return urlString;
-            }
         };
 
         struct GuildMemberData {

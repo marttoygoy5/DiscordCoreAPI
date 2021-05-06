@@ -181,9 +181,9 @@ namespace CommanderNS {
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-			auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
+			auto tempPtr = this->pClient->Guilds.GetGuild(messageData.guildId).get().Channels.GetChannel(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &this->pClient->Guilds.at(messageData.guildId).Channels.Fetch(messageData.channelId).get().messageManager->messageDeleteRateLimit, pMessageManager);
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
 			messageCreationData.threadContext = this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
@@ -212,13 +212,13 @@ namespace CommanderNS {
 				cout << "Error: " << error.what() << endl;
 			}
 		}
-
 		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
+
 			try {
 				DataReader dataReader{ args.GetDataReader() };
 				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
 				auto message = dataReader.ReadString(dataReader.UnconsumedBufferLength());
-				nlohmann::json payload = nlohmann::json::parse(message);
+				json payload = payload.parse(message);
 
 				if (payload.at("s") >= 0) {
 					this->lastNumberReceived = payload.at("s");
@@ -235,12 +235,12 @@ namespace CommanderNS {
 				if (payload.at("t") == "GUILD_CREATE") {
 					onGuildCreate(payload);
 					return;
-				}								
+				}
 
 				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
 					onMessageReactionAdd(payload);
-				}
-				
+				}				
+
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					ClientDataTypes::GuildMemberData guildMemberData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->pClient->Guilds.guildGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("user").at("id"), &guildMemberData).get();

@@ -131,17 +131,28 @@ namespace CommanderNS {
 				this->channelId = channelId;
 				this->guildId = guildId;
 				this->pRestAPI = pRestAPI;
-			};
-			
-			task<Message> Fetch(string channelId, string messageId) {
-				ClientDataTypes::MessageData messageData;
-				DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
-				Message message(messageData, this->pRestAPI, &MessageManager::messageGetRateLimit, this);
-				this->insert(std::make_pair(messageId, message));
-				co_return message;
-			};
+			};			
 
-			task<Message> getMessage(string channelId, string messageId) {
+			task<Message> Fetch(string channelId, string messageId) {
+				ClientClasses::Message message;
+				if (this->contains(messageId)) {
+					message = this->at(messageId);
+					ClientDataTypes::MessageData messageData = message.Data;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
+					Message message(messageData, this->pRestAPI, &this->messageDeleteRateLimit, this);
+					this->insert(std::make_pair(messageId, message));
+					co_return message;
+				}
+				else {
+					ClientDataTypes::MessageData messageData;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
+					Message message(messageData, this->pRestAPI, &MessageManager::messageGetRateLimit, this);
+					this->insert(std::make_pair(messageId, message));
+					co_return message;
+				}
+			};
+			task<Message> GetMessage(string channelId, string messageId) {
+
 				Message currentMessage;
 				if (this->contains(messageId)) {
 					currentMessage = this->at(messageId);
@@ -194,15 +205,17 @@ namespace CommanderNS {
 			}
 
 			task<GuildMember> Fetch(string guildMemberId) {
-					ClientDataTypes::GuildMemberData guildMemberData;
+					ClientClasses::GuildMember guildMember;
 					if (this->contains(guildMemberId)) {
-						guildMemberData = this->at(guildMemberId).Data;
+						guildMember = this->at(guildMemberId);
+						ClientDataTypes::GuildMemberData guildMemberData = guildMember.Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
 						GuildMember guildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
 						co_return guildMember;
 					}
 					else {
+						ClientDataTypes::GuildMemberData guildMemberData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
 						GuildMember guildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
@@ -216,8 +229,6 @@ namespace CommanderNS {
 					}
 					else {
 						cout << "Sorry, but they aren't here!" << endl;
-						GuildMember guildMember;
-						co_return guildMember;
 					}
 			};
 
@@ -252,15 +263,17 @@ namespace CommanderNS {
 			};
 
 			task<Channel> Fetch(string channelId) {
-					ClientDataTypes::ChannelData channelData;
+					ClientClasses::Channel channel;
 					if (this->contains(channelId)) {
-						channelData = this->at(channelId).Data;
+						channel = this->at(channelId);
+						ClientDataTypes::ChannelData channelData = channel.Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
 						Channel channel(channelData, this->pRestAPI);
 						this->insert(std::make_pair(channelId, channel));
 						co_return channel;
 					}
 					else {
+						ClientDataTypes::ChannelData channelData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
 						Channel channel(channelData, this->pRestAPI);
 						this->insert(std::make_pair(channelId, channel));
@@ -275,8 +288,6 @@ namespace CommanderNS {
 				}
 				else {
 					cout << "GetChannel() Error: Sorry, but they aren't here!" << endl;
-					Channel channel;
-					co_return channel;
 				}
 			};
 
@@ -315,15 +326,17 @@ namespace CommanderNS {
 			};
 
 			task<Guild> Fetch(string guildId) {
-				ClientDataTypes::GuildData guildData;
+				ClientClasses::Guild guild;
 				if (this->contains(guildId)) {
-					guildData = this->at(guildId).Data;
+					guild = this->at(guildId);
+					ClientDataTypes::GuildData guildData = guild.Data;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
 					Guild guild(guildData, this->pRestAPI);
 					this->insert(std::make_pair(guildId, guild));
 					co_return guild;
 				}
 				else {
+					ClientDataTypes::GuildData guildData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
 					Guild guild(guildData, this->pRestAPI);
 					co_return guild;
@@ -336,8 +349,6 @@ namespace CommanderNS {
 					}
 					else {
 						cout << "GetGuild() Error: Sorry, but they aren't here! " << endl;
-						Guild guild;
-						co_return guild;
 					}
 			};
 
@@ -354,8 +365,16 @@ namespace CommanderNS {
 			User() {};
 			User(ClientDataTypes::UserData data) {
 				this->Data = data;
+				this->Data.avatarURL = this->avatarURL();
 			};
 			ClientDataTypes::UserData Data;
+
+		protected:
+			string avatarURL() {
+				string urlString = "https://cdn.discordapp.com/avatars/" +
+					this->Data.id + "/" + this->Data.avatar + ".png";
+				return urlString;
+			}
 		};
 
 		class UserManager: map<string, User> {
@@ -366,15 +385,17 @@ namespace CommanderNS {
 			};
 
 			task<User> Fetch(string userId) {
-					ClientDataTypes::UserData userData;
+					ClientClasses::User user;
 					try {
-						userData = this->at(userId).Data;
+						user = this->at(userId);
+						ClientDataTypes::UserData userData = user.Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
 						User user(userData);
 						this->insert(std::make_pair(userId, user));
 						co_return user;
 					}
 					catch (std::exception error) {
+						ClientDataTypes::UserData userData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
 						User user(userData);
 						this->insert(std::make_pair(userId, user));
@@ -388,9 +409,6 @@ namespace CommanderNS {
 					}
 					else {
 						cout << "Sorry, but they aren't here!" << endl;
-						ClientDataTypes::UserData userData;
-						User user(userData);
-						co_return user;
 					}
 			};
 
@@ -410,13 +428,13 @@ namespace CommanderNS {
 				this->User = User;
 				this->pRestAPI = pRestAPI;
 				this->GetCurrentUser();
-				cout << this->User.Data.avatarURL() << endl;
 			};
 			~Client() {};
 			User User;
 			UserManager Users;
 			GuildManager Guilds;
 
+		protected:
 			task<void> GetCurrentUser() {
 				ClientDataTypes::UserData userData;
 				DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->Users.userGetRateLimit, &userData).get();
@@ -425,7 +443,6 @@ namespace CommanderNS {
 				co_return;
 			}
 
-		protected:
 			com_ptr<RestAPI> pRestAPI;
 			friend class GuildManager;
 			friend struct WebSocket;
