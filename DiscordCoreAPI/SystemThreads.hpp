@@ -16,7 +16,8 @@ namespace CommanderNS {
         Scheduler* scheduler;
         shared_ptr<task_group> taskGroup;
         shared_ptr<DispatcherQueue> threadQueue{ nullptr };
-    };    
+        DispatcherQueueTimer queueTimer{ nullptr };
+    };
 
     struct SystemThreads : implements<SystemThreads, winrt::Windows::Foundation::IInspectable> {
     public:
@@ -39,6 +40,7 @@ namespace CommanderNS {
             winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));
             DispatcherQueueController queueController = { ptrNew, take_ownership_from_abi };
             mainThreadContext.threadQueue = make_shared<DispatcherQueue>(queueController.DispatcherQueue());
+            mainThreadContext.queueTimer = mainThreadContext.threadQueue->CreateTimer();
             SchedulerPolicy policy;
             policy.SetConcurrencyLimits(1, 1);
             policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
@@ -60,6 +62,7 @@ namespace CommanderNS {
                 Scheduler* newScheduler = Scheduler::Create(policy);
                 threadContext.scheduler = newScheduler;
                 threadContext.threadQueue = make_shared<DispatcherQueue>(threadQueue);
+                threadContext.queueTimer = threadContext.threadQueue->CreateTimer();
                 shared_ptr<task_group> newTaskGroup = make_shared<task_group>();
                 threadContext.taskGroup = newTaskGroup;
                 newScheduler->Attach();
@@ -68,7 +71,7 @@ namespace CommanderNS {
         }
 
         ~SystemThreads() {
-
+          
         };
 
     protected:

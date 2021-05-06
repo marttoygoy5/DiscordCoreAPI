@@ -59,6 +59,9 @@ namespace CommanderNS {
 			};
 
 			task<void> DeleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
+				deleteReactionData.messageId = this->messageId;
+				deleteReactionData.channelId = this->channelId;
+				
 				string emoji;
 				if (deleteReactionData.emojiId != string()) {
 					emoji += ":" + deleteReactionData.emojiName + ":" + deleteReactionData.emojiId;
@@ -72,11 +75,14 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->channelId, this->messageId, deleteReactionData.userId, emojiEncoded).get();
+				deleteReactionData.encodedEmoji = emojiEncoded;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, deleteReactionData).get();
 				co_return;
 			}
 
-			task<void> DeleteOwnReaction(ClientDataTypes::DeleteReactionData deleteReactionData) {
+			task<void> DeleteOwnReactionAsync(ClientDataTypes::DeleteOwnReactionData deleteReactionData) {
+				deleteReactionData.channelId = this->channelId;
+				deleteReactionData.messageId = this->messageId;
 				string emoji;
 				if (deleteReactionData.emojiId != string()) {
 					emoji += ":" + deleteReactionData.emojiName + ":" + deleteReactionData.emojiId;
@@ -90,7 +96,8 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->channelId, this->messageId, deleteReactionData.userId, emojiEncoded).get();
+				deleteReactionData.encodedEmoji = emojiEncoded;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, deleteReactionData).get();
 				co_return;
 			}
 
@@ -111,10 +118,17 @@ namespace CommanderNS {
 				this->messageManager = pMessageManager;
 			}
 
-			IAsyncAction DeleteMessageAsync(int timeDelay = 1000) {
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &Message::messageDeleteRateLimit, Data.channelId, Data.id).get();
+			void deleteObjectDelegate(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &Message::messageDeleteRateLimit, this->Data.channelId, this->Data.id).get();
+			}
+
+			task<void> DeleteAfter(unsigned int delay, ThreadContext* thread) {
+				co_await resume_foreground(*thread->threadQueue.get());
+				thread->queueTimer.Interval(std::chrono::milliseconds(delay));
+				thread->queueTimer.Tick({ this, &Message::deleteObjectDelegate });
+				thread->queueTimer.Start();
 				co_return;
-			};
+			}
 
 			void* messageManager;
 			ReactionManager Reactions;
@@ -151,20 +165,20 @@ namespace CommanderNS {
 					co_return message;
 				}
 			};
+			
 			task<Message> GetMessage(string channelId, string messageId) {
-
 				Message currentMessage;
 				if (this->contains(messageId)) {
 					currentMessage = this->at(messageId);
 					co_return currentMessage;
 				}
 				else {
-					currentMessage = this->Fetch(channelId, messageId).get();
+					currentMessage = this->FetchAsync(channelId, messageId).get();
 					co_return currentMessage;
 				}
 			}
 
-			task<ClientClasses::Message> CreateMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
+			task<Message> CreateMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;

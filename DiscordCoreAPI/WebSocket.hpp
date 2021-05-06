@@ -47,7 +47,7 @@ namespace CommanderNS {
 		DispatcherQueue dispatchQueueForHB = nullptr;
 		DispatcherQueueTimer heartbeatTimer = nullptr;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew){
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew) {
 			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
@@ -115,7 +115,7 @@ namespace CommanderNS {
 		}
 
 		IAsyncAction sendAsync(std::string& text) {
-			
+
 			std::string message = text;
 			if (message.empty()) {
 				std::cout << "Please specify text to send" << std::endl;
@@ -181,12 +181,26 @@ namespace CommanderNS {
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-			auto tempPtr = this->pClient->Guilds.GetGuild(messageData.guildId).get().Channels.GetChannel(messageData.channelId).get().messageManager;
+			auto tempPtr = this->pClient->Guilds.GetGuildAsync(messageData.guildId).get().Channels.GetChannelAsync(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
 			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
-			messageCreationData.threadContext = this->pSystemThreads->Threads.at(2);
+			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
+		}
+
+		task<void> onMessageDelete(json payload){
+			EventDataTypes::MessageDeletionData messageDeletionData;
+			ClientDataTypes::MessageData messageData;
+			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
+			string guildId = payload.at("d").at("guild_id");
+			string channelId = payload.at("d").at("channel_id");
+			ClientClasses::Message message(messageData,this->pRestAPI, &this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager->messageDeleteRateLimit,
+				this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager);
+			this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager->erase(messageData.id);
+			messageDeletionData.message = message;
+			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(3);
+			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
 		}
 
 		task<void> onMessageReactionAdd(json payload) {
@@ -204,7 +218,7 @@ namespace CommanderNS {
 				reactionData.userId = reactionAddEventData.userId;
 				ClientClasses::Reaction reaction(reactionData);
 				reactionAddData.reaction = reaction;
-				reactionAddData.threadContext = this->pSystemThreads->Threads.at(2);
+				reactionAddData.threadContext = &this->pSystemThreads->Threads.at(2);
 				this->pEventMachine->onReactionAddEvent(reactionAddData);
 				co_return;
 			}
@@ -212,8 +226,8 @@ namespace CommanderNS {
 				cout << "Error: " << error.what() << endl;
 			}
 		}
-		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
 
+		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
 				DataReader dataReader{ args.GetDataReader() };
 				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
@@ -232,6 +246,10 @@ namespace CommanderNS {
 					onMessageCreate(payload);
 				}
 
+				if (payload.at("t") == "MESSAGE_DELETE") {
+					onMessageDelete(payload);
+				}
+
 				if (payload.at("t") == "GUILD_CREATE") {
 					onGuildCreate(payload);
 					return;
@@ -247,7 +265,7 @@ namespace CommanderNS {
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
-					guildMemberAddData.threadContext = this->pSystemThreads->Threads.at(2);
+					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(2);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 
