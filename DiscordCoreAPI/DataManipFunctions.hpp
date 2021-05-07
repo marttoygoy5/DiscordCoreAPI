@@ -281,7 +281,7 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
 			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 			HttpAgents::WorkloadData workloadDataNew = workloadData;
-			HttpAgents::RequestSender requestSender(buffer1, buffer2, pScheduler);
+			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 			workloadDataNew.relativeURL = relativePath;
 			requestSender.setWorkloadData(workloadDataNew);
@@ -295,10 +295,23 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pReactionPostRateLimit, string channelId, string messageId, string emoji){
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, Scheduler* pScheduler,  string channelId, string messageId, string emoji, HttpAgents::WorkloadData workloadData){
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
 			httpPUTData putData;
-			checkRateLimitAndPutDataAsync(pRestAPI, pReactionPostRateLimit, relativePath, &putData, emoji).get();
+			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			workloadDataNew.relativeURL = relativePath;
+			workloadDataNew.workloadType = HttpAgents::WorkloadType::PUT;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
+			unbounded_buffer<HttpAgents::HTTPData> buffer2;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
+			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
+			requestSender.setWorkloadData(workloadDataNew);
+			requestSender.start();
+			httpHandler.start();
+			agent::wait(&requestSender);
+			agent::wait(&httpHandler);
+			json jsonValue = requestSender.getData();
 			co_return;
 		}
 

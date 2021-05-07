@@ -39,7 +39,7 @@ namespace CommanderNS {
 
 		class RequestSender : public concurrency::agent {
 		public:
-			explicit RequestSender(ITarget<WorkloadData>& target, ISource<HTTPData>& source, Scheduler* scheduler)
+			explicit RequestSender(Scheduler* scheduler, ITarget<WorkloadData>& target, ISource<HTTPData>& source)
 				:
 				agent(*scheduler),
 				_target(target),
@@ -81,6 +81,9 @@ namespace CommanderNS {
 						workload.rateLimitData.bucket = HTTPHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
 						workload.rateLimitData = HTTPHandler::rateLimitData.at(workload.rateLimitData.bucket);
 					}
+					cout << "GETS REMAINING:22 " << workload.rateLimitData.getsRemaining << endl;
+					cout << "MS REMAINING:22" << workload.rateLimitData.msRemain << endl;
+					cout << "BUCKET:22 " << workload.rateLimitData.bucket << endl;
 					return workload;
 					});
 				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
@@ -116,11 +119,14 @@ namespace CommanderNS {
 					}
 
 					HTTPHandler::rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
-					HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
-					cout << "CURRENT WORKLOAD 22222: " << workload.content << endl;
-					cout << "GETS REMAINING: " << workload.rateLimitData.getsRemaining << endl;
-					cout << "MS REMAINING: " << workload.rateLimitData.msRemain << endl;
-					cout << "BUCKET: " << workload.rateLimitData.bucket << endl;
+					HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));					
+
+					if (HttpAgents::HTTPHandler::rateLimitDataBucketValues.contains(FoundationClasses::RateLimitType::MESSAGE_CREATE)) {
+						string bucketValue = HttpAgents::HTTPHandler::rateLimitDataBucketValues.at(FoundationClasses::RateLimitType::MESSAGE_CREATE);
+						cout << "GETS REMAINING: " << HttpAgents::HTTPHandler::rateLimitData.at(bucketValue).getsRemaining << endl;
+						cout << "MS REMAINING: " << HttpAgents::HTTPHandler::rateLimitData.at(bucketValue).msRemain << endl;
+						cout << "BUCKET: " << bucketValue << endl;
+					}					
 					return returnData;
 					});
 				WorkloadData workload = receive(&_source);
@@ -132,11 +138,10 @@ namespace CommanderNS {
 
 			ITarget<HTTPData>& _target;
 			ISource<WorkloadData>& _source;
-		protected:
-			com_ptr<RestAPI> pRestAPI;
 			static map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
 			static map<string, FoundationClasses::RateLimitData> rateLimitData;
-			
+		protected:
+			com_ptr<RestAPI> pRestAPI;			
 		};
 		map<FoundationClasses::RateLimitType, string> HTTPHandler::rateLimitDataBucketValues;
 		map<string, FoundationClasses::RateLimitData> HTTPHandler::rateLimitData;

@@ -35,9 +35,11 @@ namespace CommanderNS {
 		public:
 
 			ReactionManager() {};
-			ReactionManager(com_ptr<RestAPI> pRestAPI, string channelId, string messageId) {
+			ReactionManager(com_ptr<RestAPI> pRestAPI, string channelId, string messageId, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, com_ptr<SystemThreads> pSystemThreads) {
 				this->channelId = channelId;
+				this->pSystemThreads = pSystemThreads;
 				this->messageId = messageId;
+				this->pHttpHandler = pHttpHandler;
 				this->pRestAPI = pRestAPI;
 			};
 
@@ -57,7 +59,9 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->channelId, this->messageId, emojiEncoded).get();
+				HttpAgents::WorkloadData workload;
+				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, this->pHttpHandler, this->pSystemThreads->Threads.at(2).scheduler, this->channelId, this->messageId, emojiEncoded, workload).get();
 				co_return;
 			};
 
@@ -112,6 +116,8 @@ namespace CommanderNS {
 			friend class Message;
 			friend class HttpAgents::HTTPHandler;
 			com_ptr<RestAPI> pRestAPI;
+			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
+			com_ptr<SystemThreads> pSystemThreads;
 			static FoundationClasses::RateLimitData reactionAddRemoveRateLimit;
 			string channelId;
 			string messageId;
@@ -120,10 +126,12 @@ namespace CommanderNS {
 		class Message:winrt::Windows::Foundation::IUnknown{
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, com_ptr<SystemThreads> pSystemThreads) {
 				this->Data = data;
+				this->pSystemThreads = pSystemThreads;
 				this->pRestAPI = pRestAPI;
-				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id);
+				this->pHttpHandler = pHttpHandler;
+				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id, pHttpHandler, this->pSystemThreads);
 				this->messageManager = pMessageManager;
 			}
 
@@ -143,6 +151,8 @@ namespace CommanderNS {
 			ReactionManager Reactions;
 			ClientDataTypes::MessageData Data;
 		protected:
+			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
+			com_ptr<SystemThreads> pSystemThreads;
 			friend class HttpAgents::HTTPHandler;
 			com_ptr<RestAPI> pRestAPI;
 			static FoundationClasses::RateLimitData messageDeleteRateLimit;
@@ -156,6 +166,7 @@ namespace CommanderNS {
 				this->guildId = guildId;
 				this->pRestAPI = pRestAPI;
 				this->pSystemThreads = pSystemThreads;
+				this->pHttpHandler = pHttpHandler;
 			};
 
 			task<Message> FetchAsync(string messageId) {
@@ -164,14 +175,14 @@ namespace CommanderNS {
 					message = this->at(messageId);
 					ClientDataTypes::MessageData messageData = message.Data;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
-					Message message(messageData, this->pRestAPI,  this);
+					Message message(messageData, this->pRestAPI, this, this->pHttpHandler, this->pSystemThreads);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
 				else {
 					ClientDataTypes::MessageData messageData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
-					Message message(messageData, this->pRestAPI, this);
+					Message message(messageData, this->pRestAPI, this, this->pHttpHandler, this->pSystemThreads);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
@@ -196,8 +207,13 @@ namespace CommanderNS {
 					HttpAgents::WorkloadData workloadData;
 					workloadData.content = createMessagePayload;
 					workloadData.workloadType = HttpAgents::WorkloadType::POST;
+					workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_CREATE;
 					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->pHttpHandler, this->pSystemThreads->Threads.at(1).scheduler, this->channelId, &messageData, workloadData).get();
-					Message message(messageData, this->pRestAPI, this);
+					string bucketValue = HttpAgents::HTTPHandler::rateLimitDataBucketValues.at(FoundationClasses::RateLimitType::MESSAGE_CREATE);
+					cout << "GETS REMAINING: " << HttpAgents::HTTPHandler::rateLimitData.at(bucketValue).getsRemaining << endl;
+					cout << "MS REMAINING: " << HttpAgents::HTTPHandler::rateLimitData.at(bucketValue).msRemain << endl;
+					cout << "BUCKET: " << bucketValue << endl;
+					Message message(messageData, this->pRestAPI, this, this->pHttpHandler, this->pSystemThreads);
 					co_return message;
 				}
 				catch (exception error) {
