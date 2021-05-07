@@ -17,7 +17,7 @@
 
 namespace CommanderNS {
 
-	struct WebSocketReceiver : public  concurrency::agent, implements<WebSocketReceiver, winrt::Windows::Foundation::IInspectable> {
+	struct WebSocketReceiver : public concurrency::agent, implements<WebSocketReceiver, winrt::Windows::Foundation::IInspectable> {
 	public:
 
 		inline static bool doWeQuit = false;
