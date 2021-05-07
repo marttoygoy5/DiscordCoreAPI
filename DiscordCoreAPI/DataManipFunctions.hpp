@@ -314,10 +314,40 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessageDeleteRateLimit, string channelId, string messageId) {
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, HttpAgents::WorkloadData workloadData, string channelId, string messageId, unsigned int timeDelay) {
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
 			httpDELETEData deleteData;
-			checkRateLimitAndDeleteDataAsync(pRestAPI, pMessageDeleteRateLimit, relativePath, &deleteData).get();
+			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			workloadDataNew.relativeURL = relativePath;
+			workloadDataNew.workloadType = HttpAgents::WorkloadType::DELETED;
+			if (timeDelay > 0) {
+				unbounded_buffer<int> buffer0;
+				timer<int> timer(timeDelay, 1, &buffer0, false);
+				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
+				unbounded_buffer<HttpAgents::HTTPData> buffer2;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+				HttpAgents::TimedRequestSender requestSender(pScheduler2, buffer1, buffer2, buffer0, timer);
+				HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
+				requestSender.setWorkloadData(workloadDataNew);
+				requestSender.start();
+				httpHandler.start();
+				agent::wait(&httpHandler);
+				agent::wait(&requestSender);
+				json jsonValue = requestSender.getData();
+			}
+			else {
+				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
+				unbounded_buffer<HttpAgents::HTTPData> buffer2;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+				HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
+				HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
+				requestSender.setWorkloadData(workloadDataNew);
+				requestSender.start();
+				httpHandler.start();
+				agent::wait(&httpHandler);
+				agent::wait(&requestSender);
+				json jsonValue = requestSender.getData();
+			}
 			co_return;
 		}
 

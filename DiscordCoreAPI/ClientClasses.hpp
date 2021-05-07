@@ -86,7 +86,7 @@ namespace CommanderNS {
 				string emojiEncoded = output;
 				deleteReactionData.encodedEmoji = emojiEncoded;
 				HttpAgents::WorkloadData workload;
-				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_DELETE;
+				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workload, deleteReactionData).get();
 				co_return;
 			}
@@ -111,7 +111,7 @@ namespace CommanderNS {
 				string emojiEncoded = output;
 				deleteReactionData.encodedEmoji = emojiEncoded;
 				HttpAgents::WorkloadData workload;
-				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_DELETE;
+				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workload, deleteReactionData).get();
 				co_return;
 			}
@@ -139,15 +139,10 @@ namespace CommanderNS {
 				this->messageManager = pMessageManager;
 			}
 
-			task<void> deleteObjectDelegate(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args){
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->Data.channelId, this->Data.id).get();
-				co_return;
-			}
-
-			task<void> DeleteAfter(unsigned int delay, ThreadContext* thread) {
-				thread->queueTimer.Interval(std::chrono::milliseconds(delay));
-				thread->queueTimer.Tick({ this, &Message::deleteObjectDelegate });
-				thread->queueTimer.Start();
+			task<void> deleteMessageAsync(unsigned int timeDelay = 0) {
+				HttpAgents::WorkloadData workloadData;
+				workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_DELETE;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workloadData, this->Data.channelId, this->Data.id, timeDelay).get();
 				co_return;
 			}
 

@@ -37,6 +37,41 @@ namespace CommanderNS {
 			string content;
 		};
 
+		class TimedRequestSender : public concurrency::agent {
+		public:
+			explicit TimedRequestSender(Scheduler* scheduler, ITarget<WorkloadData>& target, ISource<HTTPData>& source, ISource<int>& source0,timer<int>& timer)
+				:
+				agent(*scheduler),
+				_target(target),
+				_source(source),
+				_source0(source0),
+				_timer(timer)
+			{}
+
+			void setWorkloadData(WorkloadData pWorkload) {
+				TimedRequestSender::workloadData = pWorkload;
+			}
+
+			json getData() {
+				return receive(_source).data;
+			}
+
+		protected:
+			ISource<HTTPData>& _source;
+			ITarget<WorkloadData>& _target;
+			ISource<int>& _source0;
+			timer<int>& _timer;
+			static HttpAgents::WorkloadData workloadData;
+
+			void run() {
+				receive(_source0);
+				send(_target, TimedRequestSender::workloadData);
+
+
+				done();
+			};
+		};
+
 		class RequestSender : public concurrency::agent {
 		public:
 			explicit RequestSender(Scheduler* scheduler, ITarget<WorkloadData>& target, ISource<HTTPData>& source)
@@ -60,7 +95,7 @@ namespace CommanderNS {
 			static HttpAgents::WorkloadData workloadData;
 
 			void run() {
-				send(_target, this->workloadData);
+				send(_target, RequestSender::workloadData);
 
 
 				done();
@@ -137,6 +172,7 @@ namespace CommanderNS {
 		map<FoundationClasses::RateLimitType, string> HTTPHandler::rateLimitDataBucketValues;
 		map<string, FoundationClasses::RateLimitData> HTTPHandler::rateLimitData;
 		HttpAgents::WorkloadData RequestSender::workloadData;
+		HttpAgents::WorkloadData TimedRequestSender::workloadData;
 	};
 };
 #endif
