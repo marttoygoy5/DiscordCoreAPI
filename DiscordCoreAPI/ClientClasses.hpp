@@ -35,11 +35,10 @@ namespace CommanderNS {
 		public:
 
 			ReactionManager() {};
-			ReactionManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, string channelId, string messageId) {
+			ReactionManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, string channelId, string messageId) {
 				this->channelId = channelId;
 				this->pSystemThreads = pSystemThreads;
 				this->messageId = messageId;
-				this->pHttpHandler = pHttpHandler;
 				this->pRestAPI = pRestAPI;
 			};
 
@@ -106,9 +105,7 @@ namespace CommanderNS {
 
 		protected:
 			friend class Message;
-			friend class HttpAgents::HTTPHandler;
 			com_ptr<RestAPI> pRestAPI;
-			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 			com_ptr<SystemThreads> pSystemThreads;
 			static FoundationClasses::RateLimitData reactionAddRemoveRateLimit;
 			string channelId;
@@ -118,12 +115,11 @@ namespace CommanderNS {
 		class Message:winrt::Windows::Foundation::IUnknown{
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, com_ptr<SystemThreads> pSystemThreads) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager,  com_ptr<SystemThreads> pSystemThreads) {
 				this->Data = data;
 				this->pSystemThreads = pSystemThreads;
 				this->pRestAPI = pRestAPI;
-				this->pHttpHandler = pHttpHandler;
-				this->Reactions = ReactionManager(pRestAPI, this->pSystemThreads, pHttpHandler, this->Data.channelId, this->Data.id);
+				this->Reactions = ReactionManager(pRestAPI, this->pSystemThreads, this->Data.channelId, this->Data.id);
 				this->messageManager = pMessageManager;
 			}
 
@@ -136,9 +132,7 @@ namespace CommanderNS {
 			ReactionManager Reactions;
 			ClientDataTypes::MessageData Data;
 		protected:
-			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 			com_ptr<SystemThreads> pSystemThreads;
-			friend class HttpAgents::HTTPHandler;
 			com_ptr<RestAPI> pRestAPI;
 			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		};
@@ -146,12 +140,11 @@ namespace CommanderNS {
 		class MessageManager: public map<string, Message> {
 		public:
 			MessageManager() {};
-			MessageManager(string channelId, string guildId, com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler) {
+			MessageManager(string channelId, string guildId, com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads) {
 				this->channelId = channelId;
 				this->guildId = guildId;
 				this->pRestAPI = pRestAPI;
 				this->pSystemThreads = pSystemThreads;
-				this->pHttpHandler = pHttpHandler;
 			};
 
 			task<Message> fetchAsync(string messageId) {
@@ -160,14 +153,14 @@ namespace CommanderNS {
 					message = this->at(messageId);
 					ClientDataTypes::MessageData messageData = message.Data;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
-					Message message(messageData, this->pRestAPI, this, this->pHttpHandler, this->pSystemThreads);
+					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
 				else {
 					ClientDataTypes::MessageData messageData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
-					Message message(messageData, this->pRestAPI, this, this->pHttpHandler, this->pSystemThreads);
+					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
@@ -190,8 +183,7 @@ namespace CommanderNS {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
 					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->channelId, &messageData, createMessagePayload).get();
-					string bucketValue = HttpAgents::HTTPHandler::rateLimitDataBucketValues.at(FoundationClasses::RateLimitType::MESSAGE_CREATE);
-					Message message(messageData, this->pRestAPI, this, this->pHttpHandler, this->pSystemThreads);
+					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
 					co_return message;
 				}
 				catch (exception error) {
@@ -204,13 +196,11 @@ namespace CommanderNS {
 		protected:
 			friend struct WebSocketAgent;
 			friend struct WebSocket;
-			friend class HttpAgents::HTTPHandler;
 			friend class Message;
 			string guildId;
 			string channelId;
 			com_ptr<RestAPI> pRestAPI;
 			com_ptr<SystemThreads> pSystemThreads;
-			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 			static FoundationClasses::RateLimitData messageGetRateLimit;
 		};
 
@@ -263,7 +253,6 @@ namespace CommanderNS {
 
 		protected:
 			friend struct WebSocket;
-			friend class HttpAgents::HTTPHandler;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
 			static FoundationClasses::RateLimitData guildMemberGetRateLimit;
@@ -273,18 +262,16 @@ namespace CommanderNS {
 		class Channel {
 		public:
 			Channel() {};
-			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, com_ptr<SystemThreads> pSystemThreads) {
+			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
 				this->pSystemThreads = pSystemThreads;
-				this->pHttpHandler = pHttpHandler;
-				this->messageManager = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI, this->pSystemThreads, this->pHttpHandler);
+				this->messageManager = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI, this->pSystemThreads);
 			};
 			ClientDataTypes::ChannelData Data;
 			MessageManager* messageManager;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
-			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 			com_ptr<SystemThreads> pSystemThreads;
 		};
 
@@ -292,9 +279,8 @@ namespace CommanderNS {
 		public:
 
 			ChannelManager() {};
-			ChannelManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads>pSystemThreads, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler) {
+			ChannelManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads>pSystemThreads) {
 				this->pRestAPI = pRestAPI;
-				this->pHttpHandler = pHttpHandler;
 				this->pSystemThreads = pSystemThreads;
 			};
 
@@ -304,14 +290,14 @@ namespace CommanderNS {
 						channel = this->at(channelId);
 						ClientDataTypes::ChannelData channelData = channel.Data;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
-						Channel channel(channelData, this->pRestAPI, this->pHttpHandler, this->pSystemThreads);
+						Channel channel(channelData, this->pRestAPI, this->pSystemThreads);
 						this->insert(std::make_pair(channelId, channel));
 						co_return channel;
 					}
 					else {
 						ClientDataTypes::ChannelData channelData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
-						Channel channel(channelData, this->pRestAPI, this->pHttpHandler, this->pSystemThreads);
+						Channel channel(channelData, this->pRestAPI, this->pSystemThreads);
 						this->insert(std::make_pair(channelId, channel));
 						co_return channel;
 					}
@@ -330,24 +316,21 @@ namespace CommanderNS {
 			};
 
 		protected:
-			friend class HttpAgents::HTTPHandler;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
 			com_ptr<SystemThreads> pSystemThreads;
-			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 			static FoundationClasses::RateLimitData channelGetRateLimit;
 		};
 
 		class Guild {
 		public:
 			Guild() {};
-			Guild(ClientDataTypes::GuildData data, com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler) {
+			Guild(ClientDataTypes::GuildData data, com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads) {
 				this->Data = data;
 				this->pSystemThreads = pSystemThreads;
-				this->pHttpHandler = pHttpHandler;
-				this->Channels = ChannelManager(pRestAPI,pSystemThreads, pHttpHandler);
+				this->Channels = ChannelManager(pRestAPI, pSystemThreads);
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
-					Channel channel(data.channels.at(x), pRestAPI, pHttpHandler, pSystemThreads);
+					Channel channel(data.channels.at(x), pRestAPI, pSystemThreads);
 					this->Channels.insert(make_pair(data.channels.at(x).id, channel));
 				}
 				this->Members = GuildMemberManager(pRestAPI, this->Data.id);
@@ -360,15 +343,13 @@ namespace CommanderNS {
 			ChannelManager Channels;
 			GuildMemberManager Members;
 			com_ptr<SystemThreads> pSystemThreads;
-			shared_ptr < HttpAgents::HTTPHandler> pHttpHandler;
 		};
 
 		class GuildManager :public map<string, Guild> {
 		public:
 			GuildManager() {};
-			GuildManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler) {
+			GuildManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads) {
 				this->pRestAPI = pRestAPI;
-				this->pHttpHandler = pHttpHandler;
 				this->pSystemThreads = pSystemThreads;
 			};
 
@@ -378,14 +359,14 @@ namespace CommanderNS {
 					guild = this->at(guildId);
 					ClientDataTypes::GuildData guildData = guild.Data;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
-					Guild guild(guildData, this->pRestAPI, this->pSystemThreads, this->pHttpHandler);
+					Guild guild(guildData, this->pRestAPI, this->pSystemThreads);
 					this->insert(std::make_pair(guildId, guild));
 					co_return guild;
 				}
 				else {
 					ClientDataTypes::GuildData guildData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
-					Guild guild(guildData, this->pRestAPI, this->pSystemThreads, this->pHttpHandler);
+					Guild guild(guildData, this->pRestAPI, this->pSystemThreads);
 					co_return guild;
 				}
 			}
@@ -406,11 +387,9 @@ namespace CommanderNS {
 		protected:
 			friend struct WebSocket;
 			friend struct WebSocketAgent;
-			friend class HttpAgents::HTTPHandler;
 			friend struct Client;
 			com_ptr<RestAPI> pRestAPI;
 			com_ptr<SystemThreads> pSystemThreads;
-			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 		};
 
 		class User {
@@ -473,7 +452,6 @@ namespace CommanderNS {
 
 		protected:
 			friend struct WebSocketAgent;
-			friend class HttpAgents::HTTPHandler;
 			friend struct WebSocket;
 			friend struct Client;
 			com_ptr<RestAPI> pRestAPI;
@@ -483,14 +461,13 @@ namespace CommanderNS {
 		struct Client: implements<Client, winrt::Windows::Foundation::IInspectable> {
 		public:
 			Client() {};
-			Client(com_ptr<RestAPI> pRestAPI, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, com_ptr<SystemThreads> pSystemThreads) {
+			Client(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads) {
 				this->Users = UserManager(pRestAPI, this);
 				this->User = User;
 				this->pRestAPI = pRestAPI;
-				this->pHttpHandler = pHttpHandler;
 				this->getCurrentUser();
 				this->pSystemThreads = pSystemThreads;
-				this->Guilds = GuildManager(pRestAPI, this->pSystemThreads, this->pHttpHandler);
+				this->Guilds = GuildManager(pRestAPI, this->pSystemThreads);
 			};
 			~Client() {};
 			User User;
@@ -505,7 +482,6 @@ namespace CommanderNS {
 			friend class ChannelManager;
 			friend class MessageManager;
 
-			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 			com_ptr<RestAPI> pRestAPI;
 			com_ptr<SystemThreads> pSystemThreads;
 

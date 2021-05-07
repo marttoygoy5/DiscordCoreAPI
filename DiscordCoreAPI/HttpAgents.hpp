@@ -36,7 +36,7 @@ namespace CommanderNS {
 			string content;
 		};
 
-		class TimedRequestSender : public concurrency::agent {
+		struct TimedRequestSender : public concurrency::agent, implements<TimedRequestSender, winrt::Windows::Foundation::IInspectable> {
 		public:
 			explicit TimedRequestSender(Scheduler* scheduler, ITarget<WorkloadData>& target, ISource<HTTPData>& source, ISource<int>& source0,timer<int>& timer)
 				:
@@ -55,6 +55,8 @@ namespace CommanderNS {
 				return receive(_source).data;
 			}
 
+			~TimedRequestSender() {};
+
 		protected:
 			ISource<HTTPData>& _source;
 			ITarget<WorkloadData>& _target;
@@ -71,7 +73,7 @@ namespace CommanderNS {
 			};
 		};
 
-		class RequestSender : public concurrency::agent {
+		struct RequestSender :  public concurrency::agent,  implements<RequestSender, winrt::Windows::Foundation::IInspectable> {
 		public:
 			explicit RequestSender(Scheduler* scheduler, ITarget<WorkloadData>& target, ISource<HTTPData>& source)
 				:
@@ -88,6 +90,8 @@ namespace CommanderNS {
 				return receive(_source).data;
 			}
 
+			~RequestSender() {};
+
 		protected:
 			ISource<HTTPData>& _source;
 			ITarget<WorkloadData>& _target;
@@ -101,9 +105,9 @@ namespace CommanderNS {
 			};
 		};
 
-		class HTTPHandler :public concurrency::agent {
+		struct HTTPHandler :public concurrency::agent,  implements<HTTPHandler, winrt::Windows::Foundation::IInspectable> {
 		public:
-			explicit HTTPHandler(Scheduler* scheduler, com_ptr<RestAPI> pRestAPI, ITarget<HTTPData>& target, ISource<WorkloadData>& source)
+			HTTPHandler(Scheduler* scheduler, com_ptr<RestAPI> pRestAPI, ITarget<HTTPData>& target, ISource<WorkloadData>& source)
 				: _target(target),
 				_source(source),
 				agent(*scheduler)
@@ -111,6 +115,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			}
 
+			~HTTPHandler() {};
 			void run() {
 				transformer<WorkloadData, WorkloadData> collectTimeLimitData([this](WorkloadData workload) -> WorkloadData {
 					if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {

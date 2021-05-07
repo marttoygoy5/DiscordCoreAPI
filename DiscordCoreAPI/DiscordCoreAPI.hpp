@@ -41,10 +41,10 @@ namespace CommanderNS {
 			this->webSocketReceiver = make_self<WebSocketReceiver>(this->buffer1, this->systemThreads->Threads.at(1).scheduler);
 			this->botToken = botToken;
 			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocketConnection->socketPath, this->systemThreads);
-			this->client = make_self<ClientClasses::Client>(this->restAPI, this->httpHandler, this->systemThreads);
+			this->client = make_self<ClientClasses::Client>(this->restAPI, this->systemThreads);
 			this->eventMachine = make_self<EventMachine>();
-			this->webSocketConnection->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->httpHandler);
-			this->webSocketReceiver->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->httpHandler);
+			this->webSocketConnection->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client);
+			this->webSocketReceiver->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
@@ -56,19 +56,18 @@ namespace CommanderNS {
 	protected:
 		hstring baseURL = L"https://discord.com/api/v9";
 		hstring botToken;
-		com_ptr<WebSocketConnection> webSocketConnection{ nullptr };
 		com_ptr<WebSocketReceiver> webSocketReceiver{ nullptr };
+		com_ptr<WebSocketConnection> webSocketConnection{ nullptr };
 		com_ptr<RestAPI> restAPI{ nullptr };
-		shared_ptr<HttpAgents::HTTPHandler> httpHandler{ nullptr };
 		unbounded_buffer<hstring> buffer1;
 
 		void run() {
 			this->webSocketConnection->start();
 			this->webSocketReceiver->start();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				//agent::wait(this->webSocket.get());
-				CommanderNS::ClientClasses::Guild guild = this->client->Guilds.fetchAsync("782757641540730900").get();
-				cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
+				agent::wait(this->webSocketReceiver.get());
+				//CommanderNS::ClientClasses::Guild guild = this->client->Guilds.fetchAsync("782757641540730900").get();
+				//cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
 				//vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				//ClientDataTypes::GuildData guildData;
 				//FoundationClasses::RateLimitData ratelimitdata;
