@@ -14,8 +14,9 @@ namespace CommanderNS{
 
 	class WebSocketAgent : public agent {
 
-		WebSocketAgent()
-			:
+		WebSocketAgent(ITarget<json>& target, ISource<string>& source)
+			:_target(target),
+			_source(source)
 		{}
 
 		~WebSocketAgent() {
@@ -23,7 +24,8 @@ namespace CommanderNS{
 		}
 
 	protected:
-
+		ITarget<json> _target;
+		ISource<string> _source;
 		friend struct DiscordCoreAPI;
 		com_ptr<SystemThreads> pSystemThreads;
 		com_ptr<EventMachine> pEventMachine;

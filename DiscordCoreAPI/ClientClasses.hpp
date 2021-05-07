@@ -427,6 +427,7 @@ namespace CommanderNS {
 			com_ptr<SystemThreads> pSystemThreads;
 			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 		};
+			
 
 		class User {
 

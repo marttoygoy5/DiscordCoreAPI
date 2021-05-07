@@ -20,6 +20,7 @@
 #include "SystemThreads.hpp"
 #include "ClientClasses.hpp"
 #include "HttpAgents.hpp"
+//#include "WebSocketAgent.hpp"
 
 namespace CommanderNS {
 
