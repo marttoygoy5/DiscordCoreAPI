@@ -325,10 +325,11 @@ namespace CommanderNS {
 				timer<int> timer(timeDelay, 1, &buffer0, false);
 				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 				unbounded_buffer<HttpAgents::HTTPData> buffer2;
-				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(3).scheduler;
 				HttpAgents::TimedRequestSender requestSender(pScheduler2, buffer1, buffer2, buffer0, timer);
 				HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 				requestSender.setWorkloadData(workloadDataNew);
+				timer.start();
 				requestSender.start();
 				httpHandler.start();
 				agent::wait(&httpHandler);
@@ -338,7 +339,7 @@ namespace CommanderNS {
 			else {
 				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 				unbounded_buffer<HttpAgents::HTTPData> buffer2;
-				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(3).scheduler;
 				HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 				HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 				requestSender.setWorkloadData(workloadDataNew);

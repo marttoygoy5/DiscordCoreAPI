@@ -43,7 +43,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 
-			task<void> AddReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
+			task<void> addReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
 				critical_section critSection;
 				scoped_lock lock(critSection);
 				string emoji;
@@ -65,7 +65,7 @@ namespace CommanderNS {
 				co_return;
 			};
 
-			task<void> DeleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
+			task<void> deleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
 				critical_section critSection;
 				scoped_lock lock(critSection);
 				deleteReactionData.messageId = this->messageId;
@@ -91,7 +91,7 @@ namespace CommanderNS {
 				co_return;
 			}
 
-			task<void> DeleteOwnReactionAsync(ClientDataTypes::DeleteOwnReactionData deleteReactionData) {
+			task<void> deleteOwnReactionAsync(ClientDataTypes::DeleteOwnReactionData deleteReactionData) {
 				critical_section critSection;
 				scoped_lock lock(critSection);
 				deleteReactionData.channelId = this->channelId;
@@ -168,7 +168,7 @@ namespace CommanderNS {
 				this->pHttpHandler = pHttpHandler;
 			};
 
-			task<Message> FetchAsync(string messageId) {
+			task<Message> fetchAsync(string messageId) {
 				ClientClasses::Message message;
 				if (this->contains(messageId)) {
 					message = this->at(messageId);
@@ -194,12 +194,12 @@ namespace CommanderNS {
 					currentMessage = this->at(messageId);
 				}
 				else {
-					currentMessage = this->FetchAsync(messageId).get();
+					currentMessage = this->fetchAsync(messageId).get();
 					co_return currentMessage;
 				}
 			}
 
-			task<Message> CreateMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
+			task<Message> createMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
@@ -248,7 +248,7 @@ namespace CommanderNS {
 				this->guildId = guildId;
 			}
 
-			task<GuildMember> FetchAsync(string guildMemberId) {
+			task<GuildMember> fetchAsync(string guildMemberId) {
 					ClientClasses::GuildMember guildMember;
 					if (this->contains(guildMemberId)) {
 						guildMember = this->at(guildMemberId);
@@ -267,7 +267,7 @@ namespace CommanderNS {
 					}
 			};
 
-			task<GuildMember> GetGuildMemberAsync(string guildMemberId) {
+			task<GuildMember> getGuildMemberAsync(string guildMemberId) {
 					if (this->contains(guildMemberId)) {
 						co_return this->at(guildMemberId);
 					}
@@ -315,7 +315,7 @@ namespace CommanderNS {
 				this->pSystemThreads = pSystemThreads;
 			};
 
-			task<Channel> FetchAsync(string channelId) {
+			task<Channel> fetchAsync(string channelId) {
 					ClientClasses::Channel channel;
 					if (this->contains(channelId)) {
 						channel = this->at(channelId);
@@ -335,7 +335,7 @@ namespace CommanderNS {
 
 			};
 
-			task<Channel> GetChannelAsync(string channelId) {
+			task<Channel> getChannelAsync(string channelId) {
 				if (this->contains(channelId)) {
 					co_return this->at(channelId);
 				}
@@ -389,7 +389,7 @@ namespace CommanderNS {
 				this->pSystemThreads = pSystemThreads;
 			};
 
-			task<Guild> FetchAsync(string guildId) {
+			task<Guild> fetchAsync(string guildId) {
 				ClientClasses::Guild guild;
 				if (this->contains(guildId)) {
 					guild = this->at(guildId);
@@ -407,7 +407,7 @@ namespace CommanderNS {
 				}
 			}
 
-			task<Guild> GetGuildAsync(string guildId) {
+			task<Guild> getGuildAsync(string guildId) {
 					if (this->contains(guildId)) {
 						co_return this->at(guildId);
 					}
@@ -454,7 +454,7 @@ namespace CommanderNS {
 				this->pClient = pClient;
 			};
 
-			task<User> FetchAsync(string userId) {
+			task<User> fetchAsync(string userId) {
 					ClientClasses::User user;
 					try {
 						user = this->at(userId);
@@ -473,7 +473,7 @@ namespace CommanderNS {
 					}
 			};
 
-			task<User> GetUserAsync(string userId) {
+			task<User> getUserAsync(string userId) {
 					if (this->contains(userId)) {
 						co_return this->at(userId);
 					}
@@ -502,7 +502,7 @@ namespace CommanderNS {
 				this->User = User;
 				this->pRestAPI = pRestAPI;
 				this->pHttpHandler = pHttpHandler;
-				this->GetCurrentUser();
+				this->getCurrentUser();
 				this->pSystemThreads = pSystemThreads;
 				this->Guilds = GuildManager(pRestAPI, this->pSystemThreads, this->pHttpHandler);
 			};
@@ -522,7 +522,7 @@ namespace CommanderNS {
 			com_ptr<RestAPI> pRestAPI;
 			com_ptr<SystemThreads> pSystemThreads;
 
-			task<void> GetCurrentUser() {
+			task<void> getCurrentUser() {
 				ClientDataTypes::UserData userData;
 				DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->Users.userGetRateLimit, &userData).get();
 				ClientClasses::User user(userData);
