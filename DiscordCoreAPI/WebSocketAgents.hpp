@@ -1,4 +1,4 @@
-// WebSocketAgent.hpp - Header for the Websocket agent class.
+// WebSocketAgents.hpp - Header for the Websocket agent classes.
 // May 7, 2021
 // Chris M.
 // https://github.com/RealTimeChris
