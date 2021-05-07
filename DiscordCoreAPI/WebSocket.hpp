@@ -184,10 +184,9 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			auto tempPtr = this->pClient->Guilds.GetGuildAsync(messageData.guildId).get().Channels.GetChannelAsync(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, pMessageManager);
 			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(1);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
-			cout << "WERE HERE WERE HERE WERE HERE!" << endl;
 			co_return;
 		}
 
@@ -198,8 +197,7 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
-			ClientClasses::Message message(messageData,this->pRestAPI, &this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager->messageDeleteRateLimit,
-				this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager);
+			ClientClasses::Message message(messageData, this->pRestAPI, this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager);
 			this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager->erase(messageData.id);
 			messageDeletionData.message = message;
 			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(1);

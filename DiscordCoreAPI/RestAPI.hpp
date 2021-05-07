@@ -11,6 +11,7 @@
 #include "pch.h"
 #include "JSONifier.hpp"
 #include "FoundationClasses.hpp"
+#include "SystemThreads.hpp"
 
 namespace CommanderNS {
 
@@ -31,9 +32,13 @@ namespace CommanderNS {
 	};
 
 	struct RestAPI : implements<RestAPI, winrt::Windows::Foundation::IInspectable> {
+
+		com_ptr<SystemThreads> pSystemThreads;
+
 	public:
-		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
+		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath, com_ptr<SystemThreads> pSystemThreads) {
 			try {
+				this->pSystemThreads = pSystemThreads;
 				this->baseURL = baseURL;
 				this->botToken = botToken;
 				this->initialConnectionPath = this->baseURL + L"/gateway/bot";
@@ -76,7 +81,7 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = getHttpClient.GetAsync(requestUri).get();
 					int currentMSTimeLocal;
-					int getsRemainingLocal;
+					unsigned int getsRemainingLocal;
 					int msRemainLocal;
 					string bucket;
 					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -99,9 +104,9 @@ namespace CommanderNS {
 						bucket = "";
 					}
 					pRateLimitData->bucket = bucket;
-					pRateLimitData->timeStartedAt = currentMSTimeLocal;
+					pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
-					pRateLimitData->msRemain = msRemainLocal;
+					pRateLimitData->msRemain = (float)msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -136,7 +141,7 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = postHttpClient.PostAsync(requestUri, contents).get();
 					int currentMSTimeLocal;
-					int getsRemainingLocal;
+					unsigned int getsRemainingLocal;
 					int msRemainLocal;
 					string bucket;
 					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -159,9 +164,9 @@ namespace CommanderNS {
 						bucket = "";
 					}
 					pRateLimitData->bucket = bucket;
-					pRateLimitData->timeStartedAt = currentMSTimeLocal;
+					pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
-					pRateLimitData->msRemain = msRemainLocal;
+					pRateLimitData->msRemain = (float)msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -196,7 +201,7 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = putHttpClient.PutAsync(requestUri, contents).get();
 					int currentMSTimeLocal;
-					int getsRemainingLocal;
+					unsigned int getsRemainingLocal;
 					int msRemainLocal;
 					string bucket;
 					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -219,9 +224,9 @@ namespace CommanderNS {
 						bucket = "";
 					}
 					pRateLimitData->bucket = bucket;
-					pRateLimitData->timeStartedAt = currentMSTimeLocal;
+					pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
-					pRateLimitData->msRemain = msRemainLocal;
+					pRateLimitData->msRemain = (float)msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -253,7 +258,7 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = deleteHttpClient.DeleteAsync(requestUri).get();
 					int currentMSTimeLocal;
-					int getsRemainingLocal;
+					unsigned int getsRemainingLocal;
 					int msRemainLocal;
 					string bucket;
 					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
@@ -276,9 +281,9 @@ namespace CommanderNS {
 						bucket = "";
 					}
 					pRateLimitData->bucket = bucket;
-					pRateLimitData->timeStartedAt = currentMSTimeLocal;
+					pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
-					pRateLimitData->msRemain = msRemainLocal;
+					pRateLimitData->msRemain = (float)msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -300,7 +305,6 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 		friend struct WebSocket;
-
 		hstring botToken;
 		hstring baseURL;
 		hstring initialConnectionPath;

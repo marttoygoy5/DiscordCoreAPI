@@ -32,7 +32,6 @@ namespace CommanderNS {
 		com_ptr<ClientClasses::Client> client{ nullptr };
 		com_ptr<EventMachine> eventMachine{ nullptr };
 		com_ptr<SystemThreads> systemThreads{ nullptr };
-
 		static bool doWeQuit;
 
 		DiscordCoreAPI(hstring botToken) {
@@ -40,11 +39,11 @@ namespace CommanderNS {
 			this->systemThreads->initialize().get();
 			this->webSocket = winrt::make_self<WebSocket>();
 			this->botToken = botToken;
-			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocket->socketPath);
+			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocket->socketPath, this->systemThreads);
 			this->client = make_self<ClientClasses::Client>(this->restAPI, this->httpHandler, this->systemThreads);
 			this->eventMachine = make_self<EventMachine>();
 			this->webSocket->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->httpHandler);
-			this->httpHandler = make_shared<HttpAgents::HTTPHandler>(this->systemThreads->Threads.at(2).scheduler, this->restAPI);
+			//this->httpHandler = make_shared<HttpAgents::HTTPHandler>(this->systemThreads->mainThreadContext.scheduler, this->restAPI);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 

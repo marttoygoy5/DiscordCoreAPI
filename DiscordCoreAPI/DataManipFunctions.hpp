@@ -13,6 +13,7 @@
 #include "FoundationClasses.hpp"
 #include "DataParsingFunctions.hpp"
 #include "ClientDataTypes.hpp"
+#include "SystemThreads.hpp"
 #include "HttpAgents.hpp"
 
 namespace CommanderNS {
@@ -32,10 +33,10 @@ namespace CommanderNS {
 				}
 				else {
 					float targetTime = static_cast<float>(pRateLimitData->timeStartedAt) + static_cast<float> (pRateLimitData->msRemain);
-					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = targetTime - currentTime;
 					while (timeRemaining > 0.0f) {
-						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = targetTime - currentTime;
 					}
 					*pGetDataStruct = pRestAPI->httpGETObjectDataAsync(relativePath, pRateLimitData).get();
@@ -70,10 +71,10 @@ namespace CommanderNS {
 				}
 				else {
 					float targetTime = static_cast<float>(pRateLimitData->timeStartedAt) + static_cast<float> (pRateLimitData->msRemain);
-					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = targetTime - currentTime;
 					while (timeRemaining > 0.0f) {
-						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = targetTime - currentTime;
 					}
 					*pPostDataStruct = pRestAPI->httpPOSTObjectDataAsync(relativePath, content, pRateLimitData).get();
@@ -107,10 +108,10 @@ namespace CommanderNS {
 				}
 				else {
 					float targetTime = static_cast<float>(pRateLimitData->timeStartedAt) + static_cast<float> (pRateLimitData->msRemain);
-					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = targetTime - currentTime;
 					while (timeRemaining > 0.0f) {
-						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = targetTime - currentTime;
 					}
 					*pPutDataStruct = pRestAPI->httpPUTObjectDataAsync(relativePath, content, pRateLimitData).get();
@@ -144,10 +145,10 @@ namespace CommanderNS {
 				}
 				else {
 					float targetTime = static_cast<float>(pRateLimitData->timeStartedAt) + static_cast<float> (pRateLimitData->msRemain);
-					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = targetTime - currentTime;
 					while (timeRemaining > 0.0f) {
-						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = targetTime - currentTime;
 					}
 					*pDeleteDataStruct = pRestAPI->httpDELETEObjectDataAsync(relativePath, pRateLimitData).get();
@@ -276,11 +277,21 @@ namespace CommanderNS {
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
-			HttpAgents::RequestSender requestSender(pHttpHandler->_source, pHttpHandler->_target, pScheduler);
-			requestSender.sendWorkload(workloadData);
-			//checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, workloadData.content).get();
-			//json jsonValue = postData.data;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
+			unbounded_buffer<HttpAgents::HTTPData> buffer2;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			HttpAgents::RequestSender requestSender(buffer1, buffer2, pScheduler);
+			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
+			workloadDataNew.relativeURL = relativePath;
+			cout << "THREAD ID 11: " << this_thread::get_id() << endl;
+			requestSender.setWorkloadData(&workloadDataNew);
+			requestSender.start();
+			httpHandler.start();
+			agent::wait(&httpHandler);
+			agent::wait(&requestSender);
 			json jsonValue = requestSender.getData();
+			cout << "THIS IT IS THIS IS IT BIG BOY!" << endl;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
 			*pDataStructure = messageData;
 			co_return;

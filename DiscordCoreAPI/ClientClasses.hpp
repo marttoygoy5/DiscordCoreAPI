@@ -120,7 +120,7 @@ namespace CommanderNS {
 		class Message:winrt::Windows::Foundation::IUnknown{
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessageDeleteRateLimit, void* pMessageManager) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
 				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id);
@@ -142,10 +142,10 @@ namespace CommanderNS {
 			void* messageManager;
 			ReactionManager Reactions;
 			ClientDataTypes::MessageData Data;
+			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		protected:
 			friend class HttpAgents::HTTPHandler;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		};
 
 		class MessageManager: map<string, Message> {
@@ -158,20 +158,20 @@ namespace CommanderNS {
 				this->pSystemThreads = pSystemThreads;
 			};
 
-			task<Message> FetchAsync(string channelId, string messageId) {
+			task<Message> FetchAsync(string messageId) {
 				ClientClasses::Message message;
 				if (this->contains(messageId)) {
 					message = this->at(messageId);
 					ClientDataTypes::MessageData messageData = message.Data;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
-					Message message(messageData, this->pRestAPI, &this->messageDeleteRateLimit, this);
+					Message message(messageData, this->pRestAPI,  this);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
 				else {
 					ClientDataTypes::MessageData messageData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
-					Message message(messageData, this->pRestAPI, &MessageManager::messageGetRateLimit, this);
+					Message message(messageData, this->pRestAPI, this);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
@@ -180,11 +180,11 @@ namespace CommanderNS {
 			task<Message> GetMessage(string channelId, string messageId) {
 				Message currentMessage;
 				if (this->contains(messageId)) {
-					currentMessage = this->at(messageId);
 					co_return currentMessage;
+					currentMessage = this->at(messageId);
 				}
 				else {
-					currentMessage = this->FetchAsync(channelId, messageId).get();
+					currentMessage = this->FetchAsync(messageId).get();
 					co_return currentMessage;
 				}
 			}
@@ -195,10 +195,11 @@ namespace CommanderNS {
 					ClientDataTypes::MessageData messageData;
 					HttpAgents::WorkloadData workloadData;
 					workloadData.content = createMessagePayload;
-					workloadData.workloadType = HttpAgents::WorkloadType::GET;
-					this->pHttpHandler.get()
-					DataManipFunctions::postObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, &messageData, workloadData, this->pHttpHandler, this->pSystemThreads->Threads.at(2).scheduler).get();
-					Message message(messageData, this->pRestAPI, &MessageManager::messageDeleteRateLimit, this);
+					cout << "THREAD ID 00: " << this_thread::get_id() << endl;
+					workloadData.workloadType = HttpAgents::WorkloadType::POST;
+					DataManipFunctions::postObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, &messageData, workloadData, this->pHttpHandler, this->pSystemThreads->Threads.at(1).scheduler).get();
+					Message message(messageData, this->pRestAPI, this);
+					cout << "WE MADE IT HERE HERE HERE 123434234" << endl;
 					co_return message;
 				}
 				catch (exception error) {
@@ -218,7 +219,6 @@ namespace CommanderNS {
 			com_ptr<SystemThreads> pSystemThreads;
 			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 			static FoundationClasses::RateLimitData messageGetRateLimit;
-			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		};
 
 		class GuildMember {
@@ -283,9 +283,9 @@ namespace CommanderNS {
 			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, com_ptr<SystemThreads> pSystemThreads) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
-				this->messageManager = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI, this->pSystemThreads, this->pHttpHandler);
 				this->pSystemThreads = pSystemThreads;
 				this->pHttpHandler = pHttpHandler;
+				this->messageManager = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI, this->pSystemThreads, this->pHttpHandler);
 			};
 			ClientDataTypes::ChannelData Data;
 			MessageManager* messageManager;
@@ -501,8 +501,8 @@ namespace CommanderNS {
 			UserManager Users;
 
 		protected:
-			friend class GuildManager;
 			friend struct WebSocket;
+			friend class GuildManager;
 			friend class Guild;
 			friend class ChannelManager;
 			friend class MessageManager;
@@ -520,12 +520,11 @@ namespace CommanderNS {
 			}
 		};
 		FoundationClasses::RateLimitData ReactionManager::reactionAddRemoveRateLimit;
-		FoundationClasses::RateLimitData Message::messageDeleteRateLimit;
 		FoundationClasses::RateLimitData GuildManager::guildGetRateLimit;
+		FoundationClasses::RateLimitData Message::messageDeleteRateLimit;
 		FoundationClasses::RateLimitData ChannelManager::channelGetRateLimit;
 		FoundationClasses::RateLimitData GuildMemberManager::guildMemberGetRateLimit;
 		FoundationClasses::RateLimitData MessageManager::messageGetRateLimit;
-		FoundationClasses::RateLimitData MessageManager::messageDeleteRateLimit;
 	};
 }
 #endif

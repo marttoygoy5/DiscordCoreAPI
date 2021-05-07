@@ -30,8 +30,8 @@ namespace CommanderNS {
 		};
 
 		struct WorkloadData {
-			string relativeURL;
 			WorkloadType workloadType = WorkloadType::UNSET;
+			string relativeURL;
 			FoundationClasses::RateLimitData rateLimitData;
 			ITarget<HTTPData>* outputTarget;
 			string content;
@@ -39,45 +39,53 @@ namespace CommanderNS {
 
 		class RequestSender : public concurrency::agent {
 		public:
-			explicit RequestSender(ITarget<WorkloadData>& target, ISource<HTTPData>& source, Scheduler* scheduler) 
+			explicit RequestSender(ITarget<WorkloadData>& target, ISource<HTTPData>& source, Scheduler* scheduler)
 				:
 				agent(*scheduler),
 				_target(target),
 				_source(source)
 			{}
 
-			void sendWorkload(WorkloadData workload) {
-				workload.outputTarget = (ITarget<CommanderNS::HttpAgents::HTTPData>*)this;
-				send(_target, workload);
+			void setWorkloadData(WorkloadData* pWorkload) {
+				this->workloadData = *pWorkload;
 			}
 
 			json getData() {
+				cout << "THREAD ID 44: " << this_thread::get_id() << endl;
 				return receive(_source).data;
+				done();
 			}
 
 		protected:
-			ITarget<WorkloadData>& _target;
 			ISource<HTTPData>& _source;
+			ITarget<WorkloadData>& _target;
+			HttpAgents::WorkloadData workloadData;
 
 			void run() {
-				return;
+				cout << "THREAD ID 33: " << this_thread::get_id() << endl;
+				send(_target, this->workloadData);
+				done();
 			};
 		};
 
-		class HTTPHandler : public concurrency::agent {
+		class HTTPHandler :public concurrency::agent {
 		public:
-			explicit HTTPHandler(Scheduler* scheduler, com_ptr<RestAPI> pRestAPI)
-				:agent(*scheduler)
+			explicit HTTPHandler(Scheduler* scheduler, com_ptr<RestAPI> pRestAPI, ITarget<HTTPData>& target, ISource<WorkloadData>& source)
+				: _target(target),
+				_source(source),
+				agent(*scheduler)
 			{
 				this->pRestAPI = pRestAPI;
 			}
 
 			void run() {
+
 				cout << "CHECKING CHECKING 00000000000000000000000000000!" << endl;
 				transformer<WorkloadData, WorkloadData> collectTimeLimitData([this](WorkloadData workload) -> WorkloadData {
-					if (this->rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
-						workload.rateLimitData.bucket = this->rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
-						workload.rateLimitData = this->rateLimitData.at(workload.rateLimitData.bucket);
+					if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
+						workload.rateLimitData.bucket = HTTPHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
+						workload.rateLimitData = HTTPHandler::rateLimitData.at(workload.rateLimitData.bucket);
+						cout << "CURRENT WORKLOAD: " << workload.content << endl;
 					}
 					return workload;
 					});
@@ -85,13 +93,15 @@ namespace CommanderNS {
 				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
 					HTTPData returnData;
 					float targetTime = static_cast<float>(workload.rateLimitData.timeStartedAt) + static_cast<float> (workload.rateLimitData.msRemain);
-					float currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+					float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					float timeRemaining = targetTime - currentTime;
-					while (timeRemaining > 0.0f) {
-						currentTime = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-						timeRemaining = targetTime - currentTime;
+					if (workload.rateLimitData.getsRemaining == 0) {
+						while (timeRemaining > 0.0f) {
+							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+							timeRemaining = targetTime - currentTime;
+							cout << timeRemaining << "HERE IT IS!" << endl;
+						}
 					}
-
 					if (workload.workloadType == WorkloadType::GET) {
 						httpGETData getData;
 						getData = this->pRestAPI->httpGETObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
@@ -99,6 +109,8 @@ namespace CommanderNS {
 					}
 					else if (workload.workloadType == WorkloadType::POST) {
 						httpPOSTData postData;
+						cout << "WE ARE HERRE WE ARE HERE WE ARE HERE!" << endl;
+						cout << "RELATIVE URL: " << workload.relativeURL << endl;
 						postData = this->pRestAPI->httpPOSTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
 						returnData.data = postData.data;
 					}
@@ -113,28 +125,32 @@ namespace CommanderNS {
 						returnData.data = deleteData.data;
 					}
 
-					this->rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
-					this->rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
-
+					HTTPHandler::rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
+					HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
+					cout << returnData.data << "TESTING, TESTING" << endl;
+					cout << "CURRENT WORKLOAD 22222: " << workload.content << endl;
+					cout << "GETS REMAINING: " << workload.rateLimitData.getsRemaining << endl;
+					cout << "MS REMAINING: " << workload.rateLimitData.msRemain << endl;
+					cout << "BUCKET: " << workload.rateLimitData.bucket << endl;
 					return returnData;
 					});
-
-				this->_source.link_target(&collectTimeLimitData);
+				WorkloadData workload = receive(&_source);
+				send(&collectTimeLimitData, workload);
 				collectTimeLimitData.link_target(&collectHTTPData);
 				collectHTTPData.link_target(&this->_target);
-
-				WorkloadData workload = receive(this->_source);
+				done();
 			};
 
-			unbounded_buffer<HTTPData> _target = unbounded_buffer<HTTPData>();
-			unbounded_buffer<WorkloadData> _source = unbounded_buffer<WorkloadData>();
+			ITarget<HTTPData>& _target;
+			ISource<WorkloadData>& _source;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
-			map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
-			map<string, FoundationClasses::RateLimitData> rateLimitData;
-
+			static map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
+			static map<string, FoundationClasses::RateLimitData> rateLimitData;
+			
 		};
-
+		map<FoundationClasses::RateLimitType, string> HTTPHandler::rateLimitDataBucketValues;
+		map<string, FoundationClasses::RateLimitData> HTTPHandler::rateLimitData;
 	};
 };
 #endif
