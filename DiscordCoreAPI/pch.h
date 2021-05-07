@@ -29,6 +29,7 @@
 #include <winrt/Windows.System.Threading.Core.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <DispatcherQueue.h>
+#include <winrt/impl/Windows.Media.Import.0.h>
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/windows.networking.sockets.h>

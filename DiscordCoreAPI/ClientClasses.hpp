@@ -157,7 +157,7 @@ namespace CommanderNS {
 			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		};
 
-		class MessageManager: map<string, Message> {
+		class MessageManager: public map<string, Message> {
 		public:
 			MessageManager() {};
 			MessageManager(string channelId, string guildId, com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler) {
@@ -220,6 +220,7 @@ namespace CommanderNS {
 			};
 
 		protected:
+			friend struct WebSocketAgent;
 			friend struct WebSocket;
 			friend class HttpAgents::HTTPHandler;
 			friend class Message;
@@ -380,7 +381,7 @@ namespace CommanderNS {
 			shared_ptr < HttpAgents::HTTPHandler> pHttpHandler;
 		};
 
-		class GuildManager : map<string, Guild> {
+		class GuildManager :public map<string, Guild> {
 		public:
 			GuildManager() {};
 			GuildManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler) {
@@ -408,26 +409,27 @@ namespace CommanderNS {
 			}
 
 			task<Guild> getGuildAsync(string guildId) {
-					if (this->contains(guildId)) {
-						co_return this->at(guildId);
-					}
-					else {
-						cout << "GetGuild() Error: Sorry, but they aren't here! " << endl;
-						Guild guild;
-						co_return guild;
-					}
+				if (this->contains(guildId)) {
+					co_return this->at(guildId);
+				}
+				else {
+					cout << "GetGuild() Error: Sorry, but they aren't here! " << endl;
+					Guild guild;
+					co_return guild;
+				}
 			};
+
+			static FoundationClasses::RateLimitData guildGetRateLimit;
 
 		protected:
 			friend struct WebSocket;
+			friend struct WebSocketAgent;
 			friend class HttpAgents::HTTPHandler;
 			friend struct Client;
-			static FoundationClasses::RateLimitData guildGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 			com_ptr<SystemThreads> pSystemThreads;
 			shared_ptr<HttpAgents::HTTPHandler> pHttpHandler;
 		};
-			
 
 		class User {
 
@@ -447,7 +449,7 @@ namespace CommanderNS {
 			}
 		};
 
-		class UserManager: map<string, User> {
+		class UserManager: public map<string, User> {
 		public:
 			UserManager() {};
 			UserManager(com_ptr<RestAPI> pRestAPI, Client* pClient) {
@@ -488,6 +490,7 @@ namespace CommanderNS {
 			static FoundationClasses::RateLimitData userGetRateLimit;
 
 		protected:
+			friend struct WebSocketAgent;
 			friend class HttpAgents::HTTPHandler;
 			friend struct WebSocket;
 			friend struct Client;
@@ -513,6 +516,7 @@ namespace CommanderNS {
 			UserManager Users;
 
 		protected:
+			friend struct WebSocketAgent;
 			friend class GuildManager;
 			friend struct WebSocket;
 			friend class Guild;

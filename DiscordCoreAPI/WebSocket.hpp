@@ -17,8 +17,13 @@
 
 namespace CommanderNS {
 
-	struct WebSocket : implements<WebSocket, winrt::Windows::Foundation::IInspectable> {
+
+	struct WebSocket :public concurrency::agent,  implements<WebSocket, winrt::Windows::Foundation::IInspectable> {
 	public:
+
+		WebSocket(ITarget<hstring>& target) 
+			: _target(target)
+		{}
 
 		~WebSocket() {
 			this->cleanup();
@@ -27,6 +32,7 @@ namespace CommanderNS {
 	protected:
 		
 		friend struct DiscordCoreAPI;
+		ITarget<hstring>& _target;
 		com_ptr<SystemThreads> pSystemThreads;
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
@@ -47,6 +53,10 @@ namespace CommanderNS {
 		DispatcherQueue dispatchQueueForHB = nullptr;
 		DispatcherQueueTimer heartbeatTimer = nullptr;
 
+		void run() {
+			this->connectAsync();
+		}
+
 		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler) {
 			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
@@ -56,7 +66,7 @@ namespace CommanderNS {
 			this->pHttpHandler = pHttpHandler;
 			this->intentsValue = ((1 << 0) + (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4) + (1 << 5) + (1 << 6) + (1 << 7) + (1 << 8) + (1 << 9) + (1 << 10) + (1 << 11) + (1 << 12) + (1 << 13) + (1 << 14));
 		}
-
+		
 		void cleanup() {
 			if (this->messageWriter) {
 				try {
@@ -174,7 +184,7 @@ namespace CommanderNS {
 				wcout << error.message().c_str() << std::endl;
 			}
 		}
-
+		/*
 		task<void> onMessageCreate(json payload) {
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
@@ -222,22 +232,24 @@ namespace CommanderNS {
 			this->pEventMachine->onReactionAddEvent(reactionAddData);
 			co_return;
 		}
-
-		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
+		*/
+		void onMessageReceived(MessageWebSocket const& , MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
 				DataReader dataReader{ args.GetDataReader() };
 				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
 				auto message = dataReader.ReadString(dataReader.UnconsumedBufferLength());
+				asend(_target, message);
+				
 				json payload = payload.parse(message);
 
 				if (payload.at("s") >= 0) {
 					this->lastNumberReceived = payload.at("s");
 				}
-
+				
 				if (payload.at("t") == "PRESENCE_UPDATE") {
 					return;
 				}
-
+				/*
 				if (payload.at("t") == "MESSAGE_CREATE") {
 					onMessageCreate(payload);
 				}
@@ -253,8 +265,8 @@ namespace CommanderNS {
 
 				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
 					onMessageReactionAdd(payload);
-				}				
-
+				}
+				
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					ClientDataTypes::GuildMemberData guildMemberData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->pClient->Guilds.guildGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("user").at("id"), &guildMemberData).get();
@@ -264,7 +276,7 @@ namespace CommanderNS {
 					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(1);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
-
+				*/
 				if (payload.at("op") == 6) {
 					std::string resume = JSONifier::getResumePayload(winrt::to_string(this->botToken), winrt::to_string(this->sessionID), this->lastNumberReceived);
 					this->sendAsync(resume);
@@ -272,9 +284,9 @@ namespace CommanderNS {
 
 				if (payload.at("op") == 7) {
 					this->cleanup();
-					this->connectAsync().get();
 					std::string resume = JSONifier::getResumePayload(winrt::to_string(this->botToken), winrt::to_string(this->sessionID), this->lastNumberReceived);
 					this->sendAsync(resume);
+					this->connectAsync().get();
 				}
 
 				if (payload.at("op") == 9) {
@@ -305,10 +317,14 @@ namespace CommanderNS {
 				}
 				
 				std::cout << "Message received from MessageWebSocket: " << winrt::to_string(message) << std::endl << std::endl;
+			
 			}
+			
 			catch (winrt::hresult_error const& ex) {
 				std::wcout << ex.message().c_str() << std::endl;
+				
 			}
+			
 		};
 	};
 };

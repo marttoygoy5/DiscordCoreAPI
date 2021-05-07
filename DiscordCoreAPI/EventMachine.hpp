@@ -53,6 +53,7 @@ namespace CommanderNS {
 	protected:
 
 		friend struct WebSocket;
+		friend struct WebSocketAgent;
 
 		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::MessageCreationData>> onMessageCreationEvent;
 
