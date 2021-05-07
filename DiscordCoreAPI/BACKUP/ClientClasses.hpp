@@ -472,12 +472,11 @@ namespace CommanderNS {
 					}
 			};
 
-			static FoundationClasses::RateLimitData userGetRateLimit;
-
 		protected:
 			friend class HttpAgents::HTTPHandler;
 			friend struct WebSocket;
 			friend struct Client;
+			static FoundationClasses::RateLimitData userGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 			Client* pClient;
 		};
@@ -524,7 +523,6 @@ namespace CommanderNS {
 		FoundationClasses::RateLimitData ChannelManager::channelGetRateLimit;
 		FoundationClasses::RateLimitData GuildMemberManager::guildMemberGetRateLimit;
 		FoundationClasses::RateLimitData MessageManager::messageGetRateLimit;
-		FoundationClasses::RateLimitData UserManager::userGetRateLimit;
 	};
 }
 #endif

@@ -39,7 +39,7 @@ namespace CommanderNS {
 			this->systemThreads->initialize().get();
 			this->webSocket = winrt::make_self<WebSocket>();
 			this->botToken = botToken;
-//			this->httpHandler = make_shared<HttpAgents::HTTPHandler>(this->systemThreads->mainThreadContext.scheduler, this->restAPI);
+			//this->httpHandler = make_shared<HttpAgents::HTTPHandler>(this->systemThreads->mainThreadContext.scheduler, this->restAPI);
 			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocket->socketPath, this->systemThreads);
 			this->client = make_self<ClientClasses::Client>(this->restAPI, this->httpHandler, this->systemThreads);
 			this->eventMachine = make_self<EventMachine>();
@@ -72,14 +72,14 @@ namespace CommanderNS {
 		task<void> run() {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				CommanderNS::ClientClasses::Guild guild = this->client->Guilds.FetchAsync("782757641540730900").get();
-				cout << guild.Members.GetGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
+				//mmanderNS::ClientClasses::Guild guild = this->client->Guilds.FetchAsync("782757641540730900").get();
+				//cout << guild.Members.GetGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
 				vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				ClientDataTypes::GuildData guildData;
 				FoundationClasses::RateLimitData ratelimitdata;
-				DataManipFunctions::getObjectDataAsync(this->restAPI, &ratelimitdata, "782757641540730900", &roleData).get();
+				//DataManipFunctions::getObjectDataAsync(this->restAPI, &ratelimitdata, "782757641540730900", &roleData).get();
 				for (unsigned int x = 0; x < roleData.size(); x += 1) {
-					//cout << roleData.at(x).name << endl;
+					cout << roleData.at(x).name << endl;
 				}
 				//cout << "Name: " << this->Client->Guilds.GetGuild("782757641540730900").get().Members.GetGuildMember("644754671088566275").get().Data.user.username << endl;
 			}
