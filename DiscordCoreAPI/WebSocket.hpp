@@ -12,8 +12,8 @@
 #include "DataParsingFunctions.hpp"
 #include "EventMachine.hpp"
 #include "DataManipFunctions.hpp"
-#include "ClientClasses.hpp"
 #include "SystemThreads.hpp"
+#include "ClientClasses.hpp"
 
 namespace CommanderNS {
 
@@ -206,26 +206,21 @@ namespace CommanderNS {
 		}
 
 		task<void> onMessageReactionAdd(json payload) {
-			try{
-				co_await resume_foreground(*this->pSystemThreads->Threads.at(1).threadQueue.get());
-				ClientDataTypes::ReactionAddEventData reactionAddEventData;
-				DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
-				ClientDataTypes::ReactionData reactionData;
-				EventDataTypes::ReactionAddData reactionAddData;
-				reactionData.channelId = reactionAddEventData.channelId;
-				reactionData.emoji = reactionAddEventData.emoji;
-				reactionData.guildId = reactionAddEventData.guildId;
-				reactionData.member = reactionAddEventData.member;
-				reactionData.messageId = reactionAddEventData.messageId;
-				reactionData.userId = reactionAddEventData.userId;
-				ClientClasses::Reaction reaction(reactionData);
-				reactionAddData.reaction = reaction;
-				reactionAddData.threadContext = &this->pSystemThreads->Threads.at(1);
-				this->pEventMachine->onReactionAddEvent(reactionAddData);
-			}
-			catch (exception error) {
-				cout << "Error: " << error.what() << endl;
-			}
+			co_await resume_foreground(*this->pSystemThreads->Threads.at(1).threadQueue.get());
+			ClientDataTypes::ReactionAddEventData reactionAddEventData;
+			DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
+			ClientDataTypes::ReactionData reactionData;
+			EventDataTypes::ReactionAddData reactionAddData;
+			reactionData.channelId = reactionAddEventData.channelId;
+			reactionData.emoji = reactionAddEventData.emoji;
+			reactionData.guildId = reactionAddEventData.guildId;
+			reactionData.member = reactionAddEventData.member;
+			reactionData.messageId = reactionAddEventData.messageId;
+			reactionData.userId = reactionAddEventData.userId;
+			ClientClasses::Reaction reaction(reactionData);
+			reactionAddData.reaction = reaction;
+			reactionAddData.threadContext = &this->pSystemThreads->Threads.at(1);
+			this->pEventMachine->onReactionAddEvent(reactionAddData);
 		}
 
 		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {

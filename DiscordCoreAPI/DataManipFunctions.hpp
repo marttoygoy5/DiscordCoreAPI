@@ -273,7 +273,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, HttpAgents::WorkloadData workloadData, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, Scheduler* pScheduler) {
+		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, Scheduler* pScheduler, string channelId, ClientDataTypes::MessageData* pDataStructure, HttpAgents::WorkloadData workloadData) {
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
 			httpPOSTData postData;
@@ -284,14 +284,12 @@ namespace CommanderNS {
 			HttpAgents::RequestSender requestSender(buffer1, buffer2, pScheduler);
 			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 			workloadDataNew.relativeURL = relativePath;
-			cout << "THREAD ID 11: " << this_thread::get_id() << endl;
-			requestSender.setWorkloadData(&workloadDataNew);
+			requestSender.setWorkloadData(workloadDataNew);
 			requestSender.start();
 			httpHandler.start();
 			agent::wait(&httpHandler);
 			agent::wait(&requestSender);
 			json jsonValue = requestSender.getData();
-			cout << "THIS IT IS THIS IS IT BIG BOY!" << endl;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
 			*pDataStructure = messageData;
 			co_return;

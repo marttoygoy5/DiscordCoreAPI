@@ -142,10 +142,10 @@ namespace CommanderNS {
 			void* messageManager;
 			ReactionManager Reactions;
 			ClientDataTypes::MessageData Data;
-			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		protected:
 			friend class HttpAgents::HTTPHandler;
 			com_ptr<RestAPI> pRestAPI;
+			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		};
 
 		class MessageManager: map<string, Message> {
@@ -195,11 +195,9 @@ namespace CommanderNS {
 					ClientDataTypes::MessageData messageData;
 					HttpAgents::WorkloadData workloadData;
 					workloadData.content = createMessagePayload;
-					cout << "THREAD ID 00: " << this_thread::get_id() << endl;
 					workloadData.workloadType = HttpAgents::WorkloadType::POST;
-					DataManipFunctions::postObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, &messageData, workloadData, this->pHttpHandler, this->pSystemThreads->Threads.at(1).scheduler).get();
+					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->pHttpHandler, this->pSystemThreads->Threads.at(1).scheduler, this->channelId, &messageData, workloadData).get();
 					Message message(messageData, this->pRestAPI, this);
-					cout << "WE MADE IT HERE HERE HERE 123434234" << endl;
 					co_return message;
 				}
 				catch (exception error) {
@@ -478,7 +476,7 @@ namespace CommanderNS {
 			friend class HttpAgents::HTTPHandler;
 			friend struct WebSocket;
 			friend struct Client;
-			FoundationClasses::RateLimitData userGetRateLimit;
+			static FoundationClasses::RateLimitData userGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 			Client* pClient;
 		};
@@ -501,8 +499,8 @@ namespace CommanderNS {
 			UserManager Users;
 
 		protected:
-			friend struct WebSocket;
 			friend class GuildManager;
+			friend struct WebSocket;
 			friend class Guild;
 			friend class ChannelManager;
 			friend class MessageManager;
@@ -520,8 +518,8 @@ namespace CommanderNS {
 			}
 		};
 		FoundationClasses::RateLimitData ReactionManager::reactionAddRemoveRateLimit;
-		FoundationClasses::RateLimitData GuildManager::guildGetRateLimit;
 		FoundationClasses::RateLimitData Message::messageDeleteRateLimit;
+		FoundationClasses::RateLimitData GuildManager::guildGetRateLimit;
 		FoundationClasses::RateLimitData ChannelManager::channelGetRateLimit;
 		FoundationClasses::RateLimitData GuildMemberManager::guildMemberGetRateLimit;
 		FoundationClasses::RateLimitData MessageManager::messageGetRateLimit;

@@ -46,14 +46,12 @@ namespace CommanderNS {
 				_source(source)
 			{}
 
-			void setWorkloadData(WorkloadData* pWorkload) {
-				this->workloadData = *pWorkload;
+			void setWorkloadData(WorkloadData pWorkload) {
+				this->workloadData = pWorkload;
 			}
 
 			json getData() {
-				cout << "THREAD ID 44: " << this_thread::get_id() << endl;
 				return receive(_source).data;
-				done();
 			}
 
 		protected:
@@ -62,7 +60,6 @@ namespace CommanderNS {
 			HttpAgents::WorkloadData workloadData;
 
 			void run() {
-				cout << "THREAD ID 33: " << this_thread::get_id() << endl;
 				send(_target, this->workloadData);
 				done();
 			};
@@ -79,17 +76,13 @@ namespace CommanderNS {
 			}
 
 			void run() {
-
-				cout << "CHECKING CHECKING 00000000000000000000000000000!" << endl;
 				transformer<WorkloadData, WorkloadData> collectTimeLimitData([this](WorkloadData workload) -> WorkloadData {
 					if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
 						workload.rateLimitData.bucket = HTTPHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
 						workload.rateLimitData = HTTPHandler::rateLimitData.at(workload.rateLimitData.bucket);
-						cout << "CURRENT WORKLOAD: " << workload.content << endl;
 					}
 					return workload;
 					});
-				cout << "CHECKING CHECKING CHECKING CHECKING CHECKING CHECKING!" << endl;
 				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
 					HTTPData returnData;
 					float targetTime = static_cast<float>(workload.rateLimitData.timeStartedAt) + static_cast<float> (workload.rateLimitData.msRemain);
@@ -99,7 +92,6 @@ namespace CommanderNS {
 						while (timeRemaining > 0.0f) {
 							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							timeRemaining = targetTime - currentTime;
-							cout << timeRemaining << "HERE IT IS!" << endl;
 						}
 					}
 					if (workload.workloadType == WorkloadType::GET) {
@@ -109,8 +101,6 @@ namespace CommanderNS {
 					}
 					else if (workload.workloadType == WorkloadType::POST) {
 						httpPOSTData postData;
-						cout << "WE ARE HERRE WE ARE HERE WE ARE HERE!" << endl;
-						cout << "RELATIVE URL: " << workload.relativeURL << endl;
 						postData = this->pRestAPI->httpPOSTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
 						returnData.data = postData.data;
 					}
@@ -127,7 +117,6 @@ namespace CommanderNS {
 
 					HTTPHandler::rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
 					HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
-					cout << returnData.data << "TESTING, TESTING" << endl;
 					cout << "CURRENT WORKLOAD 22222: " << workload.content << endl;
 					cout << "GETS REMAINING: " << workload.rateLimitData.getsRemaining << endl;
 					cout << "MS REMAINING: " << workload.rateLimitData.msRemain << endl;
