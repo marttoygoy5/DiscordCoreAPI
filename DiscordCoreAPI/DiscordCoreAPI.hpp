@@ -65,9 +65,9 @@ namespace CommanderNS {
 			this->webSocketConnection->start();
 			this->webSocketReceiver->start();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				agent::wait(this->webSocketReceiver.get());
-				//CommanderNS::ClientClasses::Guild guild = this->client->Guilds.fetchAsync("782757641540730900").get();
-				//cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
+				//agent::wait(this->webSocketReceiver.get());
+				CommanderNS::ClientClasses::Guild guild = this->client->Guilds.fetchAsync("782757641540730900").get();
+				cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
 				//vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				//ClientDataTypes::GuildData guildData;
 				//FoundationClasses::RateLimitData ratelimitdata;

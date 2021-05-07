@@ -318,6 +318,7 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
 			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 			HttpAgents::WorkloadData workloadDataNew;
+			workloadDataNew.relativeURL = relativePath;
 			workloadDataNew.content = content;
 			workloadDataNew.workloadType = HttpAgents::WorkloadType::POST;
 			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_CREATE;

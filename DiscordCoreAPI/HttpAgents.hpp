@@ -110,12 +110,12 @@ namespace CommanderNS {
 			HTTPHandler(Scheduler* scheduler, com_ptr<RestAPI> pRestAPI, ITarget<HTTPData>& target, ISource<WorkloadData>& source)
 				: _target(target),
 				_source(source),
-				agent(*scheduler)
-			{
+				agent(*scheduler) {
 				this->pRestAPI = pRestAPI;
 			}
 
 			~HTTPHandler() {};
+
 			void run() {
 				transformer<WorkloadData, WorkloadData> collectTimeLimitData([this](WorkloadData workload) -> WorkloadData {
 					if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
