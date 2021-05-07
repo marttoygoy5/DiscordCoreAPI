@@ -18,7 +18,8 @@ namespace CommanderNS {
 			MESSAGE_GET = 2,
 			REACTION_ADD_REMOVE = 3,
 			GUILD_GET = 4,
-			CHANNEL_GET = 5
+			CHANNEL_GET = 5,
+			GUILD_MEMBER_GET = 6
 		};
 
 		struct RateLimitData {

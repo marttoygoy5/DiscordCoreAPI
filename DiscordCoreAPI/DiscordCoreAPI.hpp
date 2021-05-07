@@ -10,9 +10,9 @@
 
 #include "pch.h"
 #include "RestAPI.hpp"
-#include "WebSocket.hpp"
 #include "DataParsingFunctions.hpp"
 #include "EventMachine.hpp"
+#include "WebSocketAgents.hpp"
 #include "DataManipFunctions.hpp"
 #include "EventDataTypes.hpp"
 #include "FoundationClasses.hpp"
@@ -20,7 +20,6 @@
 #include "SystemThreads.hpp"
 #include "ClientClasses.hpp"
 #include "HttpAgents.hpp"
-#include "WebSocketAgent.hpp"
 
 namespace CommanderNS {
 
@@ -38,38 +37,38 @@ namespace CommanderNS {
 		DiscordCoreAPI(hstring botToken) {
 			this->systemThreads = make_self<SystemThreads>();
 			this->systemThreads->initialize().get();
-			this->webSocket = winrt::make_self<WebSocket>(this->buffer1, this->systemThreads->Threads.at(0).scheduler);
-			this->webSocketAgent = make_self<WebSocketAgent>(this->buffer1, this->systemThreads->Threads.at(1).scheduler);
+			this->webSocketConnection = winrt::make_self<WebSocketConnection>(this->buffer1, this->systemThreads->Threads.at(0).scheduler);
+			this->webSocketReceiver = make_self<WebSocketReceiver>(this->buffer1, this->systemThreads->Threads.at(1).scheduler);
 			this->botToken = botToken;
-			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocket->socketPath, this->systemThreads);
+			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocketConnection->socketPath, this->systemThreads);
 			this->client = make_self<ClientClasses::Client>(this->restAPI, this->httpHandler, this->systemThreads);
 			this->eventMachine = make_self<EventMachine>();
-			this->webSocket->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->httpHandler);
-			this->webSocketAgent->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->httpHandler);
+			this->webSocketConnection->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->httpHandler);
+			this->webSocketReceiver->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->httpHandler);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
-		void login() {
+		int login() {
 			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this] {loginToWrap(); });
-			return;
+			return 25;
 		}
 
 	protected:
 		hstring baseURL = L"https://discord.com/api/v9";
 		hstring botToken;
-		com_ptr<WebSocket> webSocket{ nullptr };
-		com_ptr<WebSocketAgent> webSocketAgent{ nullptr };
+		com_ptr<WebSocketConnection> webSocketConnection{ nullptr };
+		com_ptr<WebSocketReceiver> webSocketReceiver{ nullptr };
 		com_ptr<RestAPI> restAPI{ nullptr };
 		shared_ptr<HttpAgents::HTTPHandler> httpHandler{ nullptr };
 		unbounded_buffer<hstring> buffer1;
 
 		void run() {
-			this->webSocket->start();
-			this->webSocketAgent->start();
+			this->webSocketConnection->start();
+			this->webSocketReceiver->start();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				agent::wait(this->webSocket.get());
-				//CommanderNS::ClientClasses::Guild guild = this->client->Guilds.fetchAsync("782757641540730900").get();
-				//cout << guild.Members.GetGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
+				//agent::wait(this->webSocket.get());
+				CommanderNS::ClientClasses::Guild guild = this->client->Guilds.fetchAsync("782757641540730900").get();
+				cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
 				//vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				//ClientDataTypes::GuildData guildData;
 				//FoundationClasses::RateLimitData ratelimitdata;
@@ -95,28 +94,33 @@ namespace CommanderNS {
 			case CTRL_C_EVENT:
 				std::cout << "Ctrl-C event\n";
 				DiscordCoreAPI::doWeQuit = true;
+				WebSocketReceiver::doWeQuit = true;
 				return TRUE;
 
 				// CTRL-CLOSE: confirm that the user wants to exit.
 			case CTRL_CLOSE_EVENT:
 				std::cout << "Ctrl-Close event\n";
 				DiscordCoreAPI::doWeQuit = true;
+				WebSocketReceiver::doWeQuit = true;
 				return TRUE;
 
 				// Pass other signals to the next handler.
 			case CTRL_BREAK_EVENT:
 				std::cout << "Ctrl-Break event\n";
 				DiscordCoreAPI::doWeQuit = true;
+				WebSocketReceiver::doWeQuit = true;
 				return FALSE;
 
 			case CTRL_LOGOFF_EVENT:
 				std::cout << "Ctrl-LogOff event\n";
 				DiscordCoreAPI::doWeQuit = true;
+				WebSocketReceiver::doWeQuit = true;
 				return FALSE;
 
 			case CTRL_SHUTDOWN_EVENT:
 				std::cout << "Ctrl-Shutdown event\n";
 				DiscordCoreAPI::doWeQuit = true;
+				WebSocketReceiver::doWeQuit = true;
 				return FALSE;
 
 			default:
