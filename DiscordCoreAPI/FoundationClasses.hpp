@@ -24,9 +24,9 @@ namespace CommanderNS {
 		struct RateLimitData {
 			string bucket = "";
 			float timeStartedAt = 0;
+			RateLimitType rateLimitType;
 			float msRemain = 0;
 			unsigned int getsRemaining = 0;
-			RateLimitType rateLimitType;
 		};
 	};
 };

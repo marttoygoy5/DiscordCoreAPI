@@ -47,7 +47,7 @@ namespace CommanderNS {
 			{}
 
 			void setWorkloadData(WorkloadData pWorkload) {
-				this->workloadData = pWorkload;
+				RequestSender::workloadData = pWorkload;
 			}
 
 			json getData() {
@@ -57,10 +57,12 @@ namespace CommanderNS {
 		protected:
 			ISource<HTTPData>& _source;
 			ITarget<WorkloadData>& _target;
-			HttpAgents::WorkloadData workloadData;
+			static HttpAgents::WorkloadData workloadData;
 
 			void run() {
 				send(_target, this->workloadData);
+
+
 				done();
 			};
 		};
@@ -81,20 +83,22 @@ namespace CommanderNS {
 						workload.rateLimitData.bucket = HTTPHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
 						workload.rateLimitData = HTTPHandler::rateLimitData.at(workload.rateLimitData.bucket);
 					}
-					cout << "GETS REMAINING:22 " << workload.rateLimitData.getsRemaining << endl;
-					cout << "MS REMAINING:22" << workload.rateLimitData.msRemain << endl;
-					cout << "BUCKET:22 " << workload.rateLimitData.bucket << endl;
+					cout << "GETS REMAINING:22: " << workload.rateLimitData.getsRemaining << endl;
+					cout << "MS REMAINING:22:  " << workload.rateLimitData.msRemain << endl;
+					cout << "BUCKET:22: " << workload.rateLimitData.bucket << endl;
+					cout << "TIME STARTED:22:  " << workload.rateLimitData.timeStartedAt << endl;
 					return workload;
 					});
 				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
 					HTTPData returnData;
-					float targetTime = static_cast<float>(workload.rateLimitData.timeStartedAt) + static_cast<float> (workload.rateLimitData.msRemain);
-					float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					float timeRemaining = targetTime - currentTime;
 					if (workload.rateLimitData.getsRemaining == 0) {
-						while (timeRemaining > 0.0f) {
+						float loopStartTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						float targetTime = loopStartTime + static_cast<float> (workload.rateLimitData.msRemain);
+						float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						while (workload.rateLimitData.msRemain > 0.0f) {
 							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-							timeRemaining = targetTime - currentTime;
+							workload.rateLimitData.msRemain = targetTime - currentTime;
+							cout << "TIME REMAINING: " << workload.rateLimitData.msRemain << endl;
 						}
 					}
 					if (workload.workloadType == WorkloadType::GET) {
@@ -117,16 +121,8 @@ namespace CommanderNS {
 						deleteData = this->pRestAPI->httpDELETEObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
 						returnData.data = deleteData.data;
 					}
-
 					HTTPHandler::rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
-					HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));					
-
-					if (HttpAgents::HTTPHandler::rateLimitDataBucketValues.contains(FoundationClasses::RateLimitType::MESSAGE_CREATE)) {
-						string bucketValue = HttpAgents::HTTPHandler::rateLimitDataBucketValues.at(FoundationClasses::RateLimitType::MESSAGE_CREATE);
-						cout << "GETS REMAINING: " << HttpAgents::HTTPHandler::rateLimitData.at(bucketValue).getsRemaining << endl;
-						cout << "MS REMAINING: " << HttpAgents::HTTPHandler::rateLimitData.at(bucketValue).msRemain << endl;
-						cout << "BUCKET: " << bucketValue << endl;
-					}					
+					HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
 					return returnData;
 					});
 				WorkloadData workload = receive(&_source);
@@ -141,10 +137,11 @@ namespace CommanderNS {
 			static map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
 			static map<string, FoundationClasses::RateLimitData> rateLimitData;
 		protected:
-			com_ptr<RestAPI> pRestAPI;			
+			com_ptr<RestAPI> pRestAPI;
 		};
 		map<FoundationClasses::RateLimitType, string> HTTPHandler::rateLimitDataBucketValues;
 		map<string, FoundationClasses::RateLimitData> HTTPHandler::rateLimitData;
+		HttpAgents::WorkloadData RequestSender::workloadData;
 	};
 };
 #endif

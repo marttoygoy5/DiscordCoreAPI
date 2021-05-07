@@ -224,9 +224,9 @@ namespace CommanderNS {
 						bucket = "";
 					}
 					pRateLimitData->bucket = bucket;
+					pRateLimitData->msRemain = (float)msRemainLocal;
 					pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
-					pRateLimitData->msRemain = (float)msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -305,10 +305,10 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 		friend struct WebSocket;
+		Uri baseURI = Uri{ nullptr };
 		hstring botToken;
 		hstring baseURL;
 		hstring initialConnectionPath;
-		Uri baseURI = Uri{ nullptr };
 		HttpRequestHeaderCollection getHeaders{ nullptr };
 		HttpRequestHeaderCollection putHeaders{ nullptr };
 		HttpRequestHeaderCollection postHeaders{ nullptr };

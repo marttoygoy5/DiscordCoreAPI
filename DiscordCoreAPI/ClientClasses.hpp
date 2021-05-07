@@ -35,7 +35,7 @@ namespace CommanderNS {
 		public:
 
 			ReactionManager() {};
-			ReactionManager(com_ptr<RestAPI> pRestAPI, string channelId, string messageId, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, com_ptr<SystemThreads> pSystemThreads) {
+			ReactionManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, string channelId, string messageId) {
 				this->channelId = channelId;
 				this->pSystemThreads = pSystemThreads;
 				this->messageId = messageId;
@@ -131,7 +131,7 @@ namespace CommanderNS {
 				this->pSystemThreads = pSystemThreads;
 				this->pRestAPI = pRestAPI;
 				this->pHttpHandler = pHttpHandler;
-				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id, pHttpHandler, this->pSystemThreads);
+				this->Reactions = ReactionManager(pRestAPI, this->pSystemThreads, pHttpHandler, this->Data.channelId, this->Data.id);
 				this->messageManager = pMessageManager;
 			}
 
@@ -208,11 +208,8 @@ namespace CommanderNS {
 					workloadData.content = createMessagePayload;
 					workloadData.workloadType = HttpAgents::WorkloadType::POST;
 					workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_CREATE;
-					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->pHttpHandler, this->pSystemThreads->Threads.at(1).scheduler, this->channelId, &messageData, workloadData).get();
+					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->pHttpHandler, this->pSystemThreads->Threads.at(2).scheduler, this->channelId, &messageData, workloadData).get();
 					string bucketValue = HttpAgents::HTTPHandler::rateLimitDataBucketValues.at(FoundationClasses::RateLimitType::MESSAGE_CREATE);
-					cout << "GETS REMAINING: " << HttpAgents::HTTPHandler::rateLimitData.at(bucketValue).getsRemaining << endl;
-					cout << "MS REMAINING: " << HttpAgents::HTTPHandler::rateLimitData.at(bucketValue).msRemain << endl;
-					cout << "BUCKET: " << bucketValue << endl;
 					Message message(messageData, this->pRestAPI, this, this->pHttpHandler, this->pSystemThreads);
 					co_return message;
 				}

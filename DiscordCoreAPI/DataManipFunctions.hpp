@@ -297,7 +297,6 @@ namespace CommanderNS {
 
 		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, Scheduler* pScheduler,  string channelId, string messageId, string emoji, HttpAgents::WorkloadData workloadData){
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
-			httpPUTData putData;
 			HttpAgents::WorkloadData workloadDataNew = workloadData;
 			workloadDataNew.relativeURL = relativePath;
 			workloadDataNew.workloadType = HttpAgents::WorkloadType::PUT;
@@ -309,8 +308,8 @@ namespace CommanderNS {
 			requestSender.setWorkloadData(workloadDataNew);
 			requestSender.start();
 			httpHandler.start();
-			agent::wait(&requestSender);
-			agent::wait(&httpHandler);
+			agent* agentArr[2] = { &requestSender, &httpHandler };
+			agent::wait_for_all(2, agentArr, nullptr);
 			json jsonValue = requestSender.getData();
 			co_return;
 		}
