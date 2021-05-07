@@ -46,9 +46,9 @@ namespace CommanderNS {
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
-		task<void> login() {
+		void login() {
 			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this] {loginToWrap(); });
-			co_return;
+			return;
 		}
 
 	protected:
@@ -68,59 +68,58 @@ namespace CommanderNS {
 			}
 		}
 
-		task<void> run() {
+		void run() {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
 				CommanderNS::ClientClasses::Guild guild = this->client->Guilds.FetchAsync("782757641540730900").get();
-				cout << guild.Members.GetGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
-				vector<CommanderNS::ClientDataTypes::RoleData> roleData;
-				ClientDataTypes::GuildData guildData;
-				FoundationClasses::RateLimitData ratelimitdata;
-				for (unsigned int x = 0; x < roleData.size(); x += 1) {
+				//cout << guild.Members.GetGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
+				//vector<CommanderNS::ClientDataTypes::RoleData> roleData;
+				//ClientDataTypes::GuildData guildData;
+				//FoundationClasses::RateLimitData ratelimitdata;
+				//for (unsigned int x = 0; x < roleData.size(); x += 1) {
 					//cout << roleData.at(x).name << endl;
-				}
+				
 				//cout << "Name: " << this->Client->Guilds.GetGuild("782757641540730900").get().Members.GetGuildMember("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
-			co_return;
 		}
 
 		void loginToWrap() {
-			this->run().get();
+			this->run();
 		}
 	};
 
-	bool DiscordCoreAPI::doWeQuit;
+	bool DiscordCoreAPI::doWeQuit = false;
 
 		BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
 			switch (fdwCtrlType)
 			{
 				// Handle the CTRL-C signal.
 			case CTRL_C_EVENT:
-				DiscordCoreAPI::doWeQuit = true;
 				std::cout << "Ctrl-C event\n";
+				DiscordCoreAPI::doWeQuit = true;
 				return TRUE;
 
 				// CTRL-CLOSE: confirm that the user wants to exit.
 			case CTRL_CLOSE_EVENT:
-				DiscordCoreAPI::doWeQuit = true;
 				std::cout << "Ctrl-Close event\n";
+				DiscordCoreAPI::doWeQuit = true;
 				return TRUE;
 
 				// Pass other signals to the next handler.
 			case CTRL_BREAK_EVENT:
-				DiscordCoreAPI::doWeQuit = true;
 				std::cout << "Ctrl-Break event\n";
+				DiscordCoreAPI::doWeQuit = true;
 				return FALSE;
 
 			case CTRL_LOGOFF_EVENT:
-				DiscordCoreAPI::doWeQuit = true;
 				std::cout << "Ctrl-LogOff event\n";
+				DiscordCoreAPI::doWeQuit = true;
 				return FALSE;
 
 			case CTRL_SHUTDOWN_EVENT:
-				DiscordCoreAPI::doWeQuit = true;
 				std::cout << "Ctrl-Shutdown event\n";
+				DiscordCoreAPI::doWeQuit = true;
 				return FALSE;
 
 			default:

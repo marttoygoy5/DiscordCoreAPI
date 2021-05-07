@@ -274,8 +274,8 @@ namespace CommanderNS {
 		}
 
 		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, Scheduler* pScheduler, string channelId, ClientDataTypes::MessageData* pDataStructure, HttpAgents::WorkloadData workloadData) {
-			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages";
+			ClientDataTypes::MessageData messageData = *pDataStructure;
 			httpPOSTData postData;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
@@ -308,8 +308,8 @@ namespace CommanderNS {
 			requestSender.setWorkloadData(workloadDataNew);
 			requestSender.start();
 			httpHandler.start();
-			agent* agentArr[2] = { &requestSender, &httpHandler };
-			agent::wait_for_all(2, agentArr, nullptr);
+			agent::wait(&httpHandler);
+			agent::wait(&requestSender);
 			json jsonValue = requestSender.getData();
 			co_return;
 		}

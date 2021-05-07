@@ -83,10 +83,6 @@ namespace CommanderNS {
 						workload.rateLimitData.bucket = HTTPHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
 						workload.rateLimitData = HTTPHandler::rateLimitData.at(workload.rateLimitData.bucket);
 					}
-					cout << "GETS REMAINING:22: " << workload.rateLimitData.getsRemaining << endl;
-					cout << "MS REMAINING:22:  " << workload.rateLimitData.msRemain << endl;
-					cout << "BUCKET:22: " << workload.rateLimitData.bucket << endl;
-					cout << "TIME STARTED:22:  " << workload.rateLimitData.timeStartedAt << endl;
 					return workload;
 					});
 				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
@@ -98,7 +94,6 @@ namespace CommanderNS {
 						while (workload.rateLimitData.msRemain > 0.0f) {
 							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							workload.rateLimitData.msRemain = targetTime - currentTime;
-							cout << "TIME REMAINING: " << workload.rateLimitData.msRemain << endl;
 						}
 					}
 					if (workload.workloadType == WorkloadType::GET) {

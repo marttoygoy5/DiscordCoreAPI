@@ -26,8 +26,8 @@ namespace CommanderNS {
 
 	protected:
 
-		friend struct DiscordCoreAPI;
 
+		friend struct DiscordCoreAPI;
 		com_ptr<SystemThreads> pSystemThreads;
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
@@ -148,7 +148,6 @@ namespace CommanderNS {
 		}
 
 		fire_and_forget onGuildCreate(json payload) {
-			co_await resume_background();
 			CommanderNS::ClientDataTypes::GuildData guildData;
 			string id = payload.at("d").at("id");
 			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
@@ -162,7 +161,6 @@ namespace CommanderNS {
 		}
 
 		fire_and_forget sendHeartBeat() {
-			co_await resume_background();
 			try {
 				if (this->didWeReceiveHeartbeatAck == false) {
 					this->cleanup();
@@ -223,6 +221,7 @@ namespace CommanderNS {
 			reactionAddData.reaction = reaction;
 			reactionAddData.threadContext = &this->pSystemThreads->Threads.at(1);
 			this->pEventMachine->onReactionAddEvent(reactionAddData);
+			co_return;
 		}
 
 		void onMessageReceived(MessageWebSocket const& /* sender */, MessageWebSocketMessageReceivedEventArgs const& args) {
