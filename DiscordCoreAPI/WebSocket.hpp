@@ -262,7 +262,7 @@ namespace CommanderNS {
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
-					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(2);
+					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(1);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 

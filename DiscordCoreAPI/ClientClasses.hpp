@@ -61,7 +61,7 @@ namespace CommanderNS {
 				string emojiEncoded = output;
 				HttpAgents::WorkloadData workload;
 				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, this->pHttpHandler, this->pSystemThreads->Threads.at(2).scheduler, this->channelId, this->messageId, emojiEncoded, workload).get();
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, this->channelId, this->messageId, emojiEncoded, workload).get();
 				co_return;
 			};
 
@@ -85,7 +85,9 @@ namespace CommanderNS {
 				}
 				string emojiEncoded = output;
 				deleteReactionData.encodedEmoji = emojiEncoded;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, deleteReactionData).get();
+				HttpAgents::WorkloadData workload;
+				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_DELETE;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workload, deleteReactionData).get();
 				co_return;
 			}
 
@@ -108,7 +110,9 @@ namespace CommanderNS {
 				}
 				string emojiEncoded = output;
 				deleteReactionData.encodedEmoji = emojiEncoded;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, deleteReactionData).get();
+				HttpAgents::WorkloadData workload;
+				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_DELETE;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workload, deleteReactionData).get();
 				co_return;
 			}
 
@@ -208,7 +212,7 @@ namespace CommanderNS {
 					workloadData.content = createMessagePayload;
 					workloadData.workloadType = HttpAgents::WorkloadType::POST;
 					workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_CREATE;
-					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->pHttpHandler, this->pSystemThreads->Threads.at(2).scheduler, this->channelId, &messageData, workloadData).get();
+					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->channelId, &messageData, workloadData).get();
 					string bucketValue = HttpAgents::HTTPHandler::rateLimitDataBucketValues.at(FoundationClasses::RateLimitType::MESSAGE_CREATE);
 					Message message(messageData, this->pRestAPI, this, this->pHttpHandler, this->pSystemThreads);
 					co_return message;

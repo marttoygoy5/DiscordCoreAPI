@@ -273,7 +273,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, Scheduler* pScheduler, string channelId, ClientDataTypes::MessageData* pDataStructure, HttpAgents::WorkloadData workloadData) {
+		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI,  string channelId, ClientDataTypes::MessageData* pDataStructure, HttpAgents::WorkloadData workloadData) {
 			string relativePath = "/channels/" + channelId + "/messages";
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			httpPOSTData postData;
@@ -295,7 +295,7 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, shared_ptr<HttpAgents::HTTPHandler> pHttpHandler, Scheduler* pScheduler,  string channelId, string messageId, string emoji, HttpAgents::WorkloadData workloadData){
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, string channelId, string messageId, string emoji, HttpAgents::WorkloadData workloadData){
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
 			HttpAgents::WorkloadData workloadDataNew = workloadData;
 			workloadDataNew.relativeURL = relativePath;
@@ -321,17 +321,43 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pReactionDeleteRateLimit, ClientDataTypes::DeleteReactionData deleteReactionData){
-			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji+ "/" + deleteReactionData.userId;
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  HttpAgents::WorkloadData workloadData, ClientDataTypes::DeleteReactionData deleteReactionData){
+			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji + "/" + deleteReactionData.userId;
 			httpDELETEData deleteData;
-			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
+			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			workloadDataNew.relativeURL = relativePath;
+			workloadDataNew.workloadType = HttpAgents::WorkloadType::DELETED;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
+			unbounded_buffer<HttpAgents::HTTPData> buffer2;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
+			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
+			requestSender.setWorkloadData(workloadDataNew);
+			requestSender.start();
+			httpHandler.start();
+			agent::wait(&httpHandler);
+			agent::wait(&requestSender);
+			json jsonValue = requestSender.getData();
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pReactionDeleteRateLimit, ClientDataTypes::DeleteOwnReactionData deletionData) {
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  HttpAgents::WorkloadData workloadData, ClientDataTypes::DeleteOwnReactionData deletionData) {
 			string relativePath = "/channels/" + deletionData.channelId + "/messages/" + deletionData.messageId + "/reactions/" + deletionData.encodedEmoji + "/@me";
 			httpDELETEData deleteData;
-			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
+			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			workloadDataNew.relativeURL = relativePath;
+			workloadDataNew.workloadType = HttpAgents::WorkloadType::DELETED;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
+			unbounded_buffer<HttpAgents::HTTPData> buffer2;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
+			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
+			requestSender.setWorkloadData(workloadDataNew);
+			requestSender.start();
+			httpHandler.start();
+			agent::wait(&httpHandler);
+			agent::wait(&requestSender);
+			json jsonValue = requestSender.getData();
 			co_return;
 		}
 	}
