@@ -128,6 +128,7 @@ namespace CommanderNS {
 						while (workload.rateLimitData.msRemain > 0.0f) {
 							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							workload.rateLimitData.msRemain = targetTime - currentTime;
+							cout << "TIME REMAINING: " << workload.rateLimitData.msRemain << endl;
 						}
 					}
 					if (workload.workloadType == WorkloadType::GET) {
