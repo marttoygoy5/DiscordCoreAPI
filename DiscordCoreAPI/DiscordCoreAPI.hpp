@@ -71,7 +71,7 @@ namespace CommanderNS {
 		void run() {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				CommanderNS::ClientClasses::Guild guild = this->client->Guilds.FetchAsync("782757641540730900").get();
+				CommanderNS::ClientClasses::Guild guild = this->client->Guilds.fetchAsync("782757641540730900").get();
 				//cout << guild.Members.GetGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
 				//vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				//ClientDataTypes::GuildData guildData;

@@ -279,7 +279,7 @@ namespace CommanderNS {
 			httpPOSTData postData;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(0).scheduler;
 			HttpAgents::WorkloadData workloadDataNew = workloadData;
 			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
@@ -302,7 +302,7 @@ namespace CommanderNS {
 			workloadDataNew.workloadType = HttpAgents::WorkloadType::PUT;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(1).scheduler;
 			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 			requestSender.setWorkloadData(workloadDataNew);
@@ -325,7 +325,7 @@ namespace CommanderNS {
 				timer<int> timer(timeDelay, 1, &buffer0, false);
 				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 				unbounded_buffer<HttpAgents::HTTPData> buffer2;
-				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(3).scheduler;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 				HttpAgents::TimedRequestSender requestSender(pScheduler2, buffer1, buffer2, buffer0, timer);
 				HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 				requestSender.setWorkloadData(workloadDataNew);
@@ -339,7 +339,7 @@ namespace CommanderNS {
 			else {
 				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 				unbounded_buffer<HttpAgents::HTTPData> buffer2;
-				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(3).scheduler;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 				HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 				HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 				requestSender.setWorkloadData(workloadDataNew);

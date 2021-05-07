@@ -80,14 +80,14 @@ namespace CommanderNS {
 		std::string getCreateMessagePayload(ClientDataTypes::CreateMessageData createMessageData) {
 			json data;
 			auto fields = json::array();
-			
+
 			for (unsigned int x = 0; x < createMessageData.embed.fields.size(); x += 1) {
 				json object = { {"inline", createMessageData.embed.fields.at(x).Inline},
 								{"value", createMessageData.embed.fields.at(x).value},
 								{"name", createMessageData.embed.fields.at(x).name} };
 				fields.push_back(object);
 			}
-			
+
 			int colorValue = createMessageData.embed.actualColor();
 
 			data = {
@@ -99,7 +99,7 @@ namespace CommanderNS {
 					}},
 				{"content", createMessageData.content},
 				{"tts" , false},
-				{"embed" , 
+				{"embed" ,
 							{
 								{"timestamp",createMessageData.embed.timestamp},
 								{"type",createMessageData.embed.type},
@@ -116,7 +116,7 @@ namespace CommanderNS {
 							{"name", createMessageData.embed.author.name},
 							{"url", createMessageData.embed.author.url },
 							{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
-					}}, 
+					}},
 					{"image", {
 						{"height", createMessageData.embed.image.height},
 						{"width", createMessageData.embed.image.width},
@@ -142,11 +142,11 @@ namespace CommanderNS {
 					{"description" , createMessageData.embed.description},
 					{"fields", fields},
 					{"color",colorValue}
-			}} 
+			}}
 			};
 
 			return data.dump();
 		}
 	}
-}
+}	
 #endif

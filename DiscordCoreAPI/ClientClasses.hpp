@@ -142,7 +142,7 @@ namespace CommanderNS {
 			task<void> deleteMessageAsync(unsigned int timeDelay = 0) {
 				HttpAgents::WorkloadData workloadData;
 				workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_DELETE;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workloadData, this->Data.channelId, this->Data.id, timeDelay).get();
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workloadData, this->Data.channelId, this->Data.id, timeDelay);
 				co_return;
 			}
 
