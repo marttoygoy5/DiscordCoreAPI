@@ -21,8 +21,9 @@ namespace CommanderNS {
 	struct WebSocket :public concurrency::agent,  implements<WebSocket, winrt::Windows::Foundation::IInspectable> {
 	public:
 
-		WebSocket(ITarget<hstring>& target) 
-			: _target(target)
+		WebSocket(ITarget<hstring>& target, Scheduler* pScheduler) 
+			: _target(target),
+			agent(*pScheduler)
 		{}
 
 		~WebSocket() {
@@ -184,55 +185,7 @@ namespace CommanderNS {
 				wcout << error.message().c_str() << std::endl;
 			}
 		}
-		/*
-		task<void> onMessageCreate(json payload) {
-			EventDataTypes::MessageCreationData messageCreationData;
-			ClientDataTypes::MessageData messageData;
-			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-			string guildId = payload.at("d").at("guild_id");
-			string channelId = payload.at("d").at("channel_id");
-			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().messageManager;
-			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager, 
-				this->pHttpHandler, this->pSystemThreads); (messageData, this->pRestAPI, pMessageManager);
-			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(1);
-			this->pEventMachine->onMessageCreationEvent(messageCreationData);
-			co_return;
-		}
 
-		task<void> onMessageDelete(json payload){
-			EventDataTypes::MessageDeletionData messageDeletionData;
-			ClientDataTypes::MessageData messageData;
-			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-			string guildId = payload.at("d").at("guild_id");
-			string channelId = payload.at("d").at("channel_id");
-			ClientClasses::Message message(messageData, this->pRestAPI, this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager,
-				this->pHttpHandler, this->pSystemThreads);
-			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager->erase(messageData.id);
-			messageDeletionData.message = message;
-			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(1);
-			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
-			co_return;
-		}
-
-		task<void> onMessageReactionAdd(json payload) {
-			ClientDataTypes::ReactionAddEventData reactionAddEventData;
-			DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
-			ClientDataTypes::ReactionData reactionData;
-			EventDataTypes::ReactionAddData reactionAddData;
-			reactionData.channelId = reactionAddEventData.channelId;
-			reactionData.emoji = reactionAddEventData.emoji;
-			reactionData.guildId = reactionAddEventData.guildId;
-			reactionData.member = reactionAddEventData.member;
-			reactionData.messageId = reactionAddEventData.messageId;
-			reactionData.userId = reactionAddEventData.userId;
-			ClientClasses::Reaction reaction(reactionData);
-			reactionAddData.reaction = reaction;
-			reactionAddData.threadContext = &this->pSystemThreads->Threads.at(1);
-			this->pEventMachine->onReactionAddEvent(reactionAddData);
-			co_return;
-		}
-		*/
 		void onMessageReceived(MessageWebSocket const& , MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
 				DataReader dataReader{ args.GetDataReader() };
@@ -249,34 +202,7 @@ namespace CommanderNS {
 				if (payload.at("t") == "PRESENCE_UPDATE") {
 					return;
 				}
-				/*
-				if (payload.at("t") == "MESSAGE_CREATE") {
-					onMessageCreate(payload);
-				}
-
-				if (payload.at("t") == "MESSAGE_DELETE") {
-					onMessageDelete(payload);
-				}
-
-				if (payload.at("t") == "GUILD_CREATE") {
-					onGuildCreate(payload);
-					return;
-				}
-
-				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
-					onMessageReactionAdd(payload);
-				}
-				
-				if (payload.at("t") == "GUILD_MEMBER_ADD") {
-					ClientDataTypes::GuildMemberData guildMemberData;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->pClient->Guilds.guildGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("user").at("id"), &guildMemberData).get();
-					EventDataTypes::GuildMemberAddData guildMemberAddData;
-					guildMemberAddData.guildId = payload.at("d").at("guild_id");
-					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
-					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(1);
-					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
-				}
-				*/
+			
 				if (payload.at("op") == 6) {
 					std::string resume = JSONifier::getResumePayload(winrt::to_string(this->botToken), winrt::to_string(this->sessionID), this->lastNumberReceived);
 					this->sendAsync(resume);

@@ -33,7 +33,6 @@ namespace CommanderNS {
 			WorkloadType workloadType = WorkloadType::UNSET;
 			string relativeURL;
 			FoundationClasses::RateLimitData rateLimitData;
-			ITarget<HTTPData>* outputTarget;
 			string content;
 		};
 
@@ -123,7 +122,7 @@ namespace CommanderNS {
 				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
 					HTTPData returnData;
 					if (workload.rateLimitData.getsRemaining == 0) {
-						float loopStartTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						float loopStartTime = workload.rateLimitData.timeStartedAt;
 						float targetTime = loopStartTime + static_cast<float> (workload.rateLimitData.msRemain);
 						float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						while (workload.rateLimitData.msRemain > 0.0f) {
@@ -151,7 +150,9 @@ namespace CommanderNS {
 						deleteData = this->pRestAPI->httpDELETEObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
 						returnData.data = deleteData.data;
 					}
+					HTTPHandler::rateLimitDataBucketValues.erase(workload.rateLimitData.rateLimitType);
 					HTTPHandler::rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
+					HTTPHandler::rateLimitData.erase(workload.rateLimitData.bucket);
 					HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
 					return returnData;
 					});

@@ -20,8 +20,9 @@ namespace CommanderNS {
 	struct WebSocketAgent : public  concurrency::agent, implements<WebSocketAgent, winrt::Windows::Foundation::IInspectable>{
 	public:
 
-		WebSocketAgent(ISource<hstring>& source)
-			:_source(source)
+		WebSocketAgent(ISource<hstring>& source, Scheduler* pScheduler)
+			:_source(source),
+			agent(*pScheduler)
 		{}
 
 		~WebSocketAgent() {};
@@ -147,8 +148,6 @@ namespace CommanderNS {
 					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(1);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
-
-				//std::cout << "Message received from MessageWebSocket: " << payload.dump() << std::endl << std::endl;
 			}
 			catch (winrt::hresult_error const& ex) {
 				std::wcout << ex.message().c_str() << std::endl;

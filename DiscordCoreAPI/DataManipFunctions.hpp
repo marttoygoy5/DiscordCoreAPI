@@ -227,9 +227,21 @@ namespace CommanderNS {
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessageGetRateLimit, string channelId, string id, ClientDataTypes::MessageData* pDataStructure) {
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			string relativePath = "/channels/" + channelId + "/messages/" + id;
-			httpGETData getData;
-			checkRateLimitAndGetDataAsync(pRestAPI, pMessageGetRateLimit, relativePath, &getData).get();
-			json jsonValue = getData.data;
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::GET;
+			workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_GET;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
+			unbounded_buffer<HttpAgents::HTTPData> buffer2;
+			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
+			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
+			requestSender.setWorkloadData(workloadData);
+			requestSender.start();
+			httpHandler.start();
+			agent::wait(&httpHandler);
+			agent::wait(&requestSender);
+			json jsonValue = requestSender.getData();
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
 			*pDataStructure = messageData;
 			co_return;
@@ -262,25 +274,17 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction postObjectDataAsyncBACKUP(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pMessagePostRateLimit, string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
-			ClientDataTypes::MessageData messageData = *pDataStructure;
-			string relativePath = "/channels/" + channelId + "/messages";
-			httpPOSTData postData;
-			checkRateLimitAndPostDataAsync(pRestAPI, pMessagePostRateLimit, relativePath, &postData, content).get();
-			json jsonValue = postData.data;
-			DataParsingFunctions::parseObject(jsonValue, &messageData);
-			*pDataStructure = messageData;
-			co_return;
-		}
-
-		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI,  string channelId, ClientDataTypes::MessageData* pDataStructure, HttpAgents::WorkloadData workloadData) {
+		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI,  string channelId, ClientDataTypes::MessageData* pDataStructure, string content) {
 			string relativePath = "/channels/" + channelId + "/messages";
 			ClientDataTypes::MessageData messageData = *pDataStructure;
 			httpPOSTData postData;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(0).scheduler;
-			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			HttpAgents::WorkloadData workloadDataNew;
+			workloadDataNew.content = content;
+			workloadDataNew.workloadType = HttpAgents::WorkloadType::POST;
+			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_CREATE;
 			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 			workloadDataNew.relativeURL = relativePath;
@@ -295,14 +299,15 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, string channelId, string messageId, string emoji, HttpAgents::WorkloadData workloadData){
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, string channelId, string messageId, string emoji){
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/@me";
-			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			HttpAgents::WorkloadData workloadDataNew;
 			workloadDataNew.relativeURL = relativePath;
 			workloadDataNew.workloadType = HttpAgents::WorkloadType::PUT;
+			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(1).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(3).scheduler;
 			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 			requestSender.setWorkloadData(workloadDataNew);
@@ -314,18 +319,19 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, HttpAgents::WorkloadData workloadData, string channelId, string messageId, unsigned int timeDelay) {
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, string channelId, string messageId, unsigned int timeDelay) {
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
 			httpDELETEData deleteData;
-			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			HttpAgents::WorkloadData workloadDataNew;
 			workloadDataNew.relativeURL = relativePath;
 			workloadDataNew.workloadType = HttpAgents::WorkloadType::DELETED;
+			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_DELETE;
 			if (timeDelay > 0) {
 				unbounded_buffer<int> buffer0;
 				timer<int> timer(timeDelay, 1, &buffer0, false);
 				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 				unbounded_buffer<HttpAgents::HTTPData> buffer2;
-				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(4).scheduler;
 				HttpAgents::TimedRequestSender requestSender(pScheduler2, buffer1, buffer2, buffer0, timer);
 				HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 				requestSender.setWorkloadData(workloadDataNew);
@@ -339,7 +345,7 @@ namespace CommanderNS {
 			else {
 				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 				unbounded_buffer<HttpAgents::HTTPData> buffer2;
-				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(4).scheduler;
 				HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 				HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 				requestSender.setWorkloadData(workloadDataNew);
@@ -352,15 +358,16 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  HttpAgents::WorkloadData workloadData, ClientDataTypes::DeleteReactionData deleteReactionData){
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  ClientDataTypes::DeleteReactionData deleteReactionData){
 			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji + "/" + deleteReactionData.userId;
 			httpDELETEData deleteData;
-			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			HttpAgents::WorkloadData workloadDataNew;
 			workloadDataNew.relativeURL = relativePath;
 			workloadDataNew.workloadType = HttpAgents::WorkloadType::DELETED;
+			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(4).scheduler;
 			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 			requestSender.setWorkloadData(workloadDataNew);
@@ -372,15 +379,16 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  HttpAgents::WorkloadData workloadData, ClientDataTypes::DeleteOwnReactionData deletionData) {
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  ClientDataTypes::DeleteOwnReactionData deletionData) {
 			string relativePath = "/channels/" + deletionData.channelId + "/messages/" + deletionData.messageId + "/reactions/" + deletionData.encodedEmoji + "/@me";
 			httpDELETEData deleteData;
-			HttpAgents::WorkloadData workloadDataNew = workloadData;
+			HttpAgents::WorkloadData workloadDataNew;
 			workloadDataNew.relativeURL = relativePath;
 			workloadDataNew.workloadType = HttpAgents::WorkloadType::DELETED;
+			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(4).scheduler;
 			HttpAgents::RequestSender requestSender(pScheduler2, buffer1, buffer2);
 			HttpAgents::HTTPHandler httpHandler(pScheduler2, pRestAPI, buffer2, buffer1);
 			requestSender.setWorkloadData(workloadDataNew);

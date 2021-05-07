@@ -38,8 +38,8 @@ namespace CommanderNS {
 		DiscordCoreAPI(hstring botToken) {
 			this->systemThreads = make_self<SystemThreads>();
 			this->systemThreads->initialize().get();
-			this->webSocket = winrt::make_self<WebSocket>(this->buffer1);
-			this->webSocketAgent = make_self<WebSocketAgent>(this->buffer1);
+			this->webSocket = winrt::make_self<WebSocket>(this->buffer1, this->systemThreads->Threads.at(0).scheduler);
+			this->webSocketAgent = make_self<WebSocketAgent>(this->buffer1, this->systemThreads->Threads.at(1).scheduler);
 			this->botToken = botToken;
 			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocket->socketPath, this->systemThreads);
 			this->client = make_self<ClientClasses::Client>(this->restAPI, this->httpHandler, this->systemThreads);

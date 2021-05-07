@@ -44,8 +44,6 @@ namespace CommanderNS {
 			};
 
 			task<void> addReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
-				critical_section critSection;
-				scoped_lock lock(critSection);
 				string emoji;
 				if (createReactionData.emojiId != string()) {
 					emoji += ":" + createReactionData.emojiName + ":" + createReactionData.emojiId;
@@ -59,15 +57,11 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				HttpAgents::WorkloadData workload;
-				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, this->channelId, this->messageId, emojiEncoded, workload).get();
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, this->channelId, this->messageId, emojiEncoded).get();
 				co_return;
 			};
 
 			task<void> deleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
-				critical_section critSection;
-				scoped_lock lock(critSection);
 				deleteReactionData.messageId = this->messageId;
 				deleteReactionData.channelId = this->channelId;
 				
@@ -85,15 +79,11 @@ namespace CommanderNS {
 				}
 				string emojiEncoded = output;
 				deleteReactionData.encodedEmoji = emojiEncoded;
-				HttpAgents::WorkloadData workload;
-				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workload, deleteReactionData).get();
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI,  deleteReactionData).get();
 				co_return;
 			}
 
 			task<void> deleteOwnReactionAsync(ClientDataTypes::DeleteOwnReactionData deleteReactionData) {
-				critical_section critSection;
-				scoped_lock lock(critSection);
 				deleteReactionData.channelId = this->channelId;
 				deleteReactionData.messageId = this->messageId;
 				string emoji;
@@ -110,9 +100,7 @@ namespace CommanderNS {
 				}
 				string emojiEncoded = output;
 				deleteReactionData.encodedEmoji = emojiEncoded;
-				HttpAgents::WorkloadData workload;
-				workload.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workload, deleteReactionData).get();
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionData).get();
 				co_return;
 			}
 
@@ -140,9 +128,7 @@ namespace CommanderNS {
 			}
 
 			task<void> deleteMessageAsync(unsigned int timeDelay = 0) {
-				HttpAgents::WorkloadData workloadData;
-				workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_DELETE;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, workloadData, this->Data.channelId, this->Data.id, timeDelay);
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, this->Data.channelId, this->Data.id, timeDelay);
 				co_return;
 			}
 
@@ -203,11 +189,7 @@ namespace CommanderNS {
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
-					HttpAgents::WorkloadData workloadData;
-					workloadData.content = createMessagePayload;
-					workloadData.workloadType = HttpAgents::WorkloadType::POST;
-					workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_CREATE;
-					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->channelId, &messageData, workloadData).get();
+					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->channelId, &messageData, createMessagePayload).get();
 					string bucketValue = HttpAgents::HTTPHandler::rateLimitDataBucketValues.at(FoundationClasses::RateLimitType::MESSAGE_CREATE);
 					Message message(messageData, this->pRestAPI, this, this->pHttpHandler, this->pSystemThreads);
 					co_return message;
