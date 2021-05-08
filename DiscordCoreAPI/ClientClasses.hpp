@@ -56,11 +56,15 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, this->channelId, this->messageId, emojiEncoded).get();
+				DataManipFunctions::PutEmojiData putEmojiData;
+				putEmojiData.channelId = this->channelId;
+				putEmojiData.messageId = this->messageId;
+				putEmojiData.emoji = emojiEncoded;
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, putEmojiData).get();
 				co_return;
 			};
 
-			task<void> deleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
+			task<void> deleteUserReactionAsync(DataManipFunctions::DeleteReactionData deleteReactionData) {
 				deleteReactionData.messageId = this->messageId;
 				deleteReactionData.channelId = this->channelId;
 				
@@ -82,7 +86,7 @@ namespace CommanderNS {
 				co_return;
 			}
 
-			task<void> deleteOwnReactionAsync(ClientDataTypes::DeleteOwnReactionData deleteReactionData) {
+			task<void> deleteOwnReactionAsync(DataManipFunctions::DeleteOwnReactionData deleteReactionData) {
 				deleteReactionData.channelId = this->channelId;
 				deleteReactionData.messageId = this->messageId;
 				string emoji;
@@ -107,7 +111,6 @@ namespace CommanderNS {
 			friend class Message;
 			com_ptr<RestAPI> pRestAPI;
 			com_ptr<SystemThreads> pSystemThreads;
-			static FoundationClasses::RateLimitData reactionAddRemoveRateLimit;
 			string channelId;
 			string messageId;
 		};
@@ -124,7 +127,11 @@ namespace CommanderNS {
 			}
 
 			task<void> deleteMessageAsync(unsigned int timeDelay = 0) {
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, this->Data.channelId, this->Data.id, timeDelay);
+				DataManipFunctions::DeleteMessageData deleteMessageData;
+				deleteMessageData.channelId = this->Data.channelId;
+				deleteMessageData.messageId = this->Data.id;
+				deleteMessageData.timeDelay = timeDelay;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteMessageData);
 				co_return;
 			}
 
@@ -134,7 +141,6 @@ namespace CommanderNS {
 		protected:
 			com_ptr<SystemThreads> pSystemThreads;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitData messageDeleteRateLimit;
 		};
 
 		class MessageManager: public map<string, Message> {
@@ -152,14 +158,22 @@ namespace CommanderNS {
 				if (this->contains(messageId)) {
 					message = this->at(messageId);
 					ClientDataTypes::MessageData messageData = message.Data;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
+					DataManipFunctions::GetMessageData getMessageData;
+					getMessageData.channelId = this->channelId;
+					getMessageData.id = messageId;
+					getMessageData.pDataStructure = &messageData;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
 					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
 				else {
 					ClientDataTypes::MessageData messageData;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
+					DataManipFunctions::GetMessageData getMessageData;
+					getMessageData.channelId = this->channelId;
+					getMessageData.id = messageId;
+					getMessageData.pDataStructure = &messageData;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
 					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
@@ -182,7 +196,11 @@ namespace CommanderNS {
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
-					DataManipFunctions::postObjectDataAsync(this->pRestAPI, this->channelId, &messageData, createMessagePayload).get();
+					DataManipFunctions::PostMessageData postMessageData;
+					postMessageData.channelId = this->channelId;
+					postMessageData.content = createMessagePayload;
+					postMessageData.pDataStructure = &messageData;
+					DataManipFunctions::postObjectDataAsync(this->pRestAPI, postMessageData).get();
 					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
 					co_return message;
 				}
@@ -201,7 +219,6 @@ namespace CommanderNS {
 			string channelId;
 			com_ptr<RestAPI> pRestAPI;
 			com_ptr<SystemThreads> pSystemThreads;
-			static FoundationClasses::RateLimitData messageGetRateLimit;
 		};
 
 		class GuildMember {
@@ -226,14 +243,22 @@ namespace CommanderNS {
 					if (this->contains(guildMemberId)) {
 						guildMember = this->at(guildMemberId);
 						ClientDataTypes::GuildMemberData guildMemberData = guildMember.Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
+						DataManipFunctions::GetGuildMemberData getGuildMemberData;
+						getGuildMemberData.guildId = this->guildId;
+						getGuildMemberData.id = guildMemberId;
+						getGuildMemberData.pDataStructure = &guildMemberData;
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 						GuildMember guildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
 						co_return guildMember;
 					}
 					else {
 						ClientDataTypes::GuildMemberData guildMemberData;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
+						DataManipFunctions::GetGuildMemberData getGuildMemberData;
+						getGuildMemberData.guildId = this->guildId;
+						getGuildMemberData.id = guildMemberId;
+						getGuildMemberData.pDataStructure = &guildMemberData;
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 						GuildMember guildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
 						co_return guildMember;
@@ -255,7 +280,6 @@ namespace CommanderNS {
 			friend struct WebSocket;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitData guildMemberGetRateLimit;
 			string guildId;
 		};
 
@@ -289,14 +313,20 @@ namespace CommanderNS {
 					if (this->contains(channelId)) {
 						channel = this->at(channelId);
 						ClientDataTypes::ChannelData channelData = channel.Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
+						DataManipFunctions::GetChannelData getChannelData;
+						getChannelData.id = channelId;
+						getChannelData.pDataStructure = &channelData;
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getChannelData).get();
 						Channel channel(channelData, this->pRestAPI, this->pSystemThreads);
 						this->insert(std::make_pair(channelId, channel));
 						co_return channel;
 					}
 					else {
 						ClientDataTypes::ChannelData channelData;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
+						DataManipFunctions::GetChannelData getChannelData;
+						getChannelData.id = channelId;
+						getChannelData.pDataStructure = &channelData;
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getChannelData).get();
 						Channel channel(channelData, this->pRestAPI, this->pSystemThreads);
 						this->insert(std::make_pair(channelId, channel));
 						co_return channel;
@@ -319,7 +349,6 @@ namespace CommanderNS {
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
 			com_ptr<SystemThreads> pSystemThreads;
-			static FoundationClasses::RateLimitData channelGetRateLimit;
 		};
 
 		class Guild {
@@ -358,14 +387,20 @@ namespace CommanderNS {
 				if (this->contains(guildId)) {
 					guild = this->at(guildId);
 					ClientDataTypes::GuildData guildData = guild.Data;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
+					DataManipFunctions::GetGuildData getGuildData;
+					getGuildData.id = guildId;
+					getGuildData.pDataStructure = &guildData;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
 					Guild guild(guildData, this->pRestAPI, this->pSystemThreads);
 					this->insert(std::make_pair(guildId, guild));
 					co_return guild;
 				}
 				else {
 					ClientDataTypes::GuildData guildData;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
+					DataManipFunctions::GetGuildData getGuildData;
+					getGuildData.id = guildId;
+					getGuildData.pDataStructure = &guildData;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
 					Guild guild(guildData, this->pRestAPI, this->pSystemThreads);
 					co_return guild;
 				}
@@ -381,8 +416,6 @@ namespace CommanderNS {
 					co_return guild;
 				}
 			};
-
-			static FoundationClasses::RateLimitData guildGetRateLimit;
 
 		protected:
 			friend struct WebSocket;
@@ -423,14 +456,20 @@ namespace CommanderNS {
 					try {
 						user = this->at(userId);
 						ClientDataTypes::UserData userData = user.Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
+						DataManipFunctions::GetUserData getUserData;
+						getUserData.id = userId;
+						getUserData.pDataStructure = &userData;
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
 						User user(userData);
 						this->insert(std::make_pair(userId, user));
 						co_return user;
 					}
 					catch (std::exception error) {
 						ClientDataTypes::UserData userData;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
+						DataManipFunctions::GetUserData getUserData;
+						getUserData.id = userId;
+						getUserData.pDataStructure = &userData;
+						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
 						User user(userData);
 						this->insert(std::make_pair(userId, user));
 						co_return user;
@@ -438,17 +477,15 @@ namespace CommanderNS {
 			};
 
 			task<User> getUserAsync(string userId) {
-					if (this->contains(userId)) {
-						co_return this->at(userId);
-					}
-					else {
-						cout << "Sorry, but they aren't here!" << endl;
-						User user;
-						co_return user;
-					}
+				if (this->contains(userId)) {
+					co_return this->at(userId);
+				}
+				else {
+					cout << "Sorry, but they aren't here!" << endl;
+					User user;
+					co_return user;
+				}
 			};
-
-			static FoundationClasses::RateLimitData userGetRateLimit;
 
 		protected:
 			friend struct WebSocketAgent;
@@ -458,7 +495,7 @@ namespace CommanderNS {
 			Client* pClient;
 		};
 
-		struct Client: implements<Client, winrt::Windows::Foundation::IInspectable> {
+		struct Client : implements<Client, winrt::Windows::Foundation::IInspectable> {
 		public:
 			Client() {};
 			Client(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads) {
@@ -487,19 +524,14 @@ namespace CommanderNS {
 
 			task<void> getCurrentUser() {
 				ClientDataTypes::UserData userData;
-				DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->Users.userGetRateLimit, &userData).get();
+				DataManipFunctions::GetSelfUserData getSelfUserData;
+				getSelfUserData.pDataStructure = &userData;
+				DataManipFunctions::getObjectDataAsync(this->pRestAPI, getSelfUserData).get();
 				ClientClasses::User user(userData);
 				this->User = user;
 				co_return;
 			}
 		};
-		FoundationClasses::RateLimitData ReactionManager::reactionAddRemoveRateLimit;
-		FoundationClasses::RateLimitData Message::messageDeleteRateLimit;
-		FoundationClasses::RateLimitData GuildManager::guildGetRateLimit;
-		FoundationClasses::RateLimitData ChannelManager::channelGetRateLimit;
-		FoundationClasses::RateLimitData GuildMemberManager::guildMemberGetRateLimit;
-		FoundationClasses::RateLimitData MessageManager::messageGetRateLimit;
-		FoundationClasses::RateLimitData UserManager::userGetRateLimit;
 	};
 }
 #endif

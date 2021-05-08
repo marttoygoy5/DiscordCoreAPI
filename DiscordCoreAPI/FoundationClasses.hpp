@@ -19,7 +19,10 @@ namespace CommanderNS {
 			REACTION_ADD_REMOVE = 3,
 			GUILD_GET = 4,
 			CHANNEL_GET = 5,
-			GUILD_MEMBER_GET = 6
+			GUILD_MEMBER_GET = 6,
+			USER_GET = 7,
+			USER_SELF_GET = 8,
+			ROLES_GET = 9
 		};
 
 		struct RateLimitData {

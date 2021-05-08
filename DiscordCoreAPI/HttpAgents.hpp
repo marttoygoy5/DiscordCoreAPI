@@ -134,6 +134,7 @@ namespace CommanderNS {
 							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							workload.rateLimitData.msRemain = targetTime - currentTime;
 						}
+						cout << "CURRENT BUCKET: " << workload.rateLimitData.bucket << endl;
 					}
 					if (workload.workloadType == WorkloadType::GET) {
 						httpGETData getData;

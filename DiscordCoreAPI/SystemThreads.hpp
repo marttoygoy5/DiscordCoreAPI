@@ -27,7 +27,7 @@ namespace CommanderNS {
         concurrent_vector<ThreadContext> Threads;
 
         SystemThreads() {
-            this->MaxThreads = thread::hardware_concurrency();
+            this->MaxThreads = thread::hardware_concurrency() - 1;
         };
 
         task<void> initialize() {
@@ -49,7 +49,7 @@ namespace CommanderNS {
             CurrentScheduler::Create(policy01);
             mainThreadContext.scheduler = CurrentScheduler::Get();
             mainThreadContext.taskGroup = make_shared<task_group>();;
-            for (unsigned int x = 0; x < this->MaxThreads - 2; x += 1) {
+            for (unsigned int x = 0; x < this->MaxThreads; x += 1) {
                 co_await resume_background();
                 ThreadContext threadContext;
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
