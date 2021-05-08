@@ -38,26 +38,39 @@ namespace CommanderNS {
 
 		struct TimedRequestSender : public concurrency::agent, implements<TimedRequestSender, winrt::Windows::Foundation::IInspectable> {
 		public:
-			explicit TimedRequestSender(Scheduler* scheduler, ITarget<WorkloadData>& target, ISource<HTTPData>& source, ISource<int>& source0,timer<int>& timer)
+			explicit TimedRequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, ISource<int>& source0,timer<int>& timer)
 				:
 				agent(*scheduler),
-				_target(target),
-				_source(source),
+				source00(source00),
+				target00(target00),
+				source01(source01),
+				target01(target01),
 				_source0(source0),
 				_timer(timer)
 			{}
 
+			inline static bool doWeQuit = false;
+
 			~TimedRequestSender() {};
 
+			ITarget<HTTPData>& target01;
 		protected:
-			ISource<HTTPData>& _source;
-			ITarget<WorkloadData>& _target;
+			ISource<WorkloadData>& source00;
+			ITarget<WorkloadData>& target00;
+			ISource<HTTPData>& source01;
 			ISource<int>& _source0;
 			timer<int>& _timer;
+			HttpAgents::WorkloadData workloadData;
 
 			void run() {
-				receive(_source0);
-				send(_target, TimedRequestSender::workloadData);
+				while (doWeQuit == false) {
+					WorkloadData workload;
+					receive(&_source0);
+					receive(&source00);
+					send(&target00, workload);
+					HTTPData httpData = receive(&source01);
+					send(&target01, httpData);
+				}
 				done();
 			};
 		};
@@ -82,6 +95,7 @@ namespace CommanderNS {
 			ISource<WorkloadData>& source00;
 			ITarget<WorkloadData>& target00;
 			ISource<HTTPData>& source01;
+			HttpAgents::WorkloadData workloadData;
 
 			void run() {
 				while (doWeQuit == false) {
@@ -173,8 +187,6 @@ namespace CommanderNS {
 		};
 		map<FoundationClasses::RateLimitType, string> HTTPHandler::rateLimitDataBucketValues;
 		map<string, FoundationClasses::RateLimitData> HTTPHandler::rateLimitData;
-		HttpAgents::WorkloadData RequestSender::workloadData;
-		HttpAgents::WorkloadData TimedRequestSender::workloadData;
 	};
 };
 #endif

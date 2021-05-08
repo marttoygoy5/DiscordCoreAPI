@@ -18,8 +18,6 @@
 
 namespace CommanderNS {
 
-	class DiscordCoreAPI;
-
 	namespace DataManipFunctions {
 
 		struct DeleteReactionData {
