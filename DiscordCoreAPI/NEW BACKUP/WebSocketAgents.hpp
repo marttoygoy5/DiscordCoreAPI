@@ -14,6 +14,7 @@
 #include "DataManipFunctions.hpp"
 #include "SystemThreads.hpp"
 #include "ClientClasses.hpp"
+#include "HTTPHandler.hpp"
 
 namespace CommanderNS {
 
@@ -25,7 +26,17 @@ namespace CommanderNS {
 		WebSocketReceiver(ISource<hstring>& source, Scheduler* pScheduler)
 			:_source(source),
 			agent(*pScheduler)
-		{}
+		{
+			this->pHttpHandler = pHttpHandler;
+		}
+
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew, com_ptr<HTTPHandler> pHttpHandler) {
+			this->pSystemThreads = pSystemThreadsNew;
+			this->pClient = pClientNew;
+			this->pRestAPI = pRestAPINew;
+			this->pEventMachine = pEventMachineNew;
+			this->pHttpHandler = pHttpHandler;
+		}
 
 		void run() {
 			while (doWeQuit == false) {
@@ -45,24 +56,16 @@ namespace CommanderNS {
 		friend struct DiscordCoreAPI;
 		ISource<hstring>& _source;
 		com_ptr<SystemThreads> pSystemThreads;
+		com_ptr<HTTPHandler> pHttpHandler;
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
-		com_ptr<HTTPController> pHttpController;
 		com_ptr<ClientClasses::Client> pClient;
-
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew, com_ptr<HTTPController> pHttpController) {
-			this->pSystemThreads = pSystemThreadsNew;
-			this->pClient = pClientNew;
-			this->pHttpController = pHttpController;
-			this->pRestAPI = pRestAPINew;
-			this->pEventMachine = pEventMachineNew;
-		}
 
 		fire_and_forget onGuildCreate(json payload) {
 			CommanderNS::ClientDataTypes::GuildData guildData;
 			string id = payload.at("d").at("id");
 			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
-			ClientClasses::Guild guild(guildData, this->pRestAPI, this->pSystemThreads, this->pHttpController);
+			ClientClasses::Guild guild(guildData, this->pHttpHandler, this->pRestAPI, this->pSystemThreads);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user);
@@ -79,7 +82,7 @@ namespace CommanderNS {
 			string channelId = payload.at("d").at("channel_id");
 			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager,
+			messageCreationData.message = ClientClasses::Message(messageData,this->pHttpHandler,  this->pRestAPI, this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager,
 				this->pSystemThreads); (messageData, this->pRestAPI, pMessageManager);
 			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(1);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
@@ -92,7 +95,7 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
-			ClientClasses::Message message(messageData, this->pRestAPI, this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager,
+			ClientClasses::Message message(messageData, this->pHttpHandler, this->pRestAPI, this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager,
 				this->pSystemThreads);
 			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager->erase(messageData.id);
 			messageDeletionData.message = message;
@@ -149,7 +152,7 @@ namespace CommanderNS {
 					getGuildMemberData.guildId = payload.at("d").at("guild_id");
 					getGuildMemberData.id = payload.at("d").at("user").at("id");
 					getGuildMemberData.pDataStructure = &guildMemberData;
-					//DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, this->pHttpHandler, getGuildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
@@ -181,7 +184,7 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 		ITarget<hstring>& _target;
-		com_ptr<HTTPController> pHttpController;
+		com_ptr<HTTPHandler> pHttpHandler;
 		com_ptr<SystemThreads> pSystemThreads;
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
@@ -205,11 +208,11 @@ namespace CommanderNS {
 			this->connectAsync();
 		}
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew, com_ptr<HTTPController> pHttpController) {
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew, com_ptr<HTTPHandler> pHttpHandler){
 			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
-			this->pHttpController = pHttpController;
+			this->pHttpHandler = pHttpHandler;
 			this->pEventMachine = pEventMachineNew;
 			this->botToken = botTokenNew;
 			this->intentsValue = ((1 << 0) + (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4) + (1 << 5) + (1 << 6) + (1 << 7) + (1 << 8) + (1 << 9) + (1 << 10) + (1 << 11) + (1 << 12) + (1 << 13) + (1 << 14));
@@ -310,7 +313,7 @@ namespace CommanderNS {
 			CommanderNS::ClientDataTypes::GuildData guildData;
 			string id = payload.at("d").at("id");
 			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
-			ClientClasses::Guild guild(guildData, this->pRestAPI, this->pSystemThreads, this->pHttpController);
+			ClientClasses::Guild guild(guildData, this->pHttpHandler, this->pRestAPI, this->pSystemThreads);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user);

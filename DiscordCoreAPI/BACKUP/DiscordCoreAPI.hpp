@@ -9,16 +9,17 @@
 #define _DISCORD_CORE_API_
 
 #include "pch.h"
-#include "HTTPController.hpp"
+#include "RestAPI.hpp"
 #include "ClientDataTypes.hpp"
-#include "EventMachine.hpp"
 #include "DataParsingFunctions.hpp"
+#include "EventMachine.hpp"
 #include "WebSocketAgents.hpp"
 #include "DataManipFunctions.hpp"
 #include "EventDataTypes.hpp"
-#include "ClientClasses.hpp"
 #include "FoundationClasses.hpp"
 #include "SystemThreads.hpp"
+#include "ClientClasses.hpp"
+#include "HTTPHandler.hpp"
 
 namespace CommanderNS {
 
@@ -31,7 +32,6 @@ namespace CommanderNS {
 		com_ptr<ClientClasses::Client> client{ nullptr };
 		com_ptr<EventMachine> eventMachine{ nullptr };
 		com_ptr<SystemThreads> systemThreads{ nullptr };
-		com_ptr<RestAPI> restAPI{ nullptr };
 		static bool doWeQuit;
 
 		DiscordCoreAPI(hstring botToken) {
@@ -41,11 +41,11 @@ namespace CommanderNS {
 			this->webSocketReceiver = make_self<WebSocketReceiver>(this->buffer1, this->systemThreads->Threads.at(1).scheduler);
 			this->botToken = botToken;
 			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocketConnection->socketPath, this->systemThreads);
-			this->pHttpController = make_self<HTTPController>(this->systemThreads->Threads, this->restAPI);
-			this->client = make_self<ClientClasses::Client>(this->restAPI, this->systemThreads, this->pHttpController);
 			this->eventMachine = make_self<EventMachine>();
-			this->webSocketConnection->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->pHttpController);
-			this->webSocketReceiver->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client, this->pHttpController);
+			this->webSocketConnection->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client);
+			this->webSocketReceiver->initialize(botToken, this->eventMachine, this->systemThreads, this->restAPI, this->client);
+			this->pHttpHandler = make_self<HTTPHandler>(this->restAPI);
+			this->client = make_self<ClientClasses::Client>(this->pHttpHandler, this->systemThreads);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
@@ -58,9 +58,10 @@ namespace CommanderNS {
 		hstring baseURL = L"https://discord.com/api/v9";
 		hstring botToken;
 		com_ptr<WebSocketReceiver> webSocketReceiver{ nullptr };
-		com_ptr<HTTPController> pHttpController;
 		com_ptr<WebSocketConnection> webSocketConnection{ nullptr };
+		com_ptr<RestAPI> restAPI{ nullptr };
 		unbounded_buffer<hstring> buffer1;
+		com_ptr<HTTPHandler> pHttpHandler{ nullptr };
 
 		void run() {
 			this->webSocketConnection->start();

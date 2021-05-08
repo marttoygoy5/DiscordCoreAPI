@@ -17,25 +17,6 @@ namespace CommanderNS {
 
 	namespace HttpAgents {
 
-		enum class WorkloadType {
-			UNSET = 0,
-			GET = 1,
-			PUT = 2,
-			POST = 3,
-			DELETED = 4
-		};
-
-		struct HTTPData {
-			json data;
-		};
-
-		struct WorkloadData {
-			WorkloadType workloadType = WorkloadType::UNSET;
-			string relativeURL;
-			FoundationClasses::RateLimitData rateLimitData;
-			string content;
-		};
-
 		struct TimedRequestSender : public concurrency::agent, implements<TimedRequestSender, winrt::Windows::Foundation::IInspectable> {
 		public:
 			explicit TimedRequestSender(Scheduler* scheduler, ITarget<WorkloadData>& target, ISource<HTTPData>& source, ISource<int>& source0,timer<int>& timer)
@@ -62,67 +43,65 @@ namespace CommanderNS {
 			ITarget<WorkloadData>& _target;
 			ISource<int>& _source0;
 			timer<int>& _timer;
-			static HttpAgents::WorkloadData workloadData;
+			static WorkloadData workloadData;
 
 			void run() {
-				receive(_source0);
-				send(_target, TimedRequestSender::workloadData);
+				while (false == false) {
+					receive(_source0);
+					send(_target, TimedRequestSender::workloadData);
+				}				
 				done();
 			};
 		};
 
 		struct RequestSender :  public concurrency::agent,  implements<RequestSender, winrt::Windows::Foundation::IInspectable> {
 		public:
-			explicit RequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01)
+			explicit RequestSender(Scheduler* scheduler, ITarget<WorkloadData>& target, ISource<HTTPData>& source)
 				:
 				agent(*scheduler),
-				source00(source00),
-				target00(target00),
-				source01(source01),
-				target01(target01)
+				_target(target),
+				_source(source)
 			{}
 
-			inline static bool doWeQuit = false;
+			void setWorkloadData(WorkloadData pWorkload) {
+				RequestSender::workloadData = pWorkload;
+			}
+
+			json getData() {
+				return receive(_source).data;
+			}
 
 			~RequestSender() {};
 
-			ITarget<HTTPData>& target01;
 		protected:
-			ISource<WorkloadData>& source00;
-			ITarget<WorkloadData>& target00;
-			ISource<HTTPData>& source01;
-			static HttpAgents::WorkloadData workloadData;
+			ISource<HTTPData>& _source;
+			ITarget<WorkloadData>& _target;
+			static WorkloadData workloadData;
 
 			void run() {
-				while (doWeQuit == false) {
-					WorkloadData workload;
-					if (try_receive(&source00, workload)) {
-						send(&target00, workload);
-						HTTPData httpData = receive(&source01);
-						send(&target01, httpData);
-					}
+				while (false == false) {
+					receive(_source);
+					send(_target, RequestSender::workloadData);
 				}
 				done();
-			}
-			
+			};
 		};
 
-		struct HTTPHandler :public concurrency::agent,  implements<HTTPHandler, winrt::Windows::Foundation::IInspectable> {
+		struct HttpHandler :public concurrency::agent,  implements<HttpHandler, winrt::Windows::Foundation::IInspectable> {
 		public:
-			HTTPHandler(Scheduler* scheduler, com_ptr<RestAPI> pRestAPI, ITarget<HTTPData>& target, ISource<WorkloadData>& source)
+
+			HttpHandler(Scheduler* scheduler, com_ptr<RestAPI> pRestAPI, ITarget<HTTPData>& target, ISource<WorkloadData>& source)
 				: _target(target),
 				_source(source),
 				agent(*scheduler) {
 				this->pRestAPI = pRestAPI;
 			}
 
-			inline static bool doWeQuit = false;
-
 			void run() {
 				transformer<WorkloadData, WorkloadData> collectTimeLimitData([this](WorkloadData workload) -> WorkloadData {
-					if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
-						workload.rateLimitData.bucket = HTTPHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
-						workload.rateLimitData = HTTPHandler::rateLimitData.at(workload.rateLimitData.bucket);
+					if (HttpHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
+						workload.rateLimitData.bucket = HttpHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
+						workload.rateLimitData = HttpHandler::rateLimitData.at(workload.rateLimitData.bucket);
 					}
 					return workload;
 					});
@@ -157,34 +136,34 @@ namespace CommanderNS {
 						deleteData = this->pRestAPI->httpDELETEObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
 						returnData.data = deleteData.data;
 					}
-					HTTPHandler::rateLimitDataBucketValues.erase(workload.rateLimitData.rateLimitType);
-					HTTPHandler::rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
-					HTTPHandler::rateLimitData.erase(workload.rateLimitData.bucket);
-					HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
+					HttpHandler::rateLimitDataBucketValues.erase(workload.rateLimitData.rateLimitType);
+					HttpHandler::rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
+					HttpHandler::rateLimitData.erase(workload.rateLimitData.bucket);
+					HttpHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
 					return returnData;
 					});
 				collectTimeLimitData.link_target(&collectHTTPData);
 				collectHTTPData.link_target(&this->_target);
-				while (doWeQuit == false) {
+				while (false == false) {
 					WorkloadData workload = receive(&_source);
 					send(&collectTimeLimitData, workload);
-				}
+				}				
 				done();
 			};
 
-			~HTTPHandler() {};
+			~HttpHandler() {};
 
 			ITarget<HTTPData>& _target;
 			ISource<WorkloadData>& _source;
-			static map<string, FoundationClasses::RateLimitData> rateLimitData;
-			static map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
+			static map<string, RateLimitData> rateLimitData;
+			static map<RateLimitType, string> rateLimitDataBucketValues;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
 		};
-		map<FoundationClasses::RateLimitType, string> HTTPHandler::rateLimitDataBucketValues;
-		map<string, FoundationClasses::RateLimitData> HTTPHandler::rateLimitData;
-		HttpAgents::WorkloadData RequestSender::workloadData;
-		HttpAgents::WorkloadData TimedRequestSender::workloadData;
+		map<RateLimitType, string> HttpHandler::rateLimitDataBucketValues;
+		map<string, RateLimitData> HttpHandler::rateLimitData;
+		WorkloadData RequestSender::workloadData;
+		WorkloadData TimedRequestSender::workloadData;
 	};
 };
 #endif
