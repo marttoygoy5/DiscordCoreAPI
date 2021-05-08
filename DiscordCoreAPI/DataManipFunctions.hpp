@@ -90,20 +90,26 @@ namespace CommanderNS {
 			string messageId;
 			unsigned int timeDelay;
 		};
-		
+
 		IAsyncAction getObjectDataAsync(com_ptr<HTTPController> pHttpController, GetSelfUserData getUserSelfData) {
-			string relativePath = "/users/@me";
-			ClientDataTypes::UserData userData = *getUserSelfData.pDataStructure;
-			HttpAgents::WorkloadData workloadDataNew;
-			workloadDataNew.relativeURL = relativePath;
-			workloadDataNew.workloadType = HttpAgents::WorkloadType::GET;
-			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::USER_SELF_GET;
-			send(&pHttpController->getBuffer00, workloadDataNew);
-			json jsonValue = receive(&pHttpController->getBuffer03).data;
-			DataParsingFunctions::parseObject(jsonValue, &userData);
-			*getUserSelfData.pDataStructure = userData;
-			co_return;
+			try {
+				string relativePath = "/users/@me";
+				ClientDataTypes::UserData userData = *getUserSelfData.pDataStructure;
+				HttpAgents::WorkloadData workloadDataNew;
+				workloadDataNew.relativeURL = relativePath;;
+				workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::USER_SELF_GET;
+				workloadDataNew.workloadType = HttpAgents::WorkloadType::GET;
+				send(&pHttpController->getBuffer00, workloadDataNew);
+				json jsonValue = receive(&pHttpController->getBuffer03).data;
+				DataParsingFunctions::parseObject(jsonValue, &userData);
+				*getUserSelfData.pDataStructure = userData;
+				co_return;
+			}
+			catch (exception error) {
+				cout << error.what() << endl;
+			}
 		}
+
 		/*
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetUserData getUserData) {
 			ClientDataTypes::UserData userData = *getUserData.pDataStructure;
