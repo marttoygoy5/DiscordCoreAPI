@@ -92,30 +92,21 @@ namespace CommanderNS {
 			string messageId;
 			unsigned int timeDelay;
 		};
-		/*
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetSelfUserData getUserSelfData) {
-			ClientDataTypes::UserData userData = *getUserSelfData.pDataStructure;
+		
+		IAsyncAction getObjectDataAsync(com_ptr<HTTPController> pHttpController, GetSelfUserData getUserSelfData) {
 			string relativePath = "/users/@me";
-			HttpAgents::WorkloadData workloadData;
-			workloadData.relativeURL = relativePath;
-			workloadData.workloadType = HttpAgents::WorkloadType::GET;
-			workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::USER_SELF_GET;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
-			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
-			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pScheduler2, pRestAPI, buffer2, buffer1);
-			requestSender->setWorkloadData(workloadData);
-			requestSender->start();
-			httpHandler->start();
-			agent::wait(httpHandler.get());
-			agent::wait(requestSender.get());
-			json jsonValue = requestSender->getData();
+			ClientDataTypes::UserData userData = *getUserSelfData.pDataStructure;
+			HttpAgents::WorkloadData workloadDataNew;
+			workloadDataNew.relativeURL = relativePath;
+			workloadDataNew.workloadType = HttpAgents::WorkloadType::GET;
+			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::USER_SELF_GET;
+			send(&pHttpController->getBuffer00, workloadDataNew);
+			json jsonValue = receive(&pHttpController->getBuffer03).data;
 			DataParsingFunctions::parseObject(jsonValue, &userData);
 			*getUserSelfData.pDataStructure = userData;
 			co_return;
 		}
-
+		/*
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetUserData getUserData) {
 			ClientDataTypes::UserData userData = *getUserData.pDataStructure;
 			string relativePath = "/users/" + getUserData.id;
@@ -271,13 +262,9 @@ namespace CommanderNS {
 		}
 		*/
 
-		IAsyncAction postObjectDataAsync(com_ptr<HTTPController> pHttpController, com_ptr<RestAPI> pRestAPI, PostMessageData postMessageData) {
+		IAsyncAction postObjectDataAsync(com_ptr<HTTPController> pHttpController, PostMessageData postMessageData) {
 			string relativePath = "/channels/" + postMessageData.channelId + "/messages";
 			ClientDataTypes::MessageData messageData = *postMessageData.pDataStructure;
-			httpPOSTData postData;
-			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
-			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(3).scheduler;
 			HttpAgents::WorkloadData workloadDataNew;
 			workloadDataNew.relativeURL = relativePath;
 			workloadDataNew.content = postMessageData.content;
@@ -285,14 +272,6 @@ namespace CommanderNS {
 			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_CREATE;
 			send(&pHttpController->postBuffer00, workloadDataNew);
 			json jsonValue = receive(&pHttpController->postBuffer03).data;
-			//com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2, buffer2, buffer1);
-			//com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pScheduler2, pRestAPI, buffer2, buffer1);
-			//requestSender->setWorkloadData(workloadDataNew);
-			//requestSender->start();
-			//httpHandler->start();
-			//agent::wait(httpHandler.get());
-			//agent::wait(requestSender.get());
-			//json jsonValue = requestSender->getData();
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
 			*postMessageData.pDataStructure = messageData;
 			co_return;

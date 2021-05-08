@@ -201,7 +201,7 @@ namespace CommanderNS {
 					postMessageData.channelId = this->channelId;
 					postMessageData.content = createMessagePayload;
 					postMessageData.pDataStructure = &messageData;
-					DataManipFunctions::postObjectDataAsync(this->pHTTPController, this->pRestAPI, postMessageData).get();
+					DataManipFunctions::postObjectDataAsync(this->pHTTPController, postMessageData).get();
 					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
 					co_return message;
 				}
@@ -416,7 +416,6 @@ namespace CommanderNS {
 			}
 
 			task<Guild> getGuildAsync(string guildId) {
-				cout << "DOES IT CONTAIN THE GUILD?!: " << this->contains(guildId) << endl;
 				if (this->contains(guildId)) {
 					co_return this->at(guildId);
 				}
@@ -538,7 +537,7 @@ namespace CommanderNS {
 				ClientDataTypes::UserData userData;
 				DataManipFunctions::GetSelfUserData getSelfUserData;
 				getSelfUserData.pDataStructure = &userData;
-				//DataManipFunctions::getObjectDataAsync(this->pRestAPI, getSelfUserData).get();
+				DataManipFunctions::getObjectDataAsync(this->pHttpController, getSelfUserData).get();
 				ClientClasses::User user(userData);
 				this->User = user;
 				co_return;
