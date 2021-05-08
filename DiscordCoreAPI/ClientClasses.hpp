@@ -154,7 +154,7 @@ namespace CommanderNS {
 			};
 
 			task<Message> fetchAsync(string messageId) {
-				ClientClasses::Message message;
+				Message message;
 				if (this->contains(messageId)) {
 					message = this->at(messageId);
 					ClientDataTypes::MessageData messageData = message.Data;
@@ -163,7 +163,7 @@ namespace CommanderNS {
 					getMessageData.id = messageId;
 					getMessageData.pDataStructure = &messageData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
-					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
+					message = Message(messageData, this->pRestAPI, this, this->pSystemThreads);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
@@ -174,13 +174,13 @@ namespace CommanderNS {
 					getMessageData.id = messageId;
 					getMessageData.pDataStructure = &messageData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
-					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
+					message = Message(messageData, this->pRestAPI, this, this->pSystemThreads);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
 			};
 			
-			task<Message> GetMessage(string channelId, string messageId) {
+			task<Message> GetMessage(string messageId) {
 				Message currentMessage;
 				if (this->contains(messageId)) {
 					co_return currentMessage;
@@ -248,7 +248,7 @@ namespace CommanderNS {
 						getGuildMemberData.id = guildMemberId;
 						getGuildMemberData.pDataStructure = &guildMemberData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
-						GuildMember guildMember(guildMemberData);
+						guildMember = GuildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
 						co_return guildMember;
 					}
@@ -259,7 +259,7 @@ namespace CommanderNS {
 						getGuildMemberData.id = guildMemberId;
 						getGuildMemberData.pDataStructure = &guildMemberData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
-						GuildMember guildMember(guildMemberData);
+						guildMember = GuildMember(guildMemberData);
 						this->insert(std::make_pair(guildMemberId, guildMember));
 						co_return guildMember;
 					}
@@ -317,7 +317,7 @@ namespace CommanderNS {
 						getChannelData.id = channelId;
 						getChannelData.pDataStructure = &channelData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getChannelData).get();
-						Channel channel(channelData, this->pRestAPI, this->pSystemThreads);
+						channel = Channel(channelData, this->pRestAPI, this->pSystemThreads);
 						this->insert(std::make_pair(channelId, channel));
 						co_return channel;
 					}
@@ -327,7 +327,7 @@ namespace CommanderNS {
 						getChannelData.id = channelId;
 						getChannelData.pDataStructure = &channelData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getChannelData).get();
-						Channel channel(channelData, this->pRestAPI, this->pSystemThreads);
+						channel = Channel(channelData, this->pRestAPI, this->pSystemThreads);
 						this->insert(std::make_pair(channelId, channel));
 						co_return channel;
 					}
@@ -391,7 +391,7 @@ namespace CommanderNS {
 					getGuildData.id = guildId;
 					getGuildData.pDataStructure = &guildData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
-					Guild guild(guildData, this->pRestAPI, this->pSystemThreads);
+					guild = Guild(guildData, this->pRestAPI, this->pSystemThreads);
 					this->insert(std::make_pair(guildId, guild));
 					co_return guild;
 				}
@@ -401,7 +401,7 @@ namespace CommanderNS {
 					getGuildData.id = guildId;
 					getGuildData.pDataStructure = &guildData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
-					Guild guild(guildData, this->pRestAPI, this->pSystemThreads);
+					guild = Guild(guildData, this->pRestAPI, this->pSystemThreads);
 					co_return guild;
 				}
 			}
@@ -460,7 +460,7 @@ namespace CommanderNS {
 						getUserData.id = userId;
 						getUserData.pDataStructure = &userData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
-						User user(userData);
+						user = User(userData);
 						this->insert(std::make_pair(userId, user));
 						co_return user;
 					}
@@ -470,7 +470,7 @@ namespace CommanderNS {
 						getUserData.id = userId;
 						getUserData.pDataStructure = &userData;
 						DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
-						User user(userData);
+						user = User(userData);
 						this->insert(std::make_pair(userId, user));
 						co_return user;
 					}

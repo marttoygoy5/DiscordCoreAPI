@@ -27,8 +27,6 @@ namespace CommanderNS {
 			agent(*pScheduler)
 		{}
 
-		~WebSocketReceiver() {};
-
 		void run() {
 			while (doWeQuit == false) {
 				hstring payloadString;
@@ -39,6 +37,8 @@ namespace CommanderNS {
 			}
 			done();
 		};
+
+		~WebSocketReceiver() {};
 
 	protected:
 
