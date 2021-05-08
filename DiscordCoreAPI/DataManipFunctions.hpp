@@ -98,7 +98,7 @@ namespace CommanderNS {
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
 			workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::USER_SELF_GET;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
@@ -121,7 +121,7 @@ namespace CommanderNS {
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
 			workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::USER_GET;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
@@ -144,7 +144,7 @@ namespace CommanderNS {
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
 			workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::GUILD_GET;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
@@ -167,7 +167,7 @@ namespace CommanderNS {
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
 			workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::CHANNEL_GET;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
@@ -190,7 +190,7 @@ namespace CommanderNS {
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
 			workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::GUILD_MEMBER_GET;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
@@ -213,7 +213,7 @@ namespace CommanderNS {
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
 			workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::MESSAGE_GET;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
@@ -236,7 +236,7 @@ namespace CommanderNS {
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
 			workloadData.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::ROLES_GET;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
@@ -274,7 +274,7 @@ namespace CommanderNS {
 			httpPOSTData postData;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(2).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(3).scheduler;
 			HttpAgents::WorkloadData workloadDataNew;
 			workloadDataNew.relativeURL = relativePath;
 			workloadDataNew.content = postMessageData.content;
@@ -301,7 +301,7 @@ namespace CommanderNS {
 			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(3).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(4).scheduler;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
 			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pScheduler2, pRestAPI, buffer2, buffer1);
 			requestSender->setWorkloadData(workloadDataNew);
@@ -325,7 +325,7 @@ namespace CommanderNS {
 				timer<int> timer(deleteMessageData.timeDelay, 1, &buffer0, false);
 				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 				unbounded_buffer<HttpAgents::HTTPData> buffer2;
-				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(4).scheduler;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
 				com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
 				com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pScheduler2, pRestAPI, buffer2, buffer1);
 				requestSender->setWorkloadData(workloadDataNew);
@@ -338,7 +338,7 @@ namespace CommanderNS {
 			else {
 				unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 				unbounded_buffer<HttpAgents::HTTPData> buffer2;
-				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(4).scheduler;
+				Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
 				com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
 				com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pScheduler2, pRestAPI, buffer2, buffer1);
 				requestSender->setWorkloadData(workloadDataNew);;
@@ -360,7 +360,7 @@ namespace CommanderNS {
 			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(4).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
 			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pScheduler2, pRestAPI, buffer2, buffer1);
 			requestSender->setWorkloadData(workloadDataNew);
@@ -381,7 +381,7 @@ namespace CommanderNS {
 			workloadDataNew.rateLimitData.rateLimitType = FoundationClasses::RateLimitType::REACTION_ADD_REMOVE;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer1;
 			unbounded_buffer<HttpAgents::HTTPData> buffer2;
-			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(4).scheduler;
+			Scheduler* pScheduler2 = pRestAPI->pSystemThreads->Threads.at(5).scheduler;
 			com_ptr<HttpAgents::RequestSender>requestSender = make_self<HttpAgents::RequestSender>(pScheduler2, buffer1, buffer2);
 			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pScheduler2, pRestAPI, buffer2, buffer1);
 			requestSender->setWorkloadData(workloadDataNew);

@@ -67,8 +67,6 @@ namespace CommanderNS {
 			void run() {
 				receive(_source0);
 				send(_target, TimedRequestSender::workloadData);
-
-
 				done();
 			};
 		};
@@ -99,8 +97,6 @@ namespace CommanderNS {
 
 			void run() {
 				send(_target, RequestSender::workloadData);
-
-
 				done();
 			};
 		};
@@ -113,8 +109,6 @@ namespace CommanderNS {
 				agent(*scheduler) {
 				this->pRestAPI = pRestAPI;
 			}
-
-			~HTTPHandler() {};
 
 			void run() {
 				transformer<WorkloadData, WorkloadData> collectTimeLimitData([this](WorkloadData workload) -> WorkloadData {
@@ -134,7 +128,6 @@ namespace CommanderNS {
 							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							workload.rateLimitData.msRemain = targetTime - currentTime;
 						}
-						cout << "CURRENT BUCKET: " << workload.rateLimitData.bucket << endl;
 					}
 					if (workload.workloadType == WorkloadType::GET) {
 						httpGETData getData;
@@ -169,10 +162,12 @@ namespace CommanderNS {
 				done();
 			};
 
+			~HTTPHandler() {};
+
 			ITarget<HTTPData>& _target;
 			ISource<WorkloadData>& _source;
-			static map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
 			static map<string, FoundationClasses::RateLimitData> rateLimitData;
+			static map<FoundationClasses::RateLimitType, string> rateLimitDataBucketValues;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
 		};

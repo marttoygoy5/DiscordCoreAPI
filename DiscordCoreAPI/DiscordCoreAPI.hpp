@@ -10,13 +10,13 @@
 
 #include "pch.h"
 #include "RestAPI.hpp"
+#include "ClientDataTypes.hpp"
 #include "DataParsingFunctions.hpp"
 #include "EventMachine.hpp"
 #include "WebSocketAgents.hpp"
 #include "DataManipFunctions.hpp"
 #include "EventDataTypes.hpp"
 #include "FoundationClasses.hpp"
-#include "ClientDataTypes.hpp"
 #include "SystemThreads.hpp"
 #include "ClientClasses.hpp"
 #include "HttpAgents.hpp"
@@ -67,7 +67,7 @@ namespace CommanderNS {
 			while (DiscordCoreAPI::doWeQuit == false) {
 				//agent::wait(this->webSocketReceiver.get());
 				CommanderNS::ClientClasses::Guild guild = this->client->Guilds.fetchAsync("782757641540730900").get();
-				cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
+				//cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
 				//vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				//ClientDataTypes::GuildData guildData;
 				//FoundationClasses::RateLimitData ratelimitdata;

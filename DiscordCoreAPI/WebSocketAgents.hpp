@@ -212,6 +212,8 @@ namespace CommanderNS {
 		}
 
 		void cleanup() {
+			done();
+
 			if (this->messageWriter) {
 				try {
 					this->messageWriter.DetachStream();
@@ -225,7 +227,7 @@ namespace CommanderNS {
 
 			if (this->webSocket) {
 				try {
-					this->webSocket.Close(1000, winrt::to_hstring("Closed due to user request."));
+					this->webSocket.Close(1000, L"Closed due to user request.");
 					this->webSocket = nullptr;
 				}
 				catch (winrt::hresult_error error) {
