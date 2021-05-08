@@ -292,8 +292,8 @@ namespace CommanderNS {
 			try {
 				// Send the data as one complete message.
 				co_await this->messageWriter.StoreAsync();
-
 			}
+
 			catch (winrt::hresult_error const& ex) {
 				std::wcout << ex.message().c_str() << std::endl;
 				co_return;
@@ -394,20 +394,13 @@ namespace CommanderNS {
 					std::string identity = JSONifier::getIdentifyPayload(winrt::to_string(this->botToken), this->intentsValue);
 					this->sendAsync(identity);
 				}
-
 				std::cout << "Message received from MessageWebSocket: " << winrt::to_string(message) << std::endl << std::endl;
-
 			}
-
 			catch (winrt::hresult_error const& ex) {
 				std::wcout << ex.message().c_str() << std::endl;
 
 			}
-
 		};
 	};
-
-
-	
 }
 #endif

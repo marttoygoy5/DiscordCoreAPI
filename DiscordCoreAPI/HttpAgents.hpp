@@ -47,14 +47,6 @@ namespace CommanderNS {
 				_timer(timer)
 			{}
 
-			void setWorkloadData(WorkloadData pWorkload) {
-				TimedRequestSender::workloadData = pWorkload;
-			}
-
-			json getData() {
-				return receive(_source).data;
-			}
-
 			~TimedRequestSender() {};
 
 		protected:
@@ -62,7 +54,6 @@ namespace CommanderNS {
 			ITarget<WorkloadData>& _target;
 			ISource<int>& _source0;
 			timer<int>& _timer;
-			static HttpAgents::WorkloadData workloadData;
 
 			void run() {
 				receive(_source0);
@@ -91,7 +82,6 @@ namespace CommanderNS {
 			ISource<WorkloadData>& source00;
 			ITarget<WorkloadData>& target00;
 			ISource<HTTPData>& source01;
-			static HttpAgents::WorkloadData workloadData;
 
 			void run() {
 				while (doWeQuit == false) {

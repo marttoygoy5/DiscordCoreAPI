@@ -24,6 +24,10 @@ namespace CommanderNS {
 			this->postRequestSender = make_self<HttpAgents::RequestSender>(systemThreads.at(3).scheduler, this->postBuffer00, this->postBuffer01, this->postBuffer02, this->postBuffer03);
 			this->putHTTPHandler = make_self<HttpAgents::HTTPHandler>(systemThreads.at(4).scheduler, pRestAPI, this->putBuffer02, this->putBuffer01);
 			this->putRequestSender = make_self<HttpAgents::RequestSender>(systemThreads.at(4).scheduler, this->putBuffer00, this->putBuffer01, this->putBuffer02, this->putBuffer03);
+			this->deleteHTTPHandler = make_self<HttpAgents::HTTPHandler>(systemThreads.at(5).scheduler, pRestAPI, this->deleteBuffer02, this->deleteBuffer01);
+			this->deleteRequestSender = make_self<HttpAgents::RequestSender>(systemThreads.at(5).scheduler, this->deleteBuffer00, this->deleteBuffer01, this->deleteBuffer02, this->deleteBuffer03);
+			this->getHTTPHandler->start();
+			this->getRequestSender->start();
 			this->postHTTPHandler->start();
 			this->postRequestSender->start();
 			this->putHTTPHandler->start();
@@ -33,6 +37,7 @@ namespace CommanderNS {
 		};
 
 		~HTTPController() {};
+
 
 		unbounded_buffer<HttpAgents::WorkloadData> getBuffer00;
 		unbounded_buffer<HttpAgents::HTTPData> getBuffer03;

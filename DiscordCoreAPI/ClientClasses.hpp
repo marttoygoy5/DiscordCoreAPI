@@ -544,5 +544,6 @@ namespace CommanderNS {
 			}
 		};
 	};
-}
 #endif
+
+}
