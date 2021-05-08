@@ -143,7 +143,11 @@ namespace CommanderNS {
 
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					ClientDataTypes::GuildMemberData guildMemberData;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->pClient->Guilds.guildGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("user").at("id"), &guildMemberData).get();
+					DataManipFunctions::GetGuildMemberData getGuildMemberData;
+					getGuildMemberData.guildId = payload.at("d").at("guild_id");
+					getGuildMemberData.id = payload.at("d").at("user").at("id");
+					getGuildMemberData.pDataStructure = &guildMemberData;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
