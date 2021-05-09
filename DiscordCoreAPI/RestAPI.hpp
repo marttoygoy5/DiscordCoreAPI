@@ -33,12 +33,9 @@ namespace CommanderNS {
 
 	struct RestAPI : implements<RestAPI, winrt::Windows::Foundation::IInspectable> {
 
-		com_ptr<SystemThreads> pSystemThreads;
-
 	public:
-		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath, com_ptr<SystemThreads> pSystemThreads) {
+		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
 			try {
-				this->pSystemThreads = pSystemThreads;
 				this->baseURL = baseURL;
 				this->botToken = botToken;
 				this->initialConnectionPath = this->baseURL + L"/gateway/bot";

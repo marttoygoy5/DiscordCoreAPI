@@ -40,7 +40,7 @@ namespace CommanderNS {
 			this->webSocketConnection = winrt::make_self<WebSocketConnection>(this->buffer1, this->systemThreads->Threads.at(0).scheduler);
 			this->webSocketReceiver = make_self<WebSocketReceiver>(this->buffer1, this->systemThreads->Threads.at(1).scheduler);
 			this->botToken = botToken;
-			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocketConnection->socketPath, this->systemThreads);
+			this->restAPI = make_self<RestAPI>(this->botToken, this->baseURL, &webSocketConnection->socketPath);
 			this->pHttpController = make_self<HTTPController>(this->systemThreads->Threads, this->restAPI);
 			this->client = make_self<ClientClasses::Client>(this->restAPI, this->systemThreads, this->pHttpController);
 			this->eventMachine = make_self<EventMachine>();
@@ -50,11 +50,13 @@ namespace CommanderNS {
 		}
 
 		int login() {
-			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this] {loginToWrap(); });
-			return 25;
+			int returnVal;
+			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
+			return returnVal;
 		}
 
 	protected:
+
 		hstring baseURL = L"https://discord.com/api/v9";
 		hstring botToken;
 		com_ptr<WebSocketReceiver> webSocketReceiver{ nullptr };
@@ -62,13 +64,15 @@ namespace CommanderNS {
 		com_ptr<WebSocketConnection> webSocketConnection{ nullptr };
 		unbounded_buffer<hstring> buffer1;
 
-		void run() {
+		int run() {
 			this->webSocketConnection->start();
 			this->webSocketReceiver->start();
 			while (DiscordCoreAPI::doWeQuit == false) {
 				//agent::wait(this->webSocketReceiver.get());
 				CommanderNS::ClientClasses::Guild guild = this->client->Guilds.fetchAsync("782757641540730900").get();
-				//cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
+				cout << guild.Data.name << endl;
+				//cout << guild.Data.name << endl;
+				cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
 				//vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				//ClientDataTypes::GuildData guildData;
 				//FoundationClasses::RateLimitData ratelimitdata;
@@ -78,10 +82,11 @@ namespace CommanderNS {
 				//cout << "Name: " << this->Client->Guilds.GetGuild("782757641540730900").get().Members.GetGuildMember("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
+			return 25;
 		}
 
-		void loginToWrap() {
-			this->run();
+		int loginToWrap() {
+			return this->run();
 		}
 	};
 

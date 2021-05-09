@@ -35,8 +35,9 @@ namespace CommanderNS {
 		public:
 
 			ReactionManager() {};
-			ReactionManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, string channelId, string messageId) {
+			ReactionManager(com_ptr<RestAPI> pRestAPI, com_ptr<SystemThreads> pSystemThreads, com_ptr<HTTPController> pHttpController, string channelId, string messageId) {
 				this->channelId = channelId;
+				this->pHttpController = pHttpController;
 				this->pSystemThreads = pSystemThreads;
 				this->messageId = messageId;
 				this->pRestAPI = pRestAPI;
@@ -60,7 +61,7 @@ namespace CommanderNS {
 				putEmojiData.channelId = this->channelId;
 				putEmojiData.messageId = this->messageId;
 				putEmojiData.emoji = emojiEncoded;
-				//DataManipFunctions::putObjectDataAsync(this->pRestAPI, putEmojiData).get();
+				DataManipFunctions::putObjectDataAsync(this->pHttpController, putEmojiData).get();
 				co_return;
 			};
 
@@ -103,13 +104,14 @@ namespace CommanderNS {
 				}
 				string emojiEncoded = output;
 				deleteReactionData.encodedEmoji = emojiEncoded;
-				//DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionData).get();
+				DataManipFunctions::deleteObjectDataAsync(this->pHttpController, deleteReactionData).get();
 				co_return;
 			}
 
 		protected:
 			friend class Message;
 			com_ptr<RestAPI> pRestAPI;
+			com_ptr<HTTPController> pHttpController;
 			com_ptr<SystemThreads> pSystemThreads;
 			string channelId;
 			string messageId;
@@ -118,11 +120,12 @@ namespace CommanderNS {
 		class Message:winrt::Windows::Foundation::IUnknown{
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager,  com_ptr<SystemThreads> pSystemThreads) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager,  com_ptr<SystemThreads> pSystemThreads, com_ptr<HTTPController> pHttpController) {
 				this->Data = data;
 				this->pSystemThreads = pSystemThreads;
 				this->pRestAPI = pRestAPI;
-				this->Reactions = ReactionManager(pRestAPI, this->pSystemThreads, this->Data.channelId, this->Data.id);
+				this->pHttpController = pHttpController;
+				this->Reactions = ReactionManager(pRestAPI, this->pSystemThreads, this->pHttpController, this->Data.channelId, this->Data.id);
 				this->messageManager = pMessageManager;
 			}
 
@@ -141,6 +144,7 @@ namespace CommanderNS {
 		protected:
 			com_ptr<SystemThreads> pSystemThreads;
 			com_ptr<RestAPI> pRestAPI;
+			com_ptr<HTTPController> pHttpController;
 		};
 
 		class MessageManager: public map<string, Message> {
@@ -163,8 +167,8 @@ namespace CommanderNS {
 					getMessageData.channelId = this->channelId;
 					getMessageData.id = messageId;
 					getMessageData.pDataStructure = &messageData;
-					//DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
-					message = Message(messageData, this->pRestAPI, this, this->pSystemThreads);
+					DataManipFunctions::getObjectDataAsync(this->pHTTPController, getMessageData).get();
+					message = Message(messageData, this->pRestAPI, this, this->pSystemThreads, this->pHTTPController);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
@@ -174,8 +178,8 @@ namespace CommanderNS {
 					getMessageData.channelId = this->channelId;
 					getMessageData.id = messageId;
 					getMessageData.pDataStructure = &messageData;
-					//DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
-					message = Message(messageData, this->pRestAPI, this, this->pSystemThreads);
+					DataManipFunctions::getObjectDataAsync(this->pHTTPController, getMessageData).get();
+					message = Message(messageData, this->pRestAPI, this, this->pSystemThreads, this->pHTTPController);
 					this->insert(std::make_pair(messageId, message));
 					co_return message;
 				}
@@ -202,7 +206,7 @@ namespace CommanderNS {
 					postMessageData.content = createMessagePayload;
 					postMessageData.pDataStructure = &messageData;
 					DataManipFunctions::postObjectDataAsync(this->pHTTPController, postMessageData).get();
-					Message message(messageData, this->pRestAPI, this, this->pSystemThreads);
+					Message message(messageData, this->pRestAPI, this, this->pSystemThreads, this->pHTTPController);
 					co_return message;
 				}
 				catch (exception error) {
@@ -399,7 +403,7 @@ namespace CommanderNS {
 					DataManipFunctions::GetGuildData getGuildData;
 					getGuildData.id = guildId;
 					getGuildData.pDataStructure = &guildData;
-					//DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
+					DataManipFunctions::getObjectDataAsync(this->pHttpController, getGuildData).get();
 					guild = Guild(guildData, this->pRestAPI, this->pSystemThreads, this->pHttpController);
 					this->insert(std::make_pair(guildId, guild));
 					co_return guild;
@@ -409,7 +413,7 @@ namespace CommanderNS {
 					DataManipFunctions::GetGuildData getGuildData;
 					getGuildData.id = guildId;
 					getGuildData.pDataStructure = &guildData;
-					//DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
+					DataManipFunctions::getObjectDataAsync(this->pHttpController, getGuildData).get();
 					guild = Guild(guildData, this->pRestAPI, this->pSystemThreads, this->pHttpController);
 					co_return guild;
 				}
@@ -512,9 +516,9 @@ namespace CommanderNS {
 				this->Users = UserManager(pRestAPI, this);
 				this->User = User;
 				this->pRestAPI = pRestAPI;
-				this->getCurrentUser();
 				this->pSystemThreads = pSystemThreads;
 				this->pHttpController = pHttpController;
+				this->getCurrentUser();
 				this->Guilds = GuildManager(pRestAPI, this->pSystemThreads, this->pHttpController);
 			};
 			~Client() {};

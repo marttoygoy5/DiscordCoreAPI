@@ -80,7 +80,8 @@ namespace CommanderNS {
 			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
 			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager,
-				this->pSystemThreads); (messageData, this->pRestAPI, pMessageManager);
+				this->pSystemThreads, this->pHttpController);
+			(messageData, this->pRestAPI, pMessageManager);
 			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(1);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
@@ -93,7 +94,7 @@ namespace CommanderNS {
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
 			ClientClasses::Message message(messageData, this->pRestAPI, this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager,
-				this->pSystemThreads);
+				this->pSystemThreads, this->pHttpController);
 			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager->erase(messageData.id);
 			messageDeletionData.message = message;
 			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(1);
