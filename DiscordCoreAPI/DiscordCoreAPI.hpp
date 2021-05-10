@@ -19,7 +19,6 @@
 #include "ClientDataTypes.hpp"
 #include "SystemThreads.hpp"
 #include "ClientClasses.hpp"
-#include "HttpAgents.hpp"
 
 namespace CommanderNS {
 
@@ -51,6 +50,13 @@ namespace CommanderNS {
 			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this] {loginToWrap(); });
 			co_return;
 		}
+		/*
+		task<void> login() {
+			co_await resume_foreground(*this->systemThreads->Threads.at(1).threadQueue.get());
+			task_handle taskHandle = make_task([this]() {this->loginToWrap().get(); });
+			this->systemThreads->Threads.at(1).taskGroup->run_and_wait(taskHandle);
+			co_return;
+		}		*/
 
 	protected:
 		hstring baseURL = L"https://discord.com/api/v9";
@@ -72,20 +78,19 @@ namespace CommanderNS {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
 				//cout << this_thread::get_id() << endl;
-				//CommanderNS::ClientClasses::Guild guild = this->Client->Guilds.FetchAsync("782757641540730900").get();
-				//cout << guild.Members.GetGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
+				//CommanderNS::ClientClasses::Guild guild = this->Client->Guilds.GetGuild("782757641540730900").get();
+				//cout << guild.Members.GetGuildMember("821912684878364723").get().Data.user.username << endl;
 				vector<CommanderNS::ClientDataTypes::RoleData> roleData;
-				//ClientDataTypes::GuildData guildData;
+				shared_ptr<FoundationClasses::RateLimitation>rateLimitData = make_shared<FoundationClasses::RateLimitation>();
+				ClientDataTypes::GuildData guildData;
 				//DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
 				for (unsigned int x = 0; x < roleData.size(); x += 1) {
-					cout << roleData.at(x).name << endl;
+					//cout << roleData.at(x).name << endl;
 				}
 				//cout << "Name: " << this->Client->Guilds.GetGuild("782757641540730900").get().Members.GetGuildMember("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
-			co_return;
 		}
-
 		void loginToWrap() {
 			this->run().get();
 		}

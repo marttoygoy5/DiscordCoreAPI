@@ -47,7 +47,7 @@ namespace CommanderNS {
 		DispatcherQueue dispatchQueueForHB = nullptr;
 		DispatcherQueueTimer heartbeatTimer = nullptr;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew) {
+		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew){
 			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
@@ -115,7 +115,7 @@ namespace CommanderNS {
 		}
 
 		IAsyncAction sendAsync(std::string& text) {
-
+			
 			std::string message = text;
 			if (message.empty()) {
 				std::cout << "Please specify text to send" << std::endl;
@@ -152,6 +152,7 @@ namespace CommanderNS {
 			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
 			ClientClasses::Guild guild(guildData, this->pRestAPI);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
+			cout << "GUILD: " << guild.Data.ownerID << endl;
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user);
 				this->pClient->Users.insert(make_pair(user.Data.id, user));
@@ -177,38 +178,21 @@ namespace CommanderNS {
 		}
 
 		task<void> onMessageCreate(json payload) {
-			co_await resume_foreground(*this->pSystemThreads->Threads.at(1).threadQueue.get());
+			co_await resume_foreground(*this->pSystemThreads->Threads.at(2).threadQueue.get());
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-			auto tempPtr = this->pClient->Guilds.GetGuildAsync(messageData.guildId).get().Channels.GetChannelAsync(messageData.channelId).get().messageManager;
+			auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &ClientClasses::MessageManager::messageDeleteRateLimit, pMessageManager);
-			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(1);
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &this->pClient->Guilds.at(messageData.guildId).Channels.Fetch(messageData.channelId).get().messageManager->messageDeleteRateLimit, pMessageManager);
+			messageCreationData.threadContext = this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
-			cout << "WERE HERE WERE HERE WERE HERE!" << endl;
-			co_return;
-		}
-
-		task<void> onMessageDelete(json payload){
-			co_await resume_foreground(*this->pSystemThreads->Threads.at(1).threadQueue.get());
-			EventDataTypes::MessageDeletionData messageDeletionData;
-			ClientDataTypes::MessageData messageData;
-			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-			string guildId = payload.at("d").at("guild_id");
-			string channelId = payload.at("d").at("channel_id");
-			ClientClasses::Message message(messageData,this->pRestAPI, &this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager->messageDeleteRateLimit,
-				this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager);
-			this->pClient->Guilds.GetGuildAsync(guildId).get().Channels.GetChannelAsync(channelId).get().messageManager->erase(messageData.id);
-			messageDeletionData.message = message;
-			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(1);
-			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
 			co_return;
 		}
 
 		task<void> onMessageReactionAdd(json payload) {
 			try{
-				co_await resume_foreground(*this->pSystemThreads->Threads.at(1).threadQueue.get());
+				co_await resume_foreground(*this->pSystemThreads->Threads.at(2).threadQueue.get());
 				ClientDataTypes::ReactionAddEventData reactionAddEventData;
 				DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
 				ClientDataTypes::ReactionData reactionData;
@@ -221,8 +205,9 @@ namespace CommanderNS {
 				reactionData.userId = reactionAddEventData.userId;
 				ClientClasses::Reaction reaction(reactionData);
 				reactionAddData.reaction = reaction;
-				reactionAddData.threadContext = &this->pSystemThreads->Threads.at(1);
+				reactionAddData.threadContext = this->pSystemThreads->Threads.at(2);
 				this->pEventMachine->onReactionAddEvent(reactionAddData);
+				co_return;
 			}
 			catch (exception error) {
 				cout << "Error: " << error.what() << endl;
@@ -234,7 +219,7 @@ namespace CommanderNS {
 				DataReader dataReader{ args.GetDataReader() };
 				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
 				auto message = dataReader.ReadString(dataReader.UnconsumedBufferLength());
-				json payload = payload.parse(message);
+				nlohmann::json payload = nlohmann::json::parse(message);
 
 				if (payload.at("s") >= 0) {
 					this->lastNumberReceived = payload.at("s");
@@ -248,26 +233,21 @@ namespace CommanderNS {
 					onMessageCreate(payload);
 				}
 
-				if (payload.at("t") == "MESSAGE_DELETE") {
-					onMessageDelete(payload);
-				}
-
 				if (payload.at("t") == "GUILD_CREATE") {
 					onGuildCreate(payload);
-					return;
-				}
+				}								
 
 				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
 					onMessageReactionAdd(payload);
-				}				
-
+				}
+				
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					ClientDataTypes::GuildMemberData guildMemberData;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->pClient->Guilds.guildGetRateLimit, payload.at("d").at("guild_id"), payload.at("d").at("user").at("id"), &guildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
-					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(2);
+					guildMemberAddData.threadContext = this->pSystemThreads->Threads.at(2);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 

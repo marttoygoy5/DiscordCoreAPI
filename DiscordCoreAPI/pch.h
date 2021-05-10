@@ -22,7 +22,6 @@
 #endif
 
 #include <windows.h>
-#include <agents.h>
 #include <winrt/base.h>
 #include <winrt/windows.system.h>
 #include <winrt/Windows.System.Threading.h>
@@ -45,7 +44,6 @@
 #include <concurrent_vector.h>
 #include <agents.h>
 #include <concrt.h>
-#include <memory>
 #include <concrtrm.h>
 #include </json-develop/include/nlohmann/json.hpp>
 #include <curl.h>

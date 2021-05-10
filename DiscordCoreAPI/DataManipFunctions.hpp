@@ -9,16 +9,16 @@
 #define _DATA_MANIP_FUNCTIONS_
 
 #include "pch.h"
-#include "DataParsingFunctions.hpp"
 #include "RestAPI.hpp"
 #include "FoundationClasses.hpp"
+#include "DataParsingFunctions.hpp"
 #include "ClientDataTypes.hpp"
 
 namespace CommanderNS {
 
 	namespace DataManipFunctions {
 
-		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
+		IAsyncAction checkRateLimitAndGetDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpGETData* pGetDataStruct) {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pGetDataStruct = pRestAPI->httpGETObjectDataAsync(relativePath, pRateLimitData).get();
@@ -55,7 +55,7 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
+		IAsyncAction checkRateLimitAndPostDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpPOSTData* pPostDataStruct, string content) {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 
@@ -93,7 +93,7 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
+		IAsyncAction checkRateLimitAndPutDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpPUTData* pPutDataStruct, string content) {
 			try {
 					*pPutDataStruct = pRestAPI->httpPUTObjectDataAsync(relativePath, content, pRateLimitData).get();
 				if (pRateLimitData->getsRemaining > 0) {
@@ -130,7 +130,7 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction checkRateLimitAndDeleteDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitData* pRateLimitData, string relativePath, httpDELETEData* pDeleteDataStruct) {
+		IAsyncAction checkRateLimitAndDeleteDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pRateLimitData, string relativePath, httpDELETEData* pDeleteDataStruct) {
 			try {
 				if (pRateLimitData->getsRemaining > 0) {
 					*pDeleteDataStruct = pRestAPI->httpDELETEObjectDataAsync(relativePath, pRateLimitData).get();
@@ -165,17 +165,6 @@ namespace CommanderNS {
 				cout << "deleteObjectDataAsync() Issue: " << error.what() << endl;
 				co_return;
 			}
-		}
-
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pUserGetRateLimit, ClientDataTypes::UserData* pDataStructure) {
-			ClientDataTypes::UserData userData = *pDataStructure;
-			string relativePath = "/users/@me";
-			httpGETData getData;
-			checkRateLimitAndGetDataAsync(pRestAPI, pUserGetRateLimit, relativePath, &getData).get();
-			json jsonValue = getData.data;
-			DataParsingFunctions::parseObject(jsonValue, &userData);
-			*pDataStructure = userData;
-			co_return;
 		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pUserGetRateLimit, string id, ClientDataTypes::UserData* pDataStructure) {
@@ -285,15 +274,8 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionDeleteRateLimit, ClientDataTypes::DeleteReactionData deleteReactionData){
-			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji+ "/" + deleteReactionData.userId;
-			httpDELETEData deleteData;
-			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
-			co_return;
-		}
-
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionDeleteRateLimit, ClientDataTypes::DeleteOwnReactionData deletionData) {
-			string relativePath = "/channels/" + deletionData.channelId + "/messages/" + deletionData.messageId + "/reactions/" + deletionData.encodedEmoji + "/@me";
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pReactionDeleteRateLimit, string channelId, string messageId, string userId, string emoji){
+			string relativePath = "/channels/" + channelId + "/messages/" + messageId + "/reactions/" + emoji + "/" + userId;
 			httpDELETEData deleteData;
 			checkRateLimitAndDeleteDataAsync(pRestAPI, pReactionDeleteRateLimit, relativePath, &deleteData).get();
 			co_return;

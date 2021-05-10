@@ -5,28 +5,17 @@
 
 #pragma once
 
-#ifndef _FOUNDATION_CLASSES_
-#define _FOUNDATION_CLASSES_
+#ifndef _FOUNDATION_CLASSES
+#define _FOUNDATION_CLASSES
 
 namespace CommanderNS {
 
 	namespace FoundationClasses {
 
-		enum class RateLimitType {
-			MESSAGE_DELETE = 0,
-			MESSAGE_CREATE = 1,
-			MESSAGE_GET = 2,
-			REACTION_ADD_REMOVE = 3,
-			GUILD_GET = 4,
-			CHANNEL_GET = 5
-		};
-
-		struct RateLimitData {
-			string bucket = "";
-			float timeStartedAt = 0;
-			float msRemain = 0;
-			unsigned int getsRemaining = 0;
-			RateLimitType rateLimitType;
+		struct RateLimitation {
+			int msRemain = 1;
+			int getsRemaining = 1;
+			int currentMsTime = 1;
 		};
 	};
 };

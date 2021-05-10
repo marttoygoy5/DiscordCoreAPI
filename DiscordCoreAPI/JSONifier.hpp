@@ -100,18 +100,7 @@ namespace CommanderNS {
 				{"content", createMessageData.content},
 				{"tts" , false},
 				{"embed" , 
-							{
-								{"timestamp",createMessageData.embed.timestamp},
-								{"type",createMessageData.embed.type},
-								{"url",createMessageData.embed.url},
-				{"title", createMessageData.embed.title},
-				{"video", {
-					{"height", createMessageData.embed.video.height},
-					{"width", createMessageData.embed.video.width},
-					{"url", createMessageData.embed.video.url},
-					{"proxy_url", createMessageData.embed.video.proxyUrl},
-			}},
-				{"author", {
+							{{"author", {
 							{"icon_url", createMessageData.embed.author.iconUrl},
 							{"name", createMessageData.embed.author.name},
 							{"url", createMessageData.embed.author.url },
@@ -134,12 +123,15 @@ namespace CommanderNS {
 					{"url", createMessageData.embed.thumbnail.url},
 					{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
 				}},
+
+					
 					{"footer", {
 						{"icon_url", createMessageData.embed.footer.iconUrl},
 						{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
 						{"text", createMessageData.embed.footer.text}
 			}},
-					{"description" , createMessageData.embed.description},
+					{"title", "Hello, Embed!"},
+					{"description" , "This is an embedded message."},
 					{"fields", fields},
 					{"color",colorValue}
 			}} 

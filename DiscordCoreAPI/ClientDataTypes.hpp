@@ -80,7 +80,6 @@ namespace CommanderNS {
             string id;
             string discriminator;
             string avatar;
-            string avatarURL;
             bool bot;
             bool system = false;
             bool mfa_enabled = false;
@@ -523,8 +522,8 @@ namespace CommanderNS {
         };
 
         struct CreateReactionData {
-            string emojiName;
-            string emojiId;
+            string name;
+            string id;
         };
 
         struct ReactionAddEventData {
@@ -548,18 +547,9 @@ namespace CommanderNS {
         struct DeleteReactionData {
             string channelId;
             string messageId;
-            string encodedEmoji;
             string emojiName;
             string emojiId;
             string userId;
-        };
-
-        struct DeleteOwnReactionData {
-            string channelId;
-            string messageId;
-            string encodedEmoji;
-            string emojiName;
-            string emojiId;
         };
 	}
 }

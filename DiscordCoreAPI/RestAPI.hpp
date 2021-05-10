@@ -11,7 +11,6 @@
 #include "pch.h"
 #include "JSONifier.hpp"
 #include "FoundationClasses.hpp"
-#include "HttpAgents.hpp"
 
 namespace CommanderNS {
 
@@ -33,11 +32,9 @@ namespace CommanderNS {
 
 	struct RestAPI : implements<RestAPI, winrt::Windows::Foundation::IInspectable> {
 	public:
+
 		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
 			try {
-				this->baseURL = baseURL;
-				this->botToken = botToken;
-				this->initialConnectionPath = this->baseURL + L"/gateway/bot";
 				this->getHttpClient = HttpClient();
 				this->getHeaders = this->getHttpClient.DefaultRequestHeaders();
 				this->putHttpClient = HttpClient();
@@ -46,6 +43,9 @@ namespace CommanderNS {
 				this->postHeaders = this->postHttpClient.DefaultRequestHeaders();
 				this->deleteHttpClient = HttpClient();
 				this->deleteHeaders = this->deleteHttpClient.DefaultRequestHeaders();
+				this->baseURL = baseURL;
+				this->botToken = botToken;
+				this->initialConnectionPath = this->baseURL + L"/gateway/bot";
 				hstring headerString = L"Bot ";
 				hstring headerString2 = headerString + botToken;
 				HttpCredentialsHeaderValue credentialValue(nullptr);
@@ -108,7 +108,6 @@ namespace CommanderNS {
 			}
 			catch (winrt::hresult_error error) {
 				wcout << L"Error: " << error.message().c_str() << std::endl;
-				co_return httpGETData();
 			}
 		}
 
@@ -160,7 +159,6 @@ namespace CommanderNS {
 			}
 			catch (winrt::hresult_error error) {
 				wcout << L"Error: " << error.message().c_str() << std::endl;
-				co_return httpPOSTData();
 			}
 		}
 
@@ -212,7 +210,6 @@ namespace CommanderNS {
 			}
 			catch (winrt::hresult_error error) {
 				wcout << L"Error: " << error.message().c_str() << std::endl;
-				co_return httpPUTData();
 			}
 		}
 
@@ -256,12 +253,12 @@ namespace CommanderNS {
 					co_return deleteData;
 				}
 				else {
+					
 					co_return httpDELETEData();
 				}
 			}
 			catch (winrt::hresult_error error) {
 				wcout << L"Error: " << error.message().c_str() << std::endl;
-				co_return httpDELETEData();
 			}
 		}
 
@@ -269,8 +266,8 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 		friend struct WebSocket;
-
 		hstring botToken;
+
 		hstring baseURL;
 		hstring initialConnectionPath;
 		Uri baseURI = Uri{ nullptr };
