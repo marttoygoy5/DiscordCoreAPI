@@ -40,7 +40,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 
-			task<void> AddReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
+			task<void> addReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
 				string emoji;
 				if (createReactionData.id != string()) {
 					emoji += ":" + createReactionData.name + ":" + createReactionData.id;
@@ -54,11 +54,15 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::putObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->channelId, this->messageId, emojiEncoded).get();
+				DataManipFunctions::PutEmojiData putEmojiData;
+				putEmojiData.channelId = this->channelId;
+				putEmojiData.messageId = this->messageId;
+				putEmojiData.emoji = emojiEncoded;
+				DataManipFunctions::putObjectDataAsync(this->pRestAPI, putEmojiData).get();
 				co_return;
 			};
 
-			task<void> DeleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
+			task<void> deleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
 				string emoji;
 				if (deleteReactionData.emojiId != string()) {
 					emoji += ":" + deleteReactionData.emojiName + ":" + deleteReactionData.emojiId;
@@ -72,7 +76,12 @@ namespace CommanderNS {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
 				string emojiEncoded = output;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &ReactionManager::reactionAddRemoveRateLimit, this->channelId, this->messageId, deleteReactionData.userId, emojiEncoded).get();
+				DataManipFunctions::DeleteReactionData deleteReactionDataNew;
+				deleteReactionDataNew.channelId = this->channelId;
+				deleteReactionDataNew.messageId = this->messageId;
+				deleteReactionDataNew.userId = deleteReactionData.userId;
+				deleteReactionDataNew.encodedEmoji = emojiEncoded;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
 				co_return;
 			}
 
@@ -93,7 +102,7 @@ namespace CommanderNS {
 				this->messageManager = pMessageManager;
 			}
 
-			IAsyncAction DeleteMessageAsync(int timeDelay = 1000) {
+			IAsyncAction deleteMessageAsync(int timeDelay = 1000) {
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &Message::messageDeleteRateLimit, Data.channelId, Data.id).get();
 				co_return;
 			};
@@ -106,7 +115,7 @@ namespace CommanderNS {
 			static RateLimitData messageDeleteRateLimit;
 		};
 
-		class MessageManager: map<string, Message> {
+		class MessageManager : public map<string, Message> {
 		public:
 			MessageManager() {};
 			MessageManager(string channelId, string guildId, com_ptr<RestAPI> pRestAPI) {
@@ -115,7 +124,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 			
-			task<Message> Fetch(string channelId, string messageId) {
+			task<Message> fetchAsync(string channelId, string messageId) {
 				ClientDataTypes::MessageData messageData;
 				DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
 				Message message(messageData, this->pRestAPI, &MessageManager::messageGetRateLimit, this);
@@ -130,16 +139,20 @@ namespace CommanderNS {
 					co_return currentMessage;
 				}
 				else {
-					currentMessage = this->Fetch(channelId, messageId).get();
+					currentMessage = this->fetchAsync(channelId, messageId).get();
 					co_return currentMessage;
 				}
 			}
 
-			task<ClientClasses::Message> CreateMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
+			task<ClientClasses::Message> createMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
-					DataManipFunctions::postObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, &messageData, createMessagePayload).get();
+					DataManipFunctions::PostMessageData postMessageData;
+					postMessageData.channelId = this->channelId;
+					postMessageData.pDataStructure = &messageData;
+					postMessageData.content = createMessagePayload;
+					DataManipFunctions::postObjectDataAsync(this->pRestAPI, postMessageData).get();
 					Message message(messageData, this->pRestAPI, &MessageManager::messageDeleteRateLimit, this);
 					co_return message;
 				}
@@ -148,14 +161,16 @@ namespace CommanderNS {
 				}
 			};
 
+			static RateLimitData messageDeleteRateLimit;
+			static RateLimitData messageGetRateLimit;
+
 		protected:
-			friend struct WebSocket;
+			friend struct WebSocketConnection;
+			friend struct WebSocketReceiver;
 			friend class Message;
 			string guildId;
 			string channelId;
 			com_ptr<RestAPI> pRestAPI;
-			static RateLimitData messageGetRateLimit;
-			static RateLimitData messageDeleteRateLimit;
 		};
 
 		class GuildMember {
@@ -167,7 +182,7 @@ namespace CommanderNS {
 			ClientDataTypes::GuildMemberData Data;
 		};
 
-		class GuildMemberManager : map<string, GuildMember> {
+		class GuildMemberManager :public map<string, GuildMember> {
 		public:
 			GuildMemberManager() {};
 			GuildMemberManager(com_ptr<RestAPI> pRestAPI, string guildId) {
@@ -175,7 +190,7 @@ namespace CommanderNS {
 				this->guildId = guildId;
 			}
 
-			task<GuildMember> Fetch(string guildMemberId) {
+			task<GuildMember> fetchAsync(string guildMemberId) {
 					ClientDataTypes::GuildMemberData guildMemberData;
 					if (this->contains(guildMemberId)) {
 						guildMemberData = this->at(guildMemberId).Data;
@@ -192,7 +207,7 @@ namespace CommanderNS {
 					}
 			};
 
-			task<GuildMember> GetGuildMember(string guildMemberId) {
+			task<GuildMember> getGuildMemberAsync(string guildMemberId) {
 					if (this->contains(guildMemberId)) {
 						co_return this->at(guildMemberId);
 					}
@@ -233,7 +248,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 
-			task<Channel> Fetch(string channelId) {
+			task<Channel> fetchAsync(string channelId) {
 					ClientDataTypes::ChannelData channelData;
 					if (this->contains(channelId)) {
 						channelData = this->at(channelId).Data;
@@ -251,7 +266,7 @@ namespace CommanderNS {
 
 			};
 
-			task<Channel> GetChannel(string channelId) {
+			task<Channel> getChannelAsync(string channelId) {
 				if (this->contains(channelId)) {
 					co_return this->at(channelId);
 				}
@@ -289,7 +304,7 @@ namespace CommanderNS {
 			GuildMemberManager Members;
 		};
 
-		class GuildManager : map<string, Guild> {
+		class GuildManager : public map<string, Guild> {
 
 		public:
 			GuildManager() {};
@@ -297,7 +312,7 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 
-			task<Guild> Fetch(string guildId) {
+			task<Guild> fetchAsync(string guildId) {
 				ClientDataTypes::GuildData guildData;
 				if (this->contains(guildId)) {
 					guildData = this->at(guildId).Data;
@@ -313,21 +328,24 @@ namespace CommanderNS {
 				}
 			}
 
-			task<Guild> GetGuild(string guildId) {
-					if (this->contains(guildId)) {
-						co_return this->at(guildId);
-					}
-					else {
-						cout << "Sorry, but they aren't here! " << endl;
-						Guild guild;
-						co_return guild;
-					}
+			task<Guild> getGuildAsync(string guildId) {
+				if (this->contains(guildId)) {
+					co_return this->at(guildId);
+				}
+				else {
+					cout << "Sorry, but they aren't here! " << endl;
+					Guild guild;
+					co_return guild;
+				}
 			};
 
-		protected:
-			friend struct WebSocket;
-			friend struct Client;
+
 			static RateLimitData guildGetRateLimit;
+
+		protected:
+			friend struct WebSocketConnection;
+			friend struct WebSocketReceiver;
+			friend struct Client;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
@@ -341,14 +359,14 @@ namespace CommanderNS {
 			ClientDataTypes::UserData Data;
 		};
 
-		class UserManager: map<string, User> {
+		class UserManager : public map<string, User> {
 		public:
 			UserManager() {};
 			UserManager(com_ptr<RestAPI> pRestAPI) {
 				this->pRestAPI = pRestAPI;
 			};
 
-			task<User> Fetch(string userId) {
+			task<User> fetchAsync(string userId) {
 					ClientDataTypes::UserData userData;
 					try {
 						userData = this->at(userId).Data;
@@ -365,7 +383,7 @@ namespace CommanderNS {
 					}
 			};
 
-			task<User> GetUser(string userId) {
+			task<User> getUserAsync(string userId) {
 					if (this->contains(userId)) {
 						co_return this->at(userId);
 					}

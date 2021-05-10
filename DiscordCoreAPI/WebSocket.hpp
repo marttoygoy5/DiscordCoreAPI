@@ -182,10 +182,10 @@ namespace CommanderNS {
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
-			auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.GetChannel(messageData.channelId).get().messageManager;
+			auto tempPtr = this->pClient->Guilds.at(messageData.guildId).Channels.getChannelAsync(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &this->pClient->Guilds.at(messageData.guildId).Channels.Fetch(messageData.channelId).get().messageManager->messageDeleteRateLimit, pMessageManager);
-			messageCreationData.threadContext = this->pSystemThreads->Threads.at(2);
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &this->pClient->Guilds.at(messageData.guildId).Channels.fetchAsync(messageData.channelId).get().messageManager->messageDeleteRateLimit, pMessageManager);
+			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(2);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
 		}
@@ -205,7 +205,7 @@ namespace CommanderNS {
 				reactionData.userId = reactionAddEventData.userId;
 				ClientClasses::Reaction reaction(reactionData);
 				reactionAddData.reaction = reaction;
-				reactionAddData.threadContext = this->pSystemThreads->Threads.at(2);
+				reactionAddData.threadContext = &this->pSystemThreads->Threads.at(2);
 				this->pEventMachine->onReactionAddEvent(reactionAddData);
 				co_return;
 			}
@@ -247,7 +247,7 @@ namespace CommanderNS {
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
-					guildMemberAddData.threadContext = this->pSystemThreads->Threads.at(2);
+					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(2);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 
