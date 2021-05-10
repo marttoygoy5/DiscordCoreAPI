@@ -544,23 +544,6 @@ namespace CommanderNS {
             AllowedMentionsData allowedMentions;
             MessageReferenceData messageReference;
         };
-
-        struct DeleteReactionData {
-            string channelId;
-            string messageId;
-            string encodedEmoji;
-            string emojiName;
-            string emojiId;
-            string userId;
-        };
-
-        struct DeleteOwnReactionData {
-            string channelId;
-            string messageId;
-            string encodedEmoji;
-            string emojiName;
-            string emojiId;
-        };
 	}
 }
 #endif

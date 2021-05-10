@@ -9,8 +9,8 @@
 #define _SYSTEM_THREADS_
 
 #include "pch.h"
-namespace CommanderNS {
 
+namespace CommanderNS {
 
     struct ThreadContext {
         Scheduler* scheduler;
@@ -24,10 +24,11 @@ namespace CommanderNS {
 
         static ThreadContext mainThreadContext;
 
-        concurrent_vector<ThreadContext> Threads;
+        concurrent_vector<ThreadContext>* Threads;
 
         SystemThreads() {
-            this->MaxThreads = thread::hardware_concurrency();
+            this->MaxThreads = thread::hardware_concurrency() - 1;
+            this->Threads = new concurrent_vector<ThreadContext>;
         };
 
         task<void> initialize() {
@@ -42,28 +43,28 @@ namespace CommanderNS {
             DispatcherQueueController queueController = { ptrNew, take_ownership_from_abi };
             mainThreadContext.threadQueue = make_shared<DispatcherQueue>(queueController.DispatcherQueue());
             mainThreadContext.queueTimer = mainThreadContext.threadQueue->CreateTimer();
-            SchedulerPolicy policy;
-            policy.SetConcurrencyLimits(1, 1);
-            policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
-            policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
-            CurrentScheduler::Create(policy);
+            SchedulerPolicy policy01;
+            policy01.SetConcurrencyLimits(1, 1);
+            policy01.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
+            policy01.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
+            CurrentScheduler::Create(policy01);
             mainThreadContext.scheduler = CurrentScheduler::Get();
             mainThreadContext.taskGroup = make_shared<task_group>();;
-            for (unsigned int x = 0; x < this->MaxThreads - 2; x += 1) {
+            for (unsigned int x = 0; x < this->MaxThreads; x += 1) {
                 co_await resume_background();
                 ThreadContext threadContext;
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
-                SchedulerPolicy policy;
-                policy.SetConcurrencyLimits(1, 1);
-                policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
-                policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
+                SchedulerPolicy policy02;
+                policy02.SetConcurrencyLimits(1, 1);
+                policy02.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
+                policy02.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
                 threadContext.threadQueue = make_shared<DispatcherQueue>(threadQueueController.DispatcherQueue());
                 co_await resume_foreground(*threadContext.threadQueue.get());
-                CurrentScheduler::Create(policy);
+                CurrentScheduler::Create(policy02);
                 threadContext.scheduler = CurrentScheduler::Get();
                 threadContext.queueTimer = threadContext.threadQueue->CreateTimer();
                 threadContext.taskGroup = make_shared<task_group>();
-                this->Threads.push_back(threadContext);
+                this->Threads->push_back(threadContext);
             }
         }
 

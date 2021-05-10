@@ -11,7 +11,7 @@
 #include "pch.h"
 #include "JSONifier.hpp"
 #include "FoundationClasses.hpp"
-#include "SystemThreads.hpp"
+#include "HttpAgents.hpp"
 
 namespace CommanderNS {
 
@@ -32,7 +32,6 @@ namespace CommanderNS {
 	};
 
 	struct RestAPI : implements<RestAPI, winrt::Windows::Foundation::IInspectable> {
-
 	public:
 		RestAPI(hstring botToken, hstring baseURL, hstring* socketPath) {
 			try {
@@ -69,7 +68,7 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpGETData> httpGETObjectDataAsync(std::string relativeURL, FoundationClasses::RateLimitData* pRateLimitData) {
+		task<httpGETData> httpGETObjectDataAsync(std::string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpGETData getData;
@@ -78,9 +77,8 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = getHttpClient.GetAsync(requestUri).get();
 					int currentMSTimeLocal;
-					unsigned int getsRemainingLocal;
+					int getsRemainingLocal;
 					int msRemainLocal;
-					string bucket;
 					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
 						getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
@@ -94,16 +92,9 @@ namespace CommanderNS {
 					else {
 						msRemainLocal = 250;
 					}
-					if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-						bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
-					}
-					else {
-						bucket = "";
-					}
-					pRateLimitData->bucket = bucket;
-					pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
+					pRateLimitData->currentMsTime = currentMSTimeLocal;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
-					pRateLimitData->msRemain = (float)msRemainLocal;
+					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -121,7 +112,7 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpPOSTData> httpPOSTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitData* pRateLimitData) {
+		task<httpPOSTData> httpPOSTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpPOSTData postData;
@@ -138,9 +129,8 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = postHttpClient.PostAsync(requestUri, contents).get();
 					int currentMSTimeLocal;
-					unsigned int getsRemainingLocal;
+					int getsRemainingLocal;
 					int msRemainLocal;
-					string bucket;
 					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
 						getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
@@ -154,16 +144,9 @@ namespace CommanderNS {
 					else {
 						msRemainLocal = 250;
 					}
-					if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-						bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
-					}
-					else {
-						bucket = "";
-					}
-					pRateLimitData->bucket = bucket;
-					pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
+					pRateLimitData->currentMsTime = currentMSTimeLocal;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
-					pRateLimitData->msRemain = (float)msRemainLocal;
+					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -181,7 +164,7 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpPUTData> httpPUTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitData* pRateLimitData) {
+		task<httpPUTData> httpPUTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
 			try {
 				if (this != nullptr) {
 					httpPUTData putData;
@@ -198,9 +181,8 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = putHttpClient.PutAsync(requestUri, contents).get();
 					int currentMSTimeLocal;
-					unsigned int getsRemainingLocal;
+					int getsRemainingLocal;
 					int msRemainLocal;
-					string bucket;
 					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
 						getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
@@ -214,16 +196,9 @@ namespace CommanderNS {
 					else {
 						msRemainLocal = 250;
 					}
-					if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-						bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
-					}
-					else {
-						bucket = "";
-					}
-					pRateLimitData->bucket = bucket;
-					pRateLimitData->msRemain = (float)msRemainLocal;
-					pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
+					pRateLimitData->currentMsTime = currentMSTimeLocal;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
+					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -241,7 +216,7 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpDELETEData> httpDELETEObjectDataAsync(string relativeURL, FoundationClasses::RateLimitData* pRateLimitData) {
+		task<httpDELETEData> httpDELETEObjectDataAsync(string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
 			try{
 				if (this != nullptr) {
 					httpDELETEData deleteData;
@@ -255,9 +230,8 @@ namespace CommanderNS {
 					HttpResponseMessage httpResponse;
 					httpResponse = deleteHttpClient.DeleteAsync(requestUri).get();
 					int currentMSTimeLocal;
-					unsigned int getsRemainingLocal;
+					int getsRemainingLocal;
 					int msRemainLocal;
-					string bucket;
 					currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 					if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
 						getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
@@ -271,16 +245,9 @@ namespace CommanderNS {
 					else {
 						msRemainLocal = 250;
 					}
-					if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-						bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
-					}
-					else {
-						bucket = "";
-					}
-					pRateLimitData->bucket = bucket;
-					pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
 					pRateLimitData->getsRemaining = getsRemainingLocal;
-					pRateLimitData->msRemain = (float)msRemainLocal;
+					pRateLimitData->currentMsTime = currentMSTimeLocal;
+					pRateLimitData->msRemain = msRemainLocal;
 					json jsonValue;
 					if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 						jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -302,10 +269,11 @@ namespace CommanderNS {
 
 		friend struct DiscordCoreAPI;
 		friend struct WebSocket;
-		Uri baseURI = Uri{ nullptr };
+
 		hstring botToken;
 		hstring baseURL;
 		hstring initialConnectionPath;
+		Uri baseURI = Uri{ nullptr };
 		HttpRequestHeaderCollection getHeaders{ nullptr };
 		HttpRequestHeaderCollection putHeaders{ nullptr };
 		HttpRequestHeaderCollection postHeaders{ nullptr };

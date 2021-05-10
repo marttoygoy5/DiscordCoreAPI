@@ -50,7 +50,7 @@ namespace CommanderNS {
 		com_ptr<HTTPController> pHttpController;
 		com_ptr<ClientClasses::Client> pClient;
 
-		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew, com_ptr<HTTPController> pHttpController) {
+		void initialize(winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew, com_ptr<HTTPController> pHttpController) {
 			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
 			this->pHttpController = pHttpController;
@@ -82,7 +82,7 @@ namespace CommanderNS {
 			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager,
 				this->pSystemThreads, this->pHttpController);
 			(messageData, this->pRestAPI, pMessageManager);
-			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(1);
+			messageCreationData.threadContext = &this->pSystemThreads->Threads->at(1);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
 		}
@@ -97,7 +97,7 @@ namespace CommanderNS {
 				this->pSystemThreads, this->pHttpController);
 			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager->erase(messageData.id);
 			messageDeletionData.message = message;
-			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(1);
+			messageDeletionData.threadContext = &this->pSystemThreads->Threads->at(1);
 			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
 			co_return;
 		}
@@ -115,7 +115,7 @@ namespace CommanderNS {
 			reactionData.userId = reactionAddEventData.userId;
 			ClientClasses::Reaction reaction(reactionData);
 			reactionAddData.reaction = reaction;
-			reactionAddData.threadContext = &this->pSystemThreads->Threads.at(1);
+			reactionAddData.threadContext = &this->pSystemThreads->Threads->at(5);
 			this->pEventMachine->onReactionAddEvent(reactionAddData);
 			co_return;
 		}
@@ -154,7 +154,7 @@ namespace CommanderNS {
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
-					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(1);
+					guildMemberAddData.threadContext = &this->pSystemThreads->Threads->at(1);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 			}
