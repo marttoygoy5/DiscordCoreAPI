@@ -205,9 +205,7 @@ namespace CommanderNS {
 			HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
 			contentHeaderCollection.ContentType(typeHeaderValue);
 			HttpResponseMessage httpResponse;
-			cout << "THIS IS IT THIS IS IT THIS IS IT!" << endl;
 			httpResponse = deleteHttpClient.DeleteAsync(requestUri).get();
-			cout << "22312344242425356356346456456!" << endl;
 			int currentMSTimeLocal;
 			unsigned int getsRemainingLocal;
 			int msRemainLocal;

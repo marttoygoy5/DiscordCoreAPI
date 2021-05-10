@@ -48,9 +48,10 @@ namespace CommanderNS {
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
-		task<void> login() {
-			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this] {loginToWrap(); });
-			co_return;
+		task<int> login() {
+			int returnVal;
+			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
+			co_return returnVal;
 		}
 
 	protected:
@@ -72,12 +73,11 @@ namespace CommanderNS {
 			}
 		}
 
-		task<void> run() {
+		task<int> run() {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				//cout << this_thread::get_id() << endl;
-				//CommanderNS::ClientClasses::Guild guild = this->Client->Guilds.GetGuild("782757641540730900").get();
-				//cout << guild.Members.GetGuildMember("821912684878364723").get().Data.user.username << endl;
+				CommanderNS::ClientClasses::Guild guild = this->Client->Guilds.fetchAsync("782757641540730900").get();
+				cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
 				//vector<CommanderNS::ClientDataTypes::RoleData> roleData;
 				//ClientDataTypes::GuildData guildData;
 				//shared_ptr<RateLimitData>rateLimitData = make_shared<RateLimitData>();
@@ -88,10 +88,10 @@ namespace CommanderNS {
 				//cout << "Name: " << this->Client->Guilds.GetGuild("782757641540730900").get().Members.GetGuildMember("644754671088566275").get().Data.user.username << endl;
 			}
 			std::cout << "Goodbye!" << std::endl;
-			co_return;
+			co_return 25;
 		}
-		void loginToWrap() {
-			this->run().get();
+		int loginToWrap() {
+			return this->run().get();
 		}
 	};
 

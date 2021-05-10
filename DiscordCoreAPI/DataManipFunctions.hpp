@@ -250,14 +250,28 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, RateLimitData* pGuildGetRateLimit, string id, ClientDataTypes::GuildData* pDataStructure) {
-			ClientDataTypes::GuildData guildData = *pDataStructure;
-			string relativePath = "/guilds/" + id;
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetGuildData getGuildData) {
+			ClientDataTypes::GuildData guildData = *getGuildData.pDataStructure;
+			string relativePath = "/guilds/" + getGuildData.id;
 			HTTPData getData;
-			checkRateLimitAndGetDataAsync(pRestAPI, pGuildGetRateLimit, relativePath, &getData).get();
+			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(3).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(3).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::GET;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			send(buffer00, workloadData);
+			getData = receive(buffer03);
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &guildData);
-			*pDataStructure = guildData;
+			*getGuildData.pDataStructure = guildData;
+			co_return;
 			co_return;
 		}
 

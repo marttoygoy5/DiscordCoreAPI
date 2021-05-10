@@ -78,7 +78,6 @@ namespace CommanderNS {
 			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().messageManager;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
 			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &ClientClasses::MessageManager::messageGetRateLimit, tempPtr);
-			messageCreationData.threadContext = &this->pSystemThreads->Threads.at(1);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
 		}
@@ -93,7 +92,6 @@ namespace CommanderNS {
 			ClientClasses::Message message(messageData, this->pRestAPI, &ClientClasses::MessageManager::messageGetRateLimit, tempPtr);
 			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager->erase(messageData.id);
 			messageDeletionData.message = message;
-			messageDeletionData.threadContext = &this->pSystemThreads->Threads.at(1);
 			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
 			co_return;
 		}
@@ -109,10 +107,8 @@ namespace CommanderNS {
 			reactionData.member = reactionAddEventData.member;
 			reactionData.messageId = reactionAddEventData.messageId;
 			reactionData.userId = reactionAddEventData.userId;
-			cout << "USER ID USER ID: " << reactionData.userId<< endl;
 			ClientClasses::Reaction reaction(reactionData);
 			reactionAddData.reaction = reaction;
-			reactionAddData.threadContext = &this->pSystemThreads->Threads.at(3);
 			reactionAddData.reaction.Data.channelId = reactionData.channelId;
 			reactionAddData.reaction.Data.userId = reactionData.userId;
 			reactionAddData.reaction.Data.messageId = reactionData.messageId;
@@ -154,7 +150,6 @@ namespace CommanderNS {
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
-					guildMemberAddData.threadContext = &this->pSystemThreads->Threads.at(1);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 			}

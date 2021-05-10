@@ -315,14 +315,20 @@ namespace CommanderNS {
 			task<Guild> fetchAsync(string guildId) {
 				ClientDataTypes::GuildData guildData;
 				if (this->contains(guildId)) {
+					DataManipFunctions::GetGuildData getGuildData;
+					getGuildData.id = guildId;
+					getGuildData.pDataStructure = &guildData;
 					guildData = this->at(guildId).Data;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
 					Guild guild(guildData, this->pRestAPI);
 					this->insert(std::make_pair(guildId, guild));
 					co_return guild;
 				}
 				else {
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildManager::guildGetRateLimit, guildId, &guildData).get();
+					DataManipFunctions::GetGuildData getGuildData;
+					getGuildData.id = guildId;
+					getGuildData.pDataStructure = &guildData;
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
 					Guild guild(guildData, this->pRestAPI);
 					co_return guild;
 				}

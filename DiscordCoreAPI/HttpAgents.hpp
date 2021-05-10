@@ -84,10 +84,6 @@ namespace CommanderNS {
 				target01(target01)
 			{};
 
-			bool getError(exception& e) {
-				return try_receive(_error, e);
-			}
-
 			~RequestSender() {};
 
 		protected:
@@ -95,18 +91,12 @@ namespace CommanderNS {
 			ISource<HTTPData>& source01;
 			ITarget<WorkloadData>& target00;
 			HttpAgents::WorkloadData workloadData;
-			single_assignment<exception> _error;
 
 			void run() {
-				try {
-					WorkloadData workload = receive(&source00);
-					send(&target00, workload);
-					HTTPData httpData = receive(&source01);
-					send(&target01, httpData);
-				}
-				catch (exception e) {
-					send(_error, e);
-				}
+				WorkloadData workload = receive(&source00);
+				send(&target00, workload);
+				HTTPData httpData = receive(&source01);
+				send(&target01, httpData);
 				done();
 			}
 		};
@@ -128,76 +118,54 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 
-			bool getError(exception& e) {
-				return try_receive(_error, e);
-			}
-
 			void run() {
 				transformer<WorkloadData, WorkloadData> collectTimeLimitData([this](WorkloadData workload) -> WorkloadData {
-					try {
-						if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
-							workload.rateLimitData.bucket = HTTPHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
-								workload.rateLimitData = HTTPHandler::rateLimitData.at(workload.rateLimitData.bucket);
-							if (HTTPHandler::rateLimitData.contains(workload.rateLimitData.bucket)) {
-							}
+					if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
+						workload.rateLimitData.bucket = HTTPHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
+						workload.rateLimitData = HTTPHandler::rateLimitData.at(workload.rateLimitData.bucket);
 						}
-						return workload;
-					}
-					catch (exception e) {
-						send(_error, e);
-					}
+					return workload;
 					});
 				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
-					try {
-						if (workload.rateLimitData.getsRemaining == 0) {
-							float loopStartTime = workload.rateLimitData.timeStartedAt;
-							float targetTime = loopStartTime + static_cast<float> (workload.rateLimitData.msRemain);
-							float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-							while (workload.rateLimitData.msRemain > 0.0f) {
-								currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-								workload.rateLimitData.msRemain = targetTime - currentTime;
-								cout << workload.rateLimitData.msRemain << endl;
-							}
+					if (workload.rateLimitData.getsRemaining == 0) {
+						float loopStartTime = workload.rateLimitData.timeStartedAt;
+						float targetTime = loopStartTime + static_cast<float> (workload.rateLimitData.msRemain);
+						float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						while (workload.rateLimitData.msRemain > 0.0f) {
+							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+							workload.rateLimitData.msRemain = targetTime - currentTime;
 						}
-						HTTPData returnData;
-						if (workload.workloadType == WorkloadType::GET) {
-							HTTPData getData;
-							getData = this->pRestAPI->httpGETObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
-							returnData.data = getData.data;
-						}
-						else if (workload.workloadType == WorkloadType::POST) {
-							HTTPData postData;
-							postData = this->pRestAPI->httpPOSTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
-							returnData.data = postData.data;
-						}
-						else if (workload.workloadType == WorkloadType::PUT) {
-							HTTPData putData;
-							putData = this->pRestAPI->httpPUTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
-							returnData.data = putData.data;
-						}
-						else if (workload.workloadType == WorkloadType::DELETED) {
-							HTTPData deleteData;
-							cout << "WE'RE HERE WE'RE HERE WE'RE HERE!" << endl;
-							deleteData = this->pRestAPI->httpDELETEObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
-							returnData.data = deleteData.data;
-						}
-						if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
-							cout << "WE'RE HERE 2222 WE'RE HERE 2222 WE'RE HERE!22222" << endl;
-							HTTPHandler::rateLimitDataBucketValues.erase(workload.rateLimitData.rateLimitType);
-						}
-						HTTPHandler::rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
-						cout << "WE'RE HERE 33333 WE'RE HERE 33333 WE'RE HERE!3333" << endl;
-						if (HTTPHandler::rateLimitData.contains(workload.rateLimitData.bucket)) {
-							HTTPHandler::rateLimitData.erase(workload.rateLimitData.bucket);
-						}
-						cout << "WE'RE HERE 44444 WE'RE HERE 44444 WE'RE HERE!4444" << endl;
-						HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
-						cout << "WE'RE HERE 55555 WE'RE HERE 5555 WE'RE HERE!5555" << endl;
-						return returnData;
 					}
-					catch (exception e) {
-						send(_error, e);
+					HTTPData returnData;
+					if (workload.workloadType == WorkloadType::GET) {
+						HTTPData getData;
+						getData = this->pRestAPI->httpGETObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
+						returnData.data = getData.data;
 					}
+					else if (workload.workloadType == WorkloadType::POST) {
+						HTTPData postData;
+						postData = this->pRestAPI->httpPOSTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
+						returnData.data = postData.data;
+					}
+					else if (workload.workloadType == WorkloadType::PUT) {
+						HTTPData putData;
+						putData = this->pRestAPI->httpPUTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
+						returnData.data = putData.data;
+					}
+					else if (workload.workloadType == WorkloadType::DELETED) {
+						HTTPData deleteData;
+						deleteData = this->pRestAPI->httpDELETEObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
+						returnData.data = deleteData.data;
+					}
+					if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
+						HTTPHandler::rateLimitDataBucketValues.erase(workload.rateLimitData.rateLimitType);
+					}
+					HTTPHandler::rateLimitDataBucketValues.insert(std::make_pair(workload.rateLimitData.rateLimitType, workload.rateLimitData.bucket));
+					if (HTTPHandler::rateLimitData.contains(workload.rateLimitData.bucket)) {
+						HTTPHandler::rateLimitData.erase(workload.rateLimitData.bucket);
+					}
+					HTTPHandler::rateLimitData.insert(std::make_pair(workload.rateLimitData.bucket, workload.rateLimitData));
+					return returnData;
 
 					});
 				collectTimeLimitData.link_target(&collectHTTPData);
@@ -210,7 +178,6 @@ namespace CommanderNS {
 			~HTTPHandler() {};
 
 		protected:
-			single_assignment<exception> _error;
 			com_ptr<RestAPI> pRestAPI;
 		};
 		map<RateLimitType, string> HTTPHandler::rateLimitDataBucketValues;

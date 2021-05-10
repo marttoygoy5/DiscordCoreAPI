@@ -20,22 +20,18 @@ namespace CommanderNS {
 		struct GuildMemberAddData {
 			ClientClasses::GuildMember guildMember;
 			std::string guildId;
-			ThreadContext* threadContext;
 		};
 
 		struct MessageCreationData {
 			ClientClasses::Message message;
-			ThreadContext* threadContext;
 		};
 
 		struct MessageDeletionData {
 			ClientClasses::Message message;
-			ThreadContext* threadContext;
 		};
 
 		struct ReactionAddData {
 			ClientClasses::Reaction reaction;
-			ThreadContext* threadContext;
 		};
 	}
 }
