@@ -77,7 +77,7 @@ namespace CommanderNS {
 			}
 
 		protected:
-			static FoundationClasses::RateLimitation reactionAddRemoveRateLimit;
+			static RateLimitData reactionAddRemoveRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 			string channelId;
 			string messageId;
@@ -86,7 +86,7 @@ namespace CommanderNS {
 		class Message {
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, FoundationClasses::RateLimitation* pMessageDeleteRateLimit, void* pMessageManager) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, RateLimitData* pMessageDeleteRateLimit, void* pMessageManager) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
 				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id);
@@ -103,7 +103,7 @@ namespace CommanderNS {
 			ClientDataTypes::MessageData Data;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitation messageDeleteRateLimit;
+			static RateLimitData messageDeleteRateLimit;
 		};
 
 		class MessageManager: map<string, Message> {
@@ -154,8 +154,8 @@ namespace CommanderNS {
 			string guildId;
 			string channelId;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitation messageGetRateLimit;
-			static FoundationClasses::RateLimitation messageDeleteRateLimit;
+			static RateLimitData messageGetRateLimit;
+			static RateLimitData messageDeleteRateLimit;
 		};
 
 		class GuildMember {
@@ -207,7 +207,7 @@ namespace CommanderNS {
 			friend struct WebSocket;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitation guildMemberGetRateLimit;
+			static RateLimitData guildMemberGetRateLimit;
 			string guildId;
 		};
 
@@ -265,7 +265,7 @@ namespace CommanderNS {
 		protected:
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			static FoundationClasses::RateLimitation channelGetRateLimit;
+			static RateLimitData channelGetRateLimit;
 		};
 
 		class Guild {
@@ -327,7 +327,7 @@ namespace CommanderNS {
 		protected:
 			friend struct WebSocket;
 			friend struct Client;
-			static FoundationClasses::RateLimitation guildGetRateLimit;
+			static RateLimitData guildGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
@@ -380,7 +380,7 @@ namespace CommanderNS {
 		protected:
 			friend struct WebSocket;
 			friend struct Client;
-			FoundationClasses::RateLimitation userGetRateLimit;
+			RateLimitData userGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
@@ -402,13 +402,13 @@ namespace CommanderNS {
 			friend class GuildManager;
 			friend struct WebSocket;
 		};
-		FoundationClasses::RateLimitation ReactionManager::reactionAddRemoveRateLimit;
-		FoundationClasses::RateLimitation Message::messageDeleteRateLimit;
-		FoundationClasses::RateLimitation GuildManager::guildGetRateLimit;
-		FoundationClasses::RateLimitation ChannelManager::channelGetRateLimit;
-		FoundationClasses::RateLimitation GuildMemberManager::guildMemberGetRateLimit;
-		FoundationClasses::RateLimitation MessageManager::messageGetRateLimit;
-		FoundationClasses::RateLimitation MessageManager::messageDeleteRateLimit;
+		RateLimitData ReactionManager::reactionAddRemoveRateLimit;
+		RateLimitData Message::messageDeleteRateLimit;
+		RateLimitData GuildManager::guildGetRateLimit;
+		RateLimitData ChannelManager::channelGetRateLimit;
+		RateLimitData GuildMemberManager::guildMemberGetRateLimit;
+		RateLimitData MessageManager::messageGetRateLimit;
+		RateLimitData MessageManager::messageDeleteRateLimit;
 	};
 }
 #endif

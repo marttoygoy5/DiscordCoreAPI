@@ -23,7 +23,7 @@ namespace CommanderNS {
 
         ThreadContext mainThreadContext;
 
-        vector<ThreadContext> Threads;
+        concurrent_vector<ThreadContext> Threads;
 
         SystemThreads() {
             this->MaxThreads = thread::hardware_concurrency();

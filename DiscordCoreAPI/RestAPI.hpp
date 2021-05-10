@@ -14,7 +14,7 @@
 
 namespace CommanderNS {
 
-	struct httpGETData {
+	struct httpData {
 		json data;
 	};
 
@@ -68,10 +68,10 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpGETData> httpGETObjectDataAsync(std::string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
+		task<httpData> httpGETObjectDataAsync(std::string relativeURL, RateLimitData* pRateLimitData) {
 			try {
 				if (this != nullptr) {
-					httpGETData getData;
+					httpData getData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 					HttpResponseMessage httpResponse;
@@ -103,7 +103,7 @@ namespace CommanderNS {
 					co_return getData;
 				}
 				else {
-					co_return httpGETData();
+					co_return httpData();
 				}
 			}
 			catch (winrt::hresult_error error) {
@@ -111,10 +111,10 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpPOSTData> httpPOSTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
+		task<httpData> httpPOSTObjectDataAsync(string relativeURL, string content, RateLimitData* pRateLimitData) {
 			try {
 				if (this != nullptr) {
-					httpPOSTData postData;
+					httpData postData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 					HttpContentHeaderCollection contentHeaderCollection;
@@ -154,7 +154,7 @@ namespace CommanderNS {
 					co_return postData;
 				}
 				else {
-					co_return httpPOSTData();
+					co_return httpData();
 				}
 			}
 			catch (winrt::hresult_error error) {
@@ -162,10 +162,10 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpPUTData> httpPUTObjectDataAsync(string relativeURL, string content, FoundationClasses::RateLimitation* pRateLimitData) {
+		task<httpData> httpPUTObjectDataAsync(string relativeURL, string content, RateLimitData* pRateLimitData) {
 			try {
 				if (this != nullptr) {
-					httpPUTData putData;
+					httpData putData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 					HttpContentHeaderCollection contentHeaderCollection;
@@ -205,7 +205,7 @@ namespace CommanderNS {
 					co_return putData;
 				}
 				else {
-					co_return httpPUTData();
+					co_return httpData();
 				}
 			}
 			catch (winrt::hresult_error error) {
@@ -213,10 +213,10 @@ namespace CommanderNS {
 			}
 		}
 
-		task<httpDELETEData> httpDELETEObjectDataAsync(string relativeURL, FoundationClasses::RateLimitation* pRateLimitData) {
+		task<httpData> httpDELETEObjectDataAsync(string relativeURL, RateLimitData* pRateLimitData) {
 			try{
 				if (this != nullptr) {
-					httpDELETEData deleteData;
+					httpData deleteData;
 					string connectionPath = to_string(this->baseURL) + relativeURL;
 					Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 					HttpContentHeaderCollection contentHeaderCollection;
@@ -254,7 +254,7 @@ namespace CommanderNS {
 				}
 				else {
 					
-					co_return httpDELETEData();
+					co_return httpData();
 				}
 			}
 			catch (winrt::hresult_error error) {

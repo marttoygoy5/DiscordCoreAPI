@@ -50,13 +50,6 @@ namespace CommanderNS {
 			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this] {loginToWrap(); });
 			co_return;
 		}
-		/*
-		task<void> login() {
-			co_await resume_foreground(*this->systemThreads->Threads.at(1).threadQueue.get());
-			task_handle taskHandle = make_task([this]() {this->loginToWrap().get(); });
-			this->systemThreads->Threads.at(1).taskGroup->run_and_wait(taskHandle);
-			co_return;
-		}		*/
 
 	protected:
 		hstring baseURL = L"https://discord.com/api/v9";
@@ -81,8 +74,8 @@ namespace CommanderNS {
 				//CommanderNS::ClientClasses::Guild guild = this->Client->Guilds.GetGuild("782757641540730900").get();
 				//cout << guild.Members.GetGuildMember("821912684878364723").get().Data.user.username << endl;
 				vector<CommanderNS::ClientDataTypes::RoleData> roleData;
-				shared_ptr<FoundationClasses::RateLimitation>rateLimitData = make_shared<FoundationClasses::RateLimitation>();
 				ClientDataTypes::GuildData guildData;
+				shared_ptr<RateLimitData>rateLimitData = make_shared<RateLimitData>();
 				//DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
 				for (unsigned int x = 0; x < roleData.size(); x += 1) {
 					//cout << roleData.at(x).name << endl;
