@@ -24,7 +24,8 @@ namespace CommanderNS {
 		GET_GUILD = 6, 
 		GET_CHANNEL = 7, 
 		REACTION_ADD_REMOVE = 8,
-		GET_GUILD_MEMBER = 9
+		GET_GUILD_MEMBER = 9,
+		GET_ROLES = 10
 	};
 
 	struct RateLimitData {
