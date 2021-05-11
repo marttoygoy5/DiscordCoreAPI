@@ -48,7 +48,7 @@ namespace CommanderNS {
 				hstring httpResponseBody = httpResponse.Content().ReadAsStringAsync().get().c_str();
 				std::wstringstream stream;
 				stream << JSONifier::parseSocketPath(httpResponseBody.c_str()).c_str();
-				stream << L"/?v=8&encoding=json";
+				stream << L"/?v=9&encoding=json";
 				*pSocketPath = stream.str();
 			}
 			catch (winrt::hresult_error ex) {

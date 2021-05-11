@@ -270,7 +270,7 @@ namespace CommanderNS {
             string afkChannelID;
             string ownerID;
             vector<string> features;
-            vector<string> permissions;
+            string permissions;
             bool owner = false;
             int afkTimeOut = 0;
             bool widgetEnabled = false;

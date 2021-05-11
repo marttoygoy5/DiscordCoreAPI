@@ -27,7 +27,8 @@ namespace CommanderNS {
 		PUT_REACTION = 9,
 		DELETE_REACTION = 10,
 		GET_GUILD_MEMBER = 11,
-		GET_ROLES = 12
+		GET_ROLES = 12,
+		GET_USER_GUILDS = 13
 	};
 
 	struct RateLimitData {

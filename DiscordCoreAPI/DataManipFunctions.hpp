@@ -86,6 +86,43 @@ namespace CommanderNS {
 			unsigned int timeDelay = 0;
 		};
 
+		struct GetCurrentUserGuildsData {
+			map<string, ClientDataTypes::GuildData>* pGuildDataMap;
+		};
+
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetCurrentUserGuildsData getCurrentUserGuildsData) {
+			string relativePath = "/users/@me/guilds";
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::GET;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_USER_GUILDS;
+			send(buffer00, workloadData);
+			HTTPData getData;
+			getData = receive(buffer03);
+			json jsonValue = getData.data;
+			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
+				json jsonGuildValue = jsonValue.at(x);
+				ClientDataTypes::GuildData guildData;
+				DataParsingFunctions::parseObject(jsonGuildValue, &guildData);
+				cout << jsonGuildValue << endl;
+				if (getCurrentUserGuildsData.pGuildDataMap->contains(guildData.id)) {
+					guildData = getCurrentUserGuildsData.pGuildDataMap->at(guildData.id);
+					DataParsingFunctions::parseObject(jsonGuildValue, &guildData);
+				}
+				getCurrentUserGuildsData.pGuildDataMap->erase(guildData.id);
+				getCurrentUserGuildsData.pGuildDataMap->insert(make_pair(guildData.id, guildData));
+			}
+			co_return;
+		}
+
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetSelfUserData getUserData) {
 			ClientDataTypes::UserData userData = *getUserData.pDataStructure;
 			string relativePath = "/users/@me";

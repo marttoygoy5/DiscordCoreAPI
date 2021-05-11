@@ -984,19 +984,8 @@ namespace CommanderNS {
             }
             
             if (jsonObjectData.contains("permissions") && !jsonObjectData.at("permissions").is_null()) {
-                json theValue = jsonObjectData.at("permissions");
-                for (unsigned int x = 0; x < theValue.size(); x += 1) {
-                    bool isItFound = false;
-                    for (unsigned int y = 0; y < guildData.permissions.size(); y += 1) {
-                        if (guildData.permissions.at(y) == theValue.at(x)) {
-                            isItFound = true;
-                            break;
-                        }
-                    }
-                    if (isItFound == false) {
-                        guildData.permissions.push_back(theValue.at(x));
-                    }
-                }
+                std::string theValue = jsonObjectData.at("permissions");
+                guildData.permissions = theValue;
             }
 
             if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
