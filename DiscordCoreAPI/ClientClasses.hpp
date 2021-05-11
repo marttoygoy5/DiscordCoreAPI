@@ -98,7 +98,11 @@ namespace CommanderNS {
 			}
 
 			IAsyncAction deleteMessageAsync(int timeDelay = 1000) {
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, Data.channelId, Data.id).get();
+				DataManipFunctions::DeleteMessageData deleteMessageData;
+				deleteMessageData.channelId = this->Data.channelId;
+				deleteMessageData.messageId = this->Data.id;
+				deleteMessageData.timeDelay = timeDelay;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteMessageData).get();
 				co_return;
 			};
 

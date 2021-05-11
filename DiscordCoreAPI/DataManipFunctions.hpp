@@ -254,7 +254,7 @@ namespace CommanderNS {
 			HttpAgents::WorkloadData workloadData;
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
-			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_USER_SELF;
 			send(buffer00, workloadData);
 			getData = receive(buffer03);
 			json jsonValue = getData.data;
@@ -278,7 +278,7 @@ namespace CommanderNS {
 			HttpAgents::WorkloadData workloadData;
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
-			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_USER;
 			send(buffer00, workloadData);
 			getData = receive(buffer03);
 			json jsonValue = getData.data;
@@ -340,7 +340,7 @@ namespace CommanderNS {
 			HttpAgents::WorkloadData workloadData;
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
-			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_CHANNEL;
 			send(buffer00, workloadData);
 			getData = receive(buffer03);
 			json jsonValue = getData.data;
@@ -392,7 +392,7 @@ namespace CommanderNS {
 			HttpAgents::WorkloadData workloadData;
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
-			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_MESSAGE;
 			send(buffer00, workloadData);
 			getData = receive(buffer03);
 			json jsonValue = getData.data;
@@ -473,8 +473,8 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  string channelId, string messageId) {
-			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  DeleteMessageData deleteMessageData) {
+			string relativePath = "/channels/" + deleteMessageData.channelId + "/messages/" + deleteMessageData.messageId;
 			HTTPData getData;
 			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
@@ -486,8 +486,8 @@ namespace CommanderNS {
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
 			workloadData.relativeURL = relativePath;
-			workloadData.workloadType = HttpAgents::WorkloadType::GET;
-			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			workloadData.workloadType = HttpAgents::WorkloadType::DELETED;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::DELETE_MESSAGE;
 			send(buffer00, workloadData);
 			getData = receive(buffer03);
 			json jsonValue = getData.data;
