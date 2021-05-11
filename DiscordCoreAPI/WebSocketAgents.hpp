@@ -170,7 +170,7 @@ namespace CommanderNS {
 			}
 		}
 
-	}
+	};
 
 	struct WebSocketConnection : public concurrency::agent, implements<WebSocketConnection, winrt::Windows::Foundation::IInspectable> {
 	public:
