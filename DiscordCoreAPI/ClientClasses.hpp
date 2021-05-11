@@ -82,6 +82,36 @@ namespace CommanderNS {
 				co_return;
 			}
 
+			task<void> deleteAllReactionsByEmojiAsync(ClientDataTypes::DeleteAllReactionsByEmojiData deleteReactionData) {
+				string emoji;
+				if (deleteReactionData.emojiId != string()) {
+					emoji += ":" + deleteReactionData.emojiName + ":" + deleteReactionData.emojiId;
+				}
+				else {
+					emoji = deleteReactionData.emojiName;
+				}
+				CURL* curl = curl_easy_init();
+				char* output = nullptr;
+				if (curl) {
+					output = curl_easy_escape(curl, emoji.c_str(), 0);
+				}
+				string emojiEncoded = output;
+				DataManipFunctions::DeleteAllReactionsByEmojiData deleteReactionDataNew;
+				deleteReactionDataNew.channelId = this->channelId;
+				deleteReactionDataNew.messageId = this->messageId;
+				deleteReactionDataNew.encodedEmoji = emojiEncoded;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
+				co_return;
+			}
+
+			task<void> deleteAllReactionsAsync(ClientDataTypes::DeleteAllReactionsData deleteReactionData) {
+				DataManipFunctions::DeleteAllReactionsData deleteReactionDataNew;
+				deleteReactionDataNew.channelId = this->channelId;
+				deleteReactionDataNew.messageId = this->messageId;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
+				co_return;
+			}
+
 			task<void> deleteOwnReactionAsync(ClientDataTypes::DeleteOwnReactionData deleteReactionData) {
 				string emoji;
 				if (deleteReactionData.emojiId != string()) {
@@ -344,10 +374,7 @@ namespace CommanderNS {
 				this->Data = data;
 				this->selfUserId = selfUserId;
 				this->Channels = new ChannelManager(pRestAPI, this->selfUserId);
-				cout << "GUILD ID: " << data.id << endl;
-				cout << "GUILD NAME: " << data.name << endl;
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
-					cout << "CHANNEL ID: " << data.channels.at(x).id << endl;
 					Channel channel(data.channels.at(x), pRestAPI, this->selfUserId);
 					this->Channels->insert(make_pair(data.channels.at(x).id, channel));
 				}

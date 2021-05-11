@@ -26,6 +26,17 @@ namespace CommanderNS {
 			string userId;
 		};
 
+		struct DeleteAllReactionsByEmojiData {
+			string channelId;
+			string messageId;
+			string encodedEmoji;
+		};
+
+		struct DeleteAllReactionsData {
+			string channelId;
+			string messageId;
+		};
+
 		struct DeleteOwnReactionData {
 			string channelId;
 			string messageId;
@@ -112,7 +123,6 @@ namespace CommanderNS {
 				json jsonGuildValue = jsonValue.at(x);
 				ClientDataTypes::GuildData guildData;
 				DataParsingFunctions::parseObject(jsonGuildValue, &guildData);
-				cout << jsonGuildValue << endl;
 				if (getCurrentUserGuildsData.pGuildDataMap->contains(guildData.id)) {
 					guildData = getCurrentUserGuildsData.pGuildDataMap->at(guildData.id);
 					DataParsingFunctions::parseObject(jsonGuildValue, &guildData);
@@ -395,6 +405,46 @@ namespace CommanderNS {
 
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, DeleteReactionData deleteReactionData){
 			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji + "/" + deleteReactionData.userId;
+			HTTPData deleteData;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::DELETED;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::DELETE_REACTION;
+			send(buffer00, workloadData);
+			deleteData = receive(buffer03);
+			co_return;
+		}
+
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, DeleteAllReactionsByEmojiData deleteReactionData) {
+			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji;
+			HTTPData deleteData;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::DELETED;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::DELETE_REACTION;
+			send(buffer00, workloadData);
+			deleteData = receive(buffer03);
+			co_return;
+		}
+
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, DeleteAllReactionsData deleteReactionData) {
+			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions";
 			HTTPData deleteData;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;

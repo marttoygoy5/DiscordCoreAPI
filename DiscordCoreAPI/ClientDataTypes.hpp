@@ -559,6 +559,18 @@ namespace CommanderNS {
             string emojiId;
         };
 
+        struct DeleteAllReactionsByEmojiData {
+            string channelId;
+            string messageId;
+            string emojiName;
+            string emojiId;
+        };
+
+        struct DeleteAllReactionsData {
+            string channelId;
+            string messageId;
+        };
+
 	}
 }
 #endif
