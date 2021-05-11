@@ -24,28 +24,28 @@ namespace CommanderNS {
 	public:
 
 		com_ptr<ClientClasses::Client> Client{ nullptr };
-		com_ptr<EventMachine> eventMachine{ nullptr };
-		com_ptr<SystemThreads> systemThreads{ nullptr };
+		com_ptr<EventMachine> pEventMachine{ nullptr };
+		com_ptr<SystemThreads> pSystemThreads{ nullptr };
 
 		static bool doWeQuit;
 
 		DiscordCoreAPI(hstring botToken) {
-			this->systemThreads = make_self<SystemThreads>();
-			this->systemThreads->initialize().get();
-			this->pWebSocketReceiver = make_self<WebSocketReceiver>(this->systemThreads->Threads.at(0).scheduler);
-			this->pWebSocketConnection = make_self<WebSocketConnection>(this->pWebSocketReceiver->buffer00, this->systemThreads->Threads.at(0).scheduler);
+			this->pSystemThreads = make_self<SystemThreads>();
+			this->pSystemThreads->initialize().get();
+			this->pWebSocketReceiver = make_self<WebSocketReceiver>(this->pSystemThreads->Threads.at(0).scheduler);
+			this->pWebSocketConnection = make_self<WebSocketConnection>(this->pWebSocketReceiver->buffer00, this->pSystemThreads->Threads.at(0).scheduler);
 			this->botToken = botToken;
-			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocketConnection->socketPath, this->systemThreads);
+			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocketConnection->socketPath, this->pSystemThreads);
 			this->Client = make_self<ClientClasses::Client>(this->pRestAPI);
-			this->eventMachine = make_self<EventMachine>();
-			this->pWebSocketConnection->initialize(botToken, this->eventMachine, this->systemThreads, this->pRestAPI, this->Client);
-			this->pWebSocketReceiver->initialize(this->eventMachine, this->systemThreads, this->pRestAPI, this->Client);
+			this->pEventMachine = make_self<EventMachine>();
+			this->pWebSocketConnection->initialize(botToken, this->pEventMachine, this->pSystemThreads, this->pRestAPI, this->Client);
+			this->pWebSocketReceiver->initialize(this->pEventMachine, this->pSystemThreads, this->pRestAPI, this->Client);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
 		task<int> login() {
 			int returnVal;
-			this->systemThreads->Threads.at(0).taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
+			this->pSystemThreads->Threads.at(0).taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
 			co_return returnVal;
 		}
 

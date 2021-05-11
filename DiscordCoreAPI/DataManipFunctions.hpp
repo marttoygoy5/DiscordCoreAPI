@@ -23,8 +23,6 @@ namespace CommanderNS {
 			string channelId;
 			string messageId;
 			string encodedEmoji;
-			string emojiName;
-			string emojiId;
 			string userId;
 		};
 
@@ -32,8 +30,6 @@ namespace CommanderNS {
 			string channelId;
 			string messageId;
 			string encodedEmoji;
-			string emojiName;
-			string emojiId;
 		};
 
 		struct GetSelfUserData {
@@ -94,7 +90,7 @@ namespace CommanderNS {
 			ClientDataTypes::UserData userData = *getUserData.pDataStructure;
 			string relativePath = "/users/@me";
 			HTTPData getData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -118,7 +114,7 @@ namespace CommanderNS {
 			ClientDataTypes::UserData userData = *getUserData.pDataStructure;
 			string relativePath = "/users/" + getUserData.id;
 			HTTPData getData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -142,7 +138,7 @@ namespace CommanderNS {
 			ClientDataTypes::GuildData guildData = *getGuildData.pDataStructure;
 			string relativePath = "/guilds/" + getGuildData.id;
 			HTTPData getData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -166,7 +162,7 @@ namespace CommanderNS {
 			ClientDataTypes::ChannelData channelData = *getChannelData.pDataStructure;
 			string relativePath = "/channels/" + getChannelData.id;
 			HTTPData getData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -190,7 +186,7 @@ namespace CommanderNS {
 			ClientDataTypes::GuildMemberData guildMemberData = *getGuildMemberData.pDataStructure;
 			string relativePath = "/guilds/" + getGuildMemberData.guildId + "/members/" + getGuildMemberData.id;
 			HTTPData getData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -214,7 +210,7 @@ namespace CommanderNS {
 			ClientDataTypes::MessageData messageData = *getMessageData.pDataStructure;
 			string relativePath = "/channels/" + getMessageData.channelId + "/messages/" + getMessageData.id;
 			HTTPData getData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -238,7 +234,7 @@ namespace CommanderNS {
 			vector<ClientDataTypes::RoleData> roleData = *getRolesData.pDataStructure;
 			string relativePath = "/guilds/" + getRolesData.guildId + "/roles";
 			HTTPData getData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -277,7 +273,7 @@ namespace CommanderNS {
 		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, PutEmojiData putEmojiData) {
 			string relativePath = "/channels/" + putEmojiData.channelId + "/messages/" + putEmojiData.messageId + "/reactions/" + putEmojiData.emoji + "/@me";
 			HTTPData deleteData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -298,7 +294,7 @@ namespace CommanderNS {
 			ClientDataTypes::MessageData messageData = *postMessageData.pDataStructure;
 			string relativePath = "/channels/" + postMessageData.channelId + "/messages";
 			HTTPData postData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -322,7 +318,7 @@ namespace CommanderNS {
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  DeleteMessageData deleteMessageData) {
 			string relativePath = "/channels/" + deleteMessageData.channelId + "/messages/" + deleteMessageData.messageId;
 			HTTPData getData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
@@ -340,10 +336,30 @@ namespace CommanderNS {
 			co_return;
 		}
 
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, DeleteOwnReactionData deleteReactionData) {
+			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji + "/@me";
+			HTTPData deleteData;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::DELETED;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::DELETE_REACTION;
+			send(buffer00, workloadData);
+			deleteData = receive(buffer03);
+			co_return;
+		}
+
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, DeleteReactionData deleteReactionData){
 			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji + "/" + deleteReactionData.userId;
 			HTTPData deleteData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;

@@ -61,7 +61,7 @@ namespace CommanderNS {
 			CommanderNS::ClientDataTypes::GuildData guildData;
 			string id = payload.at("d").at("id");
 			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
-			ClientClasses::Guild guild(guildData, this->pRestAPI);
+			ClientClasses::Guild guild(guildData, this->pRestAPI, this->pClient->User.Data.id);
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user);
@@ -78,7 +78,7 @@ namespace CommanderNS {
 			string channelId = payload.at("d").at("channel_id");
 			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().Messages;
 			ClientClasses::MessageManager pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &tempPtr);
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &tempPtr, this->pClient->User.Data.id);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
 		}
@@ -90,7 +90,7 @@ namespace CommanderNS {
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
 			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().Messages;
-			ClientClasses::Message message(messageData, this->pRestAPI, &tempPtr);
+			ClientClasses::Message message(messageData, this->pRestAPI, &tempPtr, this->pClient->User.Data.id);
 			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().Messages.erase(messageData.id);
 			messageDeletionData.message = message;
 			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
