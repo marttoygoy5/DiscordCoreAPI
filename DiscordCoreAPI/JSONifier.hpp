@@ -98,7 +98,7 @@ namespace CommanderNS {
 					{"users", createMessageData.allowedMentions.users}
 					}},
 				{"content", createMessageData.content},
-				{"tts" , false},
+				{"tts" , createMessageData.tts},
 				{"embed" , 
 							{{"author", {
 							{"icon_url", createMessageData.embed.author.iconUrl},
@@ -130,8 +130,8 @@ namespace CommanderNS {
 						{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
 						{"text", createMessageData.embed.footer.text}
 			}},
-					{"title", "Hello, Embed!"},
-					{"description" , "This is an embedded message."},
+					{"title", createMessageData.embed.title},
+					{"description" , createMessageData.embed.description},
 					{"fields", fields},
 					{"color",colorValue}
 			}} 

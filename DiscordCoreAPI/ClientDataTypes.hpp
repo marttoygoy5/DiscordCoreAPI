@@ -362,6 +362,42 @@ namespace CommanderNS {
         };
 
         struct EmbedData {
+            EmbedData setTitle(string title) {
+                this->title = title;
+                return *this;
+            }
+            EmbedData setAuthor(string authorName, string authorAvatarURL = "") {
+                this->author.name = authorName;
+                this->author.iconUrl = authorAvatarURL;
+                return *this;
+            }
+            EmbedData setImage(string imageURL) {
+                this->image.url = imageURL;
+                return *this;
+            }
+            EmbedData setThumbnail(string thumbnailURL) {
+                this->thumbnail.url = thumbnailURL;
+                return *this;
+            }
+            EmbedData setColor(int color[3]) {
+                this->color[0] = color[0];
+                this->color[1] = color[1];
+                this->color[2] = color[2];
+                return *this;
+            }
+            EmbedData setDescription(string description) {
+                this->description = description;
+                return *this;
+            }
+            EmbedData setFooter(string footerText, string footerIconURLText = "") {
+                this->footer.text = footerText;
+                this->footer.iconUrl = footerIconURLText;
+                return *this;
+            }
+            EmbedData setTimeStamp(string timeStamp) {
+                this->timestamp = timeStamp;
+                return *this;
+            }
             string title;
             string type;
             string description;

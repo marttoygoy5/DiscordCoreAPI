@@ -470,6 +470,13 @@ namespace CommanderNS {
 			User(ClientDataTypes::UserData data) {
 				this->Data = data;
 			};
+
+			string getAvatarURL() {
+				string avatarURL;
+				avatarURL = "https://cdn.discordapp.com/avatars/" + this->Data.id + "/" + this->Data.avatar;
+				return avatarURL;
+			}
+
 			ClientDataTypes::UserData Data;
 		};
 
