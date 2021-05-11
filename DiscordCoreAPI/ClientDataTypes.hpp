@@ -395,7 +395,9 @@ namespace CommanderNS {
                 return *this;
             }
             EmbedData setTimeStamp(string timeStamp) {
-                this->timestamp = timeStamp;
+                time_t now = time(0);
+                char* dt = ctime(&now);
+                this->timestamp = dt;
                 return *this;
             }
             string title;
@@ -574,7 +576,7 @@ namespace CommanderNS {
         struct CreateMessageData {
             string content;
             int nonce;
-            bool tts;
+            bool tts = false;
             EmbedData embed;
             AllowedMentionsData allowedMentions;
             MessageReferenceData messageReference;
