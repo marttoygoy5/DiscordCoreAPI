@@ -26,7 +26,7 @@ namespace CommanderNS {
 			ClientDataTypes::ReactionData Data;
 		};
 
-		class ReactionManager: map<string, Reaction> {
+		class ReactionManager : map<string, Reaction> {
 		public:
 
 			ReactionManager() {};
@@ -37,7 +37,7 @@ namespace CommanderNS {
 				this->selfUserId = selfUserId;
 			};
 
-			task<void> addReactionAsync(ClientDataTypes::CreateReactionData createReactionData){
+			task<void> addReactionAsync(ClientDataTypes::CreateReactionData createReactionData) {
 				string emoji;
 				if (createReactionData.id != string()) {
 					emoji += ":" + createReactionData.name + ":" + createReactionData.id;
@@ -110,6 +110,7 @@ namespace CommanderNS {
 			string messageId;
 			string selfUserId;
 		};
+
 		class Message {
 
 		public:
@@ -150,15 +151,15 @@ namespace CommanderNS {
 				this->selfUserId = selfUserId;
 			};
 
-			task<Message> fetchAsync(string messageId) {
+			task<Message*> fetchAsync(string messageId) {
 				if (this->contains(messageId)) {
-					Message message = this->at(messageId);
+					Message* message = &this->at(messageId);
 					DataManipFunctions::GetMessageData getMessageData;
-					getMessageData.pDataStructure = &message.Data;
+					getMessageData.pDataStructure = &message->Data;
 					getMessageData.id = messageId;
 					getMessageData.channelId = this->channelId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
-					this->insert(std::make_pair(messageId, message));
+					this->insert(std::make_pair(messageId, *message));
 					co_return message;
 				}
 				else {
@@ -170,20 +171,16 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
 					Message message(messageData, this->pRestAPI, this, this->selfUserId);
 					this->insert(std::make_pair(messageId, message));
-					co_return message;
+					co_return &this->at(messageId);
 				}
 			};
 
-			task<Message> getMessageAsync(string messageId) {
-				Message currentMessage;
+			task<Message*> getMessageAsync(string messageId) {
 				if (this->contains(messageId)) {
-					currentMessage = this->at(messageId);
-					co_return currentMessage;
+					co_return &this->at(messageId);
 				}
 				else {
 					cout << "getMessageAsync() Error: Sorry, but they aren't here!" << endl;
-					currentMessage = this->fetchAsync(messageId).get();
-					co_return currentMessage;
 				}
 			}
 
@@ -232,14 +229,15 @@ namespace CommanderNS {
 				this->guildId = guildId;
 			}
 
-			task<GuildMember> fetchAsync(string guildMemberId) {
+			task<GuildMember*> fetchAsync(string guildMemberId) {
 				if (this->contains(guildMemberId)) {
-					GuildMember guildMember = this->at(guildMemberId);
+					GuildMember* guildMember = &this->at(guildMemberId);
 					DataManipFunctions::GetGuildMemberData getGuildMemberData;
-					getGuildMemberData.pDataStructure = &guildMember.Data;
+					getGuildMemberData.pDataStructure = &guildMember->Data;
 					getGuildMemberData.id = guildMemberId;
+					getGuildMemberData.guildId = this->guildId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
-					this->insert(std::make_pair(guildMemberId, guildMember));
+					this->insert(std::make_pair(guildMemberId, *guildMember));
 					co_return guildMember;
 				}
 				else {
@@ -247,26 +245,24 @@ namespace CommanderNS {
 					DataManipFunctions::GetGuildMemberData getGuildMemberData;
 					getGuildMemberData.pDataStructure = &guildMemberData;
 					getGuildMemberData.id = guildMemberId;
+					getGuildMemberData.guildId = this->guildId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 					GuildMember guildMember(guildMemberData);
 					this->insert(std::make_pair(guildMemberId, guildMember));
-					co_return guildMember;
+					co_return &this->at(guildMemberId);
 				}
 			};
 
-			task<GuildMember> getGuildMemberAsync(string guildMemberId) {
+			task<GuildMember*> getGuildMemberAsync(string guildMemberId) {
 					if (this->contains(guildMemberId)) {
-						co_return this->at(guildMemberId);
+						co_return &this->at(guildMemberId);
 					}
 					else {
 						cout << "getGuildMemberAsync() Error: Sorry, but they aren't here!" << endl;
-						GuildMember guildMember;
-						co_return guildMember;
 					}
 			};
 
 		protected:
-			friend struct WebSocket;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
 			string guildId;
@@ -297,14 +293,14 @@ namespace CommanderNS {
 				this->selfUserId = selfUserId;
 			};
 
-			task<Channel> fetchAsync(string channelId) {
+			task<Channel*> fetchAsync(string channelId) {
 				if (this->contains(channelId)) {
-					Channel channel = this->at(channelId);
+					Channel* channel = &this->at(channelId);
 					DataManipFunctions::GetChannelData getChannelData;
-					getChannelData.pDataStructure = &channel.Data;
+					getChannelData.pDataStructure = &channel->Data;
 					getChannelData.id = channelId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getChannelData).get();
-					this->insert(std::make_pair(channelId, channel));
+					this->insert(std::make_pair(channelId, *channel));
 					co_return channel;
 				}
 				else {
@@ -315,18 +311,16 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getChannelData).get();
 					Channel channel(channelData, this->pRestAPI, this->selfUserId);
 					this->insert(std::make_pair(channelId, channel));
-					co_return channel;
+					co_return &this->at(channelId);
 				}
 			};
 
-			task<Channel> getChannelAsync(string channelId) {
+			task<Channel*> getChannelAsync(string channelId) {
 				if (this->contains(channelId)) {
-					co_return this->at(channelId);
+					co_return &this->at(channelId);
 				}
 				else {
 					cout << "getChannelAsync() Error: Sorry, but they aren't here!" << endl;
-					Channel channel;
-					co_return channel;
 				}
 			};
 
@@ -369,14 +363,14 @@ namespace CommanderNS {
 				this->selfUserId = selfUserId;
 			};
 
-			task<Guild> fetchAsync(string guildId) {
+			task<Guild*> fetchAsync(string guildId) {
 				if (this->contains(guildId)) {
-					Guild guild = this->at(guildId);
+					Guild* guild = &this->at(guildId);
 					DataManipFunctions::GetGuildData getGuildData;
-					getGuildData.pDataStructure = &guild.Data;
+					getGuildData.pDataStructure = &guild->Data;
 					getGuildData.id = guildId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
-					this->insert(std::make_pair(guildId, guild));
+					this->insert(std::make_pair(guildId, *guild));
 					co_return guild;
 				}
 				else {
@@ -387,18 +381,16 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
 					Guild guild(guildData, this->pRestAPI, this->selfUserId);
 					this->insert(std::make_pair(guildId, guild));
-					co_return guild;
+					co_return &this->at(guildId);
 				}
 			}
 
-			task<Guild> getGuildAsync(string guildId) {
+			task<Guild*> getGuildAsync(string guildId) {
 				if (this->contains(guildId)) {
-					co_return this->at(guildId);
+					co_return &this->at(guildId);
 				}
 				else {
 					cout << "getGuildAsync() Error: Sorry, but they aren't here!" << endl;
-					Guild guild;
-					co_return guild;
 				}
 			};
 
@@ -427,14 +419,14 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 
-			task<User> fetchAsync(string userId) {
+			task<User*> fetchAsync(string userId) {
 				if (this->contains(userId)){
-					User user = this->at(userId);
+					User* user = &this->at(userId);
 					DataManipFunctions::GetUserData getUserData;
-					getUserData.pDataStructure = &user.Data;
+					getUserData.pDataStructure = &user->Data;
 					getUserData.id = userId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
-					this->insert(std::make_pair(userId, user));
+					this->insert(std::make_pair(userId, *user));
 					co_return user;
 				}
 				else {
@@ -445,19 +437,16 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
 					User user(userData);
 					this->insert(std::make_pair(userId, user));
-					co_return user;
+					co_return &this->at(userId);
 				}
 			};
 
-			task<User> getUserAsync(string userId) {
+			task<User*> getUserAsync(string userId) {
 					if (this->contains(userId)) {
-						co_return this->at(userId);
+						co_return &this->at(userId);
 					}
 					else {
 						cout << "getUserAsync() Error: Sorry, but they aren't here!" << endl;
-						ClientDataTypes::UserData userData;
-						User user(userData);
-						co_return user;
 					}
 			};
 

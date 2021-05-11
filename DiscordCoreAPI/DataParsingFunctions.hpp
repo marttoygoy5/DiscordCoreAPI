@@ -2028,13 +2028,13 @@ namespace CommanderNS {
             if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
                 std::string theValue = jsonObjectData.at("id");
                 messageData.id = theValue;
-            }            
+            }
 
             if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
                 std::string theValue = jsonObjectData.at("channel_id");
                 messageData.channelId = theValue;
-            }
-            
+            }            
+
             if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
                 std::string theValue = jsonObjectData.at("guild_id");
                 messageData.guildId = theValue;
@@ -2156,13 +2156,15 @@ namespace CommanderNS {
                 for (unsigned int x = 0; x < embedsArray.size(); x += 1) {
                     bool isItFound = false;
                     for (unsigned int y = 0; y < messageData.embeds.size(); y += 1) {
-                        if (messageData.embeds.at(y).author.name == embedsArray.at(x).at("author").at("name")) {
-                            isItFound = true;
-                            ClientDataTypes::EmbedData embedData = messageData.embeds.at(y);
-                            parseObject(embedsArray.at(x), &embedData);
-                            messageData.embeds.erase(messageData.embeds.begin() + y);
-                            messageData.embeds.push_back(embedData);
-                        }
+                        if (embedsArray.at(x).contains("author")) {
+                            if (messageData.embeds.at(y).author.name == embedsArray.at(x).at("author").at("name")) {
+                                isItFound = true;
+                                ClientDataTypes::EmbedData embedData = messageData.embeds.at(y);
+                                parseObject(embedsArray.at(x), &embedData);
+                                messageData.embeds.erase(messageData.embeds.begin() + y);
+                                messageData.embeds.push_back(embedData);
+                            }
+                        }                        
                     }
                     if (isItFound == false) {
                         ClientDataTypes::EmbedData embedData;
