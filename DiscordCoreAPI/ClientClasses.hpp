@@ -17,10 +17,6 @@ namespace CommanderNS {
 
 	namespace ClientClasses {
 
-		struct Client;
-
-		class MessageManager;
-
 		class Reaction {
 		public:
 			Reaction() {};
@@ -86,7 +82,6 @@ namespace CommanderNS {
 			}
 
 		protected:
-			static RateLimitData reactionAddRemoveRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 			string channelId;
 			string messageId;
@@ -95,7 +90,7 @@ namespace CommanderNS {
 		class Message {
 		public:
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, RateLimitData* pMessageDeleteRateLimit, void* pMessageManager) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
 				this->Reactions = ReactionManager(pRestAPI, this->Data.channelId, this->Data.id);
@@ -103,7 +98,7 @@ namespace CommanderNS {
 			}
 
 			IAsyncAction deleteMessageAsync(int timeDelay = 1000) {
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, &Message::messageDeleteRateLimit, Data.channelId, Data.id).get();
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, Data.channelId, Data.id).get();
 				co_return;
 			};
 
@@ -112,10 +107,9 @@ namespace CommanderNS {
 			ClientDataTypes::MessageData Data;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
-			static RateLimitData messageDeleteRateLimit;
 		};
 
-		class MessageManager : public map<string, Message> {
+		class MessageManager :public map<string, Message> {
 		public:
 			MessageManager() {};
 			MessageManager(string channelId, string guildId, com_ptr<RestAPI> pRestAPI) {
@@ -124,10 +118,17 @@ namespace CommanderNS {
 				this->pRestAPI = pRestAPI;
 			};
 			
-			task<Message> fetchAsync(string channelId, string messageId) {
+			task<Message> fetchAsync(string messageId) {
 				ClientDataTypes::MessageData messageData;
-				DataManipFunctions::getObjectDataAsync(this->pRestAPI, &MessageManager::messageGetRateLimit, this->channelId, messageId, &messageData).get();
-				Message message(messageData, this->pRestAPI, &MessageManager::messageGetRateLimit, this);
+				if (this->contains(messageId)) {
+					messageData = this->at(messageId).Data;
+				}
+				DataManipFunctions::GetMessageData getMessageData;
+				getMessageData.pDataStructure = &messageData;
+				getMessageData.id = messageId;
+				getMessageData.channelId = this->channelId;
+				DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
+				Message message(messageData, this->pRestAPI, this);
 				this->insert(std::make_pair(messageId, message));
 				co_return message;
 			};
@@ -139,12 +140,12 @@ namespace CommanderNS {
 					co_return currentMessage;
 				}
 				else {
-					currentMessage = this->fetchAsync(channelId, messageId).get();
+					currentMessage = this->fetchAsync(messageId).get();
 					co_return currentMessage;
 				}
 			}
 
-			task<ClientClasses::Message> createMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
+			task<Message> createMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
@@ -153,16 +154,13 @@ namespace CommanderNS {
 					postMessageData.pDataStructure = &messageData;
 					postMessageData.content = createMessagePayload;
 					DataManipFunctions::postObjectDataAsync(this->pRestAPI, postMessageData).get();
-					Message message(messageData, this->pRestAPI, &MessageManager::messageDeleteRateLimit, this);
+					Message message(messageData, this->pRestAPI, this);
 					co_return message;
 				}
 				catch (exception error) {
-					cout << "CreateMessage() Error: " << error.what() << endl;
+					cout << "createMessageAsync() Error: " << error.what() << endl;
 				}
 			};
-
-			static RateLimitData messageDeleteRateLimit;
-			static RateLimitData messageGetRateLimit;
 
 		protected:
 			friend struct WebSocketConnection;
@@ -191,20 +189,17 @@ namespace CommanderNS {
 			}
 
 			task<GuildMember> fetchAsync(string guildMemberId) {
-					ClientDataTypes::GuildMemberData guildMemberData;
-					if (this->contains(guildMemberId)) {
-						guildMemberData = this->at(guildMemberId).Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
-						GuildMember guildMember(guildMemberData);
-						this->insert(std::make_pair(guildMemberId, guildMember));
-						co_return guildMember;
-					}
-					else {
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &GuildMemberManager::guildMemberGetRateLimit, this->guildId, guildMemberId, &guildMemberData).get();
-						GuildMember guildMember(guildMemberData);
-						this->insert(std::make_pair(guildMemberId, guildMember));
-						co_return guildMember;
-					}
+				ClientDataTypes::GuildMemberData guildMemberData;
+				if (this->contains(guildMemberId)) {
+					guildMemberData = this->at(guildMemberId).Data;
+				}
+				DataManipFunctions::GetGuildMemberData getGuildMemberData;
+				getGuildMemberData.pDataStructure = &guildMemberData;
+				getGuildMemberData.id = guildMemberId;
+				DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
+				GuildMember guildMember(guildMemberData);
+				this->insert(std::make_pair(guildMemberId, guildMember));
+				co_return guildMember;
 			};
 
 			task<GuildMember> getGuildMemberAsync(string guildMemberId) {
@@ -222,7 +217,6 @@ namespace CommanderNS {
 			friend struct WebSocket;
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			static RateLimitData guildMemberGetRateLimit;
 			string guildId;
 		};
 
@@ -232,10 +226,10 @@ namespace CommanderNS {
 			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
-				this->messageManager = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI);
+				this->Messages = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI);
 			};
 			ClientDataTypes::ChannelData Data;
-			MessageManager* messageManager;
+			MessageManager* Messages;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
 		};
@@ -249,20 +243,17 @@ namespace CommanderNS {
 			};
 
 			task<Channel> fetchAsync(string channelId) {
-					ClientDataTypes::ChannelData channelData;
-					if (this->contains(channelId)) {
-						channelData = this->at(channelId).Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
-						Channel channel(channelData, this->pRestAPI);
-						this->insert(std::make_pair(channelId, channel));
-						co_return channel;
-					}
-					else {
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &ChannelManager::channelGetRateLimit, channelId, &channelData).get();
-						Channel channel(channelData, this->pRestAPI);
-						this->insert(std::make_pair(channelId, channel));
-						co_return channel;
-					}
+				ClientDataTypes::ChannelData channelData;
+				if (this->contains(channelId)) {
+					channelData = this->at(channelId).Data;
+				}
+				DataManipFunctions::GetChannelData getChannelData;
+				getChannelData.pDataStructure = &channelData;
+				getChannelData.id = channelId;
+				DataManipFunctions::getObjectDataAsync(this->pRestAPI, getChannelData).get();
+				Channel channel(channelData, this->pRestAPI);
+				this->insert(std::make_pair(channelId, channel));
+				co_return channel;
 
 			};
 
@@ -280,7 +271,6 @@ namespace CommanderNS {
 		protected:
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			static RateLimitData channelGetRateLimit;
 		};
 
 		class Guild {
@@ -315,23 +305,15 @@ namespace CommanderNS {
 			task<Guild> fetchAsync(string guildId) {
 				ClientDataTypes::GuildData guildData;
 				if (this->contains(guildId)) {
-					DataManipFunctions::GetGuildData getGuildData;
-					getGuildData.id = guildId;
-					getGuildData.pDataStructure = &guildData;
 					guildData = this->at(guildId).Data;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
-					Guild guild(guildData, this->pRestAPI);
-					this->insert(std::make_pair(guildId, guild));
-					co_return guild;
 				}
-				else {
-					DataManipFunctions::GetGuildData getGuildData;
-					getGuildData.id = guildId;
-					getGuildData.pDataStructure = &guildData;
-					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
-					Guild guild(guildData, this->pRestAPI);
-					co_return guild;
-				}
+				DataManipFunctions::GetGuildData getGuildData;
+				getGuildData.pDataStructure = &guildData;
+				getGuildData.id = guildId;
+				DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
+				Guild guild(guildData, this->pRestAPI);
+				this->insert(std::make_pair(guildId, guild));
+				co_return guild;
 			}
 
 			task<Guild> getGuildAsync(string guildId) {
@@ -344,9 +326,6 @@ namespace CommanderNS {
 					co_return guild;
 				}
 			};
-
-
-			static RateLimitData guildGetRateLimit;
 
 		protected:
 			friend struct WebSocketConnection;
@@ -373,20 +352,17 @@ namespace CommanderNS {
 			};
 
 			task<User> fetchAsync(string userId) {
-					ClientDataTypes::UserData userData;
-					try {
-						userData = this->at(userId).Data;
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
-						User user(userData);
-						this->insert(std::make_pair(userId, user));
-						co_return user;
-					}
-					catch (std::exception error) {
-						DataManipFunctions::getObjectDataAsync(this->pRestAPI, &this->userGetRateLimit, userId, &userData).get();
-						User user(userData);
-						this->insert(std::make_pair(userId, user));
-						co_return user;
-					}
+				ClientDataTypes::UserData userData;
+				if (this->contains(userId)) {
+					userData = this->at(userId).Data;
+				}
+				DataManipFunctions::GetUserData getUserData;
+				getUserData.pDataStructure = &userData;
+				getUserData.id = userId;
+				DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
+				User user(userData);
+				this->insert(std::make_pair(userId, user));
+				co_return user;
 			};
 
 			task<User> getUserAsync(string userId) {
@@ -404,18 +380,29 @@ namespace CommanderNS {
 		protected:
 			friend struct WebSocket;
 			friend struct Client;
-			RateLimitData userGetRateLimit;
 			com_ptr<RestAPI> pRestAPI;
 		};
 
-		struct Client: implements<Client, winrt::Windows::Foundation::IInspectable> {
+		struct Client : implements<Client, winrt::Windows::Foundation::IInspectable> {
 		public:
 			Client() {};
 			Client(com_ptr<RestAPI> pRestAPI) {
 				this->Guilds = GuildManager(pRestAPI);
 				this->Users = UserManager(pRestAPI);
 				this->User = User;
+				this->pRestAPI = pRestAPI;
+				this->getUserSelf();
 			};
+
+			void getUserSelf() {
+				ClientDataTypes::UserData userData;
+				DataManipFunctions::GetSelfUserData getUserData;
+				getUserData.pDataStructure = &userData;
+				DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
+				ClientClasses::User  user(userData);
+				this->User = user;
+			};
+
 			~Client() {};
 			User User;
 			UserManager Users;
@@ -425,14 +412,8 @@ namespace CommanderNS {
 
 			friend class GuildManager;
 			friend struct WebSocket;
+			com_ptr<RestAPI> pRestAPI;
 		};
-		RateLimitData ReactionManager::reactionAddRemoveRateLimit;
-		RateLimitData Message::messageDeleteRateLimit;
-		RateLimitData GuildManager::guildGetRateLimit;
-		RateLimitData ChannelManager::channelGetRateLimit;
-		RateLimitData GuildMemberManager::guildMemberGetRateLimit;
-		RateLimitData MessageManager::messageGetRateLimit;
-		RateLimitData MessageManager::messageDeleteRateLimit;
 	};
 }
 #endif

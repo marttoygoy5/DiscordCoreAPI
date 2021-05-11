@@ -239,14 +239,51 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, RateLimitData* pUserGetRateLimit, string id, ClientDataTypes::UserData* pDataStructure) {
-			ClientDataTypes::UserData userData = *pDataStructure;
-			string relativePath = "/users/" + id;
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetSelfUserData getUserData) {
+			ClientDataTypes::UserData userData = *getUserData.pDataStructure;
+			string relativePath = "/users/@me";
 			HTTPData getData;
-			checkRateLimitAndGetDataAsync(pRestAPI, pUserGetRateLimit, relativePath, &getData).get();
+			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::GET;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			send(buffer00, workloadData);
+			getData = receive(buffer03);
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &userData);
-			*pDataStructure = userData;
+			*getUserData.pDataStructure = userData;
+			co_return;
+		}
+
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetUserData getUserData) {
+			ClientDataTypes::UserData userData = *getUserData.pDataStructure;
+			string relativePath = "/users/" + getUserData.id;
+			HTTPData getData;
+			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::GET;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			send(buffer00, workloadData);
+			getData = receive(buffer03);
+			json jsonValue = getData.data;
+			DataParsingFunctions::parseObject(jsonValue, &userData);
+			*getUserData.pDataStructure = userData;
 			co_return;
 		}
 
@@ -258,8 +295,8 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(3).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(3).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
@@ -272,39 +309,95 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(jsonValue, &guildData);
 			*getGuildData.pDataStructure = guildData;
 			co_return;
-			co_return;
 		}
-
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, RateLimitData* pChannelGetRateLimit, string id, ClientDataTypes::ChannelData* pDataStructure) {
-			ClientDataTypes::ChannelData channelData = *pDataStructure;
-			string relativePath = "/channels/" + id;
+		/*
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetChannelData getChannelData) {
+			ClientDataTypes::ChannelData channelData = *getChannelData.pDataStructure;
+			string relativePath = "/channels/" + getChannelData.id;
 			HTTPData getData;
+			RateLimitData* pChannelGetRateLimit = new RateLimitData;
+			pChannelGetRateLimit->getsRemaining = 1;
+			pChannelGetRateLimit->msRemain = 250;
 			checkRateLimitAndGetDataAsync(pRestAPI, pChannelGetRateLimit, relativePath, &getData).get();
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &channelData);
-			*pDataStructure = channelData;
+			*getChannelData.pDataStructure = channelData;
+			co_return;
+		}
+		*/
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetChannelData getChannelData) {
+			ClientDataTypes::ChannelData channelData = *getChannelData.pDataStructure;
+			string relativePath = "/channels/" + getChannelData.id;
+			HTTPData getData;
+			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::GET;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			send(buffer00, workloadData);
+			getData = receive(buffer03);
+			json jsonValue = getData.data;
+			DataParsingFunctions::parseObject(jsonValue, &channelData);
+			*getChannelData.pDataStructure = channelData;
 			co_return;
 		}
 
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, RateLimitData* pGuildMemberGetRateLimit, string guildId, string id, ClientDataTypes::GuildMemberData* pDataStructure) {
-			ClientDataTypes::GuildMemberData guildMemberData = *pDataStructure;
-			string relativePath = "/guilds/" + guildId + "/members/" + id;
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetGuildMemberData getGuildMemberData) {
+			ClientDataTypes::GuildMemberData guildMemberData = *getGuildMemberData.pDataStructure;
+			string relativePath = "/guilds/" + getGuildMemberData.guildId + "/members/" + getGuildMemberData.id;
 			HTTPData getData;
+			RateLimitData* pGuildMemberGetRateLimit = new RateLimitData;
+			pGuildMemberGetRateLimit->getsRemaining = 1;
+			pGuildMemberGetRateLimit->msRemain = 250;
 			checkRateLimitAndGetDataAsync(pRestAPI, pGuildMemberGetRateLimit, relativePath, &getData).get();
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &guildMemberData);
-			*pDataStructure = guildMemberData;
+			*getGuildMemberData.pDataStructure = guildMemberData;
 			co_return;
 		}
-
-		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, RateLimitData* pMessageGetRateLimit, string channelId, string id, ClientDataTypes::MessageData* pDataStructure) {
-			ClientDataTypes::MessageData messageData = *pDataStructure;
-			string relativePath = "/channels/" + channelId + "/messages/" + id;
+		/*
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetMessageData getMessageData) {
+			ClientDataTypes::MessageData messageData = *getMessageData.pDataStructure;
+			string relativePath = "/channels/" + getMessageData.channelId + "/messages/" + getMessageData.id;
 			HTTPData getData;
+			RateLimitData* pMessageGetRateLimit = new RateLimitData;
+			pMessageGetRateLimit->getsRemaining = 1;
+			pMessageGetRateLimit->msRemain = 250; 
 			checkRateLimitAndGetDataAsync(pRestAPI, pMessageGetRateLimit, relativePath, &getData).get();
 			json jsonValue = getData.data;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
-			*pDataStructure = messageData;
+			*getMessageData.pDataStructure = messageData;
+			co_return;
+		}
+		*/
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetMessageData getMessageData) {
+			ClientDataTypes::MessageData messageData = *getMessageData.pDataStructure;
+			string relativePath = "/channels/" + getMessageData.channelId + "/messages/" + getMessageData.id;
+			HTTPData getData;
+			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::GET;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			send(buffer00, workloadData);
+			getData = receive(buffer03);
+			json jsonValue = getData.data;
+			DataParsingFunctions::parseObject(jsonValue, &messageData);
+			*getMessageData.pDataStructure = messageData;
 			co_return;
 		}
 
@@ -380,10 +473,24 @@ namespace CommanderNS {
 			co_return;
 		}
 
-		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, RateLimitData* pMessageDeleteRateLimit, string channelId, string messageId) {
+		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI,  string channelId, string messageId) {
 			string relativePath = "/channels/" + channelId + "/messages/" + messageId;
-			HTTPData deleteData;
-			checkRateLimitAndDeleteDataAsync(pRestAPI, pMessageDeleteRateLimit, relativePath, &deleteData).get();
+			HTTPData getData;
+			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(5).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(5).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::GET;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD;
+			send(buffer00, workloadData);
+			getData = receive(buffer03);
+			json jsonValue = getData.data;
 			co_return;
 		}
 

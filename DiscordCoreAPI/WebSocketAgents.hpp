@@ -75,9 +75,9 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
-			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().messageManager;
+			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().Messages;
 			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &ClientClasses::MessageManager::messageGetRateLimit, tempPtr);
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, tempPtr);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
 		}
@@ -88,9 +88,9 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
-			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().messageManager;
-			ClientClasses::Message message(messageData, this->pRestAPI, &ClientClasses::MessageManager::messageGetRateLimit, tempPtr);
-			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().messageManager->erase(messageData.id);
+			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().Messages;
+			ClientClasses::Message message(messageData, this->pRestAPI, tempPtr);
+			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().Messages->erase(messageData.id);
 			messageDeletionData.message = message;
 			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
 			co_return;

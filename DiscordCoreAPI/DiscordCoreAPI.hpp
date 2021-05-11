@@ -50,7 +50,7 @@ namespace CommanderNS {
 
 		task<int> login() {
 			int returnVal;
-			this->systemThreads->mainThreadContext.taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
+			this->systemThreads->Threads.at(0).taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
 			co_return returnVal;
 		}
 
@@ -76,20 +76,12 @@ namespace CommanderNS {
 		task<int> run() {
 			this->connect();
 			while (DiscordCoreAPI::doWeQuit == false) {
-				CommanderNS::ClientClasses::Guild guild = this->Client->Guilds.fetchAsync("782757641540730900").get();
-				cout << guild.Members.getGuildMemberAsync("821912684878364723").get().Data.user.username << endl;
-				//vector<CommanderNS::ClientDataTypes::RoleData> roleData;
-				//ClientDataTypes::GuildData guildData;
-				//shared_ptr<RateLimitData>rateLimitData = make_shared<RateLimitData>();
-				//DataManipFunctions::getObjectDataAsync(this->pRestAPI, rateLimitData, "782757641540730900", &roleData).get();
-				//for (unsigned int x = 0; x < roleData.size(); x += 1) {
-					//cout << roleData.at(x).name << endl;
-				//}
-				//cout << "Name: " << this->Client->Guilds.GetGuild("782757641540730900").get().Members.GetGuildMember("644754671088566275").get().Data.user.username << endl;
+
 			}
 			std::cout << "Goodbye!" << std::endl;
 			co_return 25;
 		}
+
 		int loginToWrap() {
 			return this->run().get();
 		}

@@ -35,7 +35,6 @@ namespace CommanderNS {
 		struct TimedRequestSender : public concurrency::agent, implements<TimedRequestSender, winrt::Windows::Foundation::IInspectable> {
 		public:
 			ITarget<HTTPData>& target01;
-			inline static bool doWeQuit = false;
 
 			explicit TimedRequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, ISource<int>& source0, timer<int>& timer)
 				:
@@ -56,7 +55,6 @@ namespace CommanderNS {
 			ISource<HTTPData>& source01;
 			ISource<int>& _source0;
 			timer<int>& _timer;
-			HttpAgents::WorkloadData workloadData;
 
 			void run() {
 				WorkloadData workload;
@@ -73,8 +71,6 @@ namespace CommanderNS {
 		public:
 			ITarget<HTTPData>& target01;
 
-			inline static bool doWeQuit = false;
-
 			explicit RequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01)
 				:
 				agent(*scheduler),
@@ -90,7 +86,6 @@ namespace CommanderNS {
 			ISource<WorkloadData>& source00;
 			ISource<HTTPData>& source01;
 			ITarget<WorkloadData>& target00;
-			HttpAgents::WorkloadData workloadData;
 
 			void run() {
 				WorkloadData workload = receive(&source00);
@@ -107,8 +102,6 @@ namespace CommanderNS {
 			ISource<WorkloadData>& _source;
 			static map<string, RateLimitData> rateLimitData;
 			static map<RateLimitType, string> rateLimitDataBucketValues;
-
-			inline static bool doWeQuit = false;
 
 			HTTPHandler(Scheduler* scheduler, ITarget<HTTPData>& target, ISource<WorkloadData>& source, com_ptr<RestAPI> pRestAPI)
 				: _target(target),
