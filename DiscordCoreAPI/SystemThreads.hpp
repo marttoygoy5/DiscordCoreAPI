@@ -16,7 +16,7 @@ namespace CommanderNS {
         Scheduler* scheduler;
         shared_ptr<task_group> taskGroup;
         shared_ptr<DispatcherQueue> threadQueue{ nullptr };
-    };    
+    };
 
     struct SystemThreads : implements<SystemThreads, winrt::Windows::Foundation::IInspectable> {
     public:
@@ -47,7 +47,7 @@ namespace CommanderNS {
             mainThreadContext.scheduler = CurrentScheduler::Get();
             shared_ptr<task_group> newTaskGroup = make_shared<task_group>();
             mainThreadContext.taskGroup = newTaskGroup;
-            for (unsigned int x = 0; x < this->MaxThreads - 2; x += 1) {
+            for (unsigned int x = 0; x < this->MaxThreads - 1; x += 1) {
                 co_await resume_background();
                 ThreadContext threadContext;
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();

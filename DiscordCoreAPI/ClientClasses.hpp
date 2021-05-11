@@ -86,8 +86,8 @@ namespace CommanderNS {
 			string channelId;
 			string messageId;
 		};
-
 		class Message {
+
 		public:
 			Message() {};
 			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, void* pMessageManager) {
@@ -97,12 +97,12 @@ namespace CommanderNS {
 				this->messageManager = pMessageManager;
 			}
 
-			IAsyncAction deleteMessageAsync(int timeDelay = 1000) {
+			task<void> deleteMessageAsync(int timeDelay = 1000) {
 				DataManipFunctions::DeleteMessageData deleteMessageData;
 				deleteMessageData.channelId = this->Data.channelId;
 				deleteMessageData.messageId = this->Data.id;
 				deleteMessageData.timeDelay = timeDelay;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteMessageData).get();
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteMessageData);
 				co_return;
 			};
 
@@ -133,17 +133,21 @@ namespace CommanderNS {
 				getMessageData.channelId = this->channelId;
 				DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
 				Message message(messageData, this->pRestAPI, this);
+				if (this->size() >= 1000) {
+					this->erase(this->end());
+				}
 				this->insert(std::make_pair(messageId, message));
 				co_return message;
 			};
 
-			task<Message> getMessage(string channelId, string messageId) {
+			task<Message> getMessageAsync(string messageId) {
 				Message currentMessage;
 				if (this->contains(messageId)) {
 					currentMessage = this->at(messageId);
 					co_return currentMessage;
 				}
 				else {
+					cout << "Sorry, but they aren't here!" << endl;
 					currentMessage = this->fetchAsync(messageId).get();
 					co_return currentMessage;
 				}
@@ -159,6 +163,9 @@ namespace CommanderNS {
 					postMessageData.content = createMessagePayload;
 					DataManipFunctions::postObjectDataAsync(this->pRestAPI, postMessageData).get();
 					Message message(messageData, this->pRestAPI, this);
+					cout << "MESSAGE ID: " << messageData.id << endl;
+					this->insert(make_pair(messageData.id, message));
+					cout << "MESSAGE ID: " << this->at(messageData.id).Data.id << endl;
 					co_return message;
 				}
 				catch (exception error) {
@@ -230,10 +237,10 @@ namespace CommanderNS {
 			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
-				this->Messages = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI);
+				this->Messages = MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI);
 			};
 			ClientDataTypes::ChannelData Data;
-			MessageManager* Messages;
+			MessageManager Messages;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
 		};

@@ -10,12 +10,7 @@
 
 #include "pch.h"
 #include "RestAPI.hpp"
-#include "DataParsingFunctions.hpp"
 #include "EventMachine.hpp"
-#include "DataManipFunctions.hpp"
-#include "EventDataTypes.hpp"
-#include "FoundationClasses.hpp"
-#include "ClientDataTypes.hpp"
 #include "SystemThreads.hpp"
 #include "WebSocketAgents.hpp"
 #include "ClientClasses.hpp"
@@ -37,8 +32,8 @@ namespace CommanderNS {
 		DiscordCoreAPI(hstring botToken) {
 			this->systemThreads = make_self<SystemThreads>();
 			this->systemThreads->initialize().get();
-			this->pWebSocketReceiver = make_self<WebSocketReceiver>(this->buffer00, this->systemThreads->Threads.at(0).scheduler);
-			this->pWebSocketConnection = make_self<WebSocketConnection>(this->buffer00, this->systemThreads->Threads.at(1).scheduler);
+			this->pWebSocketReceiver = make_self<WebSocketReceiver>(this->systemThreads->Threads.at(0).scheduler);
+			this->pWebSocketConnection = make_self<WebSocketConnection>(this->pWebSocketReceiver->buffer00, this->systemThreads->Threads.at(0).scheduler);
 			this->botToken = botToken;
 			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocketConnection->socketPath, this->systemThreads);
 			this->Client = make_self<ClientClasses::Client>(this->pRestAPI);
@@ -60,25 +55,25 @@ namespace CommanderNS {
 		com_ptr<WebSocketReceiver> pWebSocketReceiver{ nullptr };
 		com_ptr<WebSocketConnection> pWebSocketConnection{ nullptr };
 		com_ptr<RestAPI> pRestAPI{ nullptr };
-		unbounded_buffer<hstring> buffer00;
 
-		void connect() {
+		task<void> connect() {
 			try {
 				this->pWebSocketConnection->start();
 				this->pWebSocketReceiver->start();
 			}
 			catch (winrt::hresult result) {
 
-				std::cout << result.value << std::endl;
+				cout << "connect() Error: " << result.value << std::endl;
 			}
+			co_return;
 		}
 
 		task<int> run() {
-			this->connect();
+			this->connect().get();
 			while (DiscordCoreAPI::doWeQuit == false) {
-
+				
 			}
-			std::cout << "Goodbye!" << std::endl;
+			cout << "Goodbye!" << std::endl;
 			co_return 25;
 		}
 

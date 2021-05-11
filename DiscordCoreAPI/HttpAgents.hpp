@@ -36,30 +36,34 @@ namespace CommanderNS {
 		public:
 			ITarget<HTTPData>& target01;
 
-			explicit TimedRequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, ISource<int>& source0, timer<int>& timer)
+			explicit TimedRequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, unsigned int timeDelay)
 				:
 				agent(*scheduler),
 				source00(source00),
 				target00(target00),
 				source01(source01),
 				target01(target01),
-				_source0(source0),
-				_timer(timer)
+				_source0(buffer00),
+				_target0(&buffer00),
+				timer(timeDelay, this->propValue, this->_target0, false)
 			{};
 
 			~TimedRequestSender() {};
 
 		protected:
+			unbounded_buffer<int> buffer00;
 			ISource<WorkloadData>& source00;
-			ITarget<WorkloadData>& target00;
 			ISource<HTTPData>& source01;
+			ITarget<WorkloadData>& target00;
+			int propValue;
 			ISource<int>& _source0;
-			timer<int>& _timer;
+			ITarget<int>* _target0;
+			timer<int> timer;
 
 			void run() {
-				WorkloadData workload;
+				this->timer.start();
 				receive(&_source0);
-				receive(&source00);
+				WorkloadData workload = receive(&source00);
 				send(&target00, workload);
 				HTTPData httpData = receive(&source01);
 				send(&target01, httpData);

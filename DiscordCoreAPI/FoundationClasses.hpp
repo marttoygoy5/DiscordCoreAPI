@@ -17,20 +17,22 @@ namespace CommanderNS {
 	enum class RateLimitType{
 		UNSET =0, 
 		GET_MESSAGE = 1,
-		CREATE_MESSAGE = 2, 
-		DELETE_MESSAGE = 3, 
+		POST_MESSAGE = 2, 
+		DELETE_MESSAGE = 3,
 		GET_USER = 4, 
 		GET_USER_SELF = 5, 
 		GET_GUILD = 6, 
 		GET_CHANNEL = 7, 
-		REACTION_ADD_REMOVE = 8,
-		GET_GUILD_MEMBER = 9,
-		GET_ROLES = 10
+		GET_REACTION = 8,
+		PUT_REACTION = 9,
+		DELETE_REACTION = 10,
+		GET_GUILD_MEMBER = 11,
+		GET_ROLES = 12
 	};
 
 	struct RateLimitData {
-		float msRemain = 0;
 		int getsRemaining = 1;
+		float msRemain = 0;
 		float timeStartedAt = 0;
 		RateLimitType rateLimitType;
 		string bucket;

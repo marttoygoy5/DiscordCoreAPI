@@ -98,8 +98,8 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
@@ -122,8 +122,8 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
@@ -146,8 +146,8 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
@@ -170,8 +170,8 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
@@ -194,8 +194,8 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
@@ -218,8 +218,8 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
@@ -242,8 +242,8 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
@@ -274,6 +274,26 @@ namespace CommanderNS {
 			co_return;
 		}
 
+		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, PutEmojiData putEmojiData) {
+			string relativePath = "/channels/" + putEmojiData.channelId + "/messages/" + putEmojiData.messageId + "/reactions/" + putEmojiData.emoji + "/@me";
+			HTTPData deleteData;
+			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(2).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::PUT;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::PUT_REACTION;
+			send(buffer00, workloadData);
+			deleteData = receive(buffer03);
+			co_return;
+		}
+
 		IAsyncAction postObjectDataAsync(com_ptr<RestAPI> pRestAPI, PostMessageData postMessageData) {
 			ClientDataTypes::MessageData messageData = *postMessageData.pDataStructure;
 			string relativePath = "/channels/" + postMessageData.channelId + "/messages";
@@ -289,33 +309,13 @@ namespace CommanderNS {
 			HttpAgents::WorkloadData workloadData;
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::POST;
-			workloadData.rateLimitData.rateLimitType = RateLimitType::CREATE_MESSAGE;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::POST_MESSAGE;
 			workloadData.content = postMessageData.content;
 			send(buffer00, workloadData);
 			postData = receive(buffer03);
 			json jsonValue = postData.data;
 			DataParsingFunctions::parseObject(jsonValue, &messageData);
 			*postMessageData.pDataStructure = messageData;
-			co_return;
-		}
-
-		IAsyncAction putObjectDataAsync(com_ptr<RestAPI> pRestAPI, PutEmojiData putEmojiData){
-			string relativePath = "/channels/" + putEmojiData.channelId + "/messages/" + putEmojiData.messageId + "/reactions/" + putEmojiData.emoji + "/@me";
-			HTTPData deleteData;
-			unbounded_buffer <HttpAgents::WorkloadData> buffer00;
-			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
-			unbounded_buffer<HTTPData> buffer02;
-			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer02, buffer01, pRestAPI);
-			requestSender->start();
-			httpHandler->start();
-			HttpAgents::WorkloadData workloadData;
-			workloadData.relativeURL = relativePath;
-			workloadData.workloadType = HttpAgents::WorkloadType::PUT;
-			workloadData.rateLimitData.rateLimitType = RateLimitType::REACTION_ADD_REMOVE;
-			send(buffer00, workloadData);
-			deleteData = receive(buffer03);
 			co_return;
 		}
 
@@ -326,8 +326,8 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(5).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(5).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::TimedRequestSender> requestSender = make_self<HttpAgents::TimedRequestSender>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer00, buffer01, buffer02, buffer03, deleteMessageData.timeDelay);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
@@ -347,14 +347,14 @@ namespace CommanderNS {
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
 			unbounded_buffer<HTTPData> buffer03;
-			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(5).scheduler, buffer00, buffer01, buffer02, buffer03);
-			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(5).scheduler, buffer02, buffer01, pRestAPI);
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(4).scheduler, buffer02, buffer01, pRestAPI);
 			requestSender->start();
 			httpHandler->start();
 			HttpAgents::WorkloadData workloadData;
 			workloadData.relativeURL = relativePath;
 			workloadData.workloadType = HttpAgents::WorkloadType::DELETED;
-			workloadData.rateLimitData.rateLimitType = RateLimitType::REACTION_ADD_REMOVE;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::DELETE_REACTION;
 			send(buffer00, workloadData);
 			deleteData = receive(buffer03);
 			co_return;

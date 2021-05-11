@@ -22,8 +22,8 @@ namespace CommanderNS {
 
 		inline static bool doWeQuit = false;
 
-		WebSocketReceiver(ISource<hstring>& source, Scheduler* pScheduler)
-			:_source(source),
+		WebSocketReceiver(Scheduler* pScheduler)
+			:_source(buffer00),
 			agent(*pScheduler)
 		{}
 
@@ -43,6 +43,7 @@ namespace CommanderNS {
 	protected:
 
 		friend struct DiscordCoreAPI;
+		unbounded_buffer<hstring> buffer00;
 		ISource<hstring>& _source;
 		com_ptr<SystemThreads> pSystemThreads;
 		com_ptr<EventMachine> pEventMachine;
@@ -56,7 +57,7 @@ namespace CommanderNS {
 			this->pEventMachine = pEventMachineNew;
 		}
 
-		fire_and_forget onGuildCreate(json payload) {
+		task<void> onGuildCreate(json payload) {
 			CommanderNS::ClientDataTypes::GuildData guildData;
 			string id = payload.at("d").at("id");
 			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
@@ -64,7 +65,7 @@ namespace CommanderNS {
 			this->pClient->Guilds.insert(std::make_pair(id, guild));
 			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 				ClientClasses::User user(guild.Data.members.at(y).user);
-				this->pClient->Users.insert(make_pair(user.Data.id, user));				
+				this->pClient->Users.insert(make_pair(user.Data.id, user));
 			}
 			co_return;
 		}
@@ -76,8 +77,8 @@ namespace CommanderNS {
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
 			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().Messages;
-			ClientClasses::MessageManager* pMessageManager = tempPtr;
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, tempPtr);
+			ClientClasses::MessageManager pMessageManager = tempPtr;
+			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, &tempPtr);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
 		}
@@ -89,8 +90,8 @@ namespace CommanderNS {
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
 			auto tempPtr = this->pClient->Guilds.getGuildAsync(messageData.guildId).get().Channels.getChannelAsync(messageData.channelId).get().Messages;
-			ClientClasses::Message message(messageData, this->pRestAPI, tempPtr);
-			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().Messages->erase(messageData.id);
+			ClientClasses::Message message(messageData, this->pRestAPI, &tempPtr);
+			this->pClient->Guilds.getGuildAsync(guildId).get().Channels.getChannelAsync(channelId).get().Messages.erase(messageData.id);
 			messageDeletionData.message = message;
 			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
 			co_return;
@@ -146,7 +147,7 @@ namespace CommanderNS {
 					getGuildMemberData.guildId = payload.at("d").at("guild_id");
 					getGuildMemberData.id = payload.at("d").at("user").at("id");
 					getGuildMemberData.pDataStructure = &guildMemberData;
-					//DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
 					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData);
@@ -192,12 +193,12 @@ namespace CommanderNS {
 		int lastNumberReceived = 0;
 		int intentsValue = 0;
 		bool didWeReceiveHeartbeatAck = true;
-		DispatcherQueueController dispatchQueueController = nullptr;
-		DispatcherQueue dispatchQueueForHB = nullptr;
-		DispatcherQueueTimer heartbeatTimer = nullptr;
+		DispatcherQueueController dispatchQueueController{ nullptr };
+		DispatcherQueue dispatchQueueForHB{ nullptr };
+		DispatcherQueueTimer heartbeatTimer{ nullptr };
 
 		void run() {
-			this->connectAsync();
+			this->connect();
 		}
 
 		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew) {
@@ -247,7 +248,7 @@ namespace CommanderNS {
 			}
 		}
 
-		IAsyncAction connectAsync() {
+		void connect() {
 			try {
 				this->dispatchQueueController = this->dispatchQueueController.CreateOnDedicatedThread();
 				this->dispatchQueueForHB = this->dispatchQueueController.DispatcherQueue();
@@ -258,7 +259,7 @@ namespace CommanderNS {
 				this->messageWriter.UnicodeEncoding(UnicodeEncoding::Utf8);
 				this->closedToken = this->webSocket.Closed({ this, &WebSocketConnection::onClosed });
 				this->messageReceivedToken = this->webSocket.MessageReceived({ this, &WebSocketConnection::onMessageReceived });
-				co_await this->webSocket.ConnectAsync(Uri(this->socketPath));
+				this->webSocket.ConnectAsync(Uri(this->socketPath)).get();
 			}
 			catch (winrt::hresult result) {
 				std::cout << result.value << std::endl;
@@ -300,24 +301,11 @@ namespace CommanderNS {
 			this->sendHeartBeat();
 		}
 
-		fire_and_forget onGuildCreate(json payload) {
-			CommanderNS::ClientDataTypes::GuildData guildData;
-			string id = payload.at("d").at("id");
-			CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
-			ClientClasses::Guild guild(guildData, this->pRestAPI);
-			this->pClient->Guilds.insert(std::make_pair(id, guild));
-			for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
-				ClientClasses::User user(guild.Data.members.at(y).user);
-				this->pClient->Users.insert(make_pair(user.Data.id, user));
-			}
-			co_return;
-		}
-
 		fire_and_forget sendHeartBeat() {
 			try {
 				if (this->didWeReceiveHeartbeatAck == false) {
 					this->cleanup();
-					this->connectAsync();
+					this->connect();
 					co_return;
 				}
 				std::string heartbeat = JSONifier::getHeartbeatPayload(this->lastNumberReceived);
@@ -359,7 +347,7 @@ namespace CommanderNS {
 					this->cleanup();
 					std::string resume = JSONifier::getResumePayload(winrt::to_string(this->botToken), winrt::to_string(this->sessionID), this->lastNumberReceived);
 					this->sendAsync(resume);
-					this->connectAsync().get();
+					this->connect();
 				}
 
 				if (payload.at("op") == 9) {
