@@ -67,10 +67,6 @@ namespace CommanderNS {
             }
         }
 
-        ~SystemThreads() {
-
-        };
-
     protected:
         unsigned int MaxThreads;
 

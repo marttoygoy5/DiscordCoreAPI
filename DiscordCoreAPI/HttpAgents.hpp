@@ -84,8 +84,6 @@ namespace CommanderNS {
 				target01(target01)
 			{};
 
-			~RequestSender() {};
-
 		protected:
 			ISource<WorkloadData>& source00;
 			ISource<HTTPData>& source01;
@@ -120,7 +118,7 @@ namespace CommanderNS {
 					if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
 						workload.rateLimitData.bucket = HTTPHandler::rateLimitDataBucketValues.at(workload.rateLimitData.rateLimitType);
 						workload.rateLimitData = HTTPHandler::rateLimitData.at(workload.rateLimitData.bucket);
-						}
+					}
 					return workload;
 					});
 				transformer<WorkloadData, HTTPData> collectHTTPData([this](WorkloadData workload)-> HTTPData {
@@ -171,8 +169,6 @@ namespace CommanderNS {
 				send(&collectTimeLimitData, workload);
 				done();
 			};
-
-			~HTTPHandler() {};
 
 		protected:
 			com_ptr<RestAPI> pRestAPI;

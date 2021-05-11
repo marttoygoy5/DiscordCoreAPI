@@ -270,6 +270,9 @@ namespace CommanderNS {
 
 		class Channel {
 		public:
+			ClientDataTypes::ChannelData Data;
+			MessageManager* Messages;
+
 			Channel() {};
 			Channel(ClientDataTypes::ChannelData data, com_ptr<RestAPI> pRestAPI, string selfUserId) {
 				this->Data = data;
@@ -277,8 +280,7 @@ namespace CommanderNS {
 				this->selfUserId = selfUserId;
 				this->Messages = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI, this->selfUserId);
 			};
-			ClientDataTypes::ChannelData Data;
-			MessageManager* Messages;
+			
 		protected:
 			com_ptr<RestAPI> pRestAPI;
 			string selfUserId;
@@ -322,8 +324,6 @@ namespace CommanderNS {
 				}
 				else {
 					cout << "getChannelAsync() Error: Sorry, but they aren't here!" << endl;
-					Channel* channel;
-					co_return channel;
 				}
 			};
 
@@ -335,7 +335,10 @@ namespace CommanderNS {
 
 		class Guild {
 		public:
-
+			ClientDataTypes::GuildData Data;
+			GuildMemberManager* Members;
+			ChannelManager* Channels;
+		
 			Guild() {};
 			Guild(ClientDataTypes::GuildData data, com_ptr<RestAPI> pRestAPI, string selfUserId) {
 				this->Data = data;
@@ -355,10 +358,8 @@ namespace CommanderNS {
 				}
 			};
 
-			ClientDataTypes::GuildData Data;
-			ChannelManager* Channels;
-			GuildMemberManager* Members;
 		protected:
+			
 			string selfUserId;
 		};
 
@@ -491,6 +492,10 @@ namespace CommanderNS {
 
 		struct Client : implements<Client, winrt::Windows::Foundation::IInspectable> {
 		public:
+			GuildManager* Guilds;
+			UserManager* Users;
+			User User;
+
 			Client() {};
 			Client(com_ptr<RestAPI> pRestAPI) {
 				this->Users = new UserManager(pRestAPI);
@@ -509,11 +514,6 @@ namespace CommanderNS {
 				ClientClasses::User  user(userData);
 				this->User = user;
 			};
-
-			~Client() {};
-			User User;
-			UserManager* Users;
-			GuildManager* Guilds;
 
 		protected:
 			friend struct WebSocketReceiver;
@@ -534,8 +534,6 @@ namespace CommanderNS {
 			{
 				this->pClient = pClient;
 			}
-
-			~ClientAgent() {};
 			
 		protected:
 			com_ptr<Client> pClient;

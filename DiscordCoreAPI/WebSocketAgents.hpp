@@ -27,19 +27,6 @@ namespace CommanderNS {
 			agent(*pScheduler)
 		{}
 
-		void run() {
-			while (doWeQuit == false) {
-				hstring payloadString;
-				if (try_receive(_source, payloadString)) {
-					json jsonValue = jsonValue.parse(payloadString);
-					onMessageReceived(jsonValue);
-				}
-			}
-			done();
-		};
-
-		~WebSocketReceiver() {};
-
 	protected:
 
 		friend struct DiscordCoreAPI;
@@ -56,6 +43,17 @@ namespace CommanderNS {
 			this->pClient = pClientNew;
 			this->pRestAPI = pRestAPINew;
 			this->pEventMachine = pEventMachineNew;
+		}
+
+		void run() {
+			while (doWeQuit == false) {
+				hstring payloadString;
+				if (try_receive(_source, payloadString)) {
+					json jsonValue = jsonValue.parse(payloadString);
+					onMessageReceived(jsonValue);
+				}
+			}
+			done();
 		}
 
 		task<void> onGuildCreate(json payload) {
@@ -77,7 +75,7 @@ namespace CommanderNS {
 			else {
 				ClientDataTypes::GuildData guildData = pClientNew->Guilds->collectBackupValue(id).get().Data;
 				CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
-				ClientClasses::Guild guild(guildData, this->pRestAPI, this->pClient->User.Data.id);
+				ClientClasses::Guild guild(guildData, this->pRestAPI, pClientNew->User.Data.id);
 				pClientNew->Guilds->insert(make_pair(id, guild));
 				for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
 					ClientClasses::User user(guild.Data.members.at(y).user);
@@ -169,10 +167,10 @@ namespace CommanderNS {
 			catch (winrt::hresult_error const& ex) {
 				std::wcout << ex.message().c_str() << std::endl;
 
-			};
-		};
+			}
+		}
 
-	};
+	}
 
 	struct WebSocketConnection : public concurrency::agent, implements<WebSocketConnection, winrt::Windows::Foundation::IInspectable> {
 	public:
@@ -209,10 +207,6 @@ namespace CommanderNS {
 		DispatcherQueue dispatchQueueForHB{ nullptr };
 		DispatcherQueueTimer heartbeatTimer{ nullptr };
 
-		void run() {
-			this->connect();
-		}
-
 		void initialize(hstring botTokenNew, winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew) {
 			this->pSystemThreads = pSystemThreadsNew;
 			this->pClient = pClientNew;
@@ -220,6 +214,10 @@ namespace CommanderNS {
 			this->pEventMachine = pEventMachineNew;
 			this->botToken = botTokenNew;
 			this->intentsValue = ((1 << 0) + (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4) + (1 << 5) + (1 << 6) + (1 << 7) + (1 << 8) + (1 << 9) + (1 << 10) + (1 << 11) + (1 << 12) + (1 << 13) + (1 << 14));
+		}
+
+		void run() {
+			this->connect();
 		}
 
 		void cleanup() {
