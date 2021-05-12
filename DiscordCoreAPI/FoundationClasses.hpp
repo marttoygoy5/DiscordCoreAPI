@@ -8,6 +8,8 @@
 #ifndef _FOUNDATION_CLASSES
 #define _FOUNDATION_CLASSES
 
+#include "ClientDataTypes.hpp"
+
 namespace CommanderNS {
 
 	struct HTTPData {
@@ -39,6 +41,20 @@ namespace CommanderNS {
 		float timeStartedAt = 0;
 		RateLimitType rateLimitType;
 		string bucket;
+	};
+
+	class PermissionsConverter {
+	public:
+		static bool checkForPresence(ClientDataTypes::Permissions permission, string permissionString) {
+			cout << permissionString << "  THE STRING" << endl;
+			int permissionsInteger = stoll(permissionString);
+			if ((permissionsInteger & (int)permission) == (int)permission) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
 	};
 };
 #endif

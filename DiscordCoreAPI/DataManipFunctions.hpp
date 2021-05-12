@@ -340,19 +340,19 @@ namespace CommanderNS {
 			getData = receive(buffer03);
 			json jsonValue = getData.data;
 			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
-				if (roleData.contains(jsonValue.at(x).at("id"))) {
-					ClientDataTypes::RoleData roleDataNew = roleData.at(jsonValue.at(x).at("id"));
-					DataParsingFunctions::parseObject(jsonValue.at(x), &roleDataNew);
-					roleData.erase(jsonValue.at(x).at("id"));
-					roleData.insert(make_pair(to_string(jsonValue.at(x).at("id")), roleDataNew));
+				json jsonGuildValue = jsonValue.at(x);
+				if (getRolesData.pDataStructure->contains(jsonGuildValue.at("id"))) {
+					ClientDataTypes::RoleData roleData = getRolesData.pDataStructure->at(jsonGuildValue.at("id"));
+					DataParsingFunctions::parseObject(jsonGuildValue, &roleData);
+					getRolesData.pDataStructure->erase(roleData.id);
+					getRolesData.pDataStructure->insert(make_pair(roleData.id, roleData));
 				}
 				else {
-					ClientDataTypes::RoleData roleDataNew;
-					DataParsingFunctions::parseObject(jsonValue.at(x), &roleDataNew);
-					roleData.insert(make_pair(to_string(jsonValue.at(x).at("id")), roleDataNew));
+					ClientDataTypes::RoleData roleData;
+					DataParsingFunctions::parseObject(jsonGuildValue, &roleData);
+					getRolesData.pDataStructure->insert(make_pair(roleData.id, roleData));
 				}
 			}
-			*getRolesData.pDataStructure = roleData;
 			co_return;
 		}
 

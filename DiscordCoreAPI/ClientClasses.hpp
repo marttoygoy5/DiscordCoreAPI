@@ -112,14 +112,6 @@ namespace CommanderNS {
 				co_return;
 			}
 
-			task<void> deleteAllReactionsAsync(ClientDataTypes::DeleteAllReactionsData deleteReactionData) {
-				DataManipFunctions::DeleteAllReactionsData deleteReactionDataNew;
-				deleteReactionDataNew.channelId = this->channelId;
-				deleteReactionDataNew.messageId = this->messageId;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
-				co_return;
-			}
-
 			task<void> deleteOwnReactionAsync(ClientDataTypes::DeleteOwnReactionData deleteReactionData) {
 				string emoji;
 				if (deleteReactionData.emojiId != string()) {
@@ -138,6 +130,14 @@ namespace CommanderNS {
 				deleteReactionDataNew.channelId = this->channelId;
 				deleteReactionDataNew.messageId = this->messageId;
 				deleteReactionDataNew.encodedEmoji = emojiEncoded;
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
+				co_return;
+			}
+
+			task<void> deleteAllReactionsAsync(ClientDataTypes::DeleteAllReactionsData deleteReactionData) {
+				DataManipFunctions::DeleteAllReactionsData deleteReactionDataNew;
+				deleteReactionDataNew.channelId = this->channelId;
+				deleteReactionDataNew.messageId = this->messageId;
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
 				co_return;
 			}
@@ -413,9 +413,66 @@ namespace CommanderNS {
 			string selfUserId;
 		};
 
+		class Role {
+		public:
+			com_ptr<ClientClasses::Client> Client{ nullptr };
+			ClientDataTypes::RoleData Data;
+
+			Role() {};
+			Role(ClientDataTypes::RoleData data, com_ptr<ClientClasses::Client> pClient, com_ptr<RestAPI> pRestAPI) {
+				this->pRestAPI = pRestAPI;
+				this->Client = pClient;
+				this->Data = data;
+			}
+
+		protected:
+			com_ptr<RestAPI> pRestAPI{ nullptr };
+		};
+
+		class RoleManager : public map<string, Role> {
+		public:
+			com_ptr<ClientClasses::Client> Client;
+			RoleManager() {};
+			RoleManager(com_ptr<RestAPI> pRestAPI, com_ptr<ClientClasses::Client> pClient, string guildId) {
+				this->pRestAPI = pRestAPI;
+				this->Client = pClient;
+				this->guildId = guildId;
+			}
+
+			task<void> getRolesAsync() {
+				DataManipFunctions::GetRolesData getRolesData;;
+				map<string, ClientDataTypes::RoleData> pRoleDataMap;
+				for (const auto& [key, value] : *this) {
+					pRoleDataMap.insert(make_pair(key, value.Data));
+				}
+				getRolesData.guildId = this->guildId;
+				getRolesData.pDataStructure = &pRoleDataMap;
+				getObjectDataAsync(this->pRestAPI, getRolesData);
+				for (auto const& [key, value] : *getRolesData.pDataStructure) {
+					if (this->contains(key)) {
+						this->erase(key);
+						ClientClasses::Role role(value, this->Client, this->pRestAPI);
+						this->insert(make_pair(key, role));
+					}
+					else {
+						ClientClasses::Role role(value, this->Client, this->pRestAPI);
+						this->insert(make_pair(key, role));
+					}
+				}
+				co_return;
+			}
+
+		protected:
+			friend class Guild;
+			com_ptr<RestAPI> pRestAPI{ nullptr };
+			string guildId;
+
+		};
+
 		class Guild {
 		public:
 			ClientDataTypes::GuildData Data;
+			RoleManager* Roles;
 			GuildMemberManager* Members;
 			ChannelManager* Channels;
 			com_ptr<Client> Client;
@@ -424,8 +481,13 @@ namespace CommanderNS {
 			Guild(ClientDataTypes::GuildData data, com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<ClientClasses::Client> pClient) {
 				this->Data = data;
 				this->selfUserId = selfUserId;
-				this->Channels = new ChannelManager(pRestAPI, this->selfUserId, this->Client);
 				this->Client = pClient;
+				this->Roles = new RoleManager(pRestAPI, this->Client, this->Data.id);
+				for (auto const& [key, value] : data.roles) {
+					Role role(value, this->Client, pRestAPI);
+					this->Roles->insert(make_pair(key, role));
+				}
+				this->Channels = new ChannelManager(pRestAPI, this->selfUserId, this->Client);
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					Channel channel(data.channels.at(x), pRestAPI, this->selfUserId, this->Client);
 					this->Channels->insert(make_pair(data.channels.at(x).id, channel));
@@ -436,12 +498,6 @@ namespace CommanderNS {
 					this->Members->insert(make_pair(data.members.at(x).user.id, member));
 				}
 			};
-
-			task<void> getRolesAsync() {
-				DataManipFunctions::GetRolesData getRolesData;
-				getRolesData.guildId = this->Data.id;
-				getRolesData.pDataStructure = &this->Data.roles;
-			}
 
 		protected:
 			string selfUserId;

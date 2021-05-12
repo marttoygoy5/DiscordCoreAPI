@@ -67,6 +67,7 @@ namespace CommanderNS {
 				send(&target00, workload);
 				HTTPData httpData = receive(&source01);
 				send(&target01, httpData);
+				agent::wait(this);
 				done();
 			};
 		};
