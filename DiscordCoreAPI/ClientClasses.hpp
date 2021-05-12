@@ -358,6 +358,17 @@ namespace CommanderNS {
 				this->Messages = new MessageManager(this->Data.id, this->Data.guildId, this->pRestAPI, this->selfUserId, this->Client);
 			};
 			
+			ClientDataTypes::OverWriteData getPermissionOverwrites(string roleOrUserId) {
+				if (this->Data.permissionOverwrites.contains(roleOrUserId)) {
+					return this->Data.permissionOverwrites.at(roleOrUserId);
+				}
+				else {
+					ClientDataTypes::OverWriteData overWriteData;
+					overWriteData.id = roleOrUserId;
+					return overWriteData;
+				}
+			}
+
 		protected:
 			com_ptr<RestAPI> pRestAPI;
 			string selfUserId;

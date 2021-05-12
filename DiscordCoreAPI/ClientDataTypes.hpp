@@ -114,13 +114,6 @@ namespace CommanderNS {
             DeferredChannelMessageWithSource = 5
         };
 
-        struct OverwriteChannelPermissionsData {
-            string roleOrUserId;
-            string allow;
-            string deny;
-            int type; // 0 for a Role, 1 for a Memeber.
-        };
-
         struct UserData {
             string username;
             string id;
@@ -251,17 +244,17 @@ namespace CommanderNS {
 
         struct OverWriteData {
             string id;
-            int type;	            //	either 0 (role) or 1 (member)
+            int type;	           //	either 0 (role) or 1 (member)
             string allow;
             string deny;
         };
 
         struct ChannelData {
-            string  id;
+            string id;
             int type;
             string guildId;
             int position;
-            vector<OverWriteData> permissionOverwrites;
+            map<string, OverWriteData> permissionOverwrites;
             string name;
             string topic;
             bool nsfw;

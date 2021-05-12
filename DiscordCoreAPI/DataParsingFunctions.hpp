@@ -138,20 +138,16 @@ namespace CommanderNS {
             if (jsonObjectData.contains("permission_overwrites") && !jsonObjectData.at("permission_overwrites").is_null()) {
                 json overWritesArray = jsonObjectData.at("permission_overwrites");
                 for (unsigned int x = 0; x < overWritesArray.size(); x += 1) {
-                    bool isItFound = false;
-                    for (unsigned int y = 0; y < channelData.permissionOverwrites.size(); y += 1) {
-                        if (channelData.permissionOverwrites.at(y).id == overWritesArray.at(x).at("id")) {
-                            isItFound = true;
-                            ClientDataTypes::OverWriteData overWriteData;
-                            parseObject(overWritesArray.at(x), &overWriteData);
-                            channelData.permissionOverwrites.erase(channelData.permissionOverwrites.begin() + y);
-                            channelData.permissionOverwrites.push_back(overWriteData);
-                        }
+                    if (channelData.permissionOverwrites.contains(overWritesArray.at(x).at("id"))) {
+                        ClientDataTypes::OverWriteData overWriteData = channelData.permissionOverwrites.at(overWritesArray.at(x).at("id"));
+                        channelData.permissionOverwrites.erase(overWritesArray.at(x).at("id"));
+                        parseObject(overWritesArray.at(x), &overWriteData);
+                        channelData.permissionOverwrites.insert(make_pair(overWriteData.id, overWriteData));
                     }
-                    if (isItFound == false) {
+                    else {
                         ClientDataTypes::OverWriteData overWriteData;
                         parseObject(overWritesArray.at(x), &overWriteData);
-                        channelData.permissionOverwrites.push_back(overWriteData);
+                        channelData.permissionOverwrites.insert(make_pair(overWriteData.id, overWriteData));
                     }
                 }
             }
