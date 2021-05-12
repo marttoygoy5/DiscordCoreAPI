@@ -400,6 +400,14 @@ namespace CommanderNS {
                 this->timestamp = dt;
                 return *this;
             }
+            EmbedData addField(string name, string value, bool Inline = true) {
+                EmbedFieldData embedFieldData;
+                embedFieldData.name = name;
+                embedFieldData.value = value;
+                embedFieldData.Inline = Inline;
+                this->fields.push_back(embedFieldData);
+                return *this;
+            }
             string title;
             string type;
             string description;

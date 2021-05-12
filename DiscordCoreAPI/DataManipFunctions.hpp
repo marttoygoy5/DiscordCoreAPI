@@ -405,6 +405,7 @@ namespace CommanderNS {
 
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, DeleteReactionData deleteReactionData){
 			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji + "/" + deleteReactionData.userId;
+			cout << relativePath << "  RELATIVEPATH" << endl;
 			HTTPData deleteData;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;

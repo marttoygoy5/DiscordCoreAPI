@@ -43,10 +43,10 @@ namespace CommanderNS {
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
-		task<int> login() {
+		int login() {
 			int returnVal;
 			this->pSystemThreads->Threads.at(0).taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
-			co_return returnVal;
+			return returnVal;
 		}
 
 	protected:
@@ -92,33 +92,33 @@ namespace CommanderNS {
 				DiscordCoreAPI::doWeQuit = true;
 				WebSocketReceiver::doWeQuit = true;
 				std::cout << "Ctrl-C event\n";
-				return TRUE;
+				exit(EXIT_SUCCESS);
 
 				// CTRL-CLOSE: confirm that the user wants to exit.
 			case CTRL_CLOSE_EVENT:
 				DiscordCoreAPI::doWeQuit = true;
 				WebSocketReceiver::doWeQuit = true;
 				std::cout << "Ctrl-Close event\n";
-				return TRUE;
+				exit(EXIT_SUCCESS);
 
 				// Pass other signals to the next handler.
 			case CTRL_BREAK_EVENT:
 				DiscordCoreAPI::doWeQuit = true;
 				WebSocketReceiver::doWeQuit = true;
 				std::cout << "Ctrl-Break event\n";
-				return FALSE;
+				exit(EXIT_SUCCESS);
 
 			case CTRL_LOGOFF_EVENT:
 				DiscordCoreAPI::doWeQuit = true;
 				WebSocketReceiver::doWeQuit = true;
 				std::cout << "Ctrl-LogOff event\n";
-				return FALSE;
+				exit(EXIT_SUCCESS);
 
 			case CTRL_SHUTDOWN_EVENT:
 				DiscordCoreAPI::doWeQuit = true;
 				WebSocketReceiver::doWeQuit = true;
 				std::cout << "Ctrl-Shutdown event\n";
-				return FALSE;
+				exit(EXIT_SUCCESS);
 
 			default:
 				return FALSE;

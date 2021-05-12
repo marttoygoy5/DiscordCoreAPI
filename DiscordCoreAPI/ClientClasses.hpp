@@ -153,6 +153,8 @@ namespace CommanderNS {
 
 		public:
 			com_ptr<Client> Client;
+			ReactionManager* Reactions;
+			ClientDataTypes::MessageData Data;
 
 			Message() {};
 			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<ClientClasses::Client> pClient) {
@@ -164,16 +166,16 @@ namespace CommanderNS {
 			}
 
 			task<void> deleteMessageAsync(int timeDelay = 0) {
+				co_await resume_background();
 				DataManipFunctions::DeleteMessageData deleteMessageData;
 				deleteMessageData.channelId = this->Data.channelId;
 				deleteMessageData.messageId = this->Data.id;
 				deleteMessageData.timeDelay = timeDelay;
 				co_await DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteMessageData);
+				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
 				co_return;
 			};
 
-			ReactionManager* Reactions;
-			ClientDataTypes::MessageData Data;
 		protected:
 			com_ptr<RestAPI> pRestAPI;
 			string selfUserId;
