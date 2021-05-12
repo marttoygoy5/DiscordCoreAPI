@@ -278,7 +278,7 @@ namespace CommanderNS {
             DefaultMessageNotificationLevel defaultMessageNotifications = DefaultMessageNotificationLevel::ALL_MESSAGES;
             ExplicitContentFilterLevel explicitContentFilter = ExplicitContentFilterLevel::DISABLED;
             vector<EmojiData> emoji;
-            map<string, RoleData> roles;
+            map<string, ClientDataTypes::RoleData> roles;
             MFALevel mfaLevel = MFALevel::NONE;
             int systemChannelFlags = 0;
             bool large = false;

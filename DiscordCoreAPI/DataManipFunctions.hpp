@@ -108,7 +108,7 @@ namespace CommanderNS {
 		};
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetGuildMembersData getGuildMembersData) {
-			string relativePath = "/guilds/" + getGuildMembersData.guildId + "/members";
+			string relativePath = "/guilds/" + getGuildMembersData.guildId + "/members?limit=1000";
 			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
 			unbounded_buffer<HTTPData> buffer02;
@@ -122,8 +122,7 @@ namespace CommanderNS {
 			workloadData.workloadType = HttpAgents::WorkloadType::GET;
 			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD_MEMBERS;
 			send(buffer00, workloadData);
-			HTTPData getData;
-			getData = receive(buffer03);
+			HTTPData getData = receive(buffer03);
 			json jsonValue = getData.data;
 			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
 				json jsonGuildValue = jsonValue.at(x);
@@ -162,14 +161,17 @@ namespace CommanderNS {
 			json jsonValue = getData.data;
 			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
 				json jsonGuildValue = jsonValue.at(x);
-				ClientDataTypes::GuildData guildData;
-				DataParsingFunctions::parseObject(jsonGuildValue, &guildData);
-				if (getCurrentUserGuildsData.pGuildDataMap->contains(guildData.id)) {
-					guildData = getCurrentUserGuildsData.pGuildDataMap->at(guildData.id);
+				if (getCurrentUserGuildsData.pGuildDataMap->contains(jsonGuildValue.at("id"))) {
+					ClientDataTypes::GuildData guildData = getCurrentUserGuildsData.pGuildDataMap->at(guildData.id);
 					DataParsingFunctions::parseObject(jsonGuildValue, &guildData);
+					getCurrentUserGuildsData.pGuildDataMap->erase(guildData.id);
+					getCurrentUserGuildsData.pGuildDataMap->insert(make_pair(guildData.id, guildData));
 				}
-				getCurrentUserGuildsData.pGuildDataMap->erase(guildData.id);
-				getCurrentUserGuildsData.pGuildDataMap->insert(make_pair(guildData.id, guildData));
+				else {
+					ClientDataTypes::GuildData guildData;
+					DataParsingFunctions::parseObject(jsonGuildValue, &guildData);
+					getCurrentUserGuildsData.pGuildDataMap->insert(make_pair(guildData.id, guildData));
+				}				
 			}
 			co_return;
 		}
@@ -340,8 +342,8 @@ namespace CommanderNS {
 			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
 				if (roleData.contains(jsonValue.at(x).at("id"))) {
 					ClientDataTypes::RoleData roleDataNew = roleData.at(jsonValue.at(x).at("id"));
-					roleData.erase(jsonValue.at(x).at("id"));
 					DataParsingFunctions::parseObject(jsonValue.at(x), &roleDataNew);
+					roleData.erase(jsonValue.at(x).at("id"));
 					roleData.insert(make_pair(to_string(jsonValue.at(x).at("id")), roleDataNew));
 				}
 				else {

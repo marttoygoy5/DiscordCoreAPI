@@ -46,7 +46,6 @@ namespace CommanderNS {
 			};
 
 			task<void> addReactionAsync(ClientDataTypes::CreateReactionData createReactionData) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(4).threadQueue.get());
 				string emoji;
 				if (createReactionData.id != string()) {
 					emoji += ":" + createReactionData.name + ":" + createReactionData.id;
@@ -65,12 +64,10 @@ namespace CommanderNS {
 				putEmojiData.messageId = this->messageId;
 				putEmojiData.emoji = emojiEncoded;
 				DataManipFunctions::putObjectDataAsync(this->pRestAPI, putEmojiData).get();
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 				co_return;
 			};
 
 			task<void> deleteUserReactionAsync(ClientDataTypes::DeleteReactionData deleteReactionData) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(4).threadQueue.get());
 				string emoji;
 				if (deleteReactionData.emojiId != string()) {
 					emoji += ":" + deleteReactionData.emojiName + ":" + deleteReactionData.emojiId;
@@ -90,12 +87,10 @@ namespace CommanderNS {
 				deleteReactionDataNew.userId = deleteReactionData.userId;
 				deleteReactionDataNew.encodedEmoji = emojiEncoded;
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 				co_return;
 			}
 
 			task<void> deleteAllReactionsByEmojiAsync(ClientDataTypes::DeleteAllReactionsByEmojiData deleteReactionData) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(4).threadQueue.get());
 				string emoji;
 				if (deleteReactionData.emojiId != string()) {
 					emoji += ":" + deleteReactionData.emojiName + ":" + deleteReactionData.emojiId;
@@ -114,22 +109,18 @@ namespace CommanderNS {
 				deleteReactionDataNew.messageId = this->messageId;
 				deleteReactionDataNew.encodedEmoji = emojiEncoded;
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 				co_return;
 			}
 
 			task<void> deleteAllReactionsAsync(ClientDataTypes::DeleteAllReactionsData deleteReactionData) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(4).threadQueue.get());
 				DataManipFunctions::DeleteAllReactionsData deleteReactionDataNew;
 				deleteReactionDataNew.channelId = this->channelId;
 				deleteReactionDataNew.messageId = this->messageId;
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 				co_return;
 			}
 
 			task<void> deleteOwnReactionAsync(ClientDataTypes::DeleteOwnReactionData deleteReactionData) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(4).threadQueue.get());
 				string emoji;
 				if (deleteReactionData.emojiId != string()) {
 					emoji += ":" + deleteReactionData.emojiName + ":" + deleteReactionData.emojiId;
@@ -148,7 +139,6 @@ namespace CommanderNS {
 				deleteReactionDataNew.messageId = this->messageId;
 				deleteReactionDataNew.encodedEmoji = emojiEncoded;
 				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 				co_return;
 			}
 
@@ -206,7 +196,6 @@ namespace CommanderNS {
 			};
 
 			task<Message*> fetchAsync(string messageId) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
 				if (this->contains(messageId)) {
 					Message* message = &this->at(messageId);
 					this->erase(messageId);
@@ -216,7 +205,6 @@ namespace CommanderNS {
 					getMessageData.channelId = this->channelId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
 					this->insert(std::make_pair(messageId, *message));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return message;
 				}
 				else {
@@ -228,7 +216,6 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
 					Message message(messageData, this->pRestAPI, this->selfUserId, this->Client);
 					this->insert(std::make_pair(messageId, message));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return &this->at(messageId);
 				}
 			};
@@ -243,7 +230,6 @@ namespace CommanderNS {
 			}
 
 			task<Message> createMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(3).threadQueue.get());
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
@@ -254,7 +240,6 @@ namespace CommanderNS {
 					DataManipFunctions::postObjectDataAsync(this->pRestAPI, postMessageData).get();
 					Message message(messageData, this->pRestAPI, this->selfUserId, this->Client);
 					this->insert(make_pair(messageData.id, message));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return message;
 				}
 				catch (exception error) {
@@ -297,7 +282,6 @@ namespace CommanderNS {
 			}
 
 			task<GuildMember*> fetchAsync(string guildMemberId) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
 				if (this->contains(guildMemberId)) {
 					GuildMember* guildMember = &this->at(guildMemberId);
 					this->erase(guildMemberId);
@@ -307,7 +291,6 @@ namespace CommanderNS {
 					getGuildMemberData.guildId = this->guildId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 					this->insert(std::make_pair(guildMemberId, *guildMember));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return guildMember;
 				}
 				else {
@@ -319,7 +302,6 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 					GuildMember guildMember(guildMemberData, this->Client);
 					this->insert(std::make_pair(guildMemberId, guildMember));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return &this->at(guildMemberId);
 				}
 			};
@@ -334,7 +316,6 @@ namespace CommanderNS {
 			};
 
 			task<void> getGuildMembersAsync() {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
 				DataManipFunctions::GetGuildMembersData getGuildMembersData;
 				map<string, ClientDataTypes::GuildMemberData> guildMemberDataMap;
 				for (auto const& [key, value]: *this) {
@@ -348,18 +329,14 @@ namespace CommanderNS {
 						this->erase(key);
 						ClientClasses::GuildMember guildMember(value, this->Client);
 						this->insert(make_pair(key, guildMember));
-						cout << "IT HAS IT" << value.user.id << endl;
 					}
 					else {
 						ClientClasses::GuildMember guildMember(value, this->Client);
 						this->insert(make_pair(key, guildMember));
-						cout << value.user.id << endl;
 					}
 				}
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 				co_return;
 			}
-
 		protected:
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
@@ -399,7 +376,6 @@ namespace CommanderNS {
 			};
 
 			task<Channel*> fetchAsync(string channelId) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
 				if (this->contains(channelId)) {
 					Channel* channel = &this->at(channelId);
 					this->erase(channelId);
@@ -408,7 +384,6 @@ namespace CommanderNS {
 					getChannelData.id = channelId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getChannelData).get();
 					this->insert(std::make_pair(channelId, *channel));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return channel;
 				}
 				else {
@@ -419,7 +394,6 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getChannelData).get();
 					Channel channel(channelData, this->pRestAPI, this->selfUserId, this->Client);
 					this->insert(std::make_pair(channelId, channel));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return &this->at(channelId);
 				}
 			};
@@ -463,6 +437,12 @@ namespace CommanderNS {
 				}
 			};
 
+			task<void> getRolesAsync() {
+				DataManipFunctions::GetRolesData getRolesData;
+				getRolesData.guildId = this->Data.id;
+				getRolesData.pDataStructure = &this->Data.roles;
+			}
+
 		protected:
 			string selfUserId;
 		};
@@ -480,7 +460,6 @@ namespace CommanderNS {
 			com_ptr<Client> Client;
 
 			task<Guild*> fetchAsync(string guildId) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
 				if (this->contains(guildId)) {
 					Guild* guild = &this->at(guildId);
 					this->erase(guildId);
@@ -489,7 +468,6 @@ namespace CommanderNS {
 					getGuildData.id = guildId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
 					this->insert(std::make_pair(guildId, *guild));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return guild;
 				}
 				else {
@@ -500,7 +478,6 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildData).get();
 					Guild guild(guildData, this->pRestAPI, this->selfUserId, this->Client);
 					this->insert(std::make_pair(guildId, guild));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return &this->at(guildId);
 				}
 			};
@@ -519,7 +496,6 @@ namespace CommanderNS {
 			}
 
 			task<void> getCurrentUserGuilds() {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
 				DataManipFunctions::GetCurrentUserGuildsData getCurrentUserGuildsData;
 				map<string, ClientDataTypes::GuildData> guildDataMap;
 				for (auto const& [key, val] : this->guilds) {
@@ -534,7 +510,6 @@ namespace CommanderNS {
 					}
 					this->guilds.insert(make_pair(key, guild));
 				}
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 				co_return;
 			};
 			
@@ -575,7 +550,6 @@ namespace CommanderNS {
 			};
 
 			task<User*> fetchAsync(string userId) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
 				if (this->contains(userId)){
 					User* user = &this->at(userId);
 					this->erase(userId);
@@ -584,7 +558,6 @@ namespace CommanderNS {
 					getUserData.id = userId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
 					this->insert(std::make_pair(userId, *user));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return user;
 				}
 				else {
@@ -595,7 +568,6 @@ namespace CommanderNS {
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getUserData).get();
 					User user(userData, this->Client);
 					this->insert(std::make_pair(userId, user));
-					co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
 					co_return &this->at(userId);
 				}
 			};
