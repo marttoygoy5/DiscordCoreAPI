@@ -146,7 +146,6 @@ namespace CommanderNS {
 				json field = { {"inline", editMessageData.embed.fields.at(x).Inline},
 								{"value", editMessageData.embed.fields.at(x).value},
 								{"name", editMessageData.embed.fields.at(x).name} };
-				cout << "THIS IS ANOTHER MESSAGE FIELD!" << endl;
 				fields.push_back(field);
 			}
 

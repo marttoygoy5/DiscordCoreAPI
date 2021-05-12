@@ -1527,6 +1527,7 @@ namespace CommanderNS {
                         ClientDataTypes::EmbedFieldData fieldData;
                         parseObject(fieldsArray.at(x), &fieldData);
                         embedData.fields.push_back(fieldData);
+                        cout << "EMBED FIELD NUMBER " + to_string(x) + "TESTING" << endl;
                         break;
                     }
                 }

@@ -202,5 +202,101 @@ namespace CommanderNS {
 			cout << "PERMISSIONS: " << endl << sstream.str() << endl;
 		}
 	};
+
+	struct DataManipFunctionData {};
+
+	struct DeleteReactionData : DataManipFunctionData {
+		string channelId;
+		string messageId;
+		string encodedEmoji;
+		string userId;
+	};
+
+	struct DeleteAllReactionsByEmojiData : DataManipFunctionData {
+		string channelId;
+		string messageId;
+		string encodedEmoji;
+	};
+
+	struct DeleteAllReactionsData : DataManipFunctionData {
+		string channelId;
+		string messageId;
+	};
+
+	struct DeleteOwnReactionData : DataManipFunctionData {
+		string channelId;
+		string messageId;
+		string encodedEmoji;
+	};
+
+	struct GetSelfUserData : DataManipFunctionData {
+		ClientDataTypes::UserData* pDataStructure;
+	};
+
+	struct GetUserData : DataManipFunctionData {
+		ClientDataTypes::UserData* pDataStructure;
+		string id;
+	};
+
+	struct GetGuildData : DataManipFunctionData {
+		ClientDataTypes::GuildData* pDataStructure;
+		string id;
+	};
+
+	struct GetChannelData : DataManipFunctionData {
+		ClientDataTypes::ChannelData* pDataStructure;
+		string id;
+	};
+
+	struct GetGuildMemberData : DataManipFunctionData {
+		ClientDataTypes::GuildMemberData* pDataStructure;
+		string guildId;
+		string id;
+	};
+
+	struct GetMessageData : DataManipFunctionData {
+		ClientDataTypes::MessageData* pDataStructure;
+		string channelId;
+		string id;
+	};
+
+	struct GetRolesData : DataManipFunctionData {
+		map<string, ClientDataTypes::RoleData>* pDataStructure;
+		string guildId;
+	};
+
+	struct PostMessageData : DataManipFunctionData {
+		ClientDataTypes::MessageData* pDataStructure;
+		string content;
+		string channelId;
+	};
+
+	struct PutEmojiData : DataManipFunctionData {
+		string channelId;
+		string messageId;
+		string emoji;
+	};
+
+	struct DeleteMessageData : DataManipFunctionData {
+		string channelId;
+		string messageId;
+		unsigned int timeDelay = 0;
+	};
+
+	struct GetCurrentUserGuildsData : DataManipFunctionData {
+		map<string, ClientDataTypes::GuildData>* pGuildDataMap;
+	};
+
+	struct GetGuildMembersData : DataManipFunctionData {
+		string guildId;
+		map<string, ClientDataTypes::GuildMemberData>* pGuildMemberDataMap;
+	};
+
+	struct EditMessageData : DataManipFunctionData {
+		string content;
+		string channelId;
+		string messageId;
+		ClientDataTypes::MessageData* pMessageData;
+	};
 };
 #endif

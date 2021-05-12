@@ -212,7 +212,6 @@ namespace CommanderNS {
 			HttpResponseMessage httpResponse;
 			HttpCompletionOption completionOption;
 			httpResponse = postHttpClient.SendRequestAsync(httpRequest, completionOption).get();
-			wcout << httpResponse.Content().ReadAsStringAsync().get().c_str() << "WHAT IS UP?" << endl;
 			int currentMSTimeLocal;
 			unsigned int getsRemainingLocal;
 			int msRemainLocal;

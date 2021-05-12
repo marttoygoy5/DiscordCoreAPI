@@ -14,6 +14,7 @@
 #include "SystemThreads.hpp"
 #include "WebSocketAgents.hpp"
 #include "ClientClasses.hpp"
+#include "MainAgent.hpp"
 
 namespace CommanderNS {
 
@@ -32,20 +33,24 @@ namespace CommanderNS {
 		DiscordCoreAPI(hstring botToken) {
 			this->pSystemThreads = make_self<SystemThreads>();
 			this->pSystemThreads->initialize().get();
-			this->pWebSocketReceiver = make_self<WebSocketReceiver>(this->pSystemThreads->Threads.at(0).scheduler);
+			this->pWebSocketReceiver = make_self<WebSocketReceiver>(this->pSystemThreads->Threads.at(0).scheduler, this->pMainAgent);
 			this->pWebSocketConnection = make_self<WebSocketConnection>(this->pWebSocketReceiver->buffer00, this->pSystemThreads->Threads.at(0).scheduler);
 			this->botToken = botToken;
 			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocketConnection->socketPath, this->pSystemThreads);
 			this->Client = make_self<ClientClasses::Client>(this->pRestAPI);
+			this->pClientAgent = make_self<ClientClasses::ClientAgent>(this->pSystemThreads->Threads.at(0).scheduler, this->Client);
+			this->pClientAgent->start();
+			this->pMainAgent = make_self<ClientClasses::MainAgent>(this->pSystemThreads->Threads.at(0).scheduler);
+			this->Client->initialize(this->pClientAgent, this->pMainAgent);
 			this->pEventMachine = make_self<EventMachine>();
-			this->pWebSocketConnection->initialize(botToken, this->pEventMachine, this->pSystemThreads, this->pRestAPI, this->Client);
+			this->pWebSocketConnection->initialize(botToken, this->pEventMachine, this->pSystemThreads,this->pRestAPI, this->Client);
 			this->pWebSocketReceiver->initialize(this->pEventMachine, this->pSystemThreads, this->pRestAPI, this->Client);
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
 		int login() {
 			int returnVal;
-			this->pSystemThreads->Threads.at(0).taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
+			this->pSystemThreads->mainThreadContext.taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
 			return returnVal;
 		}
 
@@ -55,6 +60,8 @@ namespace CommanderNS {
 		com_ptr<WebSocketReceiver> pWebSocketReceiver{ nullptr };
 		com_ptr<WebSocketConnection> pWebSocketConnection{ nullptr };
 		com_ptr<RestAPI> pRestAPI{ nullptr };
+		com_ptr<ClientClasses::ClientAgent> pClientAgent{ nullptr };
+		com_ptr<ClientClasses::MainAgent> pMainAgent{ nullptr };
 
 		task<void> connect() {
 			try {
