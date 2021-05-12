@@ -22,7 +22,8 @@ namespace CommanderNS {
 			GET = 1,
 			PUT = 2,
 			POST = 3,
-			DELETED = 4
+			PATCH = 4,
+			DELETED = 5
 		};
 
 		struct WorkloadData {
@@ -134,24 +135,19 @@ namespace CommanderNS {
 					}
 					HTTPData returnData;
 					if (workload.workloadType == WorkloadType::GET) {
-						HTTPData getData;
-						getData = this->pRestAPI->httpGETObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
-						returnData.data = getData.data;
+						returnData = this->pRestAPI->httpGETObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
 					}
 					else if (workload.workloadType == WorkloadType::POST) {
-						HTTPData postData;
-						postData = this->pRestAPI->httpPOSTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
-						returnData.data = postData.data;
+						returnData = this->pRestAPI->httpPOSTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
 					}
 					else if (workload.workloadType == WorkloadType::PUT) {
-						HTTPData putData;
-						putData = this->pRestAPI->httpPUTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
-						returnData.data = putData.data;
+						returnData = this->pRestAPI->httpPUTObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
+					}
+					else if (workload.workloadType == WorkloadType::PATCH) {
+						returnData = this->pRestAPI->httpPATCHObjectDataAsync(workload.relativeURL, workload.content, &workload.rateLimitData).get();
 					}
 					else if (workload.workloadType == WorkloadType::DELETED) {
-						HTTPData deleteData;
-						deleteData = this->pRestAPI->httpDELETEObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
-						returnData.data = deleteData.data;
+						returnData = this->pRestAPI->httpDELETEObjectDataAsync(workload.relativeURL, &workload.rateLimitData).get();
 					}
 					if (HTTPHandler::rateLimitDataBucketValues.contains(workload.rateLimitData.rateLimitType)) {
 						HTTPHandler::rateLimitDataBucketValues.erase(workload.rateLimitData.rateLimitType);

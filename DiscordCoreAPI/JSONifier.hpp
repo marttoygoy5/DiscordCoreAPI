@@ -139,6 +139,86 @@ namespace CommanderNS {
 
 			return data.dump();
 		}
+
+		std::string getEditMessagePayload(ClientDataTypes::EditMessageData editMessageData) {
+			json data;
+			auto fields = json::array();
+
+			for (unsigned int x = 0; x < editMessageData.embed.fields.size(); x += 1) {
+				json object = { {"inline", editMessageData.embed.fields.at(x).Inline},
+								{"value", editMessageData.embed.fields.at(x).value},
+								{"name", editMessageData.embed.fields.at(x).name} };
+				fields.push_back(object);
+			}
+
+			auto attachments = json::array();
+
+			for (unsigned int x = 0; x < editMessageData.attachments.size(); x += 1) {
+				json attachment = {
+					{"content_type", editMessageData.attachments.at(x).contentType},
+					{"file_name",editMessageData.attachments.at(x).filename},
+					{"height",editMessageData.attachments.at(x).height},
+					{"id",editMessageData.attachments.at(x).id},
+					{"proxy_url",editMessageData.attachments.at(x).proxyUrl},
+					{"size",editMessageData.attachments.at(x).size},
+					{"url",editMessageData.attachments.at(x).url},
+					{"width",editMessageData.attachments.at(x).width}
+				};
+				attachments.push_back(attachment);
+			}
+
+			int colorValue = editMessageData.embed.actualColor();
+
+			data = {
+				{"flags", editMessageData.flags},
+				{"attachments", attachments},
+				{"allowed_mentions", {
+					{"parse", editMessageData.allowedMentions.parse},
+					{"replied_user", editMessageData.allowedMentions.repliedUser},
+					{"roles", editMessageData.allowedMentions.roles},
+					{"users", editMessageData.allowedMentions.users}
+					}},
+				{"content", editMessageData.content},
+				{"embed" ,
+							{{"author", {
+							{"icon_url", editMessageData.embed.author.iconUrl},
+							{"name", editMessageData.embed.author.name},
+							{"url", editMessageData.embed.author.url },
+							{"proxy_icon_url", editMessageData.embed.author.proxyIconUrl}
+					}},
+					{"image", {
+						{"height", editMessageData.embed.image.height},
+						{"width", editMessageData.embed.image.width},
+						{"url", editMessageData.embed.image.url},
+						{"proxy_url",editMessageData.embed.image.proxyUrl}
+			}},
+				{ "provider" , {
+					{"name", editMessageData.embed.provider.name},
+					{"url", editMessageData.embed.provider.url}
+
+			}},
+				{"thumbnail", {
+					{"height", editMessageData.embed.thumbnail.height},
+					{"width", editMessageData.embed.thumbnail.width},
+					{"url", editMessageData.embed.thumbnail.url},
+					{"proxy_url", editMessageData.embed.thumbnail.proxyUrl}
+				}},
+
+
+					{"footer", {
+						{"icon_url", editMessageData.embed.footer.iconUrl},
+						{"proxy_icon_url", editMessageData.embed.footer.proxyIconUrl},
+						{"text", editMessageData.embed.footer.text}
+			}},
+					{"description" , editMessageData.embed.description},
+					{"title", editMessageData.embed.title},
+					{"fields", fields},
+					{"color",colorValue}
+			}}
+			};
+
+			return data.dump();
+		}
 	}
 }
 #endif

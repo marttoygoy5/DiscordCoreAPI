@@ -16,23 +16,24 @@ namespace CommanderNS {
 		json data;
 	};
 
-	enum class RateLimitType{
-		UNSET =0, 
+	enum class RateLimitType {
+		UNSET = 0,
 		GET_MESSAGE = 1,
-		POST_MESSAGE = 2, 
+		POST_MESSAGE = 2,
 		DELETE_MESSAGE = 3,
-		GET_USER = 4, 
-		GET_USER_SELF = 5, 
-		GET_GUILD = 6, 
-		GET_CHANNEL = 7, 
+		GET_USER = 4,
+		GET_USER_SELF = 5,
+		GET_GUILD = 6,
+		GET_CHANNEL = 7,
 		GET_REACTION = 8,
 		PUT_REACTION = 9,
 		DELETE_REACTION = 10,
-		DELETE_ALL_REACTION = 11,
-		GET_GUILD_MEMBER = 12,
-		GET_GUILD_MEMBERS = 13,
-		GET_ROLES = 14,
-		GET_USER_GUILDS = 15
+		PATCH_MESSAGE = 11,
+		DELETE_ALL_REACTION = 12,
+		GET_GUILD_MEMBER = 13,
+		GET_GUILD_MEMBERS = 14,
+		GET_ROLES = 15,
+		GET_USER_GUILDS = 16
 	};
 
 	struct RateLimitData {
@@ -46,6 +47,9 @@ namespace CommanderNS {
 	class PermissionsConverter {
 	public:
 		static bool checkForPresence(ClientDataTypes::Permissions permission, string permissionString) {
+			if (permissionString == "") {
+				return false;
+			}
 			int permissionsInteger = stoll(permissionString);
 			if ((permissionsInteger & (int)permission) == (int)permission) {
 				return true;
@@ -54,7 +58,11 @@ namespace CommanderNS {
 				return false;
 			}
 		}
+
 		static string addPermissionsToString(string originalPermissionString, ClientDataTypes::Permissions permissionsToAdd[], int quantityOfPermsToAdd) {
+			if (originalPermissionString == "") {
+				originalPermissionString = "0";
+			}
 			int permissionsInteger = stoll(originalPermissionString);
 			for (unsigned int x = 0; x < quantityOfPermsToAdd; x += 1) {
 				permissionsInteger = permissionsInteger | (int)permissionsToAdd[x];
@@ -63,7 +71,11 @@ namespace CommanderNS {
 			sstream << permissionsInteger;
 			return sstream.str();
 		}
+
 		static string removePermissionsFromString(string originalPermissionString, ClientDataTypes::Permissions permissionsToRemove[], int quantityOfPermsToRemove) {
+			if (originalPermissionString == "") {
+				originalPermissionString = "0";
+			}
 			int permissionsInteger = stoll(originalPermissionString);
 			for (unsigned int x = 0; x < quantityOfPermsToRemove; x += 1) {
 				permissionsInteger = permissionsInteger & ~(int)permissionsToRemove[x];
@@ -72,7 +84,11 @@ namespace CommanderNS {
 			sstream << permissionsInteger;
 			return sstream.str();
 		}
+
 		static void displayPermissions(string permissionString) {
+			if (permissionString == "") {
+				permissionString = "0";
+			}
 			int permissionsInteger = stoll(permissionString);
 			stringstream sstream;
 			if (permissionsInteger & (1 << 0)) {
@@ -171,16 +187,16 @@ namespace CommanderNS {
 			if (permissionsInteger & (1 << 31)) {
 				sstream << "USE_SLASH_COMMANDS" << endl;
 			}
-			if (permissionsInteger & (1 << 32)) {
+			if (permissionsInteger & (1l << 32)) {
 				sstream << "REQUEST_TO_SPEAK" << endl;
 			}
-			if (permissionsInteger & (1 << 34)) {
+			if (permissionsInteger & (1l << 34)) {
 				sstream << "MANAGE_THREADS" << endl;
 			}
-			if (permissionsInteger & (1 << 35)) {
+			if (permissionsInteger & (1l << 35)) {
 				sstream << "USE_PUBLIC_THREADS" << endl;
 			}
-			if (permissionsInteger & (1 << 36)) {
+			if (permissionsInteger & (1l << 36)) {
 				sstream << "USE_PRIVATE_THREADS" << endl;
 			}
 			cout << "PERMISSIONS: " << endl << sstream.str() << endl;

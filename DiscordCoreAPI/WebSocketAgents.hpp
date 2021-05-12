@@ -91,7 +91,7 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
-			messageCreationData.message = new ClientClasses::Message(messageData, this->pRestAPI, this->pClient->User.Data.id, this->pClient);
+			messageCreationData.message = new ClientClasses::Message(messageData, this->pRestAPI, this->pClient->User.Data.id, this->pClient, channelId);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
 			co_return;
 		}
@@ -102,7 +102,7 @@ namespace CommanderNS {
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
-			messageDeletionData.message = new ClientClasses::Message(messageData, this->pRestAPI, this->pClient->User.Data.id, this->pClient);
+			messageDeletionData.message = new ClientClasses::Message(messageData, this->pRestAPI, this->pClient->User.Data.id, this->pClient, channelId);
 			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
 			co_return;
 		}

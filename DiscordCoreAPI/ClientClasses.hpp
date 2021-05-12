@@ -157,11 +157,12 @@ namespace CommanderNS {
 			ClientDataTypes::MessageData Data;
 
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<ClientClasses::Client> pClient) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<ClientClasses::Client> pClient, string channelId) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
 				this->selfUserId = selfUserId;
 				this->Client = pClient;
+				this->channelId = channelId;
 				this->Reactions = new ReactionManager(pRestAPI, this->Data.channelId, this->Data.id, this->selfUserId, this->Client);
 			}
 
@@ -176,7 +177,30 @@ namespace CommanderNS {
 				co_return;
 			};
 
+			task<Message> editMessageAsync(ClientDataTypes::EditMessageData editMessageData) {
+				try {
+					string createMessagePayload = JSONifier::getEditMessagePayload(editMessageData);
+					ClientDataTypes::MessageData messageData;
+					DataManipFunctions::PostMessageData postMessageData;
+					postMessageData.channelId = this->channelId;
+					postMessageData.pDataStructure = &messageData;
+					postMessageData.content = createMessagePayload;
+					DataManipFunctions::EditMessageData editMessageDataNew;
+					editMessageDataNew.channelId = this->channelId;
+					editMessageDataNew.messageId = this->Data.id;
+					editMessageDataNew.content = createMessagePayload;
+					editMessageDataNew.pMessageData = &this->Data;
+					DataManipFunctions::patchObjectDataAsync(this->pRestAPI, editMessageDataNew).get();
+					Message message(messageData, this->pRestAPI, this->selfUserId, this->Client, this->channelId);
+					co_return message;
+				}
+				catch (exception error) {
+					cout << "createMessageAsync() Error: " << error.what() << endl;
+				}
+			}
+
 		protected:
+			string channelId;
 			com_ptr<RestAPI> pRestAPI;
 			string selfUserId;
 		};
@@ -214,7 +238,7 @@ namespace CommanderNS {
 					getMessageData.id = messageId;
 					getMessageData.channelId = this->channelId;
 					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getMessageData).get();
-					Message message(messageData, this->pRestAPI, this->selfUserId, this->Client);
+					Message message(messageData, this->pRestAPI, this->selfUserId, this->Client, this->channelId);
 					this->insert(std::make_pair(messageId, message));
 					co_return &this->at(messageId);
 				}
@@ -238,7 +262,7 @@ namespace CommanderNS {
 					postMessageData.pDataStructure = &messageData;
 					postMessageData.content = createMessagePayload;
 					DataManipFunctions::postObjectDataAsync(this->pRestAPI, postMessageData).get();
-					Message message(messageData, this->pRestAPI, this->selfUserId, this->Client);
+					Message message(messageData, this->pRestAPI, this->selfUserId, this->Client, this->channelId);
 					this->insert(make_pair(messageData.id, message));
 					co_return message;
 				}

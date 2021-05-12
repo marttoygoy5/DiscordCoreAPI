@@ -1272,7 +1272,7 @@ namespace CommanderNS {
 
             if (jsonObjectData.contains("height") && !jsonObjectData.at("height").is_null()) {
                 int theValue = jsonObjectData.at("height");
-                attachmentData.heigh = theValue;
+                attachmentData.height = theValue;
             }
 
             *pDataStructure = attachmentData;

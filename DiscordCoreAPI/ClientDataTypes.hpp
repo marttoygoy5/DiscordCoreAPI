@@ -345,14 +345,14 @@ namespace CommanderNS {
         };
 
         struct AttachmentData {
-            string id;
-            string filename;
-            string contentType;
-            int size;
-            string url;
-            string proxyUrl;
-            int heigh;
-            int width;
+            string id = "";
+            string filename = "";
+            string contentType = "";
+            int size = 0;
+            string url = "";
+            string proxyUrl = "";
+            int height = 0;
+            int width = 0;
         };
 
         struct EmbedFooterData {
@@ -649,6 +649,14 @@ namespace CommanderNS {
             string messageId;
             string emojiName;
             string emojiId;
+        };
+
+        struct EditMessageData {
+            string content;
+            EmbedData embed;
+            int flags;
+            AllowedMentionsData allowedMentions;
+            vector<AttachmentData> attachments;
         };
 
         struct DeleteAllReactionsData {

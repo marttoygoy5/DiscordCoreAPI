@@ -195,15 +195,63 @@ namespace CommanderNS {
 			co_return postData;
 		}
 
+		task<HTTPData> httpPATCHObjectDataAsync(string relativeURL, string content, RateLimitData* pRateLimitData) {
+			HTTPData patchData;
+			string connectionPath = to_string(baseURL) + relativeURL;
+			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
+			HttpContentDispositionHeaderValue headerValue(L"payload_json");
+			HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
+			auto contentHeaderCollection = HttpRequestHeaderCollection(nullptr);
+			HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
+			contents.Headers().ContentDisposition(headerValue);
+			contents.Headers().ContentType(typeHeaderValue);
+			HttpRequestMessage httpRequest;
+			httpRequest.Method(HttpMethod::Patch());
+			httpRequest.Content(contents);
+			httpRequest.RequestUri(requestUri);
+			HttpResponseMessage httpResponse;
+			HttpCompletionOption completionOption;
+			httpResponse = postHttpClient.SendRequestAsync(httpRequest, completionOption).get();
+			wcout << httpResponse.Content().ReadAsStringAsync().get().c_str() << "WHAT IS UP?" << endl;
+			int currentMSTimeLocal;
+			unsigned int getsRemainingLocal;
+			int msRemainLocal;
+			string bucket;
+			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
+				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+			}
+			else {
+				getsRemainingLocal = 0;
+			}
+			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
+				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+			}
+			else {
+				msRemainLocal = 250;
+			}
+			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
+				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
+			}
+			else {
+				bucket = "";
+			}
+			pRateLimitData->bucket = bucket;
+			pRateLimitData->msRemain = (float)msRemainLocal;
+			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
+			pRateLimitData->getsRemaining = getsRemainingLocal;
+			json jsonValue;
+			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
+				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+			}
+			patchData.data = jsonValue;
+			co_return patchData;
+		}
+
 		task<HTTPData > httpDELETEObjectDataAsync(string relativeURL, RateLimitData* pRateLimitData) {
 			HTTPData  deleteData;
 			string connectionPath = to_string(baseURL) + relativeURL;
 			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
-			HttpContentHeaderCollection contentHeaderCollection;
-			HttpContentDispositionHeaderValue headerValue(L"payload_json");
-			contentHeaderCollection.ContentDisposition(headerValue);
-			HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
-			contentHeaderCollection.ContentType(typeHeaderValue);
 			HttpResponseMessage httpResponse;
 			httpResponse = deleteHttpClient.DeleteAsync(requestUri).get();
 			int currentMSTimeLocal;
