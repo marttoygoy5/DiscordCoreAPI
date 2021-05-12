@@ -442,8 +442,8 @@ namespace CommanderNS {
             EmbedData addField(string name, string value, bool Inline = true) {
                 EmbedFieldData embedFieldData;
                 embedFieldData.name = name;
-                embedFieldData.value = value;
                 embedFieldData.Inline = Inline;
+                embedFieldData.value = value;
                 this->fields.push_back(embedFieldData);
                 return *this;
             }

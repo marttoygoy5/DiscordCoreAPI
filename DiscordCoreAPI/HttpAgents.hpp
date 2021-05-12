@@ -84,7 +84,7 @@ namespace CommanderNS {
 				target00(target00),
 				source01(source01),
 				target01(target01)
-			{};
+			{}
 
 		protected:
 			ISource<WorkloadData>& source00;
@@ -96,6 +96,7 @@ namespace CommanderNS {
 				send(&target00, workload);
 				HTTPData httpData = receive(&source01);
 				send(&target01, httpData);
+				agent::wait(this);
 				done();
 			}
 		};

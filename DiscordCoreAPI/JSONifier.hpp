@@ -15,7 +15,7 @@ namespace CommanderNS {
 
 	namespace JSONifier {
 
-		static std::string getIdentifyPayload(std::string botToken, int intents) {
+		static string getIdentifyPayload(std::string botToken, int intents) {
 			nlohmann::json data;
 			data = {
 					{"op", 2},
@@ -35,7 +35,7 @@ namespace CommanderNS {
 			return data.dump();
 		};
 
-		static std::string getHeartbeatPayload(int lastReceivedNumber) {
+		static string getHeartbeatPayload(int lastReceivedNumber) {
 			nlohmann::json data;
 			data = {
 				{"d", lastReceivedNumber},
@@ -44,7 +44,7 @@ namespace CommanderNS {
 			return data.dump();
 		};
 
-		static std::string getResumePayload(std::string botToken, std::string sessionID, int lastReceivedNumber) {
+		static string getResumePayload(std::string botToken, std::string sessionID, int lastReceivedNumber) {
 			nlohmann::json data;
 			data = {
 				{"op", 6},
@@ -77,20 +77,19 @@ namespace CommanderNS {
 			return finalValue;
 		};
 
-		std::string getCreateMessagePayload(ClientDataTypes::CreateMessageData createMessageData) {
-			json data;
+		string getCreateMessagePayload(ClientDataTypes::CreateMessageData createMessageData) {
 			auto fields = json::array();
 			
 			for (unsigned int x = 0; x < createMessageData.embed.fields.size(); x += 1) {
-				json object = { {"inline", createMessageData.embed.fields.at(x).Inline},
+				json field = { {"inline", createMessageData.embed.fields.at(x).Inline},
 								{"value", createMessageData.embed.fields.at(x).value},
 								{"name", createMessageData.embed.fields.at(x).name} };
-				fields.push_back(object);
+				fields.push_back(field);
 			}
 			
 			int colorValue = createMessageData.embed.actualColor();
 
-			data = {
+			json data = {
 				{"allowed_mentions", {
 					{"parse", createMessageData.allowedMentions.parse},
 					{"replied_user", createMessageData.allowedMentions.repliedUser},
@@ -140,36 +139,34 @@ namespace CommanderNS {
 			return data.dump();
 		}
 
-		std::string getEditMessagePayload(ClientDataTypes::EditMessageData editMessageData) {
-			json data;
+		string getEditMessagePayload(ClientDataTypes::EditMessageData editMessageData) {
 			auto fields = json::array();
 
 			for (unsigned int x = 0; x < editMessageData.embed.fields.size(); x += 1) {
-				json object = { {"inline", editMessageData.embed.fields.at(x).Inline},
+				json field = { {"inline", editMessageData.embed.fields.at(x).Inline},
 								{"value", editMessageData.embed.fields.at(x).value},
 								{"name", editMessageData.embed.fields.at(x).name} };
-				fields.push_back(object);
+				cout << "THIS IS ANOTHER MESSAGE FIELD!" << endl;
+				fields.push_back(field);
 			}
 
 			auto attachments = json::array();
 
 			for (unsigned int x = 0; x < editMessageData.attachments.size(); x += 1) {
-				json attachment = {
-					{"content_type", editMessageData.attachments.at(x).contentType},
+				json attachment = { {"content_type", editMessageData.attachments.at(x).contentType},
 					{"file_name",editMessageData.attachments.at(x).filename},
 					{"height",editMessageData.attachments.at(x).height},
 					{"id",editMessageData.attachments.at(x).id},
 					{"proxy_url",editMessageData.attachments.at(x).proxyUrl},
 					{"size",editMessageData.attachments.at(x).size},
 					{"url",editMessageData.attachments.at(x).url},
-					{"width",editMessageData.attachments.at(x).width}
-				};
+					{"width",editMessageData.attachments.at(x).width} };
 				attachments.push_back(attachment);
 			}
 
-			int colorValue = editMessageData.embed.actualColor();
+			int colorValue = editMessageData.embed.actualColorVal;
 
-			data = {
+			json data = {
 				{"flags", editMessageData.flags},
 				{"attachments", attachments},
 				{"allowed_mentions", {

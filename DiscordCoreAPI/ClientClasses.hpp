@@ -167,21 +167,19 @@ namespace CommanderNS {
 			}
 
 			task<void> deleteMessageAsync(int timeDelay = 0) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(4).threadQueue.get());
 				DataManipFunctions::DeleteMessageData deleteMessageData;
 				deleteMessageData.channelId = this->Data.channelId;
 				deleteMessageData.messageId = this->Data.id;
 				deleteMessageData.timeDelay = timeDelay;
-				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteMessageData);
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->mainThreadContext.threadQueue.get());
+				DataManipFunctions::deleteObjectDataAsync(this->pRestAPI, deleteMessageData).get();
 				co_return;
 			};
 
 			task<Message> editMessageAsync(ClientDataTypes::EditMessageData editMessageData) {
 				try {
 					string createMessagePayload = JSONifier::getEditMessagePayload(editMessageData);
-					ClientDataTypes::MessageData messageData;
 					DataManipFunctions::PostMessageData postMessageData;
+					ClientDataTypes::MessageData messageData;
 					postMessageData.channelId = this->channelId;
 					postMessageData.pDataStructure = &messageData;
 					postMessageData.content = createMessagePayload;
@@ -189,13 +187,13 @@ namespace CommanderNS {
 					editMessageDataNew.channelId = this->channelId;
 					editMessageDataNew.messageId = this->Data.id;
 					editMessageDataNew.content = createMessagePayload;
-					editMessageDataNew.pMessageData = &this->Data;
 					DataManipFunctions::patchObjectDataAsync(this->pRestAPI, editMessageDataNew).get();
+					editMessageDataNew.pMessageData = &this->Data;
 					Message message(messageData, this->pRestAPI, this->selfUserId, this->Client, this->channelId);
 					co_return message;
 				}
 				catch (exception error) {
-					cout << "createMessageAsync() Error: " << error.what() << endl;
+					cout << "editMessageAsync() Error: " << error.what() << endl;
 				}
 			}
 
