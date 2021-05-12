@@ -397,21 +397,16 @@ namespace CommanderNS {
             if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
                 json roles = jsonObjectData.at("roles");
                 for (unsigned int x = 0; x < roles.size(); x += 1) {
-                    bool isItFound = false;
-                    for (unsigned int y = 0; y < emojiData.roles.size(); y += 1) {
-                        if (emojiData.roles.at(y).id == roles.at(x).at("id")) {
-                            isItFound = true;
-                            emojiData.roles.erase(emojiData.roles.begin() + y);
-                            ClientDataTypes::RoleData roleData = emojiData.roles.at(y);
-                            parseObject(roles.at(x), &roleData);
-                            emojiData.roles.push_back(roleData);
-                            break;
-                        }
+                    if (emojiData.roles.contains(roles.at(x).at("id"))) {
+                        ClientDataTypes::RoleData roleData = emojiData.roles.at(roles.at(x).at("id"));
+                        emojiData.roles.erase(roles.at(x).at("id"));
+                        parseObject(roles.at(x), &roleData);
+                        emojiData.roles.insert(make_pair(roles.at(x).at("id"), roleData));
                     }
-                    if (isItFound == false) {
+                    else {
                         ClientDataTypes::RoleData roleData;
                         parseObject(roles.at(x), &roleData);
-                        emojiData.roles.push_back(roleData);
+                        emojiData.roles.insert(make_pair(roles.at(x).at("id"), roleData));
                     }
                 }
             }
@@ -992,20 +987,16 @@ namespace CommanderNS {
                 json roleDataArray = jsonObjectData.at("roles");
                 for (unsigned int x = 0; x < roleDataArray.size(); x += 1) {
                     bool isItFound = false;
-                    for (unsigned int y = 0; y < guildData.roles.size(); y += 1) {
-                        if (guildData.roles.at(y).id == roleDataArray.at(x).at("id")) {
-                            isItFound = true;
-                            guildData.roles.erase(guildData.roles.begin() + y);
-                            ClientDataTypes::RoleData roleData = guildData.roles.at(y);
-                            parseObject(roleDataArray.at(x), &roleData);
-                            guildData.roles.push_back(roleData);                            
-                            break;
-                        }
+                    if (guildData.roles.contains(roleDataArray.at(x).at("id"))) {
+                        ClientDataTypes::RoleData roleData = guildData.roles.at(roleDataArray.at(x).at("id"));
+                        guildData.roles.erase(roleDataArray.at(x).at("id"));
+                        parseObject(roleDataArray.at(x), &roleData);
+                        guildData.roles.insert(make_pair(roleDataArray.at(x).at("id"), roleData));
                     }
-                    if (isItFound == false) {
+                    else {
                         ClientDataTypes::RoleData roleData;
                         parseObject(roleDataArray.at(x), &roleData);
-                        guildData.roles.push_back(roleData);
+                        guildData.roles.insert(make_pair(roleDataArray.at(x).at("id"), roleData));
                     }
                 }
             }

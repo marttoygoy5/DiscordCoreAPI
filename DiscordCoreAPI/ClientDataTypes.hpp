@@ -163,7 +163,7 @@ namespace CommanderNS {
         struct EmojiData {
             string id;
             string name;
-            vector<RoleData> roles;
+            map<string, RoleData> roles;
             UserData user;
             bool requireColons;
             bool managed;
@@ -278,7 +278,7 @@ namespace CommanderNS {
             DefaultMessageNotificationLevel defaultMessageNotifications = DefaultMessageNotificationLevel::ALL_MESSAGES;
             ExplicitContentFilterLevel explicitContentFilter = ExplicitContentFilterLevel::DISABLED;
             vector<EmojiData> emoji;
-            vector<RoleData> roles;
+            map<string, RoleData> roles;
             MFALevel mfaLevel = MFALevel::NONE;
             int systemChannelFlags = 0;
             bool large = false;

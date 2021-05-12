@@ -13,6 +13,7 @@
 #include "FoundationClasses.hpp"
 #include "DataParsingFunctions.hpp"
 #include "ClientDataTypes.hpp"
+#include "ClientClasses.hpp"
 #include "HttpAgents.hpp"
 
 namespace CommanderNS {
@@ -75,7 +76,7 @@ namespace CommanderNS {
 		};
 
 		struct GetRolesData {
-			vector<ClientDataTypes::RoleData>* pDataStructure;
+			map<string, ClientDataTypes::RoleData>* pDataStructure;
 			string guildId;
 		};
 
@@ -100,6 +101,46 @@ namespace CommanderNS {
 		struct GetCurrentUserGuildsData {
 			map<string, ClientDataTypes::GuildData>* pGuildDataMap;
 		};
+
+		struct GetGuildMembersData {
+			string guildId;
+			map<string, ClientDataTypes::GuildMemberData>* pGuildMemberDataMap;
+		};
+
+		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetGuildMembersData getGuildMembersData) {
+			string relativePath = "/guilds/" + getGuildMembersData.guildId + "/members";
+			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
+			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
+			unbounded_buffer<HTTPData> buffer02;
+			unbounded_buffer<HTTPData> buffer03;
+			com_ptr<HttpAgents::RequestSender> requestSender = make_self<HttpAgents::RequestSender>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer00, buffer01, buffer02, buffer03);
+			com_ptr<HttpAgents::HTTPHandler> httpHandler = make_self<HttpAgents::HTTPHandler>(pRestAPI->pSystemThreads->Threads.at(1).scheduler, buffer02, buffer01, pRestAPI);
+			requestSender->start();
+			httpHandler->start();
+			HttpAgents::WorkloadData workloadData;
+			workloadData.relativeURL = relativePath;
+			workloadData.workloadType = HttpAgents::WorkloadType::GET;
+			workloadData.rateLimitData.rateLimitType = RateLimitType::GET_GUILD_MEMBERS;
+			send(buffer00, workloadData);
+			HTTPData getData;
+			getData = receive(buffer03);
+			json jsonValue = getData.data;
+			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
+				json jsonGuildValue = jsonValue.at(x);
+				if (getGuildMembersData.pGuildMemberDataMap->contains(jsonGuildValue.at("user").at("id"))) {
+					ClientDataTypes::GuildMemberData guildMemberData = getGuildMembersData.pGuildMemberDataMap->at(jsonGuildValue.at("user").at("id"));
+					DataParsingFunctions::parseObject(jsonGuildValue, &guildMemberData);
+					getGuildMembersData.pGuildMemberDataMap->erase(jsonGuildValue.at("user").at("id"));
+					getGuildMembersData.pGuildMemberDataMap->insert(make_pair(guildMemberData.user.id, guildMemberData));
+				}
+				else {
+					ClientDataTypes::GuildMemberData guildMemberData;
+					DataParsingFunctions::parseObject(jsonGuildValue, &guildMemberData);
+					getGuildMembersData.pGuildMemberDataMap->insert(make_pair(guildMemberData.user.id, guildMemberData));
+				}
+			}
+			co_return;
+		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetCurrentUserGuildsData getCurrentUserGuildsData) {
 			string relativePath = "/users/@me/guilds";
@@ -278,7 +319,7 @@ namespace CommanderNS {
 		}
 
 		IAsyncAction getObjectDataAsync(com_ptr<RestAPI> pRestAPI, GetRolesData getRolesData) {
-			vector<ClientDataTypes::RoleData> roleData = *getRolesData.pDataStructure;
+			map<string, ClientDataTypes::RoleData> roleData = *getRolesData.pDataStructure;
 			string relativePath = "/guilds/" + getRolesData.guildId + "/roles";
 			HTTPData getData;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
@@ -297,20 +338,16 @@ namespace CommanderNS {
 			getData = receive(buffer03);
 			json jsonValue = getData.data;
 			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
-				bool isItFound = false;
-				for (unsigned int y = 0; y < roleData.size(); y += 1) {
-					if (roleData.at(y).id == jsonValue.at(x).at("id")) {
-						isItFound = true;
-						ClientDataTypes::RoleData roleDataNew = roleData.at(y);
-						DataParsingFunctions::parseObject(jsonValue.at(x), &roleDataNew);
-						roleData.erase(roleData.begin() + y);
-						roleData.push_back(roleDataNew);
-					}
+				if (roleData.contains(jsonValue.at(x).at("id"))) {
+					ClientDataTypes::RoleData roleDataNew = roleData.at(jsonValue.at(x).at("id"));
+					roleData.erase(jsonValue.at(x).at("id"));
+					DataParsingFunctions::parseObject(jsonValue.at(x), &roleDataNew);
+					roleData.insert(make_pair(to_string(jsonValue.at(x).at("id")), roleDataNew));
 				}
-				if (isItFound == false) {
+				else {
 					ClientDataTypes::RoleData roleDataNew;
 					DataParsingFunctions::parseObject(jsonValue.at(x), &roleDataNew);
-					roleData.push_back(roleDataNew);
+					roleData.insert(make_pair(to_string(jsonValue.at(x).at("id")), roleDataNew));
 				}
 			}
 			*getRolesData.pDataStructure = roleData;
@@ -405,7 +442,6 @@ namespace CommanderNS {
 
 		IAsyncAction deleteObjectDataAsync(com_ptr<RestAPI> pRestAPI, DeleteReactionData deleteReactionData){
 			string relativePath = "/channels/" + deleteReactionData.channelId + "/messages/" + deleteReactionData.messageId + "/reactions/" + deleteReactionData.encodedEmoji + "/" + deleteReactionData.userId;
-			cout << relativePath << "  RELATIVEPATH" << endl;
 			HTTPData deleteData;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer00;
 			unbounded_buffer<HttpAgents::WorkloadData> buffer01;
