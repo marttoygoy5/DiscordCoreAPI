@@ -27,13 +27,15 @@ namespace CommanderNS {
 		GET_CHANNEL = 7,
 		GET_REACTION = 8,
 		PUT_REACTION = 9,
-		DELETE_REACTION = 10,
-		PATCH_MESSAGE = 11,
-		DELETE_ALL_REACTION = 12,
-		GET_GUILD_MEMBER = 13,
-		GET_GUILD_MEMBERS = 14,
-		GET_ROLES = 15,
-		GET_USER_GUILDS = 16
+		DELETE_REACTION =  10,
+		DELETE_ALL_REACTION = 11,
+		PATCH_MESSAGE = 12,
+		DELETE_REACTION_BY_EMOJI = 13,
+		DELETE_OWN_REACTION = 14,
+		GET_GUILD_MEMBER = 15,
+		GET_GUILD_MEMBERS = 16,
+		GET_ROLES = 17,
+		GET_USER_GUILDS = 18
 	};
 
 	struct RateLimitData {
@@ -203,7 +205,29 @@ namespace CommanderNS {
 		}
 	};
 
-	struct DataManipFunctionData {};
+	enum class DataManipFunctionDataType {
+		DeleteReactionData = 0,
+		DeleteAllReactionsByEmojiData = 1,
+		DeleteAllReactionsData = 2,
+		DeleteOwnReactionsData = 3,
+		GetSelfUserData = 4,
+		GetUserData = 5,
+		GetGuildData = 6,
+		GetChannelData = 7,
+		GetGuildMemberData = 8,
+		GetMessageData = 9,
+		GetRolesData = 10,
+		PostMessageData = 11,
+		PutEmojiData = 12,
+		DeleteMessageData = 13,
+		GetCurrentUserGuildsData = 14,
+		GetGuildMembersData = 15,
+		EditMessageData = 16
+	};
+
+	struct DataManipFunctionData {
+		DataManipFunctionDataType dataType;
+	};
 
 	struct DeleteReactionData : DataManipFunctionData {
 		string channelId;

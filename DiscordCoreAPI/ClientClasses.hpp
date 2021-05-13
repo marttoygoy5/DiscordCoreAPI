@@ -43,18 +43,16 @@ namespace CommanderNS {
 			com_ptr<MainAgent> pMainAgent;
 			com_ptr<Client> Client;
 
-			ReactionManager() {};
-			ReactionManager(com_ptr<RestAPI> pRestAPI, string channelId, string messageId, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
-				this->channelId = channelId;
-				this->messageId = messageId;
-				this->Client = pClient;
-				this->pRestAPI = pRestAPI;
-				this->selfUserId = selfUserId;
-				this->pMainAgent = pMainAgent;
-			};
+			ReactionManager() {}
+
+			void initialize(com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
+				ReactionManager::Client = pClient;
+				ReactionManager::pRestAPI = pRestAPI;
+				ReactionManager::pMainAgent = pMainAgent;
+				ReactionManager::selfUserId = selfUserId;
+			}
 
 			task<void> addReactionAsync(ClientDataTypes::CreateReactionData createReactionData) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(2).threadQueue.get());
 				string emoji;
 				if (createReactionData.id != string()) {
 					emoji += ":" + createReactionData.name + ":" + createReactionData.id;
@@ -67,12 +65,11 @@ namespace CommanderNS {
 				if (curl) {
 					output = curl_easy_escape(curl, emoji.c_str(), 0);
 				}
-				string emojiEncoded = output;
 				PutEmojiData putEmojiData;
-				putEmojiData.channelId = this->channelId;
-				putEmojiData.messageId = this->messageId;
-				putEmojiData.emoji = emojiEncoded;
-				this->pMainAgent->putObjectDataAsync(this->pRestAPI, putEmojiData).get();
+				putEmojiData.channelId = createReactionData.channelId;
+				putEmojiData.messageId = createReactionData.messageId;
+				putEmojiData.emoji = output;
+				//this->pMainAgent->putObjectDataAsync(this->pRestAPI, putEmojiData).get();
 				co_return;
 			};
 
@@ -91,11 +88,11 @@ namespace CommanderNS {
 				}
 				string emojiEncoded = output;
 				DeleteReactionData deleteReactionDataNew;
-				deleteReactionDataNew.channelId = this->channelId;
-				deleteReactionDataNew.messageId = this->messageId;
+				deleteReactionDataNew.channelId = deleteReactionData.channelId;
+				deleteReactionDataNew.messageId = deleteReactionData.messageId;
 				deleteReactionDataNew.userId = deleteReactionData.userId;
 				deleteReactionDataNew.encodedEmoji = emojiEncoded;
-				this->pMainAgent->deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
+				//this->pMainAgent->deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
 				co_return;
 			}
 
@@ -114,10 +111,10 @@ namespace CommanderNS {
 				}
 				string emojiEncoded = output;
 				DeleteAllReactionsByEmojiData deleteReactionDataNew;
-				deleteReactionDataNew.channelId = this->channelId;
-				deleteReactionDataNew.messageId = this->messageId;
+				deleteReactionDataNew.channelId = deleteReactionData.channelId;
+				deleteReactionDataNew.messageId = deleteReactionData.messageId;
 				deleteReactionDataNew.encodedEmoji = emojiEncoded;
-				this->pMainAgent->deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
+				//this->pMainAgent->deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
 				co_return;
 			}
 
@@ -136,25 +133,23 @@ namespace CommanderNS {
 				}
 				string emojiEncoded = output;
 				DeleteOwnReactionData deleteReactionDataNew;
-				deleteReactionDataNew.channelId = this->channelId;
-				deleteReactionDataNew.messageId = this->messageId;
+				deleteReactionDataNew.channelId = deleteReactionData.channelId;
+				deleteReactionDataNew.messageId = deleteReactionData.messageId;
 				deleteReactionDataNew.encodedEmoji = emojiEncoded;
-				this->pMainAgent->deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
+				//this->pMainAgent->deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
 				co_return;
 			}
 
 			task<void> deleteAllReactionsAsync(ClientDataTypes::DeleteAllReactionsData deleteReactionData) {
 				DeleteAllReactionsData deleteReactionDataNew;
-				deleteReactionDataNew.channelId = this->channelId;
-				deleteReactionDataNew.messageId = this->messageId;
-				this->pMainAgent->deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
+				deleteReactionDataNew.channelId = deleteReactionData.channelId;
+				deleteReactionDataNew.messageId = deleteReactionData.messageId;
+				//this->pMainAgent->deleteObjectDataAsync(this->pRestAPI, deleteReactionDataNew).get();
 				co_return;
 			}
 
 		protected:
 			com_ptr<RestAPI> pRestAPI;
-			string channelId;
-			string messageId;
 			string selfUserId;
 		};
 
@@ -162,47 +157,42 @@ namespace CommanderNS {
 
 		public:
 			com_ptr<MainAgent> pMainAgent;
-			ReactionManager* Reactions;
+			static ReactionManager Reactions;
 			ClientDataTypes::MessageData Data;
 			com_ptr<Client> Client;
 
 			Message() {};
-			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient,  string channelId) {
+			Message(ClientDataTypes::MessageData data, com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
 				this->Data = data;
 				this->pRestAPI = pRestAPI;
 				this->Client = pClient;
 				this->selfUserId = selfUserId;
 				this->pMainAgent = pMainAgent;
-				this->channelId = channelId;
-				this->Reactions = new ReactionManager(pRestAPI, this->Data.channelId, this->Data.id, this->selfUserId, this->pMainAgent, this->Client);
 			}
 
 			task<void> deleteMessageAsync(int timeDelay = 0) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(5).threadQueue.get());
 				DeleteMessageData deleteMessageData;
 				deleteMessageData.channelId = this->Data.channelId;
 				deleteMessageData.messageId = this->Data.id;
 				deleteMessageData.timeDelay = timeDelay;
-				this->pMainAgent->deleteObjectDataAsync(this->pRestAPI, deleteMessageData).get();
 				co_return;
 			};
 
 			task<Message> editMessageAsync(ClientDataTypes::EditMessageData editMessageData) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(4).threadQueue.get());
 				try {
 					string createMessagePayload = JSONifier::getEditMessagePayload(editMessageData);
 					PostMessageData postMessageData;
 					ClientDataTypes::MessageData messageData;
-					postMessageData.channelId = this->channelId;
+					postMessageData.channelId = editMessageData.channelId;
 					postMessageData.pDataStructure = &messageData;
 					postMessageData.content = createMessagePayload;
 					EditMessageData editMessageDataNew;
-					editMessageDataNew.channelId = this->channelId;
+					editMessageDataNew.channelId = editMessageData.channelId;
 					editMessageDataNew.messageId = this->Data.id;
 					editMessageDataNew.content = createMessagePayload;
-					this->pMainAgent->patchObjectDataAsync(this->pRestAPI, editMessageDataNew).get();
+					//this->pMainAgent->patchObjectDataAsync(this->pRestAPI, editMessageDataNew).get();
 					editMessageDataNew.pMessageData = &this->Data;
-					Message message(messageData, this->pRestAPI, this->selfUserId,this->pMainAgent, this->Client, this->channelId);
+					Message message(messageData, this->pRestAPI, this->selfUserId, this->pMainAgent, this->Client);
 					co_return message;
 				}
 				catch (exception error) {
@@ -211,7 +201,6 @@ namespace CommanderNS {
 			}
 
 		protected:
-			string channelId;
 			com_ptr<RestAPI> pRestAPI;
 			string selfUserId;
 		};
@@ -222,25 +211,24 @@ namespace CommanderNS {
 			com_ptr<MainAgent> pMainAgent;
 			com_ptr<Client> Client;
 
-			MessageManager() {};
-			MessageManager(string channelId, string guildId, com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
-				this->channelId = channelId;
-				this->Client = pClient;
-				this->guildId = guildId;
-				this->pRestAPI = pRestAPI;
-				this->selfUserId = selfUserId;
-				this->pMainAgent = pMainAgent;
-			};
+			MessageManager() {}
 
-			task<Message*> fetchAsync(string messageId) {
+			void initialize(com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
+				MessageManager::Client = pClient;
+				MessageManager::pRestAPI = pRestAPI;
+				MessageManager::selfUserId = selfUserId;
+				MessageManager::pMainAgent = pMainAgent;
+			}
+
+			task<Message*> fetchAsync(string messageId, string channelId) {
 				if (this->contains(messageId)) {
 					Message* message = &this->at(messageId);
 					this->erase(messageId);
 					GetMessageData getMessageData;
 					getMessageData.pDataStructure = &message->Data;
 					getMessageData.id = messageId;
-					getMessageData.channelId = this->channelId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getMessageData).get();
+					getMessageData.channelId = channelId;
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getMessageData).get();
 					this->insert(std::make_pair(messageId, *message));
 					co_return message;
 				}
@@ -249,9 +237,9 @@ namespace CommanderNS {
 					GetMessageData getMessageData;
 					getMessageData.pDataStructure = &messageData;
 					getMessageData.id = messageId;
-					getMessageData.channelId = this->channelId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getMessageData).get();
-					Message message(messageData, this->pRestAPI, this->selfUserId, this->pMainAgent, this->Client, this->channelId);
+					getMessageData.channelId = channelId;
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getMessageData).get();
+					Message message(messageData, this->pRestAPI, this->selfUserId, this->pMainAgent, this->Client);
 					this->insert(std::make_pair(messageId, message));
 					co_return &this->at(messageId);
 				}
@@ -267,18 +255,22 @@ namespace CommanderNS {
 			}
 
 			task<Message> createMessageAsync(ClientDataTypes::CreateMessageData createMessageData) {
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(3).threadQueue.get());
+				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
+				cout << "MESSAGE CREATION MESSAGE CREAIONT!" << endl;
 				try {
 					string createMessagePayload = JSONifier::getCreateMessagePayload(createMessageData);
 					ClientDataTypes::MessageData messageData;
 					PostMessageData postMessageData;
-					postMessageData.channelId = this->channelId;
+					postMessageData.channelId = createMessageData.channelId;
 					postMessageData.pDataStructure = &messageData;
 					postMessageData.content = createMessagePayload;
-					this->pMainAgent->postObjectDataAsync(this->pRestAPI, postMessageData).get();
-					Message message(messageData, this->pRestAPI, this->selfUserId, this->pMainAgent, this->Client, this->channelId);
+					postMessageData.dataType = DataManipFunctionDataType::PostMessageData;
+					//send(&this->pMainAgent->_target00, postMessageData);
+					bool retVal = receive(&this->pMainAgent->target01);
+					retVal = receive(&this->pMainAgent->target02);
+					Message message(messageData, this->pRestAPI, this->selfUserId, this->pMainAgent, this->Client);
 					this->insert(make_pair(messageData.id, message));
-					co_return message;
+					co_return;//message;
 				}
 				catch (exception error) {
 					cout << "createMessageAsync() Error: " << error.what() << endl;
@@ -289,8 +281,6 @@ namespace CommanderNS {
 			friend struct WebSocketConnection;
 			friend struct WebSocketReceiver;
 			friend class Message;
-			string guildId;
-			string channelId;
 			com_ptr<RestAPI> pRestAPI;
 			string selfUserId;
 		};
@@ -315,23 +305,23 @@ namespace CommanderNS {
 			map<string, ClientDataTypes::GuildMemberData> guildMemberData;
 			com_ptr<Client> Client;
 
-			GuildMemberManager() {};
-			GuildMemberManager(com_ptr<RestAPI> pRestAPI, string guildId, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
-				this->pRestAPI = pRestAPI;
-				this->pMainAgent = pMainAgent;
-				this->Client = pClient;
-				this->guildId = guildId;
+			GuildMemberManager() {}
+
+			void initialize(com_ptr<RestAPI> pRestAPI, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
+				GuildMemberManager::pRestAPI = pRestAPI;
+				GuildMemberManager::Client = pClient;
+				GuildMemberManager::pMainAgent = pMainAgent;
 			}
 
-			task<GuildMember*> fetchAsync(string guildMemberId) {
+			task<GuildMember*> fetchAsync(string guildMemberId, string guildId) {
 				if (this->contains(guildMemberId)) {
 					GuildMember* guildMember = &this->at(guildMemberId);
 					this->erase(guildMemberId);
 					GetGuildMemberData getGuildMemberData;
 					getGuildMemberData.pDataStructure = &guildMember->Data;
 					getGuildMemberData.id = guildMemberId;
-					getGuildMemberData.guildId = this->guildId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
+					getGuildMemberData.guildId = guildId;
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 					this->insert(std::make_pair(guildMemberId, *guildMember));
 					co_return guildMember;
 				}
@@ -340,8 +330,8 @@ namespace CommanderNS {
 					GetGuildMemberData getGuildMemberData;
 					getGuildMemberData.pDataStructure = &guildMemberData;
 					getGuildMemberData.id = guildMemberId;
-					getGuildMemberData.guildId = this->guildId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
+					getGuildMemberData.guildId = guildId;
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 					GuildMember guildMember(guildMemberData,this->pMainAgent, this->Client);
 					this->insert(std::make_pair(guildMemberId, guildMember));
 					co_return &this->at(guildMemberId);
@@ -357,15 +347,15 @@ namespace CommanderNS {
 					}
 			};
 
-			task<void> getGuildMembersAsync() {
+			task<void> getGuildMembersAsync(string guildId) {
 				GetGuildMembersData getGuildMembersData;
 				map<string, ClientDataTypes::GuildMemberData> guildMemberDataMap;
 				for (auto const& [key, value]: *this) {
 					guildMemberDataMap.insert(make_pair(key, value.Data));
 				}
-				getGuildMembersData.guildId = this->guildId;
+				getGuildMembersData.guildId = guildId;
 				getGuildMembersData.pGuildMemberDataMap = &guildMemberDataMap;
-				this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildMembersData).get();
+				//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildMembersData).get();
 				for (auto const& [key, value] : *getGuildMembersData.pGuildMemberDataMap) {
 					if (this->contains(key)) {
 						this->erase(key);
@@ -382,13 +372,12 @@ namespace CommanderNS {
 		protected:
 			friend class Guild;
 			com_ptr<RestAPI> pRestAPI;
-			string guildId;
 		};
 
 		class Channel {
 		public:
 			ClientDataTypes::ChannelData Data;
-			MessageManager* Messages;
+			static MessageManager Messages;
 			com_ptr<MainAgent> pMainAgent;
 			com_ptr<Client> Client;
 
@@ -399,7 +388,6 @@ namespace CommanderNS {
 				this->selfUserId = selfUserId;
 				this->Client = pClient;
 				this->pMainAgent = pMainAgent;
-				this->Messages = new MessageManager(this->Data.id,this->Data.guildId, this->pRestAPI, this->selfUserId, this->pMainAgent, this->Client);
 			};
 			
 			ClientDataTypes::OverWriteData getPermissionOverwrites(string roleOrUserId) {
@@ -424,13 +412,14 @@ namespace CommanderNS {
 			com_ptr<MainAgent> pMainAgent;
 			com_ptr<Client> Client;
 
-			ChannelManager() {};
-			ChannelManager(com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
-				this->pRestAPI = pRestAPI;
-				this->selfUserId = selfUserId;
-				this->Client = pClient;
-				this->pMainAgent = pMainAgent;
-			};
+			ChannelManager() {}
+
+			void initialize(com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
+				ChannelManager::pRestAPI = pRestAPI;
+				ChannelManager::selfUserId = selfUserId;
+				ChannelManager::pMainAgent = pMainAgent;
+				ChannelManager::Client = pClient;
+			}
 
 			task<Channel*> fetchAsync(string channelId) {
 				if (this->contains(channelId)) {
@@ -439,7 +428,7 @@ namespace CommanderNS {
 					GetChannelData getChannelData;
 					getChannelData.pDataStructure = &channel->Data;
 					getChannelData.id = channelId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getChannelData).get();
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getChannelData).get();
 					this->insert(std::make_pair(channelId, *channel));
 					co_return channel;
 				}
@@ -448,7 +437,7 @@ namespace CommanderNS {
 					GetChannelData getChannelData;
 					getChannelData.pDataStructure = &channelData;
 					getChannelData.id = channelId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getChannelData).get();
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getChannelData).get();
 					Channel channel(channelData, this->pRestAPI,this->selfUserId, this->pMainAgent, this->Client);
 					this->insert(std::make_pair(channelId, channel));
 					co_return &this->at(channelId);
@@ -492,12 +481,13 @@ namespace CommanderNS {
 		public:
 			com_ptr<MainAgent> pMainAgent;
 			com_ptr<ClientClasses::Client> Client;
-			RoleManager() {};
-			RoleManager(com_ptr<RestAPI> pRestAPI, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient, string guildId) {
-				this->pRestAPI = pRestAPI;
-				this->pMainAgent = pMainAgent;
-				this->guildId = guildId;
-				this->Client = pClient;
+
+			RoleManager() {}
+
+			void initialize(com_ptr<RestAPI> pRestAPI, com_ptr<MainAgent> pMainAgent, com_ptr<ClientClasses::Client> pClient) {
+				RoleManager::pRestAPI = pRestAPI;
+				RoleManager::Client = pClient;
+				RoleManager::pMainAgent = pMainAgent;
 			}
 
 			task<void> getRolesAsync() {
@@ -508,7 +498,7 @@ namespace CommanderNS {
 				}
 				getRolesData.guildId = this->guildId;
 				getRolesData.pDataStructure = &pRoleDataMap;
-				this->pMainAgent->getObjectDataAsync(this->pRestAPI, getRolesData);
+				//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getRolesData);
 				for (auto const& [key, value] : *getRolesData.pDataStructure) {
 					if (this->contains(key)) {
 						this->erase(key);
@@ -533,9 +523,9 @@ namespace CommanderNS {
 		class Guild {
 		public:
 			ClientDataTypes::GuildData Data;
-			RoleManager* Roles;
-			GuildMemberManager* Members;
-			ChannelManager* Channels;
+			static RoleManager Roles;
+			static GuildMemberManager Members;
+			static ChannelManager Channels;
 			com_ptr<MainAgent> pMainAgent;
 			com_ptr<Client> Client;
 
@@ -545,20 +535,17 @@ namespace CommanderNS {
 				this->selfUserId = selfUserId;
 				this->pMainAgent = pMainAgent;
 				this->Client = pClient;
-				this->Roles = new RoleManager(pRestAPI, this->pMainAgent, this->Client, this->Data.id);
 				for (auto const& [key, value] : data.roles) {
 					Role role(value, this->pMainAgent, pRestAPI, this->Client);
-					this->Roles->insert(make_pair(key, role));
+					Guild::Roles.insert(make_pair(key, role));
 				}
-				this->Channels = new ChannelManager(pRestAPI, this->selfUserId, this->pMainAgent, this->Client);
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					Channel channel(data.channels.at(x), pRestAPI, this->selfUserId, this->pMainAgent, this->Client);
-					this->Channels->insert(make_pair(data.channels.at(x).id, channel));
+					Guild::Channels.insert(make_pair(data.channels.at(x).id, channel));
 				}
-				this->Members = new GuildMemberManager(pRestAPI, this->Data.id, this->pMainAgent, this->Client);
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					GuildMember member(data.members.at(x), this->pMainAgent, this->Client);
-					this->Members->insert(make_pair(data.members.at(x).user.id, member));
+					Guild::Members.insert(make_pair(data.members.at(x).user.id, member));
 				}
 			};
 
@@ -569,13 +556,14 @@ namespace CommanderNS {
 		class GuildManager : public map<string, Guild> {
 
 		public:
-			GuildManager() {};
-			GuildManager(com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<Client> pClient) {
-				this->pRestAPI = pRestAPI;
-				this->selfUserId = selfUserId;
-				this->Client = pClient;
-				this->pMainAgent = pMainAgent;
-			};
+			GuildManager() {}
+
+			void initialize(com_ptr<RestAPI> pRestAPI, string selfUserId, com_ptr<MainAgent> pMainAgent, com_ptr<Client> pClient){
+				GuildManager::pRestAPI = pRestAPI;
+				GuildManager::selfUserId = selfUserId;
+				GuildManager::pMainAgent = pMainAgent;
+				GuildManager::Client = pClient;
+			}
 
 			com_ptr<MainAgent> pMainAgent;
 			com_ptr<Client> Client;
@@ -586,7 +574,7 @@ namespace CommanderNS {
 					GetGuildData getGuildData;
 					getGuildData.pDataStructure = &guild->Data;
 					getGuildData.id = guildId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildData).get();
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildData).get();
 					this->insert(std::make_pair(guildId, *guild));
 					co_return guild;
 				}
@@ -595,7 +583,7 @@ namespace CommanderNS {
 					GetGuildData getGuildData;
 					getGuildData.pDataStructure = &guildData;
 					getGuildData.id = guildId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildData).get();
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildData).get();
 					Guild guild(guildData, this->pRestAPI, this->selfUserId, this->pMainAgent, this->Client);
 					this->insert(std::make_pair(guildId, guild));
 					co_return &this->at(guildId);
@@ -608,6 +596,10 @@ namespace CommanderNS {
 				}
 				else {
 					cout << "getGuildAsync() Error: Sorry, but they aren't here!" << endl;
+					ClientDataTypes::GuildData guildData;
+					auto guild = new Guild(guildData, this->pRestAPI, this->selfUserId, this->pMainAgent, this->Client);
+					this->insert(make_pair(guildId, *guild));
+					co_return &this->at(guildId);
 				}
 			};
 
@@ -622,7 +614,7 @@ namespace CommanderNS {
 					guildDataMap.insert(make_pair(key, val.Data));
 				}
 				getCurrentUserGuildsData.pGuildDataMap = &guildDataMap;
-				this->pMainAgent->getObjectDataAsync(this->pRestAPI, getCurrentUserGuildsData).get();
+				//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getCurrentUserGuildsData).get();
 				for (auto const& [key, val] : guildDataMap) {
 					Guild guild(val, this->pRestAPI, this->selfUserId, this->pMainAgent, this->Client);
 					if (this->guilds.contains(key)) {
@@ -638,7 +630,7 @@ namespace CommanderNS {
 			friend struct WebSocketReceiver;
 			friend struct Client;
 			com_ptr<RestAPI> pRestAPI;
-			map<string, Guild> guilds;		
+			map<string, Guild> guilds;
 			string selfUserId;
 		};
 
@@ -663,11 +655,12 @@ namespace CommanderNS {
 
 		class UserManager : public map<string, User> {
 		public:
-			UserManager() {};
-			UserManager(com_ptr<RestAPI> pRestAPI, com_ptr<MainAgent> pMainAgent) {
-				this->pRestAPI = pRestAPI;
-				this->pMainAgent = pMainAgent;
-			};
+			UserManager() {}
+
+			void initialize(com_ptr<RestAPI> pRestAPI, com_ptr<MainAgent> pMainAgent) {
+				UserManager::pRestAPI = pRestAPI;
+				UserManager::pMainAgent = pMainAgent;
+			}
 
 			task<User*> fetchAsync(string userId) {
 				if (this->contains(userId)){
@@ -676,7 +669,7 @@ namespace CommanderNS {
 					GetUserData getUserData;
 					getUserData.pDataStructure = &user->Data;
 					getUserData.id = userId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getUserData).get();
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getUserData).get();
 					this->insert(std::make_pair(userId, *user));
 					co_return user;
 				}
@@ -685,7 +678,7 @@ namespace CommanderNS {
 					GetUserData getUserData;
 					getUserData.pDataStructure = &userData;
 					getUserData.id = userId;
-					this->pMainAgent->getObjectDataAsync(this->pRestAPI, getUserData).get();
+					//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getUserData).get();
 					User user(userData, this->pMainAgent);
 					this->insert(std::make_pair(userId, user));
 					co_return &this->at(userId);
@@ -712,20 +705,31 @@ namespace CommanderNS {
 		public:
 			com_ptr<ClientAgent> pClientAgent{ nullptr };
 			com_ptr<MainAgent> pMainAgent{ nullptr };
-			GuildManager* Guilds;
-			UserManager* Users;
+			com_ptr<Client> pClient;
+			static GuildManager Guilds;
+			static UserManager Users;
 			User User;
-			
 			Client() {};
+
 			Client(com_ptr<RestAPI> pRestAPI) {
-				com_ptr<Client> pClient{ nullptr };
-				pClient.attach(this);
+				this->pClient.attach(this);
 				this->pRestAPI = pRestAPI;
-				this->Users = new UserManager(pRestAPI, this->pMainAgent);
-				this->User = User;
 				this->getUserSelf();
-				this->Guilds = new GuildManager(pRestAPI, this->User.Data.id, this->pMainAgent, pClient);
-				this->Guilds->getCurrentUserGuilds().get();
+				Client::Guilds = GuildManager();
+				Client::Guilds.initialize(this->pRestAPI, this->User.Data.id, this->pMainAgent, this->pClient);
+				Client::Guilds.getCurrentUserGuilds().get();
+				Client::Users = UserManager();
+				Client::Users.initialize(this->pRestAPI, this->pMainAgent);
+				Guild::Channels = ChannelManager();
+				Guild::Channels.initialize(this->pRestAPI, this->User.Data.id, this->pMainAgent, this->pClient);
+				Guild::Members = GuildMemberManager();
+				Guild::Members.initialize(this->pRestAPI, this->pMainAgent, this->pClient);
+				Guild::Roles = RoleManager();
+				Guild::Roles.initialize(this->pRestAPI, this->pMainAgent, this->pClient);
+				Channel::Messages = MessageManager();
+				Channel::Messages.initialize(this->pRestAPI, this->User.Data.id, this->pMainAgent, this->pClient);
+				Message::Reactions = ReactionManager();
+				Message::Reactions.initialize(this->pRestAPI, this->User.Data.id, this->pMainAgent, this->pClient);
 			};
 
 			void initialize(com_ptr<ClientAgent> pClientAgent, com_ptr<MainAgent> pMainAgent) {
@@ -734,17 +738,12 @@ namespace CommanderNS {
 			}
 
 			task<void> getUserSelf() {
-				apartment_context mainThread;
-				co_await resume_foreground(*this->pRestAPI->pSystemThreads->Threads.at(1).threadQueue.get());
 				ClientDataTypes::UserData userData;
 				GetSelfUserData getUserData;
 				getUserData.pDataStructure = &userData;
-				this->pMainAgent->getObjectDataAsync(this->pRestAPI, getUserData).get();
-				com_ptr<Client> pClient{ nullptr };
-				pClient.attach(this);
+				//this->pMainAgent->getObjectDataAsync(this->pRestAPI, getUserData).get();
 				ClientClasses::User userNew(userData, this->pMainAgent);
 				this->User = userNew;
-				co_await mainThread;
 				co_return;
 			};
 
@@ -758,17 +757,15 @@ namespace CommanderNS {
 		struct ClientAgent :public concurrency::agent, implements<ClientAgent, winrt::Windows::Foundation::IInspectable> {
 		public:
 			unbounded_buffer<bool> source00;
-			unbounded_buffer<com_ptr<Client>> target00;
+			unbounded_buffer<com_ptr<Client>> buffer00;
 
-			ClientAgent(Scheduler* pScheduler, com_ptr<Client> pClient)
+			ClientAgent(com_ptr<Client> pClient, Scheduler* pScheduler = nullptr)
 				:_source00(source00),
-				_target00(target00),
+				_target00(buffer00),
 				agent(*pScheduler)
 			{
 				this->pClient = pClient;
 			}
-			
-			bool doWeQuit = false;
 
 		protected:
 			friend struct WebSocketReceiver;
@@ -783,12 +780,17 @@ namespace CommanderNS {
 				com_ptr<Client> pClient = this->pClient;
 				send(_target00, pClient);
 				done();
-				}
-				
-			};
-			
-		};
+			}
 
-	
+		};
+		};
+		CommanderNS::ClientClasses::GuildManager CommanderNS::ClientClasses::Client::Guilds;
+		CommanderNS::ClientClasses::ChannelManager CommanderNS::ClientClasses::Guild::Channels;
+		CommanderNS::ClientClasses::RoleManager CommanderNS::ClientClasses::Guild::Roles;
+		CommanderNS::ClientClasses::GuildMemberManager CommanderNS::ClientClasses::Guild::Members;
+		CommanderNS::ClientClasses::UserManager CommanderNS::ClientClasses::Client::Users;
+		CommanderNS::ClientClasses::MessageManager CommanderNS::ClientClasses::Channel::Messages;
+		CommanderNS::ClientClasses::ReactionManager CommanderNS::ClientClasses::Message::Reactions;
+
 };
 #endif

@@ -37,7 +37,7 @@ namespace CommanderNS {
 		public:
 			ITarget<HTTPData>& target01;
 
-			explicit TimedRequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, unsigned int timeDelay)
+			explicit TimedRequestSender(ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, unsigned int timeDelay, Scheduler* scheduler = nullptr)
 				:
 				agent(*scheduler),
 				source00(source00),
@@ -77,7 +77,7 @@ namespace CommanderNS {
 		public:
 			ITarget<HTTPData>& target01;
 
-			explicit RequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01)
+			explicit RequestSender(ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, Scheduler* scheduler = nullptr)
 				:
 				agent(*scheduler),
 				source00(source00),
@@ -108,7 +108,7 @@ namespace CommanderNS {
 			static map<string, RateLimitData> rateLimitData;
 			static map<RateLimitType, string> rateLimitDataBucketValues;
 
-			HTTPHandler(Scheduler* scheduler, ITarget<HTTPData>& target, ISource<WorkloadData>& source, com_ptr<RestAPI> pRestAPI)
+			HTTPHandler(ITarget<HTTPData>& target, ISource<WorkloadData>& source, com_ptr<RestAPI> pRestAPI, Scheduler* scheduler = nullptr)
 				: _target(target),
 				_source(source),
 				agent(*scheduler)

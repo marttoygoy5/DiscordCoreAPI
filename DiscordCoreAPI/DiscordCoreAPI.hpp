@@ -24,7 +24,7 @@ namespace CommanderNS {
 
 	public:
 
-		com_ptr<ClientClasses::Client> Client{ nullptr };
+		static com_ptr<ClientClasses::Client> Client;
 		com_ptr<EventMachine> pEventMachine{ nullptr };
 		com_ptr<SystemThreads> pSystemThreads{ nullptr };
 
@@ -33,24 +33,29 @@ namespace CommanderNS {
 		DiscordCoreAPI(hstring botToken) {
 			this->pSystemThreads = make_self<SystemThreads>();
 			this->pSystemThreads->initialize().get();
-			this->pWebSocketReceiver = make_self<WebSocketReceiver>(this->pSystemThreads->Threads.at(0).scheduler, this->pMainAgent);
-			this->pWebSocketConnection = make_self<WebSocketConnection>(this->pWebSocketReceiver->buffer00, this->pSystemThreads->Threads.at(0).scheduler);
 			this->botToken = botToken;
-			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &pWebSocketConnection->socketPath, this->pSystemThreads);
-			this->Client = make_self<ClientClasses::Client>(this->pRestAPI);
-			this->pClientAgent = make_self<ClientClasses::ClientAgent>(this->pSystemThreads->Threads.at(0).scheduler, this->Client);
+			hstring socketPath;
+			this->pRestAPI = make_self<RestAPI>(this->botToken, this->baseURL, &socketPath, this->pSystemThreads);
+			DiscordCoreAPI::Client = make_self<ClientClasses::Client>(this->pRestAPI);
+			this->pClientAgent = make_self<ClientClasses::ClientAgent>(DiscordCoreAPI::Client, this->pSystemThreads->Threads.at(1).scheduler);
 			this->pClientAgent->start();
-			this->pMainAgent = make_self<ClientClasses::MainAgent>(this->pSystemThreads->Threads.at(0).scheduler);
+			this->pMainAgent = make_self<ClientClasses::MainAgent>(this->pRestAPI, this->pSystemThreads->Threads.at(0).scheduler);
+			this->pMainAgent->start();
+			this->pWebSocketReceiver = make_self<WebSocketReceiver>(this->pMainAgent);
+			this->pWebSocketConnection = make_self<WebSocketConnection>(this->pWebSocketReceiver->buffer00);
+			this->pWebSocketConnection->socketPath = socketPath;
 			this->Client->initialize(this->pClientAgent, this->pMainAgent);
 			this->pEventMachine = make_self<EventMachine>();
-			this->pWebSocketConnection->initialize(botToken, this->pEventMachine, this->pSystemThreads,this->pRestAPI, this->Client);
-			this->pWebSocketReceiver->initialize(this->pEventMachine, this->pSystemThreads, this->pRestAPI, this->Client);
+			this->pWebSocketConnection->initialize(botToken, this->pEventMachine, this->pSystemThreads, this->pRestAPI, DiscordCoreAPI::Client);
+			this->pWebSocketReceiver->initialize(this->pEventMachine, this->pSystemThreads, this->pRestAPI, DiscordCoreAPI::Client);
+			this->pWebSocketConnection->start();
+			this->pWebSocketReceiver->start();
 			SetConsoleCtrlHandler(CommanderNS::CtrlHandler, TRUE);
 		}
 
 		int login() {
 			int returnVal;
-			this->pSystemThreads->mainThreadContext.taskGroup->run_and_wait([this, &returnVal] {returnVal = loginToWrap(); });
+			loginToWrap();
 			return returnVal;
 		}
 
@@ -65,8 +70,8 @@ namespace CommanderNS {
 
 		task<void> connect() {
 			try {
-				this->pWebSocketConnection->start();
-				this->pWebSocketReceiver->start();
+				//this->pWebSocketConnection->start();
+				//this->pWebSocketReceiver->start();
 			}
 			catch (winrt::hresult result) {
 
@@ -131,5 +136,6 @@ namespace CommanderNS {
 				return FALSE;
 			}
 		}
+		com_ptr<struct CommanderNS::ClientClasses::Client> CommanderNS::DiscordCoreAPI::Client;
 };
 #endif

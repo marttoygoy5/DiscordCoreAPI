@@ -610,6 +610,8 @@ namespace CommanderNS {
 
         struct CreateReactionData: ClientDataType {
             string name;
+            string channelId;
+            string messageId;
             string id;
         };
 
@@ -623,6 +625,7 @@ namespace CommanderNS {
         };
 
         struct CreateMessageData: ClientDataType {
+            string channelId;
             string content;
             int nonce;
             bool tts = false;
@@ -654,6 +657,7 @@ namespace CommanderNS {
         };
 
         struct EditMessageData: ClientDataType {
+            string channelId;
             string content;
             EmbedData embed;
             int flags;

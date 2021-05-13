@@ -32,8 +32,8 @@ namespace CommanderNS {
         task<void> initialize() {
             DispatcherQueueOptions options{
                 sizeof(DispatcherQueueOptions),
-                DQTYPE_THREAD_CURRENT,
-                 DQTAT_COM_NONE
+                DQTYPE_THREAD_DEDICATED,
+                 DQTAT_COM_STA
             };
             ABI::Windows::System::IDispatcherQueueController* ptrNew{};
             winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));

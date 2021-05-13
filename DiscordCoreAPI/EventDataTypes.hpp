@@ -23,11 +23,11 @@ namespace CommanderNS {
 		};
 
 		struct MessageCreationData {
-			ClientClasses::Message* message;
+			ClientClasses::Message message;
 		};
 
 		struct MessageDeletionData {
-			ClientClasses::Message* message;
+			ClientClasses::Message message;
 		};
 
 		struct ReactionAddData {
