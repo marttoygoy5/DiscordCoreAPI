@@ -9,9 +9,9 @@
 #define _JSONIFIER_
 
 #include "pch.h"
-#include "ClientDataTypes.hpp"
+#include "DiscordDataStructs.hpp"
 
-namespace CommanderNS {
+namespace DiscordCoreInternal {
 
 	namespace JSONifier {
 
@@ -77,7 +77,7 @@ namespace CommanderNS {
 			return finalValue;
 		};
 
-		string getCreateMessagePayload(ClientDataTypes::CreateMessageData createMessageData) {
+		string getCreateMessagePayload(CreateMessageData createMessageData) {
 			auto fields = json::array();
 			
 			for (unsigned int x = 0; x < createMessageData.embed.fields.size(); x += 1) {
@@ -139,13 +139,14 @@ namespace CommanderNS {
 			return data.dump();
 		}
 
-		string getEditMessagePayload(ClientDataTypes::EditMessageData editMessageData) {
+		string getEditMessagePayload(EditMessageData editMessageData) {
 			auto fields = json::array();
 
 			for (unsigned int x = 0; x < editMessageData.embed.fields.size(); x += 1) {
 				json field = { {"inline", editMessageData.embed.fields.at(x).Inline},
 								{"value", editMessageData.embed.fields.at(x).value},
 								{"name", editMessageData.embed.fields.at(x).name} };
+				cout << "THIS IS ANOTHER MESSAGE FIELD!" << endl;
 				fields.push_back(field);
 			}
 

@@ -5,14 +5,14 @@
 
 #pragma once
 
-#ifndef _DATA_PARSING_FUNCTIONS_
 #define _DATA_PARSING_FUNCTIONS_
+#ifndef _DATA_PARSING_FUNCTIONS_
 
 #include "pch.h"
 #include "ClientDataTypes.hpp"
 
 namespace CommanderNS {
-	
+	/*
     namespace DataParsingFunctions {
 
         void parseObject(json jsonObjectData, ClientDataTypes::OverWriteData * pDataStructure) {
@@ -1527,7 +1527,6 @@ namespace CommanderNS {
                         ClientDataTypes::EmbedFieldData fieldData;
                         parseObject(fieldsArray.at(x), &fieldData);
                         embedData.fields.push_back(fieldData);
-                        cout << "EMBED FIELD NUMBER " + to_string(x) + "TESTING" << endl;
                         break;
                     }
                 }
@@ -2245,5 +2244,6 @@ namespace CommanderNS {
             *pDataStructure = messageData;
         }
 	}
+    */
 };
 #endif

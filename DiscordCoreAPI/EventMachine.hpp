@@ -9,12 +9,9 @@
 #define _EVENT_MACHINE_
 
 #include "pch.h"
-#include "SystemThreads.hpp"
-#include "ClientDataTypes.hpp"
-#include "EventDataTypes.hpp"
 
 namespace CommanderNS {
-
+	
 	struct EventMachine : implements<EventMachine, winrt::Windows::Foundation::IInspectable> {
 	public:
 
@@ -63,5 +60,6 @@ namespace CommanderNS {
 
 		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::ReactionAddData>> onReactionAddEvent;
 	};
+	*/
 }
 #endif

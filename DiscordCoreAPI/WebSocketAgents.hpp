@@ -11,22 +11,21 @@
 #include "pch.h"
 #include "EventMachine.hpp"
 #include "DataParsingFunctions.hpp"
+#include "DataManipFunctions.hpp"
 #include "SystemThreads.hpp"
 #include "ClientClasses.hpp"
 
 namespace CommanderNS {
-
+	/*
 	struct WebSocketReceiver : public concurrency::agent, implements<WebSocketReceiver, winrt::Windows::Foundation::IInspectable> {
 	public:
 
 		inline static bool doWeQuit = false;
 
-		WebSocketReceiver(com_ptr<ClientClasses::MainAgent> pMainAgent, Scheduler* pScheduler = nullptr)
+		WebSocketReceiver(Scheduler* pScheduler)
 			:_source(buffer00),
 			agent(*pScheduler)
-		{
-			this->pMainAgent = pMainAgent;
-		}
+		{}
 
 	protected:
 
@@ -38,7 +37,6 @@ namespace CommanderNS {
 		com_ptr<EventMachine> pEventMachine;
 		com_ptr<RestAPI> pRestAPI;
 		com_ptr<ClientClasses::Client> pClient;
-		com_ptr<ClientClasses::MainAgent> pMainAgent;
 
 		void initialize(winrt::com_ptr<EventMachine> pEventMachineNew, com_ptr<SystemThreads> pSystemThreadsNew, com_ptr<RestAPI> pRestAPINew, com_ptr<ClientClasses::Client> pClientNew) {
 			this->pSystemThreads = pSystemThreadsNew;
@@ -59,65 +57,57 @@ namespace CommanderNS {
 		}
 
 		task<void> onGuildCreate(json payload) {
-			/*
 			string id = payload.at("d").at("id");
-			send(this->pClient->pClientAgent->source00, true);
-			com_ptr<ClientClasses::Client> pClientNew = receive(this->pClient->pClientAgent->target00);
-			if (ClientClasses::Client::Guilds.contains(id)) {
-				ClientClasses::Guild guild = *ClientClasses::Client::Guilds.getGuildAsync(id).get();
-				ClientClasses::Client::Guilds.erase(id);
-				CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guild.Data);
-				ClientClasses::Client::Guilds.insert(std::make_pair(id, guild));
-				/*
+			com_ptr<ClientClasses::ClientAgent> clientAgent = make_self<ClientClasses::ClientAgent>(this->pSystemThreads->Threads.at(0).scheduler, this->pClient);
+			clientAgent->start();
+			send(clientAgent->source00, true);
+			com_ptr<ClientClasses::Client> pClientNew = receive(clientAgent->target00);
+			if (pClientNew->Guilds->contains(id)) {
+				pClientNew->Guilds->erase(id);
+				ClientClasses::Guild* guild = pClientNew->Guilds->getGuildAsync(id).get();
+				CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guild->Data);
+				pClientNew->Guilds->insert(std::make_pair(id, *guild));
 				for (unsigned int y = 0; y < guild->Data.members.size(); y += 1) {
-					ClientClasses::User user(guild->Data.members.at(y).user, this->pMainAgent);
+					ClientClasses::User user(guild->Data.members.at(y).user, this->pClient);
 					pClientNew->Users->insert(make_pair(user.Data.id, user));
 				}
-				
 			}
 			else {
-				ClientDataTypes::GuildData guildData = ClientClasses::Client::Guilds.collectBackupValue(id).get().Data;
+				ClientDataTypes::GuildData guildData = pClientNew->Guilds->collectBackupValue(id).get().Data;
 				CommanderNS::DataParsingFunctions::parseObject(payload.at("d"), &guildData);
-				ClientClasses::Guild guild(guildData, this->pRestAPI, pClientNew->User.Data.id, this->pMainAgent, this->pClient);
-				ClientClasses::Client::Guilds.insert(make_pair(id, guild));
-				/*
+				ClientClasses::Guild guild(guildData, this->pRestAPI, pClientNew->User.Data.id, this->pClient);
+				pClientNew->Guilds->insert(make_pair(id, guild));
 				for (unsigned int y = 0; y < guild.Data.members.size(); y += 1) {
-					ClientClasses::User user(guild.Data.members.at(y).user, this->pMainAgent);
+					ClientClasses::User user(guild.Data.members.at(y).user, this->pClient);
 					pClientNew->Users->insert(make_pair(user.Data.id, user));
 				}
-				
-			}*/
+			}
 			co_return;
 		}
 
 		task<void> onMessageCreate(json payload) {
-			
 			EventDataTypes::MessageCreationData messageCreationData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
-			messageCreationData.message = ClientClasses::Message(messageData, this->pRestAPI, this->pClient->User.Data.id, this->pMainAgent, this->pClient);
+			messageCreationData.message = new ClientClasses::Message(messageData, this->pRestAPI, this->pClient->User.Data.id, this->pClient, channelId);
 			this->pEventMachine->onMessageCreationEvent(messageCreationData);
-			
 			co_return;
 		}
 
 		task<void> onMessageDelete(json payload) {
-			/*
 			EventDataTypes::MessageDeletionData messageDeletionData;
 			ClientDataTypes::MessageData messageData;
 			DataParsingFunctions::parseObject(payload.at("d"), &messageData);
 			string guildId = payload.at("d").at("guild_id");
 			string channelId = payload.at("d").at("channel_id");
-			messageDeletionData.message = ClientClasses::Message(messageData, this->pRestAPI, this->pClient->User.Data.id, this->pMainAgent, this->pClient, channelId);
+			messageDeletionData.message = new ClientClasses::Message(messageData, this->pRestAPI, this->pClient->User.Data.id, this->pClient, channelId);
 			this->pEventMachine->onMessageDeletionEvent(messageDeletionData);
-			*/
 			co_return;
 		}
 
 		task<void> onMessageReactionAdd(json payload) {
-			/*
 			ClientDataTypes::ReactionAddEventData reactionAddEventData;
 			DataParsingFunctions::parseObject(payload.at("d"), &reactionAddEventData);
 			ClientDataTypes::ReactionData reactionData;
@@ -128,13 +118,12 @@ namespace CommanderNS {
 			reactionData.member = reactionAddEventData.member;
 			reactionData.messageId = reactionAddEventData.messageId;
 			reactionData.userId = reactionAddEventData.userId;
-			ClientClasses::Reaction reaction(reactionData, this->pMainAgent, this->pClient);
+			ClientClasses::Reaction reaction(reactionData, this->pClient);
 			reactionAddData.reaction = reaction;
 			reactionAddData.reaction.Data.channelId = reactionData.channelId;
 			reactionAddData.reaction.Data.userId = reactionData.userId;
 			reactionAddData.reaction.Data.messageId = reactionData.messageId;
 			this->pEventMachine->onReactionAddEvent(reactionAddData);
-			*/
 			co_return;
 		}
 
@@ -164,14 +153,14 @@ namespace CommanderNS {
 
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					ClientDataTypes::GuildMemberData guildMemberData;
-					GetGuildMemberData getGuildMemberData;
+					DataManipFunctions::GetGuildMemberData getGuildMemberData;
 					getGuildMemberData.guildId = payload.at("d").at("guild_id");
 					getGuildMemberData.id = payload.at("d").at("user").at("id");
 					getGuildMemberData.pDataStructure = &guildMemberData;
-					//this->pClient->pMainAgent->getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
+					DataManipFunctions::getObjectDataAsync(this->pRestAPI, getGuildMemberData).get();
 					EventDataTypes::GuildMemberAddData guildMemberAddData;
 					guildMemberAddData.guildId = payload.at("d").at("guild_id");
-					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData, this->pMainAgent, this->pClient);
+					guildMemberAddData.guildMember = ClientClasses::GuildMember(guildMemberData, this->pClient);
 					this->pEventMachine->onGuildMemberAddEvent(guildMemberAddData);
 				}
 			}
@@ -186,7 +175,7 @@ namespace CommanderNS {
 	struct WebSocketConnection : public concurrency::agent, implements<WebSocketConnection, winrt::Windows::Foundation::IInspectable> {
 	public:
 
-		WebSocketConnection(ITarget<hstring>& target, Scheduler* pScheduler = nullptr)
+		WebSocketConnection(ITarget<hstring>& target, Scheduler* pScheduler)
 			: _target(target),
 			agent(*pScheduler)
 		{}
@@ -287,7 +276,7 @@ namespace CommanderNS {
 			}
 		}
 
-		void onClosed(IWebSocket const& /* sender */, WebSocketClosedEventArgs const& args) {
+		void onClosed(IWebSocket const& ,WebSocketClosedEventArgs const& args) {
 			std::wcout << L"WebSocket_Closed; Code: " << args.Code() << ", Reason: \"" << args.Reason().c_str() << "\"" << std::endl;
 		}
 
@@ -405,5 +394,6 @@ namespace CommanderNS {
 			}
 		};
 	};
+	*/
 }
 #endif

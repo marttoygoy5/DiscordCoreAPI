@@ -10,7 +10,7 @@
 
 #include "pch.h"
 
-namespace CommanderNS {
+namespace DiscordCoreInternal {
 
     struct ThreadContext {
         Scheduler* scheduler;
@@ -32,8 +32,8 @@ namespace CommanderNS {
         task<void> initialize() {
             DispatcherQueueOptions options{
                 sizeof(DispatcherQueueOptions),
-                DQTYPE_THREAD_DEDICATED,
-                 DQTAT_COM_STA
+                DQTYPE_THREAD_CURRENT,
+                DQTAT_COM_NONE
             };
             ABI::Windows::System::IDispatcherQueueController* ptrNew{};
             winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));
@@ -52,7 +52,6 @@ namespace CommanderNS {
                 ThreadContext threadContext;
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
                 DispatcherQueue threadQueue = threadQueueController.DispatcherQueue();
-                SchedulerPolicy policy;
                 policy.SetConcurrencyLimits(1, 1);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
@@ -60,7 +59,7 @@ namespace CommanderNS {
                 Scheduler* newScheduler = Scheduler::Create(policy);
                 threadContext.scheduler = newScheduler;
                 threadContext.threadQueue = make_shared<DispatcherQueue>(threadQueue);
-                shared_ptr<task_group> newTaskGroup = make_shared<task_group>();
+                newTaskGroup = make_shared<task_group>();
                 threadContext.taskGroup = newTaskGroup;
                 newScheduler->Attach();
                 this->Threads.push_back(threadContext);

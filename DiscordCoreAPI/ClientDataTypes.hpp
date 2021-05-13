@@ -11,10 +11,8 @@
 #include "pch.h"
 
 namespace CommanderNS {
-
+    /*
 	namespace ClientDataTypes {
-
-        struct ClientDataType {};
 
         enum class Permissions {
             CREATE_INSTANT_INVITE = (1 << 0),
@@ -116,7 +114,7 @@ namespace CommanderNS {
             DeferredChannelMessageWithSource = 5
         };
 
-        struct UserData: ClientDataType {
+        struct UserData {
             string username;
             string id;
             string discriminator;
@@ -132,7 +130,7 @@ namespace CommanderNS {
             int public_flags = 0;
         };
 
-        struct GuildMemberData: ClientDataType {
+        struct GuildMemberData {
             UserData user;
             string nick;
             vector<string> roles;
@@ -144,52 +142,52 @@ namespace CommanderNS {
             string permissions;
         };
 
-        struct WelcomeScreenChannelData: ClientDataType {
+        struct WelcomeScreenChannelData {
             string channelId;
             string description;
             string emojiId;
             string emojiName;
         };
 
-        struct WelcomeScreenData: ClientDataType {
+        struct WelcomeScreenData {
             string description;
             vector<WelcomeScreenChannelData> welcomeChannels;
         };
 
-        struct PartyData: ClientDataType {
+        struct PartyData {
             string id;
             int size[2]{};
         };
 
-        struct AssetsData: ClientDataType {
+        struct AssetsData {
             string largeImage;
             string largeText;
             string smallImage;
             string smallText;
         };
 
-        struct SecretsData: ClientDataType {
+        struct SecretsData {
             string join;
             string spectate;
             string match;
         };
 
-        struct TimestampData: ClientDataType {
+        struct TimestampData {
             int start;
             int end;
         };
 
-        struct ButtonData: ClientDataType {
+        struct ButtonData {
             string label;
             string url;
         };
 
-        struct RoleTagsData: ClientDataType {
+        struct RoleTagsData {
             string botId;
             string integrationId;
         };
 
-        struct RoleData: ClientDataType {
+        struct RoleData {
             string id;
             string name;
             int color;
@@ -201,7 +199,7 @@ namespace CommanderNS {
             RoleTagsData tags;
         };
 
-        struct EmojiData: ClientDataType {
+        struct EmojiData {
             string id;
             string name;
             map<string, RoleData> roles;
@@ -212,7 +210,7 @@ namespace CommanderNS {
             bool available;
         };
 
-        struct ActivityData: ClientDataType {
+        struct ActivityData {
             string name;
             int type;
             string url;
@@ -230,13 +228,13 @@ namespace CommanderNS {
             vector<ButtonData> buttons;
         };
 
-        struct ClientStatusData: ClientDataType {
+        struct ClientStatusData {
             string desktop;
             string mobile;
             string web;
         };
 
-        struct PresenceUpdateData: ClientDataType {
+        struct PresenceUpdateData {
             UserData user;
             string guildId;
             string status;
@@ -244,14 +242,14 @@ namespace CommanderNS {
             ClientStatusData clientStatus;
         };
 
-        struct OverWriteData: ClientDataType {
+        struct OverWriteData {
             string id;
             int type;	           //	either 0 (role) or 1 (member)
             string allow;
             string deny;
         };
 
-        struct ChannelData: ClientDataType {
+        struct ChannelData {
             string id;
             int type;
             string guildId;
@@ -274,7 +272,7 @@ namespace CommanderNS {
             int videoQualityMode;
         };
 
-        struct VoiceStateData: ClientDataType {
+        struct VoiceStateData {
             string guildId;
             string channelId;
             string userId;
@@ -290,7 +288,7 @@ namespace CommanderNS {
             string requestToSpeakTimestamp;
         };
 
-        struct GuildData: ClientDataType {
+        struct GuildData {
             string icon;
             string name;
             string id;
@@ -339,155 +337,15 @@ namespace CommanderNS {
             vector<ChannelData> channels;
         };
 
-        struct ChannelMentionData: ClientDataType {
+        struct ChannelMentionData {
             string id;
             string guildId;
             int type;
             string name;
         };
 
-        struct AttachmentData: ClientDataType {
-            string id = "";
-            string filename = "";
-            string contentType = "";
-            int size = 0;
-            string url = "";
-            string proxyUrl = "";
-            int height = 0;
-            int width = 0;
-        };
 
-        struct EmbedFooterData: ClientDataType {
-            string iconUrl;
-            string text;
-            string proxyIconUrl;
-        };
-
-        struct EmbedImageData: ClientDataType {
-            string url;
-            string proxyUrl;
-            int height;
-            int width;
-        };
-
-        struct EmbedThumbnailData: ClientDataType {
-            string url;
-            string proxyUrl;
-            int height;
-            int width;
-        };
-
-        struct EmbedVideoData: ClientDataType {
-            string url;
-            string proxyUrl;
-            int height;
-            int width;
-        };
-
-        struct EmbedProviderData: ClientDataType {
-            string name;
-            string url;
-        };
-
-        struct EmbedAuthorData: ClientDataType {
-            string name;
-            string url;
-            string iconUrl;
-            string proxyIconUrl;
-        };
-
-        struct EmbedFieldData: ClientDataType {
-            string name;
-            string value;
-            bool Inline;
-        };
-
-        struct EmbedData: ClientDataType {
-            EmbedData setTitle(string title) {
-                this->title = title;
-                return *this;
-            }
-            EmbedData setAuthor(string authorName, string authorAvatarURL = "") {
-                this->author.name = authorName;
-                this->author.iconUrl = authorAvatarURL;
-                return *this;
-            }
-            EmbedData setImage(string imageURL) {
-                this->image.url = imageURL;
-                return *this;
-            }
-            EmbedData setThumbnail(string thumbnailURL) {
-                this->thumbnail.url = thumbnailURL;
-                return *this;
-            }
-            EmbedData setColor(int color[3]) {
-                this->color[0] = color[0];
-                this->color[1] = color[1];
-                this->color[2] = color[2];
-                return *this;
-            }
-            EmbedData setDescription(string description) {
-                this->description = description;
-                return *this;
-            }
-            EmbedData setFooter(string footerText, string footerIconURLText = "") {
-                this->footer.text = footerText;
-                this->footer.iconUrl = footerIconURLText;
-                return *this;
-            }
-            EmbedData setTimeStamp(string timeStamp) {
-                time_t now = time(0);
-                char* dt = ctime(&now);
-                this->timestamp = dt;
-                return *this;
-            }
-            EmbedData addField(string name, string value, bool Inline = true) {
-                EmbedFieldData embedFieldData;
-                embedFieldData.name = name;
-                embedFieldData.Inline = Inline;
-                embedFieldData.value = value;
-                this->fields.push_back(embedFieldData);
-                return *this;
-            }
-            string title;
-            string type;
-            string description;
-            string url;
-            string timestamp;
-            int color[3];
-            EmbedFooterData footer;
-            EmbedImageData image;
-            EmbedThumbnailData thumbnail;
-            EmbedVideoData video;
-            EmbedProviderData provider;
-            EmbedAuthorData author;
-            vector<EmbedFieldData> fields;
-            int actualColor() {
-                if (this->color[0] > 255) {
-                    this->color[0] = 255;
-                }
-                else if (this->color[0] < 0) {
-                    this->color[0] = 0;
-                }
-                if (this->color[1] > 255) {
-                    this->color[1] = 255;
-                }
-                else if (this->color[1] < 0) {
-                    this->color[1] = 0;
-                }
-                if (this->color[2] > 255) {
-                    this->color[2] = 255;
-                }
-                else if (this->color[2] < 0) {
-                    this->color[2] = 0;
-                }
-                int colorValue = 65536 * this->color[0] + 256 * this->color[1] + this->color[2];
-                return colorValue;
-            };
-            int actualColorVal = actualColor();
-        };
-
-        struct ReactionData: ClientDataType {
+        struct ReactionData {
             int count;
             bool me;
             EmojiData emoji;
@@ -498,26 +356,26 @@ namespace CommanderNS {
             GuildMemberData member;
         };
 
-        struct MessageActivityData: ClientDataType {
+        struct MessageActivityData {
             int type;
             string partyId;
         };
 
-        struct TeamMembersObjectData: ClientDataType {
+        struct TeamMembersObjectData {
             int membershipState;
             vector<string> permissions;
             string teamId;
             UserData user;
         };
 
-        struct TeamObjectData: ClientDataType {
+        struct TeamObjectData {
             string icon;
             string id;
             vector<TeamMembersObjectData> members;
             string ownerUserId;
         };
 
-        struct ApplicationData: ClientDataType {
+        struct ApplicationData {
             string id;
             string name;
             string icon;
@@ -538,14 +396,9 @@ namespace CommanderNS {
             int flags;
         };
 
-        struct MessageReferenceData: ClientDataType {
-            string messageId;
-            string channelId;
-            string guildId;
-            bool failIfNotExists;
-        };
+        
 
-        struct MessageStickerData: ClientDataType {
+        struct MessageStickerData {
             string id;
             string packId;
             string name;
@@ -555,14 +408,9 @@ namespace CommanderNS {
             int formatType;
         };
 
-        struct AllowedMentionsData: ClientDataType {
-            vector<string> parse;
-            vector<string> roles;
-            vector<string> users;
-            bool repliedUser;
-        };
+        
 
-        struct InteractionApplicationCommandCallbackData: ClientDataType {
+        struct InteractionApplicationCommandCallbackData {
             bool tts;
             string content;
             vector<EmbedData> embeds;
@@ -570,12 +418,12 @@ namespace CommanderNS {
             int flags;
         };
 
-        struct InteractionData: ClientDataType {
+        struct InteractionData {
             InteractionResponseType type;
             InteractionApplicationCommandCallbackData data;
         };
 
-        struct MessageDataOld: ClientDataType {
+        struct MessageDataOld {
             string id;
             string channelId;
             string guildId;
@@ -608,14 +456,12 @@ namespace CommanderNS {
             MessageDataOld referencedMessage;
         };
 
-        struct CreateReactionData: ClientDataType {
+        struct CreateReactionData {
             string name;
-            string channelId;
-            string messageId;
             string id;
         };
 
-        struct ReactionAddEventData: ClientDataType {
+        struct ReactionAddEventData {
             string userId;
             string channelId;
             string messageId;
@@ -624,17 +470,9 @@ namespace CommanderNS {
             EmojiData emoji;
         };
 
-        struct CreateMessageData: ClientDataType {
-            string channelId;
-            string content;
-            int nonce;
-            bool tts = false;
-            EmbedData embed;
-            AllowedMentionsData allowedMentions;
-            MessageReferenceData messageReference;
-        };
+        
 
-        struct DeleteReactionData: ClientDataType {
+        struct DeleteReactionData {
             string channelId;
             string messageId;
             string emojiName;
@@ -642,34 +480,27 @@ namespace CommanderNS {
             string userId;
         };
 
-        struct DeleteOwnReactionData: ClientDataType {
+        struct DeleteOwnReactionData {
             string channelId;
             string messageId;
             string emojiName;
             string emojiId;
         };
 
-        struct DeleteAllReactionsByEmojiData: ClientDataType {
+        struct DeleteAllReactionsByEmojiData {
             string channelId;
             string messageId;
             string emojiName;
             string emojiId;
         };
 
-        struct EditMessageData: ClientDataType {
-            string channelId;
-            string content;
-            EmbedData embed;
-            int flags;
-            AllowedMentionsData allowedMentions;
-            vector<AttachmentData> attachments;
-        };
 
-        struct DeleteAllReactionsData: ClientDataType {
+        struct DeleteAllReactionsData {
             string channelId;
             string messageId;
         };
 
 	}
+    */
 }
 #endif

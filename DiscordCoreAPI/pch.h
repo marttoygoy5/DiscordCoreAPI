@@ -25,6 +25,7 @@
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/windows.storage.streams.h>
 #include <winrt/Windows.Foundation.h>
+#include "concurrent_unordered_map.h"
 #include <winrt/windows.ui.xaml.h>
 #include <winrt/windows.system.h>
 #include <concurrent_vector.h>

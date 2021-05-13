@@ -14,25 +14,26 @@
 #include "SystemThreads.hpp"
 
 namespace CommanderNS {
-
+	/*
 	namespace EventDataTypes {
-
+		
 		struct GuildMemberAddData {
 			ClientClasses::GuildMember guildMember;
 			std::string guildId;
 		};
 
 		struct MessageCreationData {
-			ClientClasses::Message message;
+			ClientClasses::Message* message;
 		};
 
 		struct MessageDeletionData {
-			ClientClasses::Message message;
+			ClientClasses::Message* message;
 		};
 
 		struct ReactionAddData {
 			ClientClasses::Reaction reaction;
 		};
 	}
+	*/
 }
 #endif

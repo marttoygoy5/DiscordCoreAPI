@@ -14,7 +14,7 @@
 #include "RestAPI.hpp"
 
 namespace CommanderNS {
-
+	/*
 	namespace HttpAgents {
 
 		enum class WorkloadType {
@@ -37,7 +37,7 @@ namespace CommanderNS {
 		public:
 			ITarget<HTTPData>& target01;
 
-			explicit TimedRequestSender(ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, unsigned int timeDelay, Scheduler* scheduler = nullptr)
+			explicit TimedRequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, unsigned int timeDelay)
 				:
 				agent(*scheduler),
 				source00(source00),
@@ -77,7 +77,7 @@ namespace CommanderNS {
 		public:
 			ITarget<HTTPData>& target01;
 
-			explicit RequestSender(ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01, Scheduler* scheduler = nullptr)
+			explicit RequestSender(Scheduler* scheduler, ISource<WorkloadData>& source00, ITarget<WorkloadData>& target00, ISource<HTTPData>& source01, ITarget<HTTPData>& target01)
 				:
 				agent(*scheduler),
 				source00(source00),
@@ -108,7 +108,7 @@ namespace CommanderNS {
 			static map<string, RateLimitData> rateLimitData;
 			static map<RateLimitType, string> rateLimitDataBucketValues;
 
-			HTTPHandler(ITarget<HTTPData>& target, ISource<WorkloadData>& source, com_ptr<RestAPI> pRestAPI, Scheduler* scheduler = nullptr)
+			HTTPHandler(Scheduler* scheduler, ITarget<HTTPData>& target, ISource<WorkloadData>& source, com_ptr<RestAPI> pRestAPI)
 				: _target(target),
 				_source(source),
 				agent(*scheduler)
@@ -174,5 +174,6 @@ namespace CommanderNS {
 		map<RateLimitType, string> HTTPHandler::rateLimitDataBucketValues;
 		map<string, RateLimitData> HTTPHandler::rateLimitData;
 	};
+	*/
 };
 #endif
