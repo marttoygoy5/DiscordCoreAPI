@@ -20,13 +20,14 @@ namespace DiscordCoreAPI {
 	public:
 	
 		DiscordCoreClient(hstring botToken) 
-			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer)
+			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
+			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer)
 		{
 			this->pSystemThreads = make_self<DiscordCoreInternal::SystemThreads>();
 			this->botToken = botToken;
 			this->pSystemThreads->initialize().get();
 			this->pWebSocketConnectionAgent = make_self<DiscordCoreInternal::WebSocketConnectionAgent>(this->webSocketIncWorkloadBuffer, this->pSystemThreads->Threads.at(1));
-			this->pWebSocketReceiverAgent = make_self<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkCollectionBuffer, this->pSystemThreads->Threads.at(2));
+			this->pWebSocketReceiverAgent = make_self<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->Threads.at(2));
 			this->pGETAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(3).scheduler);
 			this->pGETAgent->start();
 			this->pPUTAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(4).scheduler);
@@ -40,7 +41,6 @@ namespace DiscordCoreAPI {
 			this->pWebSocketConnectionAgent->initialize(botToken);
 			this->pWebSocketConnectionAgent->start();
 			this->pWebSocketReceiverAgent->start();
-
 		}
 
 		GuildManager Guilds;
@@ -77,14 +77,15 @@ namespace DiscordCoreAPI {
 		com_ptr<DiscordCoreInternal::HttpRequestAgent> pPATCHAgent{ nullptr };
 		com_ptr<DiscordCoreInternal::HttpRequestAgent> pDELETEAgent{ nullptr };
 		ISource<DiscordCoreInternal::WebSocketWorkload>& webSocketWorkloadSource;
-		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketIncWorkloadBuffer;
+		ITarget<DiscordCoreInternal::WebSocketWorkload>& webSocketWorkloadTarget;
+		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
 
 		void run() {
 			while (doWeQuit == false) {
 				DiscordCoreInternal::WebSocketWorkload workload;
-				if (try_receive(this->webSocketWorkloadSource, workload)) {
-					cout << workload.payLoad << endl;
+				if (try_receive(this->webSocketWorkloadSource, workload))
+					cout << "WORKLOAD TYPE: " << endl << workload.eventType << endl;
 				}
 			}
 			done();

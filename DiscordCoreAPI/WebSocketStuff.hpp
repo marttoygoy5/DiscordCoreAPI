@@ -25,12 +25,12 @@ namespace DiscordCoreInternal {
 
 	struct WebSocketWorkload {
 		json payLoad;
-		WebSocketEventType eventype;
+		WebSocketEventType eventType;
 	};
 
 	struct WebSocketReceiverAgent : agent, implements<WebSocketReceiverAgent, winrt::Windows::Foundation::IInspectable> {
 	public:
-		WebSocketReceiverAgent(ISource<WebSocketWorkload>& pWorkloadSource, ITarget<WebSocketWorkload>& pWorkloadTarget, ThreadContext threadContextNew = {nullptr, nullptr, nullptr})
+		WebSocketReceiverAgent(ISource<json>& pWorkloadSource, ITarget<WebSocketWorkload>& pWorkloadTarget, ThreadContext threadContextNew = {nullptr, nullptr, nullptr})
 			:workloadSource(pWorkloadSource),
 			workloadTarget(pWorkloadTarget),
 			agent(*threadContextNew.scheduler)
@@ -49,14 +49,14 @@ namespace DiscordCoreInternal {
 	protected:
 		bool doWeQuit = false;
 		ThreadContext threadContext;
-		ISource<WebSocketWorkload>& workloadSource;
+		ISource<json>& workloadSource;
 		ITarget<WebSocketWorkload>& workloadTarget;
 
 		void run() {
 			while (doWeQuit == false) {
-				WebSocketWorkload workload;
-				if (try_receive(this->workloadSource, workload)) {
-					this->onMessageReceived(workload.payLoad);
+				json payload;
+				if (try_receive(this->workloadSource, payload)) {
+					this->onMessageReceived(payload);
 				}
 			}
 			done();
@@ -65,40 +65,40 @@ namespace DiscordCoreInternal {
 		fire_and_forget onGuildCreate(json payload) {
 			WebSocketWorkload workload;
 			workload.payLoad = payload;
-			workload.eventype = WebSocketEventType::GUIILD_CREATE;
-			asend(this->workloadTarget, workload);
+			workload.eventType = WebSocketEventType::GUIILD_CREATE;
+			send(this->workloadTarget, workload);
 			co_return;
 		}
 
 		fire_and_forget onMessageCreate(json payload) {
 			WebSocketWorkload workload;
 			workload.payLoad = payload;
-			workload.eventype = WebSocketEventType::MESSAGE_CREATE;
-			asend(this->workloadTarget, workload);
+			workload.eventType = WebSocketEventType::MESSAGE_CREATE;
+			send(this->workloadTarget, workload);
 			co_return;
 		}
 
 		fire_and_forget onMessageDelete(json payload) {
 			WebSocketWorkload workload;
 			workload.payLoad = payload;
-			workload.eventype = WebSocketEventType::MESSAGE_DELETE;
-			asend(this->workloadTarget, workload);
+			workload.eventType = WebSocketEventType::MESSAGE_DELETE;
+			send(this->workloadTarget, workload);
 			co_return;
 		}
 
 		fire_and_forget onMessageReactionAdd(json payload) {
 			WebSocketWorkload workload;
 			workload.payLoad = payload;
-			workload.eventype = WebSocketEventType::REACTION_ADD;
-			asend(this->workloadTarget, workload);
+			workload.eventType = WebSocketEventType::REACTION_ADD;
+			send(this->workloadTarget, workload);
 			co_return;
 		}
 
 		fire_and_forget onGuildMemberAdd(json payload) {
 			WebSocketWorkload workload;
 			workload.payLoad = payload;
-			workload.eventype = WebSocketEventType::GUILD_MEMBER_ADD;
-			asend(this->workloadTarget, workload);
+			workload.eventType = WebSocketEventType::GUILD_MEMBER_ADD;
+			send(this->workloadTarget, workload);
 			co_return;
 		}
 
@@ -136,11 +136,10 @@ namespace DiscordCoreInternal {
 	struct WebSocketConnectionAgent :agent, implements<WebSocketConnectionAgent, winrt::Windows::Foundation::IInspectable> {
 	public:
 
-		WebSocketConnectionAgent(ITarget<WebSocketWorkload>& target, ThreadContext threadContextNew = {nullptr, nullptr, nullptr})
-			:workloadSubmission(target),
+		WebSocketConnectionAgent(ITarget<json>& target, ThreadContext threadContextNew = {nullptr, nullptr, nullptr})
+			:
 			agent(*threadContext.scheduler),
-			webSocketMessageTarget(messageBuffer),
-			webSocketMessageSource(messageBuffer)
+			webSocketMessageTarget(target)
 		{
 			this->threadContext = threadContext;
 		}
@@ -177,10 +176,7 @@ namespace DiscordCoreInternal {
 		DispatcherQueueController dispatchQueueController{ nullptr };
 		DispatcherQueue dispatchQueueForHB{ nullptr };
 		DispatcherQueueTimer heartbeatTimer{ nullptr };
-		ITarget<WebSocketWorkload>& workloadSubmission;
-		ISource<json>& webSocketMessageSource;
 		ITarget<json>& webSocketMessageTarget;
-		unbounded_buffer<json> messageBuffer;
 
 		void run() {
 			this->connect();
@@ -282,7 +278,7 @@ namespace DiscordCoreInternal {
 				wcout << error.message().c_str() << endl;
 			}
 		}
-				
+		
 		void onMessageReceived(MessageWebSocket const&, MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
 				DataReader dataReader{ args.GetDataReader() };
