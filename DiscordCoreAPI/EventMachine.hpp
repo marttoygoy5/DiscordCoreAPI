@@ -9,23 +9,26 @@
 #define _EVENT_MACHINE_
 
 #include "pch.h"
+#include "GuildStuff.hpp"
 
-namespace DisccordCoreInternal {
+namespace DiscordCoreInternal {
 	
 	struct GuildMemberAddData {
-		GuildMember guildMember;
+		DiscordCoreAPI::GuildMember guildMember;
 	};
 
 	struct MessageCreationData {
-		Message* message;
+		DiscordCoreAPI::Message message;
 	};
 
 	struct MessageDeletionData {
-		Message* message;
+		string messageId;
+		string channelId;
+		string guildId;
 	};
 
 	struct ReactionAddData {
-		Reaction reaction;
+		DiscordCoreAPI::Reaction reaction;
 	};
 
 	struct EventMachine : implements<EventMachine, winrt::Windows::Foundation::IInspectable> {
@@ -73,6 +76,5 @@ namespace DisccordCoreInternal {
 
 		winrt::event <winrt::delegate<ReactionAddData>> onReactionAddEvent;
 	};
-	*/
 }
 #endif

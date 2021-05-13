@@ -14,6 +14,8 @@
 
 namespace DiscordCoreInternal {
 
+	struct HttpRequestAgent;
+
 	enum class HttpWorkloadClass {
 		GET = 0,
 		PUT = 1,
@@ -40,6 +42,14 @@ namespace DiscordCoreInternal {
 		GET_GUILD_MEMBERS = 14,
 		GET_ROLES = 15,
 		GET_USER_GUILDS = 16
+	};
+
+	struct HttpAgentPointers {
+		com_ptr<HttpRequestAgent> pGETAgent;
+		com_ptr<HttpRequestAgent> pPUTAgent;
+		com_ptr<HttpRequestAgent> pPOSTAgent;
+		com_ptr<HttpRequestAgent> pPATCHAgent;
+		com_ptr<HttpRequestAgent> pDELETEAgent;
 	};
 
 	struct HttpData {
@@ -96,7 +106,7 @@ namespace DiscordCoreInternal {
 				httpResponse = getHttpClient.GetAsync(this->baseURI).get();
 				hstring httpResponseBody = httpResponse.Content().ReadAsStringAsync().get().c_str();
 				std::wstringstream stream;
-				stream << JSONifier::parseSocketPath(httpResponseBody.c_str()).c_str();
+				stream << parseSocketPath(httpResponseBody.c_str()).c_str();
 				stream << L"/?v=9&encoding=json";
 				*pSocketPath = stream.str();
 			}

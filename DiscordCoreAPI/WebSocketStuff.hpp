@@ -126,7 +126,7 @@ namespace DiscordCoreInternal {
 				}
 			}
 			catch (winrt::hresult_error const& ex) {
-				std::wcout << ex.message().c_str() << std::endl;
+				wcout << ex.message().c_str() << endl;
 
 			}
 		}
@@ -270,7 +270,7 @@ namespace DiscordCoreInternal {
 					this->connect();
 					co_return;
 				}
-				string heartbeat = JSONifier::getHeartbeatPayload(this->lastNumberReceived);
+				string heartbeat = getHeartbeatPayload(this->lastNumberReceived);
 				this->sendAsync(heartbeat).get();
 				this->didWeReceiveHeartbeatAck = false;
 			}
@@ -301,13 +301,13 @@ namespace DiscordCoreInternal {
 				}
 
 				if (payload.at("op") == 6) {
-					std::string resume = JSONifier::getResumePayload(winrt::to_string(this->botToken), winrt::to_string(this->sessionID), this->lastNumberReceived);
+					string resume = getResumePayload(to_string(this->botToken), to_string(this->sessionID), this->lastNumberReceived);
 					this->sendAsync(resume);
 				}
 
 				if (payload.at("op") == 7) {
 					this->cleanup();
-					std::string resume = JSONifier::getResumePayload(winrt::to_string(this->botToken), winrt::to_string(this->sessionID), this->lastNumberReceived);
+					string resume = getResumePayload(to_string(this->botToken), to_string(this->sessionID), this->lastNumberReceived);
 					this->sendAsync(resume);
 					this->connect();
 				}
@@ -317,9 +317,9 @@ namespace DiscordCoreInternal {
 				}
 
 				if (payload.at("t") == "READY") {
-					std::string sessionIDTemp;
+					string sessionIDTemp;
 					sessionIDTemp = payload.at("d").at("session_id");
-					this->sessionID = winrt::to_hstring(sessionIDTemp);
+					this->sessionID = to_hstring(sessionIDTemp);
 				}
 
 				if (payload.at("op") == 1) {
@@ -332,13 +332,13 @@ namespace DiscordCoreInternal {
 
 				if (payload.at("op") == 10) {
 					this->heartbeatInterval = payload.at("d").at("heartbeat_interval");
-					this->heartbeatTimer.Interval(std::chrono::milliseconds(this->heartbeatInterval));
+					this->heartbeatTimer.Interval(chrono::milliseconds(this->heartbeatInterval));
 					this->heartbeatTimer.Tick({ this, &WebSocketConnectionAgent::OnHeartbeat });
 					this->heartbeatTimer.Start();
-					std::string identity = JSONifier::getIdentifyPayload(winrt::to_string(this->botToken), this->intentsValue);
+					std::string identity = getIdentifyPayload(to_string(this->botToken), this->intentsValue);
 					this->sendAsync(identity);
 				}
-				std::cout << "Message received from MessageWebSocket: " << winrt::to_string(message) << std::endl << std::endl;
+				cout << "Message received from MessageWebSocket: " << to_string(message) << endl << endl;
 			}
 			catch (hresult_error const& ex) {
 				wcout << ex.message().c_str() << endl;

@@ -13,19 +13,21 @@
 #include "HttpStuff.hpp"
 #include "WebSocketStuff.hpp"
 #include "GuildStuff.hpp"
+#include "EventMachine.hpp"
 
 namespace DiscordCoreAPI {
 
 	struct DiscordCoreClient : agent, implements<DiscordCoreClient, winrt::Windows::Foundation::IInspectable> {
 	public:
-	
-		DiscordCoreClient(hstring botToken) 
+
+		DiscordCoreClient(hstring botToken)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer)
 		{
 			this->pSystemThreads = make_self<DiscordCoreInternal::SystemThreads>();
-			this->botToken = botToken;
 			this->pSystemThreads->initialize().get();
+			this->pEventMachine = make_self<DiscordCoreInternal::EventMachine>();
+			this->botToken = botToken;
 			this->pWebSocketConnectionAgent = make_self<DiscordCoreInternal::WebSocketConnectionAgent>(this->webSocketIncWorkloadBuffer, this->pSystemThreads->Threads.at(1));
 			this->pWebSocketReceiverAgent = make_self<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->Threads.at(2));
 			this->pGETAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(3).scheduler);
@@ -41,11 +43,18 @@ namespace DiscordCoreAPI {
 			this->pWebSocketConnectionAgent->initialize(botToken);
 			this->pWebSocketConnectionAgent->start();
 			this->pWebSocketReceiverAgent->start();
+			DiscordCoreInternal::HttpAgentPointers pointers;
+			pointers.pGETAgent = this->pGETAgent;
+			pointers.pPUTAgent = this->pPUTAgent;
+			pointers.pPOSTAgent = this->pPOSTAgent;
+			pointers.pPATCHAgent = this->pPATCHAgent;
+			pointers.pDELETEAgent = this->pDELETEAgent;
+			this->Guilds = GuildManager(pointers);
 		}
 
 		GuildManager Guilds;
 
-		void terminate(){
+		void terminate() {
 			this->doWeQuit = true;
 		}
 
@@ -65,10 +74,17 @@ namespace DiscordCoreAPI {
 		}
 
 	protected:
+		friend class GuildManager;
+		friend class Guild;
+		friend class GuildMemberManager;
+		friend class GuildMember;
+		friend class ChannelManager;
+		friend class Channel;
 		hstring botToken;
 		bool doWeQuit = false;
 		hstring baseURL = L"https://discord.com/api/v9";
 		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
+		com_ptr<DiscordCoreInternal::EventMachine> pEventMachine{ nullptr };
 		com_ptr<DiscordCoreInternal::WebSocketConnectionAgent> pWebSocketConnectionAgent{ nullptr };
 		com_ptr<DiscordCoreInternal::WebSocketReceiverAgent> pWebSocketReceiverAgent{ nullptr };
 		com_ptr<DiscordCoreInternal::HttpRequestAgent> pGETAgent{ nullptr };
@@ -84,16 +100,14 @@ namespace DiscordCoreAPI {
 		void run() {
 			while (doWeQuit == false) {
 				DiscordCoreInternal::WebSocketWorkload workload;
-				if (try_receive(this->webSocketWorkloadSource, workload))
-					cout << "WORKLOAD TYPE: " << endl << workload.eventType << endl;
+				if (try_receive(this->webSocketWorkloadSource, workload)) {
+					cout << "WORKLOAD TYPE: " << endl << (int)workload.eventType << endl;
 				}
 			}
 			done();
 		}
-		
+
 	};
-
-
 }
 
 #endif
