@@ -58,4 +58,5 @@ using namespace concurrency;
 using namespace nlohmann;
 using namespace winrt;
 using namespace std;
+
 #endif

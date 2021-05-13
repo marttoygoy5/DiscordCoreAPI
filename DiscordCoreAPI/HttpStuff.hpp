@@ -46,6 +46,13 @@ namespace DiscordCoreInternal {
 		json data;
 	};
 
+	struct HttpWorkload {
+		HttpWorkloadClass workloadClass;
+		HttpWorkloadType workloadType;
+		string relativePath;
+		string content;
+	};
+
 	struct RateLimitData {
 		HttpWorkloadType workloadType;
 		float timeStartedAt = 0;
@@ -54,394 +61,11 @@ namespace DiscordCoreInternal {
 		string bucket;
 	};
 
-	struct HttpWorkload {
-		HttpWorkloadClass workloadClass;
-		HttpWorkloadType workloadType;
-		string relativePath;
-		string content;
-	};
-
-	struct TimedHttpRequestAgent: agent, implements<TimedHttpRequestAgent, winrt::Windows::Foundation::IInspectable> {
-	public:
-		unbounded_buffer<HttpWorkload> workSubmissionBuffer;
-		unbounded_buffer<json> workReturnBuffer;
-		TimedHttpRequestAgent(Scheduler* pScheduler, hstring botToken, hstring baseURL, hstring* pSocketPath, unsigned int timeDelay)
-			:
-			source00(workSubmissionBuffer),
-			target01(workReturnBuffer),
-			timerTarget(&timerBuffer),
-			timerSource(timerBuffer),
-			timer(timeDelay, this->propValue, timerTarget, false),
-			agent(*pScheduler)
-		{
-			try {
-				this->baseURL = baseURL;
-				this->botToken = botToken;
-				this->initialConnectionPath = this->baseURL + L"/gateway/bot";
-				this->getHttpClient = HttpClient();
-				this->getHeaders = this->getHttpClient.DefaultRequestHeaders();
-				this->putHttpClient = HttpClient();
-				this->putHeaders = this->putHttpClient.DefaultRequestHeaders();
-				this->postHttpClient = HttpClient();
-				this->postHeaders = this->postHttpClient.DefaultRequestHeaders();
-				this->deleteHttpClient = HttpClient();
-				this->deleteHeaders = this->deleteHttpClient.DefaultRequestHeaders();
-				hstring headerString = L"Bot ";
-				hstring headerString2 = headerString + botToken;
-				HttpCredentialsHeaderValue credentialValue(nullptr);
-				credentialValue = credentialValue.Parse(headerString2.c_str());
-				this->getHeaders.Authorization(credentialValue);
-				this->putHeaders.Authorization(credentialValue);
-				this->postHeaders.Authorization(credentialValue);
-				this->deleteHeaders.Authorization(credentialValue);
-				this->baseURI = Uri(this->initialConnectionPath.c_str());
-				HttpResponseMessage httpResponse;
-				httpResponse = getHttpClient.GetAsync(this->baseURI).get();
-				hstring httpResponseBody = httpResponse.Content().ReadAsStringAsync().get().c_str();
-				std::wstringstream stream;
-				stream << JSONifier::parseSocketPath(httpResponseBody.c_str()).c_str();
-				stream << L"/?v=9&encoding=json";
-				*pSocketPath = stream.str();
-			}
-			catch (winrt::hresult_error ex) {
-				std::wcout << "Error: " << ex.message().c_str() << std::endl;
-			}
-		}
-
-		void terminate() {
-			this->doWeQuit = true;
-		}
-
-	protected:
-		unbounded_buffer<bool> timerBuffer;
-		bool doWeQuit = false;
-		ITarget<bool>* timerTarget;
-		ISource<bool>& timerSource;
-		ISource<HttpWorkload>& source00;
-		ITarget<json>& target01;
-		timer<bool> timer;
-		int propValue;
-		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
-		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
-
-		void run() {
-			transformer<HttpWorkload, json> completeHttpRequest([this](HttpWorkload workload) -> json {
-				RateLimitData rateLimitData;
-				try {
-					string bucket = TimedHttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
-					rateLimitData = TimedHttpRequestAgent::rateLimitData.at(bucket);
-				}
-				catch (exception error) {
-					cout << "TimedHttpRequestAgent Error: " << error.what() << endl;
-				}
-				if (rateLimitData.getsRemaining == 0) {
-					float loopStartTime = rateLimitData.timeStartedAt;
-					float targetTime = loopStartTime + static_cast<float> (rateLimitData.msRemain);
-					float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					while (rateLimitData.msRemain > 0.0f) {
-						currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-						rateLimitData.msRemain = targetTime - currentTime;
-					}
-				}
-				HttpData returnData;
-				if (workload.workloadClass == HttpWorkloadClass::GET) {
-					returnData = httpGETObjectDataAsync(workload.relativePath, &rateLimitData).get();
-				}
-				else if (workload.workloadClass == HttpWorkloadClass::POST) {
-					returnData = httpPOSTObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
-				}
-				else if (workload.workloadClass == HttpWorkloadClass::PUT) {
-					returnData = httpPUTObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
-				}
-				else if (workload.workloadClass == HttpWorkloadClass::PATCH) {
-					returnData = httpPATCHObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
-				}
-				else if (workload.workloadClass == HttpWorkloadClass::DELETED) {
-					returnData = httpDELETEObjectDataAsync(workload.relativePath, &rateLimitData).get();
-				}
-				try {
-					TimedHttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
-					TimedHttpRequestAgent::rateLimitDataBucketValues.unsafe_erase(workload.workloadType);
-					TimedHttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
-				}
-				catch (exception error) {
-					cout << "TimedHttpRequestAgent Error: " << error.what() << endl;
-					TimedHttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
-				}
-				try {
-					TimedHttpRequestAgent::rateLimitData.at(rateLimitData.bucket);
-					TimedHttpRequestAgent::rateLimitData.unsafe_erase(rateLimitData.bucket);
-					TimedHttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
-				}
-				catch (exception error) {
-					cout << "TimedHttpRequestAgent Error: " << error.what() << endl;
-					TimedHttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
-				};
-				return returnData.data;
-				});
-			completeHttpRequest.link_target(&this->target01);
-			while (this->doWeQuit == false) {
-				bool startVal = receive(&this->timerSource);
-				HttpWorkload workload;
-				if (try_receive(&this->source00, workload)) {
-					send(&completeHttpRequest, workload);
-				}
-			}
-			done();
-		}
-
-		task<HttpData> httpGETObjectDataAsync(string relativeURL, RateLimitData* pRateLimitData) {
-			HttpData getData;
-			string connectionPath = to_string(baseURL) + relativeURL;
-			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
-			HttpResponseMessage httpResponse;
-			httpResponse = getHttpClient.GetAsync(requestUri).get();
-			int currentMSTimeLocal;
-			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
-			}
-			else {
-				getsRemainingLocal = 0;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
-			}
-			else {
-				msRemainLocal = 250;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
-			}
-			else {
-				bucket = "";
-			}
-			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
-			pRateLimitData->getsRemaining = getsRemainingLocal;
-			json jsonValue;
-			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
-				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-			}
-			getData.data = jsonValue;
-			co_return getData;
-		}
-
-		task<HttpData> httpPUTObjectDataAsync(string relativeURL, string content, RateLimitData* pRateLimitData) {
-			HttpData putData;
-			string connectionPath = to_string(baseURL) + relativeURL;
-			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
-			HttpContentHeaderCollection contentHeaderCollection;
-			HttpContentDispositionHeaderValue headerValue(L"payload_json");
-			contentHeaderCollection.ContentDisposition(headerValue);
-			HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
-			contentHeaderCollection.ContentType(typeHeaderValue);
-			HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
-			contents.Headers().ContentDisposition(headerValue);
-			contents.Headers().ContentType(typeHeaderValue);
-			HttpResponseMessage httpResponse;
-			httpResponse = putHttpClient.PutAsync(requestUri, contents).get();
-			int currentMSTimeLocal;
-			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
-			}
-			else {
-				getsRemainingLocal = 0;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
-			}
-			else {
-				msRemainLocal = 250;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
-			}
-			else {
-				bucket = "";
-			}
-			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
-			pRateLimitData->getsRemaining = getsRemainingLocal;
-			json jsonValue;
-			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
-				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-			}
-			putData.data = jsonValue;
-			co_return putData;
-		}
-
-		task<HttpData> httpPOSTObjectDataAsync(string relativeURL, string content, RateLimitData* pRateLimitData) {
-			HttpData postData;
-			string connectionPath = to_string(baseURL) + relativeURL;
-			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
-			HttpContentHeaderCollection contentHeaderCollection;
-			HttpContentDispositionHeaderValue headerValue(L"payload_json");
-			contentHeaderCollection.ContentDisposition(headerValue);
-			HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
-			contentHeaderCollection.ContentType(typeHeaderValue);
-			HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
-			contents.Headers().ContentDisposition(headerValue);
-			contents.Headers().ContentType(typeHeaderValue);
-			HttpResponseMessage httpResponse;
-			httpResponse = postHttpClient.PostAsync(requestUri, contents).get();
-			int currentMSTimeLocal;
-			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
-			}
-			else {
-				getsRemainingLocal = 0;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
-			}
-			else {
-				msRemainLocal = 250;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
-			}
-			else {
-				bucket = "";
-			}
-			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
-			pRateLimitData->getsRemaining = getsRemainingLocal;
-			json jsonValue;
-			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
-				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-			}
-			postData.data = jsonValue;
-			co_return postData;
-		}
-
-		task<HttpData> httpPATCHObjectDataAsync(string relativeURL, string content, RateLimitData* pRateLimitData) {
-			HttpData patchData;
-			string connectionPath = to_string(baseURL) + relativeURL;
-			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
-			HttpContentDispositionHeaderValue headerValue(L"payload_json");
-			HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
-			auto contentHeaderCollection = HttpRequestHeaderCollection(nullptr);
-			HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
-			contents.Headers().ContentDisposition(headerValue);
-			contents.Headers().ContentType(typeHeaderValue);
-			HttpRequestMessage httpRequest;
-			httpRequest.Method(HttpMethod::Patch());
-			httpRequest.Content(contents);
-			httpRequest.RequestUri(requestUri);
-			HttpResponseMessage httpResponse;
-			HttpCompletionOption completionOption;
-			httpResponse = postHttpClient.SendRequestAsync(httpRequest, completionOption).get();
-			wcout << httpResponse.Content().ReadAsStringAsync().get().c_str() << "WHAT IS UP?" << endl;
-			int currentMSTimeLocal;
-			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
-			}
-			else {
-				getsRemainingLocal = 0;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
-			}
-			else {
-				msRemainLocal = 250;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
-			}
-			else {
-				bucket = "";
-			}
-			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
-			pRateLimitData->getsRemaining = getsRemainingLocal;
-			json jsonValue;
-			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
-				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-			}
-			patchData.data = jsonValue;
-			co_return patchData;
-		}
-
-		task<HttpData> httpDELETEObjectDataAsync(string relativeURL, RateLimitData* pRateLimitData) {
-			HttpData deleteData;
-			string connectionPath = to_string(baseURL) + relativeURL;
-			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
-			HttpResponseMessage httpResponse;
-			httpResponse = deleteHttpClient.DeleteAsync(requestUri).get();
-			int currentMSTimeLocal;
-			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
-			}
-			else {
-				getsRemainingLocal = 0;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
-			}
-			else {
-				msRemainLocal = 250;
-			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
-			}
-			else {
-				bucket = "";
-			}
-			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
-			pRateLimitData->getsRemaining = getsRemainingLocal;
-			json jsonValue;
-			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
-				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-			}
-			deleteData.data = jsonValue;
-			co_return deleteData;
-		}
-
-		Uri baseURI = Uri{ nullptr };
-		hstring botToken;
-		hstring baseURL;
-		hstring initialConnectionPath;
-		HttpRequestHeaderCollection getHeaders{ nullptr };
-		HttpRequestHeaderCollection putHeaders{ nullptr };
-		HttpRequestHeaderCollection postHeaders{ nullptr };
-		HttpRequestHeaderCollection deleteHeaders{ nullptr };
-		HttpClient getHttpClient;
-		HttpClient putHttpClient;
-		HttpClient postHttpClient;
-		HttpClient deleteHttpClient;
-	};
-
 	struct HttpRequestAgent :agent, implements<HttpRequestAgent, winrt::Windows::Foundation::IInspectable> {
 	public:
 		unbounded_buffer<HttpWorkload> workSubmissionBuffer;
 		unbounded_buffer<json> workReturnBuffer;
-		HttpRequestAgent(Scheduler* pScheduler, hstring botToken, hstring baseURL, hstring* pSocketPath)
+		HttpRequestAgent(hstring botToken, hstring baseURL, hstring* pSocketPath, Scheduler* pScheduler = nullptr) 
 			:
 			source00(workSubmissionBuffer),
 			target00(workReturnBuffer),
@@ -791,17 +415,19 @@ namespace DiscordCoreInternal {
 		}
 
 		Uri baseURI = Uri{ nullptr };
-		hstring botToken;
 		hstring baseURL;
+		hstring botToken;
 		hstring initialConnectionPath;
 		HttpRequestHeaderCollection getHeaders{ nullptr };
 		HttpRequestHeaderCollection putHeaders{ nullptr };
 		HttpRequestHeaderCollection postHeaders{ nullptr };
 		HttpRequestHeaderCollection deleteHeaders{ nullptr };
+		HttpClient postHttpClient;
 		HttpClient getHttpClient;
 		HttpClient putHttpClient;
-		HttpClient postHttpClient;
 		HttpClient deleteHttpClient;
 	};
+	concurrent_unordered_map<HttpWorkloadType, string> HttpRequestAgent::rateLimitDataBucketValues;
+	concurrent_unordered_map<string, RateLimitData> HttpRequestAgent::rateLimitData;
 }
 #endif

@@ -9,27 +9,38 @@
 #define _GUILD_STUFF_
 
 #include "pch.h"
+#include "DiscordDataStructs.hpp"
 
-namespace DiscordCoreInternal
+namespace DiscordCoreAPI
 {
 	class Guild {
 	public:
+		string guildId;
 
+		Guild() {};
+		Guild(DiscordCoreInternal::GuildData data) {
+			this->data = data;
+		}
+
+		~Guild() {}
 
 	protected:
-
+		DiscordCoreInternal::GuildData data;
 
 	};
 
 	class GuildManager {
 	public:
+		GuildManager(){}
+
 		task<Guild> fetchAsync(string guildId) {
 
 		}
 
 		task<Guild> getGuildAsync(string guildId) {
 			try {
-				co_return this->Guilds.at(guildId);
+				Guild guild = this->Guilds.at(guildId);
+				co_return guild;
 			}
 			catch (exception error) {
 				cout << "getGuildAsync() Error: " << error.what() << endl;
@@ -37,7 +48,7 @@ namespace DiscordCoreInternal
 				co_return guild;
 			}
 		}
-
+		~GuildManager() {}
 	protected:
 		concurrent_unordered_map<string, Guild> Guilds;
 

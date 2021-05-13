@@ -32,8 +32,8 @@ namespace DiscordCoreInternal {
         task<void> initialize() {
             DispatcherQueueOptions options{
                 sizeof(DispatcherQueueOptions),
-                DQTYPE_THREAD_CURRENT,
-                DQTAT_COM_NONE
+                DQTYPE_THREAD_DEDICATED,
+                DQTAT_COM_STA
             };
             ABI::Windows::System::IDispatcherQueueController* ptrNew{};
             winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));
@@ -49,8 +49,8 @@ namespace DiscordCoreInternal {
             mainThreadContext.taskGroup = newTaskGroup;
             for (unsigned int x = 0; x < this->MaxThreads - 1; x += 1) {
                 co_await resume_background();
-                ThreadContext threadContext;
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
+                ThreadContext threadContext;
                 DispatcherQueue threadQueue = threadQueueController.DispatcherQueue();
                 policy.SetConcurrencyLimits(1, 1);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);

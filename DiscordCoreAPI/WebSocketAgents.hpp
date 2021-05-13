@@ -16,7 +16,7 @@
 #include "ClientClasses.hpp"
 
 namespace CommanderNS {
-	/*
+	
 	struct WebSocketReceiver : public concurrency::agent, implements<WebSocketReceiver, winrt::Windows::Foundation::IInspectable> {
 	public:
 
@@ -25,8 +25,8 @@ namespace CommanderNS {
 		WebSocketReceiver(Scheduler* pScheduler)
 			:_source(buffer00),
 			agent(*pScheduler)
-		{}
 
+		{}
 	protected:
 
 		friend struct DiscordCoreAPI;
@@ -288,8 +288,8 @@ namespace CommanderNS {
 				co_return;
 			}
 
-			std::cout << "Sending Message: ";
 			std::cout << message << std::endl;
+			std::cout << "Sending Message: ";
 
 			// Buffer any data we want to send.
 			this->messageWriter.WriteString(winrt::to_hstring(message));
@@ -394,6 +394,5 @@ namespace CommanderNS {
 			}
 		};
 	};
-	*/
 }
 #endif

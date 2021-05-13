@@ -183,6 +183,8 @@ namespace DiscordCoreInternal {
         AllowedMentionsData allowedMentions;
         vector<AttachmentData> attachments;
     };
+    struct GuildData {
 
+    };
 }
 #endif

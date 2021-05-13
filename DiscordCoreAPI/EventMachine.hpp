@@ -10,12 +10,28 @@
 
 #include "pch.h"
 
-namespace CommanderNS {
+namespace DisccordCoreInternal {
 	
+	struct GuildMemberAddData {
+		GuildMember guildMember;
+	};
+
+	struct MessageCreationData {
+		Message* message;
+	};
+
+	struct MessageDeletionData {
+		Message* message;
+	};
+
+	struct ReactionAddData {
+		Reaction reaction;
+	};
+
 	struct EventMachine : implements<EventMachine, winrt::Windows::Foundation::IInspectable> {
 	public:
 
-		winrt::event_token onGuildMemberAdd(winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData> const& handler) {
+		winrt::event_token onGuildMemberAdd(winrt::delegate<GuildMemberAddData> const& handler) {
 			return onGuildMemberAddEvent.add(handler);
 		}
 
@@ -23,7 +39,7 @@ namespace CommanderNS {
 			onGuildMemberAddEvent.remove(token);
 		}
 
-		winrt::event_token onMessageCreation(winrt::delegate<CommanderNS::EventDataTypes::MessageCreationData> const& handler) {
+		winrt::event_token onMessageCreation(winrt::delegate<MessageCreationData> const& handler) {
 			return onMessageCreationEvent.add(handler);
 		}
 
@@ -31,7 +47,7 @@ namespace CommanderNS {
 			onMessageCreationEvent.remove(token);
 		}
 
-		winrt::event_token onMessageDeletion(winrt::delegate<CommanderNS::EventDataTypes::MessageDeletionData> const& handler) {
+		winrt::event_token onMessageDeletion(winrt::delegate<MessageDeletionData> const& handler) {
 			return onMessageDeletionEvent.add(handler);
 		}
 
@@ -39,7 +55,7 @@ namespace CommanderNS {
 			onMessageDeletionEvent.remove(token);
 		}
 
-		winrt::event_token onReactionAdd(winrt::delegate<CommanderNS::EventDataTypes::ReactionAddData> const& handler) {
+		winrt::event_token onReactionAdd(winrt::delegate<ReactionAddData> const& handler) {
 			return onReactionAddEvent.add(handler);
 		}
 
@@ -48,17 +64,14 @@ namespace CommanderNS {
 		}
 
 	protected:
-		friend struct WebSocket;
-		friend struct WebSocketConnection;
-		friend struct WebSocketReceiver;
 
-		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::MessageCreationData>> onMessageCreationEvent;
+		winrt::event <winrt::delegate<MessageCreationData>> onMessageCreationEvent;
 
-		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::MessageDeletionData>> onMessageDeletionEvent;
+		winrt::event <winrt::delegate<MessageDeletionData>> onMessageDeletionEvent;
 
-		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::GuildMemberAddData>> onGuildMemberAddEvent;
+		winrt::event <winrt::delegate<GuildMemberAddData>> onGuildMemberAddEvent;
 
-		winrt::event <winrt::delegate<CommanderNS::EventDataTypes::ReactionAddData>> onReactionAddEvent;
+		winrt::event <winrt::delegate<ReactionAddData>> onReactionAddEvent;
 	};
 	*/
 }
