@@ -11,7 +11,10 @@
 #include "pch.h"
 
 namespace DiscordCoreAPI {
+
 	class RoleManager;
+
+	class Guild;
 
 	class Role {
 	public:
@@ -30,51 +33,66 @@ namespace DiscordCoreAPI {
 		friend class RoleManager;
 		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
-	class RoleManager: concurrent_unordered_map<string, Role>,public implements<RoleManager,winrt::Windows::Foundation::IInspectable> {
 
+	class RoleManager: concurrent_unordered_map<string, Role>,public implements<RoleManager,winrt::Windows::Foundation::IInspectable> {
 	public:
+
 		Guild* guild{ nullptr };
+
 		RoleManager() {}
 		RoleManager(Guild* guildNew, DiscordCoreInternal::HttpAgentPointers pointers) {
 			this->pointers = pointers;
 			this->guild = guildNew;
 		}
 
-		task<Role> fetchAsync(string guildId, string roleId) {
+		task<Role> fetchAsync(string roleId, string guildId) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_ROLES;
 			workload.relativePath = "/guilds/" + guildId + "/roles";
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
-			Role role;
+			DiscordCoreInternal::RoleData roleData;
 			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
+				cout << jsonValue << endl;
 				try {
-					role = this->at(jsonValue.at(x).at("id"));
+					roleData = this->at(jsonValue.at(x).at("id")).data;
 					this->unsafe_erase(jsonValue.at(x).at("id"));
-					DiscordCoreInternal::parseObject(jsonValue.at(x), &role.data);
+					com_ptr<RoleManager> pRoleManager;
+					pRoleManager.attach(this);
+					DiscordCoreInternal::parseObject(jsonValue.at(x), &roleData);
+					Role role(roleData, this->pointers, pRoleManager, this->guild);
 					this->insert(make_pair(role.data.id, role));
 				}
 				catch (exception error) {
 					com_ptr<RoleManager> pRoleManager;
 					pRoleManager.attach(this);
-					DiscordCoreInternal::RoleData roleData;
-					role = Role(roleData, this->pointers, pRoleManager, this->guild);
-					DiscordCoreInternal::parseObject(jsonValue.at(x), &role.data);
+					DiscordCoreInternal::parseObject(jsonValue.at(x), &roleData);
+					Role role(roleData, this->pointers, pRoleManager, this->guild);
 					this->insert(make_pair(role.data.id, role));
 					cout << "fetchAsync() Error: " << error.what() << endl;
 				}
 			}
-			co_return this->at(roleId);
+			try {
+				co_return this->at(roleId);
+			}
+			catch (exception error) {
+				cout << "fetchAsync() Error: " << error.what() << endl;
+				com_ptr<RoleManager> pRoleManager;
+				pRoleManager.attach(this);
+				Role role(roleData, this->pointers, pRoleManager, this->guild);
+				co_return role;
+			}
+			
 		}
 
-		task<Role> getGuildAsync(string roleId) {
+		task<Role> getRoleAsync(string roleId) {
 			try {
 				Role role = this->at(roleId);
 				co_return role;
 			}
 			catch (exception error) {
-				cout << "getGuildAsync() Error: " << error.what() << endl;
+				cout << "getRoleAsync() Error: " << error.what() << endl;
 				DiscordCoreInternal::RoleData roleData;
 				com_ptr<RoleManager> pRoleManager;
 				pRoleManager.attach(this);

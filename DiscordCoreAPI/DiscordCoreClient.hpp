@@ -20,7 +20,7 @@ namespace DiscordCoreAPI {
 	struct DiscordCoreClient : agent, implements<DiscordCoreClient, winrt::Windows::Foundation::IInspectable> {
 	public:
 
-		com_ptr<DiscordCoreAPI::EventMachine> pEventMachine{ nullptr };
+		com_ptr<DiscordCoreAPI::EventMachine> Events{ nullptr };
 
 		DiscordCoreClient(hstring botToken)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
@@ -28,7 +28,7 @@ namespace DiscordCoreAPI {
 		{
 			this->pSystemThreads = make_self<DiscordCoreInternal::SystemThreads>();
 			this->pSystemThreads->initialize().get();
-			this->pEventMachine = make_self<DiscordCoreAPI::EventMachine>();
+			this->Events = make_self<DiscordCoreAPI::EventMachine>();
 			this->botToken = botToken;
 			this->pWebSocketConnectionAgent = make_self<DiscordCoreInternal::WebSocketConnectionAgent>(this->webSocketIncWorkloadBuffer, this->pSystemThreads->Threads.at(1));
 			this->pWebSocketReceiverAgent = make_self<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->Threads.at(2));
@@ -46,15 +46,15 @@ namespace DiscordCoreAPI {
 			this->pWebSocketConnectionAgent->start();
 			this->pWebSocketReceiverAgent->start();
 			DiscordCoreInternal::HttpAgentPointers pointers;
-			pointers.pGETAgent.copy_from(this->pGETAgent.get());
-			pointers.pPUTAgent.copy_from(this->pPUTAgent.get());
-			pointers.pPOSTAgent.copy_from(this->pPOSTAgent.get());
-			pointers.pPATCHAgent.copy_from(this->pPATCHAgent.get());
-			pointers.pDELETEAgent.copy_from(this->pDELETEAgent.get());
-			this->Guilds = make_shared<GuildManager>(pointers);
+			pointers.pGETAgent.attach(this->pGETAgent.get());
+			pointers.pPUTAgent.attach(this->pPUTAgent.get());
+			pointers.pPOSTAgent.attach(this->pPOSTAgent.get());
+			pointers.pPATCHAgent.attach(this->pPATCHAgent.get());
+			pointers.pDELETEAgent.attach(this->pDELETEAgent.get());
+			this->guilds = make_self<GuildManager>(pointers);
 		}
 
-		shared_ptr<GuildManager> Guilds;
+		com_ptr<GuildManager> guilds{ nullptr };
 
 		void terminate() {
 			this->doWeQuit = true;
@@ -102,29 +102,29 @@ namespace DiscordCoreAPI {
 			while (doWeQuit == false) {
 				DiscordCoreInternal::WebSocketWorkload workload;
 				if (try_receive(this->webSocketWorkloadSource, workload)) {
-					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUIILD_CREATE) {
-						this->Guilds->insertGuild(workload.payLoad);
+					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
+						this->guilds->insertGuild(workload.payLoad);
 					}
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
-						DiscordCoreAPI::MessageCreationData messageCreationData;
 						DiscordCoreInternal::MessageData messageData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
 						DiscordCoreInternal::HttpAgentPointers pointers;
-						pointers.pGETAgent = this->pGETAgent;
-						pointers.pPUTAgent = this->pPUTAgent;
-						pointers.pPOSTAgent = this->pPOSTAgent;
-						pointers.pPATCHAgent = this->pPATCHAgent;
-						pointers.pDELETEAgent = this->pDELETEAgent;
-						Guild guild = this->Guilds->getGuildAsync(messageData.guildId).get();
-						com_ptr<MessageManager> messageManager = guild.channels->getChannelAsync(messageData.channelId).get().messages;
+						DiscordCoreAPI::MessageCreationData messageCreationData;
+						pointers.pGETAgent.attach(this->pGETAgent.get());
+						pointers.pPUTAgent.attach(this->pPUTAgent.get());
+						pointers.pPOSTAgent.attach(this->pPOSTAgent.get());
+						pointers.pPATCHAgent.attach(this->pPATCHAgent.get());
+						pointers.pDELETEAgent.attach(this->pDELETEAgent.get());
+						//this->guilds->fetchAsync(messageData.guildId).get();
+						auto guild = this->guilds->fetchAsync(messageData.guildId).get(); //this->guilds->getGuildAsync(messageData.guildId).get();
+						com_ptr<MessageManager> messageManager = guild.channels->fetchAsync(messageData.channelId).get().messages;
 						messageCreationData.message = Message(messageData, &guild, pointers, messageManager);
-						this->pEventMachine->onMessageCreationEvent(messageCreationData);
+						this->Events->onMessageCreationEvent(messageCreationData);
 					}
 				}
 			}
 			done();
 		}
-
 	};
 }
 

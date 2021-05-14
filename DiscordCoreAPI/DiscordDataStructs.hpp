@@ -128,10 +128,10 @@ namespace DiscordCoreInternal {
             this->thumbnail.url = thumbnailURL;
             return *this;
         }
-        EmbedData setColor(int colorNew[3]) {
-            this->color[0] = colorNew[0];
-            this->color[1] = colorNew[1];
-            this->color[2] = colorNew[2];
+        EmbedData setColor(int colorRed, int colorGreen, int colorBlue) {
+            this->color[0] = colorRed;
+            this->color[1] = colorGreen;
+            this->color[2] = colorBlue;
             return *this;
         }
         EmbedData setDescription(string descriptionNew) {
@@ -309,6 +309,11 @@ namespace DiscordCoreInternal {
         int flags = 0;
         int premium_type = 0;
         int public_flags = 0;
+        string getAvatarURL() {
+            string avatarURL;
+            avatarURL = "https://cdn.discordapp.com/avatars/" + this->id + "/" + this->avatar;
+            return avatarURL;
+        }
     };
 
     struct GuildMemberData {

@@ -13,7 +13,7 @@
 namespace DiscordCoreInternal {
 
 	enum class WebSocketEventType {
-		GUIILD_CREATE = 0,
+		GUILD_CREATE = 0,
 		GUILD_MEMBER_ADD = 1,
 		ROLE_UPDATE = 2,
 		MESSAGE_CREATE = 3,
@@ -65,7 +65,7 @@ namespace DiscordCoreInternal {
 		fire_and_forget onGuildCreate(json payload) {
 			WebSocketWorkload workload;
 			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::GUIILD_CREATE;
+			workload.eventType = WebSocketEventType::GUILD_CREATE;
 			send(this->workloadTarget, workload);
 			co_return;
 		}
@@ -278,7 +278,7 @@ namespace DiscordCoreInternal {
 				wcout << error.message().c_str() << endl;
 			}
 		}
-		
+
 		void onMessageReceived(MessageWebSocket const&, MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
 				DataReader dataReader{ args.GetDataReader() };

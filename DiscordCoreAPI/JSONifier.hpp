@@ -13,8 +13,8 @@
 
 namespace DiscordCoreInternal {
 
-	static string getIdentifyPayload(std::string botToken, int intents) {
-		nlohmann::json data;
+	string getIdentifyPayload(string botToken, int intents) {
+		json data;
 		data = {
 				{"op", 2},
 					{"d", {
@@ -33,8 +33,8 @@ namespace DiscordCoreInternal {
 		return data.dump();
 	};
 
-	static string getHeartbeatPayload(int lastReceivedNumber) {
-		nlohmann::json data;
+	string getHeartbeatPayload(int lastReceivedNumber) {
+		json data;
 		data = {
 			{"d", lastReceivedNumber},
 			{"op", 1}
@@ -42,8 +42,8 @@ namespace DiscordCoreInternal {
 		return data.dump();
 	};
 
-	static string getResumePayload(std::string botToken, std::string sessionID, int lastReceivedNumber) {
-		nlohmann::json data;
+	string getResumePayload(string botToken, string sessionID, int lastReceivedNumber) {
+		json data;
 		data = {
 			{"op", 6},
 			{"d" , {
@@ -55,10 +55,10 @@ namespace DiscordCoreInternal {
 		return data.dump();
 	};
 
-	std::string parseSocketPath(hstring initialPayload) {
-		std::string finalString = "";
-		nlohmann::json jsonVal;
-		jsonVal = jsonVal.parse(winrt::to_string(initialPayload));
+	string parseSocketPath(hstring initialPayload) {
+		string finalString = "";
+		json jsonVal;
+		jsonVal = jsonVal.parse(to_string(initialPayload));
 		if (jsonVal.contains("url")) {
 			finalString = jsonVal.at("url");
 		}
@@ -66,9 +66,9 @@ namespace DiscordCoreInternal {
 	};
 
 	int parseHeartBeatInterval(hstring initialPayload) {
-		nlohmann::json jsonVal;
+		json jsonVal;
 		int finalValue = 0;
-		jsonVal = jsonVal.parse(winrt::to_string(initialPayload));
+		jsonVal = jsonVal.parse(to_string(initialPayload));
 		if (jsonVal.contains("heartbeat_interval")) {
 			finalValue = jsonVal.at("heartbeat_interval");
 		}
@@ -144,7 +144,6 @@ namespace DiscordCoreInternal {
 			json field = { {"inline", editMessageData.embed.fields.at(x).Inline},
 							{"value", editMessageData.embed.fields.at(x).value},
 							{"name", editMessageData.embed.fields.at(x).name} };
-			cout << "THIS IS ANOTHER MESSAGE FIELD!" << endl;
 			fields.push_back(field);
 		}
 

@@ -67,6 +67,7 @@ namespace DiscordCoreAPI {
 		}
 
 	protected:
+
 		friend struct DiscordCoreClient;
 
 		winrt::event <winrt::delegate<MessageCreationData>> onMessageCreationEvent;

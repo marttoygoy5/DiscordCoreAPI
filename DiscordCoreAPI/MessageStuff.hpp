@@ -23,7 +23,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::MessageData data;
 		com_ptr<MessageManager> messages{ nullptr };
 		com_ptr<ReactionManager> reactions{ nullptr };
-		Guild* guild;
+		Guild* guild{ nullptr };
 		Message() {}
 		Message(DiscordCoreInternal::MessageData dataNew, Guild* guildNew,  DiscordCoreInternal::HttpAgentPointers pointersNew, com_ptr<MessageManager> pMessageManagerNew) {
 			this->guild = guildNew;
@@ -49,7 +49,7 @@ namespace DiscordCoreAPI {
 
 	class MessageManager: concurrent_unordered_map<string, Message>, public implements<MessageManager, winrt::Windows::Foundation::IInspectable> {
 	public:
-		Guild* guild;
+		Guild* guild{ nullptr };
 		MessageManager() {}
 		MessageManager(DiscordCoreInternal::HttpAgentPointers pointersNew, Guild* guildNew) {
 			this->pointers = pointersNew;

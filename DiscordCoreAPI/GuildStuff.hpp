@@ -20,14 +20,17 @@ namespace DiscordCoreAPI
 {
 	class GuildManager;
 
-	class Guild{
+	class Guild {
 	public:
-		Guild() {}
+
 		DiscordCoreInternal::GuildData data;
+
 		com_ptr<ChannelManager> channels{ nullptr };
 		com_ptr<GuildMemberManager> guildMembers{ nullptr };
 		com_ptr<RoleManager> roles{ nullptr };
 		com_ptr<GuildManager> guilds{ nullptr };
+
+		Guild() {}
 		Guild(DiscordCoreInternal::GuildData data, DiscordCoreInternal::HttpAgentPointers pointersNew, com_ptr<GuildManager> guildsNew) {
 			this->data = data;
 			this->pointers = pointersNew;
@@ -59,8 +62,9 @@ namespace DiscordCoreAPI
 		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
 
-	class GuildManager : concurrent_unordered_map<string, Guild>, public implements < GuildManager, winrt::Windows::Foundation::IInspectable > {
+	class GuildManager : concurrent_unordered_map<string, Guild>, public implements <GuildManager, winrt::Windows::Foundation::IInspectable> {
 	public:
+
 		GuildManager() {}
 		GuildManager(DiscordCoreInternal::HttpAgentPointers pointers){
 			this->pointers = pointers;
@@ -73,6 +77,7 @@ namespace DiscordCoreAPI
 			workload.relativePath = "/guilds/" + guildId;
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
+			/*
 			DiscordCoreInternal::GuildData guildData;
 			try {
 				guildData = this->at(guildId).data;
@@ -81,10 +86,13 @@ namespace DiscordCoreAPI
 			catch (exception error) {
 				cout << "fetchAsync() Error: " << error.what() << endl;
 			}
+
 			DiscordCoreInternal::parseObject(jsonValue, &guildData);
-			com_ptr<GuildManager> pGuildManager;
-			pGuildManager.attach(this);
-			Guild guild(guildData, this->pointers, pGuildManager);
+			*/
+			DiscordCoreInternal::GuildData guildData;
+			com_ptr<GuildManager> pGuildManager = make_self<GuildManager>(this->pointers);
+			pGuildManager->swap(*this);
+			Guild guild = Guild(guildData, this->pointers, pGuildManager);
 			this->insert(make_pair(guildId, guild));
 			co_return guild;
 		}
@@ -97,8 +105,8 @@ namespace DiscordCoreAPI
 			catch (exception error) {
 				cout << "getGuildAsync() Error: " << error.what() << endl;
 				DiscordCoreInternal::GuildData guildData;
-				com_ptr<GuildManager> pGuildManager;
-				pGuildManager.attach(this);
+				com_ptr<GuildManager> pGuildManager = make_self<GuildManager>(this->pointers);
+				pGuildManager->swap(*this);
 				Guild guild(guildData, this->pointers, pGuildManager);
 				co_return guild;
 			}
@@ -107,8 +115,11 @@ namespace DiscordCoreAPI
 		~GuildManager() {}
 
 	protected:
+
 		friend struct DiscordCoreClient;
+
 		DiscordCoreInternal::HttpAgentPointers pointers;
+
 		task<void> insertGuild(json payload) {
 			DiscordCoreInternal::GuildData guildData;
 			try {
@@ -119,8 +130,8 @@ namespace DiscordCoreAPI
 				cout << "insertGuild() Error: " << error.what() << endl;
 			}
 			DiscordCoreInternal::parseObject(payload, &guildData);
-			com_ptr<GuildManager> pGuildManager;
-			pGuildManager.attach(this);
+			com_ptr<GuildManager> pGuildManager = make_self<GuildManager>(this->pointers);
+			pGuildManager->swap(*this);
 			Guild guild(guildData, this->pointers, pGuildManager);
 			this->insert(make_pair(guild.data.id, guild));
 			co_return;
