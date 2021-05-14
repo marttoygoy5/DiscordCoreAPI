@@ -13,11 +13,13 @@
 
 namespace DiscordCoreAPI {
 	class Message {
-
+		Message() {}
+		~Message() {}
 	};
 
 	class MessageManager {
-
+		MessageManager() {}
+		~MessageManager() {}
 	};
 }
 #endif

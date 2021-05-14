@@ -840,7 +840,7 @@ namespace DiscordCoreInternal {
     
         void parseObject(json jsonObjectData, GuildData * pDataStructure) {
         GuildData guildData = *pDataStructure;
-
+        
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
             std::string theValue = jsonObjectData.at("id");
             guildData.id = theValue;
@@ -980,7 +980,6 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
             json roleDataArray = jsonObjectData.at("roles");
             for (unsigned int x = 0; x < roleDataArray.size(); x += 1) {
-                bool isItFound = false;
                 if (guildData.roles.contains(roleDataArray.at(x).at("id"))) {
                     RoleData roleData = guildData.roles.at(roleDataArray.at(x).at("id"));
                     guildData.roles.erase(roleDataArray.at(x).at("id"));

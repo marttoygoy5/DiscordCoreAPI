@@ -106,23 +106,23 @@ namespace DiscordCoreInternal {
 			try {
 
 				if (payload.at("t") == "MESSAGE_CREATE") {
-					onMessageCreate(payload);
+					onMessageCreate(payload.at("d"));
 				}
 
 				if (payload.at("t") == "MESSAGE_DELETE") {
-					onMessageDelete(payload);
+					onMessageDelete(payload.at("d"));
 				}
 
 				if (payload.at("t") == "GUILD_CREATE") {
-					onGuildCreate(payload);
+					onGuildCreate(payload.at("d"));
 				}
 
 				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
-					onMessageReactionAdd(payload);
+					onMessageReactionAdd(payload.at("d"));
 				}
 
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
-					onGuildMemberAdd(payload);
+					onGuildMemberAdd(payload.at("d"));
 				}
 			}
 			catch (winrt::hresult_error const& ex) {

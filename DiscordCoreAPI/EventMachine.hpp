@@ -11,7 +11,7 @@
 #include "pch.h"
 #include "GuildStuff.hpp"
 
-namespace DiscordCoreInternal {
+namespace DiscordCoreAPI {
 	
 	struct GuildMemberAddData {
 		DiscordCoreAPI::GuildMember guildMember;

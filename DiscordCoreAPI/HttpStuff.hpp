@@ -77,8 +77,6 @@ namespace DiscordCoreInternal {
 		unbounded_buffer<json> workReturnBuffer;
 		HttpRequestAgent(hstring botToken, hstring baseURL, hstring* pSocketPath, Scheduler* pScheduler = nullptr) 
 			:
-			source00(workSubmissionBuffer),
-			target00(workReturnBuffer),
 			agent(*pScheduler)
 		{
 			try {
@@ -121,8 +119,6 @@ namespace DiscordCoreInternal {
 
 	protected:
 		bool doWeQuit = false;
-		ISource<HttpWorkload>& source00;
-		ITarget<json>& target00;
 		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
 		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
 
@@ -178,13 +174,13 @@ namespace DiscordCoreInternal {
 				catch (exception error) {
 					cout << "HttpRequestAgent Error: " << error.what() << endl;
 					HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
-				};
-				return returnData.data;
+				}
+				send(this->workReturnBuffer, returnData.data);
 				});
-			completeHttpRequest.link_target(&this->target00);
+			completeHttpRequest.link_target(&this->workReturnBuffer);
 			while (this->doWeQuit == false) {
 				HttpWorkload workload;
-				if (try_receive(&this->source00, workload)) {
+				if (try_receive(&this->workSubmissionBuffer, workload)) {
 					send(&completeHttpRequest, workload);
 				}
 			}

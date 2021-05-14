@@ -20,13 +20,15 @@ namespace DiscordCoreAPI {
 	struct DiscordCoreClient : agent, implements<DiscordCoreClient, winrt::Windows::Foundation::IInspectable> {
 	public:
 
+		com_ptr<DiscordCoreAPI::EventMachine> pEventMachine{ nullptr };
+
 		DiscordCoreClient(hstring botToken)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer)
 		{
 			this->pSystemThreads = make_self<DiscordCoreInternal::SystemThreads>();
 			this->pSystemThreads->initialize().get();
-			this->pEventMachine = make_self<DiscordCoreInternal::EventMachine>();
+			this->pEventMachine = make_self<DiscordCoreAPI::EventMachine>();
 			this->botToken = botToken;
 			this->pWebSocketConnectionAgent = make_self<DiscordCoreInternal::WebSocketConnectionAgent>(this->webSocketIncWorkloadBuffer, this->pSystemThreads->Threads.at(1));
 			this->pWebSocketReceiverAgent = make_self<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->Threads.at(2));
@@ -44,15 +46,15 @@ namespace DiscordCoreAPI {
 			this->pWebSocketConnectionAgent->start();
 			this->pWebSocketReceiverAgent->start();
 			DiscordCoreInternal::HttpAgentPointers pointers;
-			pointers.pGETAgent = this->pGETAgent;
-			pointers.pPUTAgent = this->pPUTAgent;
-			pointers.pPOSTAgent = this->pPOSTAgent;
-			pointers.pPATCHAgent = this->pPATCHAgent;
-			pointers.pDELETEAgent = this->pDELETEAgent;
-			this->Guilds = GuildManager(pointers);
+			pointers.pGETAgent.copy_from(this->pGETAgent.get());
+			pointers.pPUTAgent.copy_from(this->pPUTAgent.get());
+			pointers.pPOSTAgent.copy_from(this->pPOSTAgent.get());
+			pointers.pPATCHAgent.copy_from(this->pPATCHAgent.get());
+			pointers.pDELETEAgent.copy_from(this->pDELETEAgent.get());
+			this->Guilds = make_shared<GuildManager>(pointers);
 		}
 
-		GuildManager Guilds;
+		shared_ptr<GuildManager> Guilds;
 
 		void terminate() {
 			this->doWeQuit = true;
@@ -84,7 +86,6 @@ namespace DiscordCoreAPI {
 		bool doWeQuit = false;
 		hstring baseURL = L"https://discord.com/api/v9";
 		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
-		com_ptr<DiscordCoreInternal::EventMachine> pEventMachine{ nullptr };
 		com_ptr<DiscordCoreInternal::WebSocketConnectionAgent> pWebSocketConnectionAgent{ nullptr };
 		com_ptr<DiscordCoreInternal::WebSocketReceiverAgent> pWebSocketReceiverAgent{ nullptr };
 		com_ptr<DiscordCoreInternal::HttpRequestAgent> pGETAgent{ nullptr };
@@ -101,7 +102,9 @@ namespace DiscordCoreAPI {
 			while (doWeQuit == false) {
 				DiscordCoreInternal::WebSocketWorkload workload;
 				if (try_receive(this->webSocketWorkloadSource, workload)) {
-					cout << "WORKLOAD TYPE: " << endl << (int)workload.eventType << endl;
+					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUIILD_CREATE) {
+						this->Guilds->insertGuild(workload.payLoad);
+					}
 				}
 			}
 			done();
