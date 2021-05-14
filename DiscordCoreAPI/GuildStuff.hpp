@@ -24,21 +24,21 @@ namespace DiscordCoreAPI
 	public:
 		Guild() {}
 		DiscordCoreInternal::GuildData data;
-		shared_ptr<ChannelManager> channels{ nullptr };
-		shared_ptr<GuildMemberManager> guildMembers{ nullptr };
-		shared_ptr<RoleManager> roles{ nullptr };
-		shared_ptr<GuildManager> guilds{ nullptr };
-		Guild(DiscordCoreInternal::GuildData data, DiscordCoreInternal::HttpAgentPointers pointersNew, shared_ptr<GuildManager> guildsNew) {
+		com_ptr<ChannelManager> channels{ nullptr };
+		com_ptr<GuildMemberManager> guildMembers{ nullptr };
+		com_ptr<RoleManager> roles{ nullptr };
+		com_ptr<GuildManager> guilds{ nullptr };
+		Guild(DiscordCoreInternal::GuildData data, DiscordCoreInternal::HttpAgentPointers pointersNew, com_ptr<GuildManager> guildsNew) {
 			this->data = data;
 			this->pointers = pointersNew;
 			this->guilds = guildsNew;
-			this->channels = make_shared<ChannelManager>(this, this->pointers);
+			this->channels = make_self<ChannelManager>(this, this->pointers);
 			for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 				DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
 				Channel channel(channelData, this->pointers, this->channels, this);
 				this->channels->insert(make_pair(channelData.id, channel));
 			}
-			this->guildMembers = make_shared<GuildMemberManager>(this, this->pointers);
+			this->guildMembers = make_self<GuildMemberManager>(this, this->pointers);
 			for (unsigned int x = 0; x < data.members.size(); x += 1){
 				DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
 				GuildMember guildMember(guildMemberData, this, this->guildMembers);
@@ -53,7 +53,7 @@ namespace DiscordCoreAPI
 		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
 
-	class GuildManager: map<string, Guild> {
+	class GuildManager : map<string, Guild>, public implements < GuildManager, winrt::Windows::Foundation::IInspectable > {
 	public:
 		GuildManager() {}
 		GuildManager(DiscordCoreInternal::HttpAgentPointers pointers){
@@ -68,7 +68,9 @@ namespace DiscordCoreAPI
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
 			DiscordCoreInternal::GuildData guildData;
-			Guild guild(guildData, this->pointers, make_shared<GuildManager>(this->pointers));
+			com_ptr<GuildManager> pGuildManager;
+			pGuildManager.attach(this);
+			Guild guild(guildData, this->pointers, pGuildManager);
 			try {
 				guild = this->at(guildId);
 				this->erase(guildId);
@@ -89,7 +91,9 @@ namespace DiscordCoreAPI
 			catch (exception error) {
 				cout << "getGuildAsync() Error: " << error.what() << endl;
 				DiscordCoreInternal::GuildData guildData;
-				Guild guild = Guild(guildData, this->pointers, make_shared<GuildManager>(this->pointers));
+				com_ptr<GuildManager> pGuildManager;
+				pGuildManager.attach(this);
+				Guild guild(guildData, this->pointers, pGuildManager);
 				co_return guild;
 			}
 		}
@@ -101,7 +105,9 @@ namespace DiscordCoreAPI
 		DiscordCoreInternal::HttpAgentPointers pointers;
 		task<void> insertGuild(json payload) {
 			DiscordCoreInternal::GuildData guildData;
-			Guild guild = Guild(guildData, this->pointers, make_shared<GuildManager>(this->pointers));
+			com_ptr<GuildManager> pGuildManager;
+			pGuildManager.attach(this);
+			Guild guild(guildData, this->pointers, pGuildManager);
 			try {
 				guild = this->at(payload.at("id"));
 				this->erase(payload.at("id"));

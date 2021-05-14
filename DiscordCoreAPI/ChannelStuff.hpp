@@ -23,9 +23,9 @@ namespace DiscordCoreAPI {
 	public:
 		Channel() {}
 		DiscordCoreInternal::ChannelData data;
-		shared_ptr<ChannelManager> channels{ nullptr };
+		com_ptr<ChannelManager> channels{ nullptr };
 		Guild* guild{ nullptr };
-		Channel(DiscordCoreInternal::ChannelData channelData, DiscordCoreInternal::HttpAgentPointers pointersNew, shared_ptr<ChannelManager> channelManager, Guild* guildNew) {
+		Channel(DiscordCoreInternal::ChannelData channelData, DiscordCoreInternal::HttpAgentPointers pointersNew, com_ptr<ChannelManager> channelManager, Guild* guildNew) {
 			data = channelData;
 			this->pointers = pointersNew;
 			this->channels = channelManager;
@@ -37,7 +37,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
 
-	class ChannelManager: map<string, Channel> {
+	class ChannelManager : map<string, Channel>, public implements<ChannelManager, winrt::Windows::Foundation::IInspectable> {
 	public:
 		Guild* guild{ nullptr };
 		ChannelManager(){}
@@ -54,7 +54,9 @@ namespace DiscordCoreAPI {
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
 			DiscordCoreInternal::ChannelData channelData;
-			Channel channel(channelData, this->pointers, make_shared<ChannelManager>(this->guild, this->pointers), this->guild);
+			com_ptr<ChannelManager> pChannelManager;
+			pChannelManager.attach(this);
+			Channel channel(channelData, this->pointers, pChannelManager, this->guild);
 			try {
 				channel = this->at(channelId);
 				this->erase(channelId);
@@ -75,7 +77,9 @@ namespace DiscordCoreAPI {
 			catch (exception error) {
 				cout << "getChannelAsync() Error: " << error.what() << endl;
 				DiscordCoreInternal::ChannelData channelData;
-				Channel channel(channelData, this->pointers, make_shared<ChannelManager>(this->guild, this->pointers), this->guild);
+				com_ptr<ChannelManager> pChannelManager;
+				pChannelManager.attach(this);
+				Channel channel(channelData, this->pointers, pChannelManager, this->guild);
 				co_return channel;
 			}
 		}

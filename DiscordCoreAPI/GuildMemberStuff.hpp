@@ -21,9 +21,9 @@ namespace DiscordCoreAPI {
 	public:
 		DiscordCoreInternal::GuildMemberData data;
 		Guild* guild{ nullptr };
-		shared_ptr<GuildMemberManager> guildMembers{ nullptr };
+		com_ptr<GuildMemberManager> guildMembers{ nullptr };
 		GuildMember() {}
-		GuildMember(DiscordCoreInternal::GuildMemberData guildMemberData, Guild* guildNew, shared_ptr<GuildMemberManager> guildMembersNew) {
+		GuildMember(DiscordCoreInternal::GuildMemberData guildMemberData, Guild* guildNew, com_ptr<GuildMemberManager> guildMembersNew) {
 			this->data = guildMemberData;
 			this->guild = guildNew;
 			this->guildMembers = guildMembersNew;
@@ -34,7 +34,7 @@ namespace DiscordCoreAPI {
 
 	};
 
-	class GuildMemberManager: map<string,GuildMember>{
+	class GuildMemberManager: map<string,GuildMember>, public implements<GuildMemberManager, winrt::Windows::Foundation::IInspectable>{
 	public:
 		Guild* guild{ nullptr };
 		GuildMemberManager() {}
@@ -51,7 +51,9 @@ namespace DiscordCoreAPI {
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
 			DiscordCoreInternal::GuildMemberData guildMemberData;
-			GuildMember guildMember(guildMemberData, this->guild, make_shared<GuildMemberManager>(this->guild, this->pointers));
+			com_ptr<GuildMemberManager> pGuildMemberManager;
+			pGuildMemberManager.attach(this);
+			GuildMember guildMember(guildMemberData, this->guild, pGuildMemberManager);
 			try {
 				guildMember = this->at(guildMemberId);
 				this->erase(guildMemberId);
@@ -72,7 +74,9 @@ namespace DiscordCoreAPI {
 			catch (exception error) {
 				cout << "getGuildMemberAsync() Error: " << error.what() << endl;
 				DiscordCoreInternal::GuildMemberData guildMemberData;
-				GuildMember guildMember(guildMemberData, this->guild, make_shared<GuildMemberManager>(this->guild, this->pointers));
+				com_ptr<GuildMemberManager> pGuildMemberManager;
+				pGuildMemberManager.attach(this);
+				GuildMember guildMember(guildMemberData, this->guild, pGuildMemberManager);
 				co_return guildMember;
 			}
 		}

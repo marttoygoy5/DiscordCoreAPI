@@ -15,10 +15,10 @@ namespace DiscordCoreAPI {
 
 	class Role {
 	public:
-		RoleManager* roles;
+		com_ptr<RoleManager> roles;
 		DiscordCoreInternal::RoleData data;
 		Role() {}
-		Role(DiscordCoreInternal::RoleData roleData, DiscordCoreInternal::HttpAgentPointers pointersNew, RoleManager* rolesNew) {
+		Role(DiscordCoreInternal::RoleData roleData, DiscordCoreInternal::HttpAgentPointers pointersNew, com_ptr<RoleManager> rolesNew) {
 			this->data = roleData;
 			this->pointers = pointersNew;
 			this->roles = rolesNew;
@@ -28,8 +28,8 @@ namespace DiscordCoreAPI {
 		friend class RoleManager;
 		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
+	class RoleManager: map<string, Role>,public implements<RoleManager,winrt::Windows::Foundation::IInspectable> {
 
-	class RoleManager: map<string, Role> {
 	public:
 		Guild* guild;
 		RoleManager() {}
@@ -46,7 +46,9 @@ namespace DiscordCoreAPI {
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
 			DiscordCoreInternal::RoleData roleData;
-			Role role(roleData, this->pointers, this);
+			com_ptr<RoleManager> pRoleManager;
+			pRoleManager.attach(this);
+			Role role(roleData, this->pointers, pRoleManager);
 			try {
 				role = this->at(roleId);
 				this->erase(guildId);
@@ -67,7 +69,9 @@ namespace DiscordCoreAPI {
 			catch (exception error) {
 				cout << "getGuildAsync() Error: " << error.what() << endl;
 				DiscordCoreInternal::RoleData roleData;
-				Role role(roleData, this->pointers, this);
+				com_ptr<RoleManager> pRoleManager;
+				pRoleManager.attach(this);
+				Role role(roleData, this->pointers, pRoleManager);
 				co_return role;
 			}
 		}
