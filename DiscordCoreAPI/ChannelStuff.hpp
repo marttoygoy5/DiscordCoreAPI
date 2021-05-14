@@ -23,6 +23,7 @@ namespace DiscordCoreAPI {
 	public:
 		Channel() {}
 		DiscordCoreInternal::ChannelData data;
+		com_ptr<MessageManager> messages{ nullptr };
 		com_ptr<ChannelManager> channels{ nullptr };
 		Guild* guild{ nullptr };
 		Channel(DiscordCoreInternal::ChannelData channelData, DiscordCoreInternal::HttpAgentPointers pointersNew, com_ptr<ChannelManager> channelManager, Guild* guildNew) {
@@ -30,6 +31,7 @@ namespace DiscordCoreAPI {
 			this->pointers = pointersNew;
 			this->channels = channelManager;
 			this->guild = guildNew;
+			this->messages = make_self<MessageManager>(this->pointers, this->guild);
 		}
 	protected:
 		friend class ChannelManager;

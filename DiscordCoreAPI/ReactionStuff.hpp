@@ -8,13 +8,44 @@
 #ifndef _REACTION_STUFF_
 #define _REACTION_STUFF_
 
-namespace DiscordCoreAPI{
-	class Reaction {
+#include "pch.h"
 
+namespace DiscordCoreAPI{
+
+	class Guild;
+
+	class Reaction {
+	public:
+		DiscordCoreInternal::ReactionData data;
+		Guild* guild;
+		Reaction() {}
+		Reaction(DiscordCoreInternal::HttpAgentPointers pointersNew, DiscordCoreInternal::ReactionData reactionData, Guild* guildNew) {
+			this->pointers = pointersNew;
+			this->data = reactionData;
+			this->guild = guildNew;
+		}
+		~Reaction() {}
+	protected:
+		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
 
-	class ReactionManager {
+	class ReactionManager: public implements<ReactionManager, winrt::Windows::Foundation::IInspectable> {
+	public:
+		Guild* guild;
+		ReactionManager() {}
+		ReactionManager(DiscordCoreInternal::HttpAgentPointers pointersNew, Guild* guildNew) {
+			this->pointers = pointersNew;
+			this->guild = guildNew;
+		}
 
+		task<void> createReactionAsync(DiscordCoreInternal::CreateReactionData createReactionData){
+
+			co_return;
+		}
+
+		~ReactionManager() {}
+	protected:
+		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
 
 }

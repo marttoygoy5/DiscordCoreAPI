@@ -105,6 +105,21 @@ namespace DiscordCoreAPI {
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUIILD_CREATE) {
 						this->Guilds->insertGuild(workload.payLoad);
 					}
+					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
+						DiscordCoreAPI::MessageCreationData messageCreationData;
+						DiscordCoreInternal::MessageData messageData;
+						DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
+						DiscordCoreInternal::HttpAgentPointers pointers;
+						pointers.pGETAgent = this->pGETAgent;
+						pointers.pPUTAgent = this->pPUTAgent;
+						pointers.pPOSTAgent = this->pPOSTAgent;
+						pointers.pPATCHAgent = this->pPATCHAgent;
+						pointers.pDELETEAgent = this->pDELETEAgent;
+						Guild guild = this->Guilds->getGuildAsync(messageData.guildId).get();
+						com_ptr<MessageManager> messageManager = guild.channels->getChannelAsync(messageData.channelId).get().messages;
+						messageCreationData.message = Message(messageData, &guild, pointers, messageManager);
+						this->pEventMachine->onMessageCreationEvent(messageCreationData);
+					}
 				}
 			}
 			done();

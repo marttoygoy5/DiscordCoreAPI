@@ -51,17 +51,17 @@ namespace DiscordCoreAPI {
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
 			DiscordCoreInternal::GuildMemberData guildMemberData;
-			com_ptr<GuildMemberManager> pGuildMemberManager;
-			pGuildMemberManager.attach(this);
-			GuildMember guildMember(guildMemberData, this->guild, pGuildMemberManager);
 			try {
-				guildMember = this->at(guildMemberId);
+				guildMemberData = this->at(guildMemberId).data;
 				this->unsafe_erase(guildMemberId);
 			}
 			catch (exception error) {
 				cout << "fetchAsync() Error: " << error.what() << endl;
 			}
-			DiscordCoreInternal::parseObject(jsonValue, &guildMember.data);
+			DiscordCoreInternal::parseObject(jsonValue, &guildMemberData);
+			com_ptr<GuildMemberManager> pGuildMemberManager;
+			pGuildMemberManager.attach(this);
+			GuildMember guildMember(guildMemberData, this->guild, pGuildMemberManager);
 			this->insert(make_pair(guildMemberId, guildMember));
 			co_return guildMember;
 		}

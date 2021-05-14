@@ -195,23 +195,6 @@ namespace DiscordCoreInternal {
         int actualColorVal = actualColor();
     };
 
-    struct CreateMessageData {
-        int nonce;
-        bool tts = false;
-        string content;
-        EmbedData embed;
-        AllowedMentionsData allowedMentions;
-        MessageReferenceData messageReference;
-    };
-
-    struct EditMessageData {
-        string content;
-        EmbedData embed;
-        int flags;
-        AllowedMentionsData allowedMentions;
-        vector<AttachmentData> attachments;
-    };
-
     enum class Permissions {
         CREATE_INSTANT_INVITE = (1 << 0),
         KICK_MEMBERS = (1 << 1),
@@ -495,6 +478,23 @@ namespace DiscordCoreInternal {
         bool selfVideo;
         bool suppress;
         string requestToSpeakTimestamp;
+    };
+
+    struct EditMessageData {
+        string content;
+        DiscordCoreInternal::EmbedData embed;
+        int flags;
+        DiscordCoreInternal::AllowedMentionsData allowedMentions;
+        vector<DiscordCoreInternal::AttachmentData> attachments;
+    };
+
+    struct CreateMessageData {
+        string content;
+        int nonce;
+        bool tts = false;
+        DiscordCoreInternal::EmbedData embed;
+        DiscordCoreInternal::AllowedMentionsData allowedMentions;
+        DiscordCoreInternal::MessageReferenceData messageReference;
     };
 
     struct GuildData {
