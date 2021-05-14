@@ -37,7 +37,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
 
-	class ChannelManager : map<string, Channel>, public implements<ChannelManager, winrt::Windows::Foundation::IInspectable> {
+	class ChannelManager : concurrent_unordered_map<string, Channel>, public implements<ChannelManager, winrt::Windows::Foundation::IInspectable> {
 	public:
 		Guild* guild{ nullptr };
 		ChannelManager(){}
@@ -54,17 +54,17 @@ namespace DiscordCoreAPI {
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
 			DiscordCoreInternal::ChannelData channelData;
-			com_ptr<ChannelManager> pChannelManager;
-			pChannelManager.attach(this);
-			Channel channel(channelData, this->pointers, pChannelManager, this->guild);
 			try {
-				channel = this->at(channelId);
-				this->erase(channelId);
+				channelData = this->at(channelId).data;
+				this->unsafe_erase(channelId);
 			}
 			catch (exception error) {
 				cout << "fetchAsync() Error: " << error.what() << endl;
 			}
-			DiscordCoreInternal::parseObject(jsonValue, &channel.data);
+			DiscordCoreInternal::parseObject(jsonValue, &channelData);
+			com_ptr<ChannelManager> pChannelManager;
+			pChannelManager.attach(this);
+			Channel channel(channelData, this->pointers, pChannelManager, this->guild);
 			this->insert(make_pair(channelId, channel));
 			co_return channel;
 		}

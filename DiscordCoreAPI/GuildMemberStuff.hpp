@@ -34,7 +34,7 @@ namespace DiscordCoreAPI {
 
 	};
 
-	class GuildMemberManager: map<string,GuildMember>, public implements<GuildMemberManager, winrt::Windows::Foundation::IInspectable>{
+	class GuildMemberManager: concurrent_unordered_map<string,GuildMember>, public implements<GuildMemberManager, winrt::Windows::Foundation::IInspectable>{
 	public:
 		Guild* guild{ nullptr };
 		GuildMemberManager() {}
@@ -56,7 +56,7 @@ namespace DiscordCoreAPI {
 			GuildMember guildMember(guildMemberData, this->guild, pGuildMemberManager);
 			try {
 				guildMember = this->at(guildMemberId);
-				this->erase(guildMemberId);
+				this->unsafe_erase(guildMemberId);
 			}
 			catch (exception error) {
 				cout << "fetchAsync() Error: " << error.what() << endl;

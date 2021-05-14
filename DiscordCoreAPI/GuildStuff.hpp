@@ -44,6 +44,12 @@ namespace DiscordCoreAPI
 				GuildMember guildMember(guildMemberData, this, this->guildMembers);
 				this->guildMembers->insert(make_pair(guildMemberData.user.id, guildMember));
 			}
+			this->roles = make_self<RoleManager>(this, this->pointers);
+			for (auto const& [key,  value]: data.roles) {
+				DiscordCoreInternal::RoleData roleData = value;
+				Role role(roleData, this->pointers, this->roles, this);
+				this->roles->insert(make_pair(key, role));
+			}
 		}
 
 		~Guild() {}
@@ -53,7 +59,7 @@ namespace DiscordCoreAPI
 		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
 
-	class GuildManager : map<string, Guild>, public implements < GuildManager, winrt::Windows::Foundation::IInspectable > {
+	class GuildManager : concurrent_unordered_map<string, Guild>, public implements < GuildManager, winrt::Windows::Foundation::IInspectable > {
 	public:
 		GuildManager() {}
 		GuildManager(DiscordCoreInternal::HttpAgentPointers pointers){
@@ -68,17 +74,17 @@ namespace DiscordCoreAPI
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
 			DiscordCoreInternal::GuildData guildData;
-			com_ptr<GuildManager> pGuildManager;
-			pGuildManager.attach(this);
-			Guild guild(guildData, this->pointers, pGuildManager);
 			try {
-				guild = this->at(guildId);
-				this->erase(guildId);
+				guildData = this->at(guildId).data;
+				this->unsafe_erase(guildId);
 			}
 			catch (exception error) {
 				cout << "fetchAsync() Error: " << error.what() << endl;
 			}
-			DiscordCoreInternal::parseObject(jsonValue, &guild.data);
+			DiscordCoreInternal::parseObject(jsonValue, &guildData);
+			com_ptr<GuildManager> pGuildManager;
+			pGuildManager.attach(this);
+			Guild guild(guildData, this->pointers, pGuildManager);
 			this->insert(make_pair(guildId, guild));
 			co_return guild;
 		}
@@ -105,17 +111,17 @@ namespace DiscordCoreAPI
 		DiscordCoreInternal::HttpAgentPointers pointers;
 		task<void> insertGuild(json payload) {
 			DiscordCoreInternal::GuildData guildData;
-			com_ptr<GuildManager> pGuildManager;
-			pGuildManager.attach(this);
-			Guild guild(guildData, this->pointers, pGuildManager);
 			try {
-				guild = this->at(payload.at("id"));
-				this->erase(payload.at("id"));
+				guildData = this->at(payload.at("id")).data;
+				this->unsafe_erase(payload.at("id"));
 			}
 			catch(exception error) {
 				cout << "insertGuild() Error: " << error.what() << endl;
 			}
-			DiscordCoreInternal::parseObject(payload, &guild.data);
+			DiscordCoreInternal::parseObject(payload, &guildData);
+			com_ptr<GuildManager> pGuildManager;
+			pGuildManager.attach(this);
+			Guild guild(guildData, this->pointers, pGuildManager);
 			this->insert(make_pair(guild.data.id, guild));
 			co_return;
 		}
