@@ -37,7 +37,7 @@ namespace DiscordCoreAPI
 
 		task<void> initialize(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentPointers pointersNew, GuildManager* guildsNew, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew) {
 			this->pSystemThreads = pSystemThreadsNew;
-			co_await resume_foreground(*this->pSystemThreads->Threads.at(9).threadQueue.get());
+			co_await resume_foreground(*this->pSystemThreads->Threads.at(0).threadQueue.get());
 			this->data = dataNew;
 			this->pointers = pointersNew;
 			this->guilds.attach(guildsNew);
@@ -132,7 +132,6 @@ namespace DiscordCoreAPI
 
 		task<Guild> fetchAsync(string guildId) {
 			cout << "THIS IS IT THIS IS IT" << endl;
-			co_await resume_foreground(*this->pSystemThreads->Threads.at(9).threadQueue.get());
 			cout << "THIS IS IT THIS IS IT 2222222" << endl;
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
@@ -191,13 +190,10 @@ namespace DiscordCoreAPI
 		DiscordCoreInternal::HttpAgentPointers pointers;
 
 		task<void> insertGuild(json payload) {
-			co_await resume_foreground(*this->pSystemThreads->Threads.at(9).threadQueue.get());
 			GuildManagerAgent managerAgent(this->pScheduler);
 			managerAgent.start();
 			DiscordCoreInternal::GuildData guildData;
 			DiscordCoreInternal::parseObject(payload, &guildData);
-			critical_section critSection;
-			scoped_lock lock(critSection);
 			Guild guild(guildData, this->pointers, this, this->pSystemThreads);
 			cout << "WEVE SENT IT WEVE SENT IT!11111" << endl;
 			GuildManagerAgent::guildsToInsert.push(guild);

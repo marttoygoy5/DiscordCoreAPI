@@ -136,7 +136,7 @@ namespace DiscordCoreInternal {
 	struct WebSocketConnectionAgent :agent, implements<WebSocketConnectionAgent, winrt::Windows::Foundation::IInspectable> {
 	public:
 
-		WebSocketConnectionAgent(ITarget<json>& target, ThreadContext threadContextNew = {nullptr, nullptr, nullptr})
+		WebSocketConnectionAgent(ITarget<json>& target, ThreadContext threadContextNew = {nullptr ,nullptr, nullptr})
 			:
 			agent(*threadContext.scheduler),
 			webSocketMessageTarget(target)

@@ -21,39 +21,14 @@ namespace DiscordCoreAPI {
 	public:
 
 		com_ptr<GuildManager> guilds{ nullptr };
-		com_ptr<EventMachine> Events{ nullptr };
+		com_ptr<EventMachine> EventMachine{ nullptr };
 		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 
-		DiscordCoreClient(hstring botToken)
+		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer)
 		{
-			this->initialize(botToken).get();
-		}
-
-		task<void> initialize(hstring botTokenNew) {
-			this->pSystemThreads = make_self<DiscordCoreInternal::SystemThreads>();
-			this->pSystemThreads->initialize().get();
-			co_await resume_foreground(*this->pSystemThreads->mainThreadContext.threadQueue.get());
-			this->Events = make_self<DiscordCoreAPI::EventMachine>();
-			this->botToken = botToken;
-			this->pWebSocketConnectionAgent = make_self<DiscordCoreInternal::WebSocketConnectionAgent>(this->webSocketIncWorkloadBuffer, this->pSystemThreads->Threads.at(1));
-			this->pWebSocketReceiverAgent = make_self<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->Threads.at(2));
-			this->pGETAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(3).scheduler);
-			this->pPUTAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(4).scheduler);
-			this->pPOSTAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(5).scheduler);
-			this->pPATCHAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(6).scheduler);
-			this->pDELETEAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(7).scheduler);
-			this->pWebSocketConnectionAgent->initialize(botTokenNew);
-			DiscordCoreInternal::HttpAgentPointers pointers;
-			pointers.pGETAgent.attach(this->pGETAgent.get());
-			pointers.pPUTAgent.attach(this->pPUTAgent.get());
-			pointers.pPOSTAgent.attach(this->pPOSTAgent.get());
-			pointers.pPATCHAgent.attach(this->pPATCHAgent.get());
-			pointers.pDELETEAgent.attach(this->pDELETEAgent.get());
-			this->guilds = make_self<GuildManager>(pointers, this->pSystemThreads->Threads.at(8).scheduler, this->pSystemThreads);
-			GuildManagerAgent::initialize().get();
-			ChannelManagerAgent::initialize().get();
+			this->botToken = botTokenNew;
 		}
 
 		void terminate() {
@@ -69,6 +44,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> login() {
+			this->initialize(this->botToken);
 			co_await resume_foreground(*this->pSystemThreads->mainThreadContext.threadQueue.get());
 			this->pGETAgent->start();
 			this->pPUTAgent->start();
@@ -77,7 +53,8 @@ namespace DiscordCoreAPI {
 			this->pDELETEAgent->start();
 			this->pWebSocketConnectionAgent->start();
 			this->pWebSocketReceiverAgent->start();
-			this->start();			
+			this->start();
+			co_return;
 		}
 
 		~DiscordCoreClient() {
@@ -112,8 +89,33 @@ namespace DiscordCoreAPI {
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
 
+		task<void> initialize(hstring botTokenNew) {
+			this->pSystemThreads = make_self<DiscordCoreInternal::SystemThreads>();
+			this->pSystemThreads->initialize().get();
+			co_await resume_foreground(*this->pSystemThreads->mainThreadContext.threadQueue.get());
+			this->EventMachine = make_self<DiscordCoreAPI::EventMachine>();
+			this->botToken = botTokenNew;
+			this->pWebSocketConnectionAgent = make_self<DiscordCoreInternal::WebSocketConnectionAgent>(this->webSocketIncWorkloadBuffer, this->pSystemThreads->Threads.at(1));
+			this->pWebSocketReceiverAgent = make_self<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->Threads.at(2));
+			this->pGETAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(3).scheduler);
+			this->pPUTAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(4).scheduler);
+			this->pPOSTAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(5).scheduler);
+			this->pPATCHAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(6).scheduler);
+			this->pDELETEAgent = make_self<DiscordCoreInternal::HttpRequestAgent>(this->botToken, this->baseURL, this->pWebSocketConnectionAgent->returnSocketPathPointer(), this->pSystemThreads->Threads.at(7).scheduler);
+			this->pWebSocketConnectionAgent->initialize(botTokenNew);
+			DiscordCoreInternal::HttpAgentPointers pointers;
+			pointers.pGETAgent.attach(this->pGETAgent.get());
+			pointers.pPUTAgent.attach(this->pPUTAgent.get());
+			pointers.pPOSTAgent.attach(this->pPOSTAgent.get());
+			pointers.pPATCHAgent.attach(this->pPATCHAgent.get());
+			pointers.pDELETEAgent.attach(this->pDELETEAgent.get());
+			this->guilds = make_self<GuildManager>(pointers, this->pSystemThreads->Threads.at(8).scheduler, this->pSystemThreads);
+			GuildManagerAgent::initialize().get();
+			ChannelManagerAgent::initialize().get();
+		}
+
 		task<Channel> fetchChannelAsync(string channelId, Guild guild) {
-			co_await resume_foreground(*this->pSystemThreads->Threads.at(9).threadQueue.get());
+			co_await resume_foreground(*this->pSystemThreads->Threads.at(0).threadQueue.get());
 			co_return guild.channels->fetchAsync(channelId).get();
 		}
 
@@ -140,7 +142,7 @@ namespace DiscordCoreAPI {
 						messageCreationData.message = Message(messageData, &guild, pointers, messageManager);
 						cout << "WE ARE HERE WE ARE HERE WE ARE HERE" << endl;
 						
-						this->Events->onMessageCreationEvent(messageCreationData);
+						this->EventMachine->onMessageCreationEvent(messageCreationData);
 					}
 				}
 			}
