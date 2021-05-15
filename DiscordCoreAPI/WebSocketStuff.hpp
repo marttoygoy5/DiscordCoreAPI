@@ -313,7 +313,10 @@ namespace DiscordCoreInternal {
 				}
 
 				if (payload.at("op") == 9) {
-
+					this->cleanup();
+					string resume = getResumePayload(to_string(this->botToken), to_string(this->sessionID), this->lastNumberReceived);
+					this->sendAsync(resume);
+					this->connect();
 				}
 
 				if (payload.at("t") == "READY") {

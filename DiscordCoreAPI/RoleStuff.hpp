@@ -22,16 +22,16 @@ namespace DiscordCoreAPI {
 		com_ptr<RoleManager> roles{ nullptr };
 		DiscordCoreInternal::RoleData data;
 		Role() {}
-		Role(DiscordCoreInternal::RoleData roleData, DiscordCoreInternal::HttpAgentPointers pointersNew, com_ptr<RoleManager> rolesNew, Guild* guildNew) {
+		Role(DiscordCoreInternal::RoleData roleData, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<RoleManager> rolesNew, Guild* guildNew) {
 			this->data = roleData;
-			this->pointers = pointersNew;
+			this->agentResources = agentResourcesNew;
 			this->guild = guildNew;
 			this->roles = rolesNew;
 		}
 		~Role() {}
 	protected:
 		friend class RoleManager;
-		DiscordCoreInternal::HttpAgentPointers pointers;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 
 	class RoleManager: concurrent_unordered_map<string, Role>,public implements<RoleManager,winrt::Windows::Foundation::IInspectable> {
@@ -40,13 +40,14 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		RoleManager() {}
-		RoleManager(Guild* guildNew, DiscordCoreInternal::HttpAgentPointers pointers, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew) {
-			this->pointers = pointers;
+		RoleManager(Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew) {
+			this->agentResources = agentResourcesNew;
 			this->guild = guildNew;
 			this->pSystemThreads = pSystemThreadsNew;
 		}
 
 		task<Role> fetchAsync(string roleId, string guildId) {
+			/*
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_ROLES;
@@ -62,14 +63,14 @@ namespace DiscordCoreAPI {
 					com_ptr<RoleManager> pRoleManager;
 					pRoleManager.attach(this);
 					DiscordCoreInternal::parseObject(jsonValue.at(x), &roleData);
-					Role role(roleData, this->pointers, pRoleManager, this->guild);
+					Role role(roleData, this->agentResources, pRoleManager, this->guild);
 					this->insert(make_pair(role.data.id, role));
 				}
 				catch (exception error) {
 					com_ptr<RoleManager> pRoleManager;
 					pRoleManager.attach(this);
 					DiscordCoreInternal::parseObject(jsonValue.at(x), &roleData);
-					Role role(roleData, this->pointers, pRoleManager, this->guild);
+					Role role(roleData, this->agentResources, pRoleManager, this->guild);
 					this->insert(make_pair(role.data.id, role));
 					cout << "fetchAsync() Error: " << error.what() << endl;
 				}
@@ -81,9 +82,10 @@ namespace DiscordCoreAPI {
 				cout << "fetchAsync() Error: " << error.what() << endl;
 				com_ptr<RoleManager> pRoleManager;
 				pRoleManager.attach(this);
-				Role role(roleData, this->pointers, pRoleManager, this->guild);
+				Role role(roleData, this->agentResources, pRoleManager, this->guild);
 				co_return role;
 			}
+			*/
 			
 		}
 
@@ -97,7 +99,7 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::RoleData roleData;
 				com_ptr<RoleManager> pRoleManager;
 				pRoleManager.attach(this);
-				Role role(roleData, this->pointers, pRoleManager, this->guild);
+				Role role(roleData, this->agentResources, pRoleManager, this->guild);
 				co_return role;
 			}
 		}
@@ -107,7 +109,7 @@ namespace DiscordCoreAPI {
 		friend class Guild;
 		friend struct DiscordCoreClient;
 		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads;
-		DiscordCoreInternal::HttpAgentPointers pointers;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 }
 #endif

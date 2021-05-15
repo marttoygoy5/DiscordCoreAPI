@@ -27,22 +27,21 @@ namespace DiscordCoreAPI {
 		com_ptr<MessageManager> messages{ nullptr };
 		com_ptr<ChannelManager> channels{ nullptr };
 		Guild* guild{ nullptr };
-		Channel(DiscordCoreInternal::ChannelData channelData, DiscordCoreInternal::HttpAgentPointers pointersNew, com_ptr<ChannelManager> channelManager, Guild* guildNew) {
+		Channel(DiscordCoreInternal::ChannelData channelData, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<ChannelManager> channelManager, Guild* guildNew) {
 			data = channelData;
-			this->pointers = pointersNew;
+			this->agentResources = agentResourcesNew;
 			this->channels = channelManager;
 			this->guild = guildNew;
-			this->messages = make_self<MessageManager>(this->pointers, this->guild);
+			//this->messages = make_self<MessageManager>(this->pointers, this->guild);
 		}
 	protected:
 		friend class ChannelManager;
 		friend class Guild;
-		DiscordCoreInternal::HttpAgentPointers pointers;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 
 	class ChannelManagerAgent : public agent {
 	public:
-		static map<string, Channel> cache;
 		Guild* guild;
 
 		ChannelManagerAgent(Scheduler* pSchedulerNew, com_ptr<ChannelManager> pChannelManagerNew)
@@ -62,6 +61,7 @@ namespace DiscordCoreAPI {
 
 	protected:
 		friend class ChannelManager;
+		static map<string, Channel> cache;
 		static unbounded_buffer<string>* requestFetchBuffer;
 		static unbounded_buffer<string>* requestGetBuffer;
 		static unbounded_buffer<Channel>* outBuffer;
@@ -71,12 +71,13 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::HttpAgentPointers pointers;
 
 		task<Channel> fetchAsyncWrapped(string channelId, Channel channel) {
-			string channelIdNew = receive(ChannelManagerAgent::requestFetchBuffer);
+			/*
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_CHANNEL;
-			workload.relativePath = "/channels/" + channelIdNew;
+			workload.relativePath = "/channels/" + channelId;
 			cout << "CHANNEL RESULTS 0000" << endl;
+			DiscordCoreInternal::HttpRequestAgent pGetAgent(this->pointers.pGETAgent->botToken, this->pointers.pGETAgent->baseURL, this->pointers.pGETAgent->);
 			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
 			cout << "WEVE SEND IT WEVE SEND IT!" << endl;
 			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
@@ -88,9 +89,11 @@ namespace DiscordCoreAPI {
 			cout << "CHANNEL RESULTS 333333" << endl;
 			ChannelManagerAgent::cache.insert(make_pair(channelId, channelNew));
 			co_return channel;
+			*/
 		}
 
 		task<Channel> getChannelAsyncWrapped(string channelId) {
+			/*
 			if (ChannelManagerAgent::cache.contains(channelId)) {
 				Channel channel = ChannelManagerAgent::cache.at(channelId);
 				ChannelManagerAgent::cache.erase(channel.data.id);
@@ -101,12 +104,13 @@ namespace DiscordCoreAPI {
 				Channel channel(channelData, this->pointers, this->pChannelManager, this->guild);
 				co_return channel;
 			}
+			*/
 		}
 
 		void run() {
-			try {
+			try {/*
 				string channelId = receive(ChannelManagerAgent::requestFetchBuffer, 100U);
-				cout << "GUILD ID: " << channelId << endl;
+				cout << "CHANNEL ID: " << channelId << endl;
 				if (ChannelManagerAgent::cache.contains(channelId)) {
 					Channel channel = ChannelManagerAgent::cache.at(channelId);
 					ChannelManagerAgent::cache.erase(channelId);
@@ -115,7 +119,7 @@ namespace DiscordCoreAPI {
 				}
 				else {
 					DiscordCoreInternal::ChannelData channelData;
-					Channel channel(channelData, this->pointers, this->pChannelManager, this->guild);
+					//Channel channel(channelData, this->pointers, this->pChannelManager, this->guild);
 					channel = fetchAsyncWrapped(channelId, channel).get();
 					send(ChannelManagerAgent::outBuffer, channel);
 				}
@@ -123,7 +127,7 @@ namespace DiscordCoreAPI {
 			catch (exception error) {
 				//cout << "run() Error: " << error.what() << endl;
 			}
-			string channelId; 
+			string channelId;
 			if (try_receive(ChannelManagerAgent::requestGetBuffer, channelId)) {
 				Channel channel = getChannelAsyncWrapped(channelId).get();
 				send(ChannelManagerAgent::outBuffer, channel);
@@ -136,28 +140,40 @@ namespace DiscordCoreAPI {
 				ChannelManagerAgent::cache.insert(make_pair(channel.data.id, channel));
 				cout << ChannelManagerAgent::cache.at(channel.data.id).data.name << endl;
 			}
-			done();
-		}
+			*/
+				done();
+			}
+			catch (exception error) {
 
+			}
+		};
 	};
 
 	class ChannelManager : concurrent_unordered_map<string, Channel>, public implements<ChannelManager, winrt::Windows::Foundation::IInspectable> {
 	public:
 		Guild* guild{ nullptr };
-		ChannelManager(){}
-		ChannelManager(Guild* guild, DiscordCoreInternal::HttpAgentPointers pointers, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew){
+		ChannelManager() {}
+		ChannelManager(Guild* guild, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew) {
 			this->guild = guild;
-			this->pointers = pointers;
+			this->agentResources = agentResourcesNew;
 			this->pSystemThreads = pSystemThreadsNew;
 		}
 
 		task<Channel> fetchAsync(string channelId) {
 			com_ptr<ChannelManager> pChannelManager;
 			pChannelManager.attach(this);
-			ChannelManagerAgent channelManagerAgent(this->pSystemThreads->Threads.at(4).scheduler, pChannelManager);
+			SchedulerPolicy policy;
+			policy.SetConcurrencyLimits(1, 1);
+			policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
+			policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
+			CurrentScheduler::Create(policy);
+			Scheduler* pScheduler = CurrentScheduler::Get();
+			ChannelManagerAgent channelManagerAgent(pScheduler, pChannelManager);
 			channelManagerAgent.start();
 			send(ChannelManagerAgent::requestFetchBuffer, channelId);
-			co_return receive(ChannelManagerAgent::outBuffer);
+			Channel channel = receive(ChannelManagerAgent::outBuffer);
+			cout << "CHANNEL NAME CHANNEL NAME: " << channel.data.name << endl;
+			co_return channel;
 		}
 
 		task<Channel> getChannelAsync(string channelId) {
@@ -173,14 +189,12 @@ namespace DiscordCoreAPI {
 	protected:
 		friend class Guild;
 		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads;
-		DiscordCoreInternal::HttpAgentPointers pointers;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
-
+	map<string, Channel> ChannelManagerAgent::cache;
 	unbounded_buffer<string>* ChannelManagerAgent::requestFetchBuffer;
 	unbounded_buffer<string>* ChannelManagerAgent::requestGetBuffer;
 	unbounded_buffer<Channel>* ChannelManagerAgent::outBuffer;
 	concurrent_queue<Channel> ChannelManagerAgent::channelsToInsert;
-	map<string, Channel> ChannelManagerAgent::cache;
-
 }
 #endif

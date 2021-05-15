@@ -52,6 +52,12 @@ namespace DiscordCoreInternal {
 		com_ptr<HttpRequestAgent> pDELETEAgent;
 	};
 
+	struct HttpAgentResources {
+		hstring botToken;
+		hstring baseURL;
+		hstring* pSocketPath;
+	};
+
 	struct HttpData {
 		json data;
 	};
@@ -75,13 +81,13 @@ namespace DiscordCoreInternal {
 	public:
 		unbounded_buffer<HttpWorkload> workSubmissionBuffer;
 		unbounded_buffer<json> workReturnBuffer;
-		HttpRequestAgent(hstring botToken, hstring baseURL, hstring* pSocketPath, Scheduler* pScheduler = nullptr) 
+		HttpRequestAgent(HttpAgentResources agentResources, Scheduler* pScheduler = nullptr) 
 			:
 			agent(*pScheduler)
 		{
 			try {
-				this->baseURL = baseURL;
-				this->botToken = botToken;
+				this->baseURL = agentResources.baseURL;
+				this->botToken = agentResources.botToken;
 				this->initialConnectionPath = this->baseURL + L"/gateway/bot";
 				this->getHttpClient = HttpClient();
 				this->getHeaders = this->getHttpClient.DefaultRequestHeaders();
@@ -92,7 +98,7 @@ namespace DiscordCoreInternal {
 				this->deleteHttpClient = HttpClient();
 				this->deleteHeaders = this->deleteHttpClient.DefaultRequestHeaders();
 				hstring headerString = L"Bot ";
-				hstring headerString2 = headerString + botToken;
+				hstring headerString2 = headerString + this->botToken;
 				HttpCredentialsHeaderValue credentialValue(nullptr);
 				credentialValue = credentialValue.Parse(headerString2.c_str());
 				this->getHeaders.Authorization(credentialValue);
@@ -106,7 +112,7 @@ namespace DiscordCoreInternal {
 				std::wstringstream stream;
 				stream << parseSocketPath(httpResponseBody.c_str()).c_str();
 				stream << L"/?v=9&encoding=json";
-				*pSocketPath = stream.str();
+				*agentResources.pSocketPath = stream.str();
 			}
 			catch (winrt::hresult_error ex) {
 				std::wcout << "Error: " << ex.message().c_str() << std::endl;
@@ -116,8 +122,8 @@ namespace DiscordCoreInternal {
 		void terminate() {
 			this->doWeQuit = true;
 		}
-
 	protected:
+
 		bool doWeQuit = false;
 		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
 		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
