@@ -40,9 +40,10 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		RoleManager() {}
-		RoleManager(Guild* guildNew, DiscordCoreInternal::HttpAgentPointers pointers) {
+		RoleManager(Guild* guildNew, DiscordCoreInternal::HttpAgentPointers pointers, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew) {
 			this->pointers = pointers;
 			this->guild = guildNew;
+			this->pSystemThreads = pSystemThreadsNew;
 		}
 
 		task<Role> fetchAsync(string roleId, string guildId) {
@@ -105,6 +106,7 @@ namespace DiscordCoreAPI {
 	protected:
 		friend class Guild;
 		friend struct DiscordCoreClient;
+		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads;
 		DiscordCoreInternal::HttpAgentPointers pointers;
 	};
 }

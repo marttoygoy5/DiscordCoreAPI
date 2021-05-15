@@ -43,8 +43,11 @@ namespace DiscordCoreAPI {
 		}
 
 		~Message() {}
+
 	protected:
+
 		DiscordCoreInternal::HttpAgentPointers pointers;
+
 	};
 
 	class MessageManager: concurrent_unordered_map<string, Message>, public implements<MessageManager, winrt::Windows::Foundation::IInspectable> {
