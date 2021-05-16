@@ -45,11 +45,11 @@ namespace DiscordCoreInternal {
 	};
 
 	struct HttpAgentPointers {
-		com_ptr<HttpRequestAgent> pGETAgent;
-		com_ptr<HttpRequestAgent> pPUTAgent;
-		com_ptr<HttpRequestAgent> pPOSTAgent;
-		com_ptr<HttpRequestAgent> pPATCHAgent;
-		com_ptr<HttpRequestAgent> pDELETEAgent;
+		shared_ptr<HttpRequestAgent> pGETAgent;
+		shared_ptr<HttpRequestAgent> pPUTAgent;
+		shared_ptr<HttpRequestAgent> pPOSTAgent;
+		shared_ptr<HttpRequestAgent> pPATCHAgent;
+		shared_ptr<HttpRequestAgent> pDELETEAgent;
 	};
 
 	struct HttpAgentResources {

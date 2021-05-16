@@ -21,9 +21,9 @@ namespace DiscordCoreAPI {
 	public:
 		DiscordCoreInternal::GuildMemberData data;
 		Guild* guild{ nullptr };
-		com_ptr<GuildMemberManager> guildMembers{ nullptr };
+		shared_ptr<GuildMemberManager> guildMembers{ nullptr };
 		GuildMember() {}
-		GuildMember(DiscordCoreInternal::GuildMemberData guildMemberData, Guild* guildNew, com_ptr<GuildMemberManager> guildMembersNew) {
+		GuildMember(DiscordCoreInternal::GuildMemberData guildMemberData, Guild* guildNew, shared_ptr<GuildMemberManager> guildMembersNew) {
 			this->data = guildMemberData;
 			this->guild = guildNew;
 			this->guildMembers = guildMembersNew;
@@ -59,8 +59,8 @@ namespace DiscordCoreAPI {
 				cout << "fetchAsync() Error: " << error.what() << endl;
 			}
 			DiscordCoreInternal::parseObject(jsonValue, &guildMemberData);
-			com_ptr<GuildMemberManager> pGuildMemberManager;
-			pGuildMemberManager.attach(this);
+			shared_ptr<GuildMemberManager> pGuildMemberManager;
+			pGuildMemberManager.reset(this);
 			GuildMember guildMember(guildMemberData, this->guild, pGuildMemberManager);
 			this->insert(make_pair(guildMemberId, guildMember));
 			co_return guildMember;
@@ -74,8 +74,8 @@ namespace DiscordCoreAPI {
 			catch (exception error) {
 				cout << "getGuildMemberAsync() Error: " << error.what() << endl;
 				DiscordCoreInternal::GuildMemberData guildMemberData;
-				com_ptr<GuildMemberManager> pGuildMemberManager;
-				pGuildMemberManager.attach(this);
+				shared_ptr<GuildMemberManager> pGuildMemberManager;
+				pGuildMemberManager.reset(this);
 				GuildMember guildMember(guildMemberData, this->guild, pGuildMemberManager);
 				co_return guildMember;
 			}

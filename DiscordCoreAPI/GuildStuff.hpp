@@ -31,15 +31,15 @@ namespace DiscordCoreAPI
 		shared_ptr<GuildManager> guilds{ nullptr };
 
 		Guild() {}
-		Guild(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, shared_ptr<GuildManager> guildsNew, shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew) {
+		Guild(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, GuildManager* guildsNew, shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew) {
 			this->initialize(dataNew, agentResourcesNew, guildsNew, pThreadsNew).get();
 		}
 
-		task<void> initialize(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, shared_ptr<GuildManager> guildsNew, shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew) {
+		task<void> initialize(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, GuildManager* guildsNew, shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew) {
 			this->pThreads = pThreadsNew;
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
-			this->guilds.reset(guildsNew.get());
+			this->guilds.reset(guildsNew);
 			this->channels = make_shared<ChannelManager>(this, this->agentResources, this->pThreads);
 			/*
 			for (unsigned int x = 0; x < data.channels.size(); x += 1) {
@@ -113,9 +113,7 @@ namespace DiscordCoreAPI
 			json jsonValue = receive(requestAgent.workReturnBuffer);
 			DiscordCoreInternal::GuildData guildData = guild.data;
 			DiscordCoreInternal::parseObject(jsonValue, &guildData);
-			shared_ptr<GuildManager> pGuildManagerNew;
-			pGuildManagerNew.reset(this->pGuildManager);
-			Guild guildNew(guildData, this->agentResources, pGuildManagerNew, this->pThreads);
+			Guild guildNew(guildData, this->agentResources, this->pGuildManager, this->pThreads);
 			co_return guildNew;
 		}
 
@@ -208,10 +206,8 @@ namespace DiscordCoreAPI
 			managerAgent.start();
 			DiscordCoreInternal::GuildData guildData;
 			DiscordCoreInternal::parseObject(payload, &guildData);
-			shared_ptr<GuildManager> pGuildManager;
-			pGuildManager.reset(this);
-			Guild guild(guildData, this->agentResources, pGuildManager, this->pThreads);
-			cout << payload << endl;
+			Guild guild(guildData, this->agentResources, this, this->pThreads);
+			//cout << payload << endl;
 			cout << "WEVE SENT IT WEVE SENT IT!11111" << endl;
 			GuildManagerAgent::guildsToInsert.push(guild);
 			cout << "WEVE SENT IT WEVE SENT IT!" << endl;
