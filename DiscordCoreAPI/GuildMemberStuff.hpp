@@ -17,24 +17,24 @@ namespace DiscordCoreAPI {
 
 	class Guild;
 
-	class GuildMember{
+	class GuildMember {
 	public:
 		DiscordCoreInternal::GuildMemberData data;
 		Guild* guild{ nullptr };
-		shared_ptr<GuildMemberManager> guildMembers{ nullptr };
+		GuildMemberManager* guildMembers{ nullptr };
 		GuildMember() {}
-		GuildMember(DiscordCoreInternal::GuildMemberData guildMemberData, Guild* guildNew, shared_ptr<GuildMemberManager> guildMembersNew) {
+		GuildMember(DiscordCoreInternal::GuildMemberData guildMemberData, Guild* guildNew, GuildMemberManager* guildMembersNew) {
 			this->data = guildMemberData;
 			this->guild = guildNew;
 			this->guildMembers = guildMembersNew;
 		}
-		
+
 	protected:
 		friend class GuildMemberManager;
 
 	};
 
-	class GuildMemberManager: concurrent_unordered_map<string,GuildMember>, public implements<GuildMemberManager, winrt::Windows::Foundation::IInspectable>{
+	class GuildMemberManager {
 	public:
 		Guild* guild{ nullptr };
 		GuildMemberManager() {}
@@ -44,47 +44,21 @@ namespace DiscordCoreAPI {
 		}
 
 		task<GuildMember> fetchAsync(string guildId, string guildMemberId) {
-			DiscordCoreInternal::HttpWorkload workload;
-			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
-			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_CHANNEL;
-			workload.relativePath = "/guilds/" + guildId + "/members/" + guildMemberId;
-			send(&pointers.pGETAgent->workSubmissionBuffer, workload);
-			json jsonValue = receive(pointers.pGETAgent->workReturnBuffer);
-			DiscordCoreInternal::GuildMemberData guildMemberData;
-			try {
-				guildMemberData = this->at(guildMemberId).data;
-				this->unsafe_erase(guildMemberId);
-			}
-			catch (exception error) {
-				cout << "fetchAsync() Error: " << error.what() << endl;
-			}
-			DiscordCoreInternal::parseObject(jsonValue, &guildMemberData);
-			shared_ptr<GuildMemberManager> pGuildMemberManager;
-			pGuildMemberManager.reset(this);
-			GuildMember guildMember(guildMemberData, this->guild, pGuildMemberManager);
-			this->insert(make_pair(guildMemberId, guildMember));
+			GuildMember guildMember;
 			co_return guildMember;
 		}
 
 		task<GuildMember> getGuildMemberAsync(string guildMemberID) {
-			try {
-				GuildMember guildMember = this->at(guildMemberID);
-				co_return guildMember;
-			}
-			catch (exception error) {
-				cout << "getGuildMemberAsync() Error: " << error.what() << endl;
-				DiscordCoreInternal::GuildMemberData guildMemberData;
-				shared_ptr<GuildMemberManager> pGuildMemberManager;
-				pGuildMemberManager.reset(this);
-				GuildMember guildMember(guildMemberData, this->guild, pGuildMemberManager);
-				co_return guildMember;
-			}
+			DiscordCoreInternal::GuildMemberData guildMemberData;
+			GuildMember guildMember(guildMemberData, this->guild, this);
+			co_return guildMember;
 		}
+
 		~GuildMemberManager() {}
 
 	protected:
 		DiscordCoreInternal::HttpAgentPointers pointers;
 		friend class Guild;
 	};
-}
+};
 #endif

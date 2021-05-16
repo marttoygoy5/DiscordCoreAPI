@@ -20,30 +20,7 @@ namespace CommanderNS {
 	/*
 	namespace DataManipFunctions {
 
-		struct DeleteReactionData {
-			string channelId;
-			string messageId;
-			string encodedEmoji;
-			string userId;
-		};
-
-		struct DeleteAllReactionsByEmojiData {
-			string channelId;
-			string messageId;
-			string encodedEmoji;
-		};
-
-		struct DeleteAllReactionsData {
-			string channelId;
-			string messageId;
-		};
-
-		struct DeleteOwnReactionData {
-			string channelId;
-			string messageId;
-			string encodedEmoji;
-		};
-
+	
 		struct GetSelfUserData {
 			ClientDataTypes::UserData* pDataStructure;
 		};
@@ -58,10 +35,7 @@ namespace CommanderNS {
 			string id;
 		};
 
-		struct GetChannelData {
-			ClientDataTypes::ChannelData* pDataStructure;
-			string id;
-		};
+		
 
 		struct GetGuildMemberData {
 			ClientDataTypes::GuildMemberData* pDataStructure;
@@ -86,11 +60,7 @@ namespace CommanderNS {
 			string channelId;
 		};
 
-		struct PutEmojiData {
-			string channelId;
-			string messageId;
-			string emoji;
-		};
+		
 
 		struct DeleteMessageData {
 			string channelId;

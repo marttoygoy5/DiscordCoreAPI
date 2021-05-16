@@ -655,6 +655,8 @@ namespace DiscordCoreInternal {
     };
 
     struct CreateReactionData {
+        string channelId;
+        string messageId;
         string name;
         string id;
     };

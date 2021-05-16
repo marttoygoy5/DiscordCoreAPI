@@ -33,15 +33,15 @@ namespace DiscordCoreAPI {
 
 		void terminate() {
 			this->doWeQuit = true;
-			this->pWebSocketConnectionAgent->terminate();
 			this->pWebSocketReceiverAgent->terminate();
+			this->pWebSocketConnectionAgent->terminate();
 			this->terminate();
 		}
 
 		task<void> login() {
 			this->initialize(this->botToken).get();;
-			this->pWebSocketConnectionAgent->start();
 			this->pWebSocketReceiverAgent->start();
+			this->pWebSocketConnectionAgent->start();
 			this->start();
 			co_return;
 		}
@@ -85,6 +85,7 @@ namespace DiscordCoreAPI {
 			GuildManagerAgent::initialize().get();
 			ChannelManagerAgent::initialize().get();
 			MessageManagerAgent::initialize().get();
+			ReactionManagerAgent::initialize().get();
 		}
 
 		void run() {
@@ -92,7 +93,15 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::WebSocketWorkload workload;
 				if (try_receive(this->webSocketWorkloadSource, workload)) {
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
-						this->guilds->insertGuild(workload.payLoad);
+						DiscordCoreAPI::GuildCreationData guildCreationData;
+						DiscordCoreInternal::GuildData guildData;
+						DiscordCoreInternal::parseObject(workload.payLoad, &guildData);
+						DiscordCoreInternal::HttpAgentResources agentResources;
+						agentResources.baseURL = this->baseURL;
+						agentResources.botToken = this->botToken;
+						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
+						guildCreationData.guild = Guild(guildData, agentResources, this->guilds.get(), this->pSystemThreads.get()->getThreads().get());
+						this->EventMachine->onGuildCreationEvent(guildCreationData);
 					}
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
 						DiscordCoreInternal::MessageData messageData;
@@ -103,12 +112,9 @@ namespace DiscordCoreAPI {
 						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 						DiscordCoreAPI::MessageCreationData messageCreationData;
 						Guild guild = this->guilds->fetchAsync(messageData.guildId).get();
-						cout << guild.data.name << endl;
-						cout << "CHANNEL ID: " << messageData.channelId << endl;
-						cout << "CHANNEL NAME: " << guild.channels->getChannelAsync(messageData.channelId).get().data.name << endl;
-						DiscordCoreAPI::Message message(messageData, &guild, agentResources, guild.channels->fetchAsync(messageData.channelId).get().messages, this->pSystemThreads.get()->getThreads().get());
+						MessageManager* msgManager = guild.channels->fetchAsync(messageData.channelId).get().messages;
+						DiscordCoreAPI::Message message(messageData, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
 						messageCreationData.message = message;
-						cout << "25252525WERE HERE WERE HERE" << endl;
 						this->EventMachine->onMessageCreationEvent(messageCreationData);
 					}
 				}
