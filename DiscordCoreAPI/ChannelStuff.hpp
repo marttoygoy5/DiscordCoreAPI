@@ -14,6 +14,7 @@
 #include "HttpStuff.hpp"
 
 namespace DiscordCoreAPI {
+
 	class ChannelManager;
 
 	class ChannelManagerAgent;
@@ -34,7 +35,7 @@ namespace DiscordCoreAPI {
 			this->agentResources = agentResourcesNew;
 			this->channels = channelsNew;
 			this->guild = guildNew;
-			this->messages = new MessageManager(this->agentResources, this->guild);
+			this->messages = new MessageManager(this->agentResources, this->guild, this->pThreads);
 		}
 	protected:
 		friend class ChannelManager;
@@ -88,7 +89,6 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::ChannelData channelData = channel.data;
 			DiscordCoreInternal::parseObject(jsonValue, &channelData);
 			Channel channelNew(channelData, this->pGuild, this->agentResources, this->pChannelManager, this->pThreads);
-			cout << "THE CHANNEL" << endl << jsonValue << endl;
 			co_return channelNew;
 		}
 
@@ -98,13 +98,11 @@ namespace DiscordCoreAPI {
 				channelId = receive(ChannelManagerAgent::requestGetBuffer, 50U);
 				if (ChannelManagerAgent::cache.contains(channelId)) {
 					Channel channel = ChannelManagerAgent::cache.at(channelId);
-					cout << "GUILD NAME111: " << channel.data.name << endl;
 					send(ChannelManagerAgent::outBuffer, channel);
 				}
 				else {
 					Channel channel;
 					send(ChannelManagerAgent::outBuffer, channel);
-					cout << "Channel NAME2222: " << channel.data.name << endl;
 				}
 			}
 			catch (exception error) {}

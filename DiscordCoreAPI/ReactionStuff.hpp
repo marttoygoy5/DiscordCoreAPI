@@ -39,7 +39,6 @@ namespace DiscordCoreAPI{
 		}
 
 		task<void> createReactionAsync(DiscordCoreInternal::CreateReactionData createReactionData){
-
 			co_return;
 		}
 

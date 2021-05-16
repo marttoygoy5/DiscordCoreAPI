@@ -97,17 +97,14 @@ namespace DiscordCoreAPI {
 						DiscordCoreInternal::MessageData messageData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
 						DiscordCoreInternal::HttpAgentResources agentResources;
-						agentResources.baseURL = this->baseURL;
 						agentResources.botToken = this->botToken;
+						agentResources.baseURL = this->baseURL;
 						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 						DiscordCoreAPI::MessageCreationData messageCreationData;
 						Guild guild = this->guilds->fetchAsync(messageData.guildId).get();
-						cout << guild.data.name << endl;
-						cout << "CHANNEL ID: " << messageData.channelId << endl;
-						cout << "CHANNEL NAME: " <<guild.channels->getChannelAsync(messageData.channelId).get().data.name << endl;
-						DiscordCoreAPI::Message message(messageData, &guild, agentResources, guild.channels->fetchAsync(messageData.channelId).get().messages);
-						messageCreationData.message = Message();
-						cout << "25252525WERE HERE WERE HERE" << endl;
+						MessageManager* messages = guild.channels->fetchAsync(messageData.channelId).get().messages;
+						DiscordCoreAPI::Message message(messageData, &guild, agentResources, messages, this->pSystemThreads->pThreads);
+						messageCreationData.message = message;
 						this->EventMachine->onMessageCreationEvent(messageCreationData);
 					}
 				}

@@ -114,7 +114,6 @@ namespace DiscordCoreAPI
 			DiscordCoreInternal::GuildData guildData = guild.data;
 			DiscordCoreInternal::parseObject(jsonValue, &guildData);
 			Guild guildNew(guildData, this->agentResources, this->pGuildManager, this->pThreads);
-			cout << "THE GUILD" << endl<< jsonValue << endl;
 			co_return guildNew;
 		}
 

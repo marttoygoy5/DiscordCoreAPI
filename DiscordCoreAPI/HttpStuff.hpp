@@ -177,8 +177,6 @@ namespace DiscordCoreInternal {
 					cout << "HttpRequestAgent Error: " << error.what() << endl;
 					HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
 				}
-				cout << returnData.data << endl;
-				send(this->workReturnBuffer, returnData.data);
 				return returnData.data;
 				});
 			completeHttpRequest.link_target(&this->workReturnBuffer);
