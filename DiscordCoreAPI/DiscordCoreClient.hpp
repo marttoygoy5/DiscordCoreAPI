@@ -70,7 +70,7 @@ namespace DiscordCoreAPI {
 		task<void> initialize(hstring botTokenNew) {
 			this->pSystemThreads = make_shared<DiscordCoreInternal::SystemThreads>();
 			this->pSystemThreads->initialize().get();
-			co_await resume_foreground(*this->pSystemThreads->pThreads->at(0).threadQueue.get());
+			co_await resume_foreground(*this->pSystemThreads->getThreads().get()->at(0).threadQueue.get());
 			this->EventMachine = make_shared<DiscordCoreAPI::EventMachine>();
 			this->botToken = botTokenNew;
 			this->pWebSocketConnectionAgent = make_shared<DiscordCoreInternal::WebSocketConnectionAgent>(this->webSocketIncWorkloadBuffer, this->pSystemThreads->getThreads().get()->at(1));
@@ -78,7 +78,7 @@ namespace DiscordCoreAPI {
 			agentResources.baseURL = this->baseURL;
 			agentResources.botToken = this->botToken;
 			agentResources.pSocketPath = pWebSocketConnectionAgent->returnSocketPathPointer();
-			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->pThreads->at(3).scheduler);
+			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->getThreads().get()->at(3).scheduler);
 			this->pWebSocketReceiverAgent = make_shared<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(2));
 			this->pWebSocketConnectionAgent->initialize(botTokenNew);
 			this->guilds = make_shared<GuildManager>(this->pSystemThreads->getThreads().get(), agentResources);
@@ -87,24 +87,27 @@ namespace DiscordCoreAPI {
 		}
 
 		void run() {
-			while (doWeQuit == false) {
 				DiscordCoreInternal::WebSocketWorkload workload;
 				if (try_receive(this->webSocketWorkloadSource, workload)) {
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
+			while (doWeQuit == false) {
 						this->guilds->insertGuild(workload.payLoad);
 					}
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
 						DiscordCoreInternal::MessageData messageData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
 						DiscordCoreInternal::HttpAgentResources agentResources;
-						agentResources.botToken = this->botToken;
 						agentResources.baseURL = this->baseURL;
+						agentResources.botToken = this->botToken;
 						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 						DiscordCoreAPI::MessageCreationData messageCreationData;
 						Guild guild = this->guilds->fetchAsync(messageData.guildId).get();
-						MessageManager* messages = guild.channels->fetchAsync(messageData.channelId).get().messages;
-						DiscordCoreAPI::Message message(messageData, &guild, agentResources, messages, this->pSystemThreads->pThreads);
-						messageCreationData.message = message;
+						cout << guild.data.name << endl;
+						cout << "CHANNEL ID: " << messageData.channelId << endl;
+						cout << "CHANNEL NAME: " << guild.channels->getChannelAsync(messageData.channelId).get().data.name << endl;
+						DiscordCoreAPI::Message message(messageData, &guild, agentResources, guild.channels->fetchAsync(messageData.channelId).get().messages, this->pSystemThreads.get()->getThreads().get());
+						messageCreationData.message = Message();
+						cout << "25252525WERE HERE WERE HERE" << endl;
 						this->EventMachine->onMessageCreationEvent(messageCreationData);
 					}
 				}

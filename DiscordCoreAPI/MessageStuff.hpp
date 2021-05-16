@@ -38,7 +38,7 @@ namespace DiscordCoreAPI {
 		~Message() {}
 
 	protected:
-		friend class DiscordCoreClient;
+		friend struct DiscordCoreClient;
 		friend class MessageManager;
 		friend class MessageManagerAgent;
 
@@ -50,8 +50,8 @@ namespace DiscordCoreAPI {
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
 			this->messages = pMessageManagerNew;
-			this->reactions = new ReactionManager(this->agentResources, this->guild);
 			this->pThreads = pThreadsNew;
+			this->reactions = new ReactionManager(this->agentResources, this->guild);
 		}
 		
 
@@ -119,7 +119,7 @@ namespace DiscordCoreAPI {
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_MESSAGE;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
 			workload.relativePath = "/channels/" + channelId + "/messages";
-			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->pThreads->at(3).scheduler);
+			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->pThreads->at(5).scheduler);
 			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
 			json jsonValue = receive(requestAgent.workReturnBuffer);

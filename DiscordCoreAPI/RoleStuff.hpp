@@ -12,17 +12,17 @@
 
 namespace DiscordCoreAPI {
 
-	class RoleManager;
 
+	class RoleManager;
 	class Guild;
 
 	class Role {
 	public:
 		Guild* guild{ nullptr };
-		com_ptr<RoleManager> roles{ nullptr };
+		RoleManager* roles{ nullptr };
 		DiscordCoreInternal::RoleData data;
 		Role() {}
-		Role(DiscordCoreInternal::RoleData roleData, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<RoleManager> rolesNew, Guild* guildNew) {
+		Role(DiscordCoreInternal::RoleData roleData, DiscordCoreInternal::HttpAgentResources agentResourcesNew, RoleManager* rolesNew, Guild* guildNew) {
 			this->data = roleData;
 			this->agentResources = agentResourcesNew;
 			this->guild = guildNew;
@@ -40,7 +40,7 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		RoleManager() {}
-		RoleManager(Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew) {
+		RoleManager(Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreInternal::SystemThreads* pSystemThreadsNew) {
 			this->agentResources = agentResourcesNew;
 			this->guild = guildNew;
 			this->pSystemThreads = pSystemThreadsNew;
@@ -97,9 +97,7 @@ namespace DiscordCoreAPI {
 			catch (exception error) {
 				cout << "getRoleAsync() Error: " << error.what() << endl;
 				DiscordCoreInternal::RoleData roleData;
-				com_ptr<RoleManager> pRoleManager;
-				pRoleManager.attach(this);
-				Role role(roleData, this->agentResources, pRoleManager, this->guild);
+				Role role(roleData, this->agentResources, this, this->guild);
 				co_return role;
 			}
 		}
@@ -108,7 +106,7 @@ namespace DiscordCoreAPI {
 	protected:
 		friend class Guild;
 		friend struct DiscordCoreClient;
-		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads;
+		DiscordCoreInternal::SystemThreads* pSystemThreads;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 }

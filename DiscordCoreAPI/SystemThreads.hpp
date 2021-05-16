@@ -26,8 +26,8 @@ namespace DiscordCoreInternal {
         unbounded_buffer<shared_ptr<concurrent_vector<ThreadContext>>> submitBuffer;
         unbounded_buffer <shared_ptr<concurrent_vector<ThreadContext>>> responseBuffer;
 
-        SystemThreadsAgent(shared_ptr<concurrent_vector<ThreadContext>> Threads, SystemThreads* pSystemThreadsNew)
-            : agent()
+        SystemThreadsAgent(shared_ptr<concurrent_vector<ThreadContext>> Threads)
+            : agent(*Threads.get()->at(0).scheduler)
         {}
 
         task<void> submitThreads(shared_ptr<concurrent_vector<ThreadContext>> pThreads) {
@@ -54,7 +54,7 @@ namespace DiscordCoreInternal {
         static shared_ptr<concurrent_vector<ThreadContext>> pThreads;
 
         task<shared_ptr<concurrent_vector<ThreadContext>>> getThreads() {
-            SystemThreadsAgent systemThreadsAgent(SystemThreads::pThreads, this);
+            SystemThreadsAgent systemThreadsAgent(SystemThreads::pThreads);
             systemThreadsAgent.start();
             systemThreadsAgent.submitThreads(SystemThreads::pThreads).get();
             send(systemThreadsAgent.requestBuffer, true);
