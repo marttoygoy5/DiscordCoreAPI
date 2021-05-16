@@ -30,18 +30,18 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		Channel() {}
-		Channel(DiscordCoreInternal::ChannelData dataNew, Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, ChannelManager* channelsNew, shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew) {
+		Channel(DiscordCoreInternal::ChannelData dataNew, Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, ChannelManager* channelsNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
 			this->channels = channelsNew;
 			this->guild = guildNew;
-			this->messages = new MessageManager(this->agentResources, this->guild, this->pThreads);
+			this->messages = new MessageManager(this->agentResources, this->guild, this->threads);
 		}
 	protected:
 		friend class ChannelManager;
 		friend class Guild;
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 	};
 
 	class ChannelManagerAgent : public agent {
@@ -52,11 +52,11 @@ namespace DiscordCoreAPI {
 		static concurrent_queue<Channel> channelsToInsert;
 		static map<string, Channel> cache;
 
-		ChannelManagerAgent(shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::ChannelManager* pChannelManagerNew, Guild* pGuildNew)
-			:agent(*pThreadsNew->at(8).scheduler)
+		ChannelManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::ChannelManager* pChannelManagerNew, Guild* pGuildNew)
+			:agent(*threadsNew->at(8).scheduler)
 		{
 			this->agentResources = agentResourcesNew;
-			this->pThreads = pThreadsNew;
+			this->threads = threadsNew;
 			this->pChannelManager = pChannelManagerNew;
 			this->pGuild = pGuildNew;
 		}
@@ -72,7 +72,7 @@ namespace DiscordCoreAPI {
 
 	protected:
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreAPI::ChannelManager* pChannelManager;
 		Guild* pGuild;
 
@@ -81,14 +81,14 @@ namespace DiscordCoreAPI {
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_CHANNEL;
 			workload.relativePath = "/channels/" + channelId;
-			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->pThreads->at(3).scheduler);
+			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(3).scheduler);
 			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
 			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::ChannelData channelData = channel.data;
 			DiscordCoreInternal::parseObject(jsonValue, &channelData);
-			Channel channelNew(channelData, this->pGuild, this->agentResources, this->pChannelManager, this->pThreads);
+			Channel channelNew(channelData, this->pGuild, this->agentResources, this->pChannelManager, this->threads);
 			co_return channelNew;
 		}
 
@@ -139,14 +139,14 @@ namespace DiscordCoreAPI {
 	public:
 		Guild* guild{ nullptr };
 		ChannelManager() {}
-		ChannelManager(Guild* guild, DiscordCoreInternal::HttpAgentResources agentResourcesNew, shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew) {
+		ChannelManager(Guild* guild, DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
 			this->guild = guild;
 			this->agentResources = agentResourcesNew;
-			this->pThreads = pThreadsNew;
+			this->threads = threadsNew;
 		}
 
 		task<Channel> fetchAsync(string channelId) {
-			ChannelManagerAgent channelManagerAgent(this->pThreads, this->agentResources, this, this->guild);
+			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this, this->guild);
 			channelManagerAgent.start();
 			send(ChannelManagerAgent::requestFetchBuffer, channelId);
 			cout << "333WERE HERE WERE HERE WERE HERE" << endl;
@@ -157,7 +157,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<Channel> getChannelAsync(string channelId) {
-			ChannelManagerAgent channelManagerAgent(this->pThreads, this->agentResources, this, this->guild);
+			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this, this->guild);
 			channelManagerAgent.start();
 			send(ChannelManagerAgent::requestGetBuffer, channelId);
 			agent::wait(&channelManagerAgent);
@@ -168,7 +168,7 @@ namespace DiscordCoreAPI {
 
 	protected:
 		friend class Guild;
-		shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 	map<string, Channel> ChannelManagerAgent::cache;

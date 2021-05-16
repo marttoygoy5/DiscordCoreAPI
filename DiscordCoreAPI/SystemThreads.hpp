@@ -23,15 +23,15 @@ namespace DiscordCoreInternal {
     class SystemThreadsAgent :public agent{
     public:
         unbounded_buffer<bool> requestBuffer;
-        unbounded_buffer<shared_ptr<concurrent_vector<ThreadContext>>> submitBuffer;
-        unbounded_buffer <shared_ptr<concurrent_vector<ThreadContext>>> responseBuffer;
+        unbounded_buffer<concurrent_vector<ThreadContext>*> submitBuffer;
+        unbounded_buffer <concurrent_vector<ThreadContext>*> responseBuffer;
 
-        SystemThreadsAgent(shared_ptr<concurrent_vector<ThreadContext>> Threads)
-            : agent(*Threads.get()->at(0).scheduler)
+        SystemThreadsAgent(concurrent_vector<ThreadContext>* threads)
+            : agent(*threads->at(0).scheduler)
         {}
 
-        task<void> submitThreads(shared_ptr<concurrent_vector<ThreadContext>> pThreads) {
-            send(submitBuffer, pThreads);
+        task<void> submitThreads(concurrent_vector<ThreadContext>* threads) {
+            send(submitBuffer, threads);
             co_return;
         }
 
@@ -41,8 +41,8 @@ namespace DiscordCoreInternal {
         shared_ptr<SystemThreads> pSystemThreads;
         void run() {
             bool startVal = receive(requestBuffer, 50U);
-            shared_ptr<concurrent_vector<ThreadContext>> pThreads = receive(submitBuffer);
-            send(responseBuffer, pThreads);
+            concurrent_vector<ThreadContext>* threads = receive(submitBuffer);
+            send(responseBuffer, threads);
             done();
         }
     };
@@ -51,14 +51,14 @@ namespace DiscordCoreInternal {
     public:
 
         ThreadContext mainThreadContext;
-        static shared_ptr<concurrent_vector<ThreadContext>> pThreads;
+        static concurrent_vector<ThreadContext>* threads;
 
-        task<shared_ptr<concurrent_vector<ThreadContext>>> getThreads() {
-            SystemThreadsAgent systemThreadsAgent(SystemThreads::pThreads);
+        task<concurrent_vector<ThreadContext>*> getThreads() {
+            SystemThreadsAgent systemThreadsAgent(SystemThreads::threads);
             systemThreadsAgent.start();
-            systemThreadsAgent.submitThreads(SystemThreads::pThreads).get();
+            systemThreadsAgent.submitThreads(SystemThreads::threads).get();
             send(systemThreadsAgent.requestBuffer, true);
-            shared_ptr<concurrent_vector<ThreadContext>> threadsNew = receive(systemThreadsAgent.responseBuffer);
+            concurrent_vector<ThreadContext>* threadsNew = receive(systemThreadsAgent.responseBuffer);
             co_return threadsNew;
         }
 
@@ -84,7 +84,7 @@ namespace DiscordCoreInternal {
             this->mainThreadContext.scheduler = CurrentScheduler::Get();
             shared_ptr<task_group> newTaskGroup = make_shared<task_group>();
             this->mainThreadContext.taskGroup = newTaskGroup;
-            SystemThreads::pThreads = make_shared<concurrent_vector<ThreadContext>>();
+            SystemThreads::threads = new concurrent_vector<ThreadContext>();
             for (unsigned int x = 0; x < this->MaxThreads - 1; x += 1) {
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
                 ThreadContext threadContext;
@@ -101,7 +101,7 @@ namespace DiscordCoreInternal {
                 threadContext.taskGroup = newTaskGroup;
                 newScheduler->Attach();
                 co_await mainThread;
-                SystemThreads::pThreads->push_back(threadContext);
+                SystemThreads::threads->push_back(threadContext);
             }
         }
 
@@ -110,6 +110,6 @@ namespace DiscordCoreInternal {
         unsigned int MaxThreads;
 
     };
-    shared_ptr<concurrent_vector<ThreadContext>>   SystemThreads::pThreads;
+    concurrent_vector<ThreadContext>* SystemThreads::threads;
 }
 #endif

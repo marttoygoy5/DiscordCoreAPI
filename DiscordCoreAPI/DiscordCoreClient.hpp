@@ -87,11 +87,11 @@ namespace DiscordCoreAPI {
 		}
 
 		void run() {
+			while (doWeQuit == false) {
 				DiscordCoreInternal::WebSocketWorkload workload;
 				if (try_receive(this->webSocketWorkloadSource, workload)) {
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
-			while (doWeQuit == false) {
-						this->guilds->insertGuild(workload.payLoad);
+						this->guilds->insertGuild(workload.payLoad).get();
 					}
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
 						DiscordCoreInternal::MessageData messageData;
@@ -106,7 +106,7 @@ namespace DiscordCoreAPI {
 						cout << "CHANNEL ID: " << messageData.channelId << endl;
 						cout << "CHANNEL NAME: " << guild.channels->getChannelAsync(messageData.channelId).get().data.name << endl;
 						DiscordCoreAPI::Message message(messageData, &guild, agentResources, guild.channels->fetchAsync(messageData.channelId).get().messages, this->pSystemThreads.get()->getThreads().get());
-						messageCreationData.message = Message();
+						messageCreationData.message = message;
 						cout << "25252525WERE HERE WERE HERE" << endl;
 						this->EventMachine->onMessageCreationEvent(messageCreationData);
 					}
