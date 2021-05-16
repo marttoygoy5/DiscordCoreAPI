@@ -96,14 +96,18 @@ namespace DiscordCoreAPI {
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
 						DiscordCoreInternal::MessageData messageData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
-						DiscordCoreInternal::HttpAgentPointers pointers;
+						DiscordCoreInternal::HttpAgentResources agentResources;
+						agentResources.baseURL = this->baseURL;
+						agentResources.botToken = this->botToken;
+						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 						DiscordCoreAPI::MessageCreationData messageCreationData;
-						cout << "WE ARE HERE WE ARE HERE WE ARE HERE" << endl;
-						DiscordCoreAPI::Guild guild = this->guilds->fetchAsync(messageData.guildId).get();
-						//auto messageManager = fetchChannelAsync(messageData.channelId, guild).get().messages;
-						//messageCreationData.message = Message(messageData, &guild, pointers, messageManager);
-						cout << "WE ARE HERE WE ARE HERE WE ARE HERE" << endl;
-						
+						Guild guild = this->guilds->fetchAsync(messageData.guildId).get();
+						cout << guild.data.name << endl;
+						cout << "CHANNEL ID: " << messageData.channelId << endl;
+						cout << "CHANNEL NAME: " <<guild.channels->getChannelAsync(messageData.channelId).get().data.name << endl;
+						DiscordCoreAPI::Message message(messageData, &guild, agentResources, guild.channels->fetchAsync(messageData.channelId).get().messages);
+						messageCreationData.message = Message();
+						cout << "25252525WERE HERE WERE HERE" << endl;
 						this->EventMachine->onMessageCreationEvent(messageCreationData);
 					}
 				}
@@ -112,5 +116,4 @@ namespace DiscordCoreAPI {
 		}
 	};
 }
-
 #endif

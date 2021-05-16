@@ -119,12 +119,8 @@ namespace DiscordCoreInternal {
 			}
 		}
 
-		void terminate() {
-			this->doWeQuit = true;
-		}
 	protected:
 
-		bool doWeQuit = false;
 		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
 		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
 
@@ -181,15 +177,13 @@ namespace DiscordCoreInternal {
 					cout << "HttpRequestAgent Error: " << error.what() << endl;
 					HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
 				}
+				cout << returnData.data << endl;
 				send(this->workReturnBuffer, returnData.data);
+				return returnData.data;
 				});
 			completeHttpRequest.link_target(&this->workReturnBuffer);
-			while (this->doWeQuit == false) {
-				HttpWorkload workload;
-				if (try_receive(&this->workSubmissionBuffer, workload)) {
-					send(&completeHttpRequest, workload);
-				}
-			}
+			HttpWorkload workload = receive(&this->workSubmissionBuffer);
+			send(&completeHttpRequest, workload);
 			done();
 		}
 

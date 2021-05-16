@@ -19,22 +19,22 @@ namespace DiscordCoreAPI{
 		DiscordCoreInternal::ReactionData data;
 		Guild* guild;
 		Reaction() {}
-		Reaction(DiscordCoreInternal::HttpAgentPointers pointersNew, DiscordCoreInternal::ReactionData reactionData, Guild* guildNew) {
-			this->pointers = pointersNew;
+		Reaction(DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreInternal::ReactionData reactionData, Guild* guildNew) {
+			this->agentResources = agentResourcesNew;
 			this->data = reactionData;
 			this->guild = guildNew;
 		}
 		~Reaction() {}
 	protected:
-		DiscordCoreInternal::HttpAgentPointers pointers;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 
 	class ReactionManager: public implements<ReactionManager, winrt::Windows::Foundation::IInspectable> {
 	public:
 		Guild* guild;
 		ReactionManager() {}
-		ReactionManager(DiscordCoreInternal::HttpAgentPointers pointersNew, Guild* guildNew) {
-			this->pointers = pointersNew;
+		ReactionManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, Guild* guildNew) {
+			this->agentResources = agentResourcesNew;
 			this->guild = guildNew;
 		}
 
@@ -45,7 +45,7 @@ namespace DiscordCoreAPI{
 
 		~ReactionManager() {}
 	protected:
-		DiscordCoreInternal::HttpAgentPointers pointers;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 
 }

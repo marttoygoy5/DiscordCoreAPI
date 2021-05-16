@@ -21,16 +21,16 @@ namespace DiscordCoreAPI {
 	class Message {
 	public:
 		DiscordCoreInternal::MessageData data;
-		com_ptr<MessageManager> messages{ nullptr };
-		com_ptr<ReactionManager> reactions{ nullptr };
+		MessageManager* messages{ nullptr };
+		ReactionManager* reactions{ nullptr };
 		Guild* guild{ nullptr };
 		Message() {}
-		Message(DiscordCoreInternal::MessageData dataNew, Guild* guildNew,  DiscordCoreInternal::HttpAgentPointers pointersNew, com_ptr<MessageManager> pMessageManagerNew) {
+		Message(DiscordCoreInternal::MessageData dataNew, Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, MessageManager* pMessageManagerNew) {
 			this->guild = guildNew;
 			this->data = dataNew;
-			this->pointers = pointersNew;
+			this->agentResources = agentResourcesNew;
 			this->messages = pMessageManagerNew;
-			this->reactions = make_self<ReactionManager>(this->pointers, this->guild);
+			this->reactions = new ReactionManager(this->agentResources, this->guild);
 		}
 
 		task<Message> editMessageAsync(DiscordCoreInternal::EditMessageData editMessageData) {
@@ -46,7 +46,7 @@ namespace DiscordCoreAPI {
 
 	protected:
 
-		DiscordCoreInternal::HttpAgentPointers pointers;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 
 	};
 
@@ -54,8 +54,8 @@ namespace DiscordCoreAPI {
 	public:
 		Guild* guild{ nullptr };
 		MessageManager() {}
-		MessageManager(DiscordCoreInternal::HttpAgentPointers pointersNew, Guild* guildNew) {
-			this->pointers = pointersNew;
+		MessageManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, Guild* guildNew) {
+			this->agentResources = agentResourcesNew;
 			this->guild = guildNew;
 		}
 
@@ -65,20 +65,16 @@ namespace DiscordCoreAPI {
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_MESSAGE;
 			workload.relativePath = "/channels/" + channelId + "/messages";
 			workload.content = DiscordCoreInternal::getCreateMessagePayload(createMessageData);
-			send(&pointers.pPOSTAgent->workSubmissionBuffer, workload);
-			json jsonValue = receive(pointers.pPOSTAgent->workReturnBuffer);
 			DiscordCoreInternal::MessageData messageData;
-			DiscordCoreInternal::parseObject(jsonValue, &messageData);
-			com_ptr<MessageManager> pMessageManager;
-			pMessageManager.attach(this);
-			Message message(messageData, this->guild, this->pointers, pMessageManager);
+			//DiscordCoreInternal::parseObject(jsonValue, &messageData);
+			Message message(messageData, this->guild, this->agentResources, this);
 			this->insert(make_pair(message.data.id, message));
 			co_return message;
 		}
 
 		~MessageManager() {}
 	protected:
-		DiscordCoreInternal::HttpAgentPointers pointers;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 }
 #endif
