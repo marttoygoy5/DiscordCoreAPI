@@ -25,22 +25,22 @@ namespace DiscordCoreAPI
 
 		DiscordCoreInternal::GuildData data;
 
-		com_ptr<ChannelManager> channels{ nullptr };
-		com_ptr<GuildMemberManager> guildMembers{ nullptr };
-		com_ptr<RoleManager> roles{ nullptr };
-		com_ptr<GuildManager> guilds{ nullptr };
+		shared_ptr<ChannelManager> channels{ nullptr };
+		shared_ptr<GuildMemberManager> guildMembers{ nullptr };
+		shared_ptr<RoleManager> roles{ nullptr };
+		shared_ptr<GuildManager> guilds{ nullptr };
 
 		Guild() {}
-		Guild(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<GuildManager> guildsNew, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew) {
-			this->initialize(dataNew, agentResourcesNew, guildsNew, pSystemThreadsNew).get();
+		Guild(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, shared_ptr<GuildManager> guildsNew, shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew) {
+			this->initialize(dataNew, agentResourcesNew, guildsNew, pThreadsNew).get();
 		}
 
-		task<void> initialize(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<GuildManager> guildsNew, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew) {
-			this->pSystemThreads = pSystemThreadsNew;
+		task<void> initialize(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, shared_ptr<GuildManager> guildsNew, shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew) {
+			this->pThreads = pThreadsNew;
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
-			this->guilds.attach(guildsNew.get());
-			this->channels = make_self<ChannelManager>(this, this->agentResources, this->pSystemThreads);
+			this->guilds.reset(guildsNew.get());
+			this->channels = make_shared<ChannelManager>(this, this->agentResources, this->pThreads);
 			/*
 			for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 				DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
@@ -68,7 +68,7 @@ namespace DiscordCoreAPI
 	protected:
 		friend class GuildManager;
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads;
+		shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreads;
 	};
 
 	class GuildManagerAgent: public agent {
@@ -79,11 +79,12 @@ namespace DiscordCoreAPI
 		static concurrent_queue<Guild> guildsToInsert;
 		static map<string, Guild> cache;
 
-		GuildManagerAgent(com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<DiscordCoreAPI::GuildManager> pGuildManagerNew)
-			:agent(*pSystemThreadsNew->Threads.at(0).scheduler)
+		GuildManagerAgent(shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::GuildManager* pGuildManagerNew)
+			:agent(*pThreadsNew->at(0).scheduler)
 		{
+			//cout << pThreads->size() << endl;
 			this->agentResources = agentResourcesNew;
-			this->pSystemThreads = pSystemThreadsNew;
+			this->pThreads = pThreadsNew;
 			this->pGuildManager = pGuildManagerNew;
 		}
 
@@ -98,21 +99,23 @@ namespace DiscordCoreAPI
 
 	protected:
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads;
-		com_ptr<DiscordCoreAPI::GuildManager> pGuildManager;
+		shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreads;
+		DiscordCoreAPI::GuildManager* pGuildManager;
 
 		task<Guild> fetchAsync(string guildId, Guild guild) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_GUILD;
 			workload.relativePath = "/guilds/" + guildId;
-			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->pSystemThreads->Threads.at(1).scheduler);
+			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->pThreads->at(0).scheduler);
 			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
 			json jsonValue = receive(requestAgent.workReturnBuffer);
 			DiscordCoreInternal::GuildData guildData = guild.data;
 			DiscordCoreInternal::parseObject(jsonValue, &guildData);
-			Guild guildNew(guildData, this->agentResources, this->pGuildManager, this->pSystemThreads);
+			shared_ptr<GuildManager> pGuildManagerNew;
+			pGuildManagerNew.reset(this->pGuildManager);
+			Guild guildNew(guildData, this->agentResources, pGuildManagerNew, this->pThreads);
 			co_return guildNew;
 		}
 
@@ -165,18 +168,16 @@ namespace DiscordCoreAPI
 	class GuildManager :  public implements <GuildManager, winrt::Windows::Foundation::IInspectable> {
 	public:
 
-		GuildManager(com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew)
+		GuildManager(shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew,  DiscordCoreInternal::HttpAgentResources agentResourcesNew)
 		{
-			this->pSystemThreads = pSystemThreadsNew;
+			this->pThreads = pThreadsNew;
 			this->agentResources = agentResourcesNew;
 		}
 
 		task<Guild> fetchAsync(string guildId) {
 			cout << "THIS IS IT THIS IS IT" << endl;
 			cout << "THIS IS IT THIS IS IT 2222222" << endl;
-			com_ptr<GuildManager> pGuildManager;
-			pGuildManager.attach(this);
-			GuildManagerAgent guildManagerAgent(this->pSystemThreads, this->agentResources, pGuildManager);
+			GuildManagerAgent guildManagerAgent(this->pThreads, this->agentResources, this);
 			guildManagerAgent.start();
 			send(GuildManagerAgent::requestFetchBuffer, guildId);
 			Guild guild = receive(GuildManagerAgent::outBuffer);
@@ -184,9 +185,7 @@ namespace DiscordCoreAPI
 		}
 
 		task<Guild> getGuildAsync(string guildId) {
-			com_ptr<GuildManager> pGuildManager;
-			pGuildManager.attach(this);
-			GuildManagerAgent guildManagerAgent(this->pSystemThreads, this->agentResources, pGuildManager);
+			GuildManagerAgent guildManagerAgent(this->pThreads, this->agentResources, this);
 			guildManagerAgent.start();
 			send(GuildManagerAgent::requestGetBuffer, guildId);
 			Guild guild = receive(GuildManagerAgent::outBuffer);
@@ -199,24 +198,25 @@ namespace DiscordCoreAPI
 
 		friend struct DiscordCoreClient;
 
-		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads;
+		shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreads;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 
 		task<void> insertGuild(json payload) {
-			com_ptr<GuildManager> pGuildManager;
-			pGuildManager.attach(this);
-			critical_section critSection;
-			scoped_lock lock(critSection);
-			GuildManagerAgent managerAgent(this->pSystemThreads, this->agentResources, pGuildManager);
+			cout << this->pThreads->size() << " = THREADS SIZE THREADS SIZE" << endl;
+			GuildManagerAgent managerAgent(this->pThreads, this->agentResources,this);
 			managerAgent.start();
 			DiscordCoreInternal::GuildData guildData;
 			DiscordCoreInternal::parseObject(payload, &guildData);
-			Guild guild(guildData, this->agentResources, pGuildManager, this->pSystemThreads);
+			shared_ptr<GuildManager> pGuildManager;
+			pGuildManager.reset(this);
+			Guild guild(guildData, this->agentResources, pGuildManager, this->pThreads);
+			cout << payload << endl;
 			cout << "WEVE SENT IT WEVE SENT IT!11111" << endl;
 			GuildManagerAgent::guildsToInsert.push(guild);
 			cout << "WEVE SENT IT WEVE SENT IT!" << endl;
-			agent::wait(&managerAgent);
+			managerAgent.wait(&managerAgent);
+			cout << "CURRENT THREAD ID: " << this_thread::get_id() << endl;
 			co_return;
 		}
 	};

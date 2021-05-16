@@ -40,7 +40,6 @@ namespace DiscordCoreAPI {
 
 		task<void> login() {
 			this->initialize(this->botToken);
-			co_await resume_foreground(*this->pSystemThreads->mainThreadContext.threadQueue.get());
 			this->pWebSocketConnectionAgent->start();
 			this->pWebSocketReceiverAgent->start();
 			this->start();
@@ -71,7 +70,6 @@ namespace DiscordCoreAPI {
 		task<void> initialize(hstring botTokenNew) {
 			this->pSystemThreads = make_self<DiscordCoreInternal::SystemThreads>();
 			this->pSystemThreads->initialize().get();
-			co_await resume_foreground(*this->pSystemThreads->mainThreadContext.threadQueue.get());
 			this->EventMachine = make_self<DiscordCoreAPI::EventMachine>();
 			this->botToken = botTokenNew;
 			this->pWebSocketConnectionAgent = make_self<DiscordCoreInternal::WebSocketConnectionAgent>(this->webSocketIncWorkloadBuffer, this->pSystemThreads->Threads.at(1));
@@ -82,7 +80,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->Threads.at(0).scheduler);
 			this->pWebSocketReceiverAgent = make_self<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->Threads.at(2));
 			this->pWebSocketConnectionAgent->initialize(botTokenNew);
-			this->guilds = make_self<GuildManager>(this->pSystemThreads, agentResources);
+			this->guilds = make_self<GuildManager>(this->pSystemThreads->getThreads().get(), agentResources);
 			GuildManagerAgent::initialize().get();
 			ChannelManagerAgent::initialize().get();
 		}

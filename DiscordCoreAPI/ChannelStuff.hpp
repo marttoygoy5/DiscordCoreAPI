@@ -67,7 +67,6 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<Channel>* outBuffer;
 		static concurrent_queue<Channel> channelsToInsert;
 		com_ptr<ChannelManager> pChannelManager;
-		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads;
 		DiscordCoreInternal::HttpAgentPointers pointers;
 
 		task<Channel> fetchAsyncWrapped(string channelId, Channel channel) {
@@ -153,10 +152,10 @@ namespace DiscordCoreAPI {
 	public:
 		Guild* guild{ nullptr };
 		ChannelManager() {}
-		ChannelManager(Guild* guild, DiscordCoreInternal::HttpAgentResources agentResourcesNew, com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreadsNew) {
+		ChannelManager(Guild* guild, DiscordCoreInternal::HttpAgentResources agentResourcesNew, shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreadsNew) {
 			this->guild = guild;
 			this->agentResources = agentResourcesNew;
-			this->pSystemThreads = pSystemThreadsNew;
+			this->pThreads = pThreadsNew;
 		}
 
 		task<Channel> fetchAsync(string channelId) {
@@ -179,7 +178,7 @@ namespace DiscordCoreAPI {
 		task<Channel> getChannelAsync(string channelId) {
 			com_ptr<ChannelManager> pChannelManager;
 			pChannelManager.attach(this);
-			ChannelManagerAgent channelManagerAgent(this->pSystemThreads->Threads.at(4).scheduler, pChannelManager);
+			ChannelManagerAgent channelManagerAgent(this->pThreads->at(4).scheduler, pChannelManager);
 			channelManagerAgent.start();
 			send(ChannelManagerAgent::requestGetBuffer, channelId);
 			co_return receive(ChannelManagerAgent::outBuffer);
@@ -188,7 +187,7 @@ namespace DiscordCoreAPI {
 
 	protected:
 		friend class Guild;
-		com_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads;
+		shared_ptr<concurrent_vector<DiscordCoreInternal::ThreadContext>> pThreads;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 	map<string, Channel> ChannelManagerAgent::cache;
