@@ -84,6 +84,7 @@ namespace DiscordCoreAPI {
 			this->guilds = make_shared<GuildManager>(this->pSystemThreads->getThreads().get(), agentResources);
 			GuildManagerAgent::initialize().get();
 			ChannelManagerAgent::initialize().get();
+			MessageManagerAgent::initialize().get();
 		}
 
 		void run() {
@@ -91,7 +92,7 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::WebSocketWorkload workload;
 				if (try_receive(this->webSocketWorkloadSource, workload)) {
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
-						this->guilds->insertGuild(workload.payLoad).get();
+						this->guilds->insertGuild(workload.payLoad);
 					}
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
 						DiscordCoreInternal::MessageData messageData;

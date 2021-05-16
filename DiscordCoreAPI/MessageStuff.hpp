@@ -72,8 +72,8 @@ namespace DiscordCoreAPI {
 		static concurrent_queue<Message> messagesToInsert;
 		static map<string, Message> cache;
 
-		MessageManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::MessageManager* pMessageManagerNew, Guild* pGuildNew)
-			:agent(*threadsNew->at(8).scheduler)
+		MessageManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::MessageManager* pMessageManagerNew, Guild* pGuildNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew)
+			:agent(*threadsNew->at(0).scheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
@@ -192,21 +192,16 @@ namespace DiscordCoreAPI {
 		}
 
 		task<Message> createMessageAsync(DiscordCoreInternal::CreateMessageData createMessageData, string channelId) {
-			if (this->threads->at(0).scheduler == nullptr) {
-				cout << "createMessageAsync() Error: Message Manager is not initialized! Create one from a channel!" << endl;
-			}
-			co_await resume_foreground(*this->threads->at(3).threadQueue.get());
+			co_await resume_foreground(*this->threads->at(5).threadQueue.get());
 			MessageManagerDataPackage dataPackage;
 			dataPackage.channelId = channelId;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageData);
-			concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew = this->threads;
-			//MessageManagerAgent messageManagerAgent(threadsNew, this->agentResources, this, this->guild);
-			//messageManagerAgent.start();
-			//send(MessageManagerAgent::requestPostBuffer, dataPackage);
+			MessageManagerAgent messageManagerAgent(this->agentResources, this, this->guild, this->threads);
+			messageManagerAgent.start();
+			send(MessageManagerAgent::requestPostBuffer, dataPackage);
 			cout << "WERE HERE WERE HERE WERE HERE" << endl;
-			//Message message = receive(MessageManagerAgent::outBuffer);
-			//agent::wait(&messageManagerAgent);
-			Message message;
+			Message message = receive(MessageManagerAgent::outBuffer);
+			agent::wait(&messageManagerAgent);
 			co_return message;
 		}
 

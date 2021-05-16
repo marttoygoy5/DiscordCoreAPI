@@ -146,6 +146,7 @@ namespace DiscordCoreInternal {
 
 		void initialize(hstring botTokenNew) {
 			this->botToken = botTokenNew;
+			this->connect();
 		}
 
 		hstring* returnSocketPathPointer(){
@@ -179,7 +180,7 @@ namespace DiscordCoreInternal {
 		ITarget<json>& webSocketMessageTarget;
 
 		void run() {
-			this->connect();
+			
 		}
 
 		void cleanup() {

@@ -31,10 +31,16 @@ namespace DiscordCoreAPI {
 
 		Channel() {}
 		Channel(DiscordCoreInternal::ChannelData dataNew, Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, ChannelManager* channelsNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
+			this->initialize(dataNew, guildNew, agentResourcesNew, channelsNew, threadsNew).get();
+		}
+
+		task<void> initialize(DiscordCoreInternal::ChannelData dataNew, Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, ChannelManager* channelsNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
 			this->channels = channelsNew;
 			this->guild = guildNew;
+			this->threads = threadsNew;
+			co_await resume_foreground(*this->threads->at(0).threadQueue.get());
 			this->messages = new MessageManager(this->agentResources, this->guild, this->threads);
 		}
 	protected:
