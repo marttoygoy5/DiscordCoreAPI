@@ -18,6 +18,14 @@ namespace DiscordCoreAPI {
 
 	class MessageManager;
 
+	class MessageManagerAgent;
+
+	struct DeleteMessageData {
+		string channelId;
+		string messageId;
+		unsigned int timeDelay = 0;
+	};
+
 	class Message {
 	public:
 		DiscordCoreInternal::MessageData data;
@@ -25,14 +33,10 @@ namespace DiscordCoreAPI {
 		ReactionManager* reactions{ nullptr };
 		Guild* guild{ nullptr };
 		Message() {}
-		
+
 		task<Message> editMessageAsync(DiscordCoreInternal::EditMessageData editMessageData) {
 			Message message;
 			co_return message;
-		}
-
-		task<void> deleteMessageAsync(unsigned int timeDelay = 0) {
-			co_return;
 		}
 
 	protected:
@@ -68,10 +72,12 @@ namespace DiscordCoreAPI {
 	protected:
 		friend struct DiscordCoreClient;
 		friend class MessageManager;
+		friend class Message;
 
 		static unbounded_buffer<GetMessageData>* requestFetchBuffer;
 		static unbounded_buffer<GetMessageData>* requestGetBuffer;
 		static unbounded_buffer<PostMessageData>* requestPostBuffer;
+		static unbounded_buffer<DeleteMessageData>* requestDeleteBuffer;
 		static unbounded_buffer<Message>* outBuffer;
 		static concurrent_queue<Message> messagesToInsert;
 		static map<string, Message> cache;
@@ -94,15 +100,16 @@ namespace DiscordCoreAPI {
 			MessageManagerAgent::requestFetchBuffer = new unbounded_buffer<GetMessageData>;
 			MessageManagerAgent::requestGetBuffer = new unbounded_buffer<GetMessageData>;
 			MessageManagerAgent::requestPostBuffer = new unbounded_buffer<PostMessageData>;
+			MessageManagerAgent::requestDeleteBuffer = new unbounded_buffer<DeleteMessageData>;
 			MessageManagerAgent::outBuffer = new unbounded_buffer<Message>;
 			co_return;
 		}
 
-		task<Message> getObjectAsync(string messageId, string channelId, Message message) {
+		task<Message> getObjectAsync(GetMessageData getObjectData, Message message) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_MESSAGE;
-			workload.relativePath = "/channels/" + channelId + "/messages/" + messageId;
+			workload.relativePath = "/channels/" + getObjectData.channelId + "/messages/" + getObjectData.id;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(3).scheduler);
 			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
@@ -131,9 +138,33 @@ namespace DiscordCoreAPI {
 			co_return messageNew;
 		}
 
+		void onDelete(DeleteMessageData dataPackage) {
+			DiscordCoreInternal::HttpWorkload workload;
+			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_MESSAGE;
+			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
+			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.messageId;
+			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(7).scheduler);
+			requestAgent.start();
+			send(requestAgent.workSubmissionBuffer, workload);
+			json jsonValue = receive(requestAgent.workReturnBuffer);
+			agent::wait(&requestAgent);
+		}
+
+		task<void> deleteObjectAsync(DeleteMessageData dataPackage) {
+			DispatcherQueueTimer timer = this->threads->at(7).threadQueue->CreateTimer();
+			timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
+			timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
+				onDelete(dataPackage);
+				timer.Stop();
+				});
+			timer.Start();
+
+			co_return;
+		}
+
 		void run() {
-			PostMessageData dataPackage;
 			try {
+				PostMessageData dataPackage;
 				dataPackage = receive(MessageManagerAgent::requestPostBuffer, 1U);
 				Message message = this->postObjectAsync(dataPackage.channelId, dataPackage.content).get();
 				send(MessageManagerAgent::outBuffer, message);
@@ -156,15 +187,23 @@ namespace DiscordCoreAPI {
 				if (MessageManagerAgent::cache.contains(dataPackage.channelId + dataPackage.id)) {
 					Message message = MessageManagerAgent::cache.at(dataPackage.channelId + dataPackage.id);
 					MessageManagerAgent::cache.erase(dataPackage.channelId + dataPackage.id);
-					message = getObjectAsync(dataPackage.id, dataPackage.channelId, message).get();
+					message = getObjectAsync(dataPackage, message).get();
 					MessageManagerAgent::cache.insert(make_pair(dataPackage.channelId + dataPackage.id, message));
 					send(MessageManagerAgent::outBuffer, message);
 				}
 				else {
-					Message message = getObjectAsync(dataPackage.id, dataPackage.channelId, message).get();
+					Message message = getObjectAsync(dataPackage, message).get();
 					MessageManagerAgent::cache.insert(make_pair(dataPackage.channelId + dataPackage.id, message));
 					send(MessageManagerAgent::outBuffer, message);
 				}
+			}
+			catch (exception error) {}
+			try {
+				DeleteMessageData dataPackage = receive(MessageManagerAgent::requestDeleteBuffer, 1U);
+				if (MessageManagerAgent::cache.contains(dataPackage.channelId + dataPackage.messageId)) {
+					MessageManagerAgent::cache.erase(dataPackage.channelId + dataPackage.messageId);
+				}
+				deleteObjectAsync(dataPackage);
 			}
 			catch (exception error) {}
 			Message message;
@@ -179,7 +218,7 @@ namespace DiscordCoreAPI {
 
 	};
 
-	class MessageManager: concurrent_unordered_map<string, Message>, public implements<MessageManager, winrt::Windows::Foundation::IInspectable> {
+	class MessageManager : concurrent_unordered_map<string, Message>, public implements<MessageManager, winrt::Windows::Foundation::IInspectable> {
 	public:
 		Guild* guild{ nullptr };
 
@@ -196,6 +235,18 @@ namespace DiscordCoreAPI {
 			agent::wait(&messageManagerAgent);
 			co_return message;
 		}
+
+		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
+			DeleteMessageData dataPackage;
+			dataPackage.channelId = deleteMessageData.channelId;
+			dataPackage.messageId = deleteMessageData.messageId;
+			dataPackage.timeDelay = deleteMessageData.timeDelay;
+			MessageManagerAgent messageManagerAgent(this->agentResources, this, this->guild, this->threads);
+			messageManagerAgent.start();
+			send(MessageManagerAgent::requestDeleteBuffer, dataPackage);
+			agent::wait(&messageManagerAgent);
+			co_return;
+		}		
 
 	protected:
 		friend class Channel;
@@ -214,6 +265,7 @@ namespace DiscordCoreAPI {
 	unbounded_buffer<GetMessageData>* MessageManagerAgent::requestFetchBuffer;
 	unbounded_buffer<GetMessageData>* MessageManagerAgent::requestGetBuffer;
 	unbounded_buffer<PostMessageData>* MessageManagerAgent::requestPostBuffer;
+	unbounded_buffer<DeleteMessageData>* MessageManagerAgent::requestDeleteBuffer;
 	unbounded_buffer<Message>* MessageManagerAgent::outBuffer;
 	concurrent_queue<Message> MessageManagerAgent::messagesToInsert;
 }

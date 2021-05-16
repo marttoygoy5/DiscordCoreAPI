@@ -12,8 +12,8 @@
 
 namespace DiscordCoreAPI {
 
-
 	class RoleManager;
+
 	class Guild;
 
 	class Role {
@@ -34,7 +34,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 
-	class RoleManager: concurrent_unordered_map<string, Role>,public implements<RoleManager,winrt::Windows::Foundation::IInspectable> {
+	class RoleManager {
 	public:
 
 		Guild* guild{ nullptr };
@@ -91,7 +91,7 @@ namespace DiscordCoreAPI {
 
 		task<Role> getRoleAsync(string roleId) {
 			try {
-				Role role = this->at(roleId);
+				Role role;
 				co_return role;
 			}
 			catch (exception error) {

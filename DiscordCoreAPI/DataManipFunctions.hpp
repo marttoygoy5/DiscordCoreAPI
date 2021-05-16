@@ -62,11 +62,7 @@ namespace CommanderNS {
 
 		
 
-		struct DeleteMessageData {
-			string channelId;
-			string messageId;
-			unsigned int timeDelay = 0;
-		};
+		
 
 		struct GetCurrentUserGuildsData {
 			map<string, ClientDataTypes::GuildData>* pGuildDataMap;

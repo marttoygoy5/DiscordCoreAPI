@@ -26,8 +26,7 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
-			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer)
-		{
+			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
 			this->botToken = botTokenNew;
 		}
 
@@ -39,7 +38,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> login() {
-			this->initialize(this->botToken).get();;
+			this->initialize(this->botToken).get();
 			this->pWebSocketReceiverAgent->start();
 			this->pWebSocketConnectionAgent->start();
 			this->start();
@@ -111,8 +110,8 @@ namespace DiscordCoreAPI {
 						agentResources.botToken = this->botToken;
 						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 						DiscordCoreAPI::MessageCreationData messageCreationData;
-						Guild guild = this->guilds->fetchAsync(messageData.guildId).get();
-						MessageManager* msgManager = guild.channels->fetchAsync(messageData.channelId).get().messages;
+						Guild guild = this->guilds->getGuildAsync(messageData.guildId).get();
+						MessageManager* msgManager = guild.channels->getChannelAsync(messageData.channelId).get().messages;
 						DiscordCoreAPI::Message message(messageData, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
 						messageCreationData.message = message;
 						this->EventMachine->onMessageCreationEvent(messageCreationData);

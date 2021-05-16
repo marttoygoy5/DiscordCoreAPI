@@ -9,8 +9,9 @@
 #define _REACTION_STUFF_
 
 #include "pch.h"
+#include "MessageStuff.hpp"
 
-namespace DiscordCoreAPI{
+namespace DiscordCoreAPI {
 
 	class Guild;
 
@@ -126,6 +127,7 @@ namespace DiscordCoreAPI{
 			try {
 				dataPackage = receive(ReactionManagerAgent::requestPutBuffer, 1U);
 				this->putObjectAsync(dataPackage).get();
+				send(ReactionManagerAgent::outBuffer, Reaction());
 			}
 			catch (exception error) {}
 			done();
