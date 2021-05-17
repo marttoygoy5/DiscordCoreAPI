@@ -77,7 +77,7 @@ namespace DiscordCoreAPI {
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_GUILD_MEMBER;
 			workload.relativePath = "/guilds/" + getData.guildId + "/members/" + getData.guildMemberId;
-			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(3).scheduler);
+			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(2).scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
 			json jsonValue = receive(requestAgent.workReturnBuffer);
@@ -134,27 +134,12 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		task<GuildMember> fetchAsync(string guildId, string guildMemberId) {
-			GuildMember guildMember;
-			co_return guildMember;
-		}
-
-		task<Guild> fetchAsync(string guildId) {
-			co_await resume_foreground(*this->threads->at(3).threadQueue.get());
-			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this);
-			send(GuildManagerAgent::requestFetchBuffer, guildId);
-			guildManagerAgent.start();
-			Guild guild = receive(GuildManagerAgent::outBuffer);
-			agent::wait(&guildManagerAgent);
-			co_return guild;
-		}
-
-		task<GuildMember> fetchAsync(string guildId, string guildMemberId) {
 			GuildMemberManagerAgent managerAgent(this->threads, this->agentResources, this, this->guild);
 			DiscordCoreInternal::GuildMemberData guildMemberData;
 			GetGuildMemberData getData;
 			getData.guildId = guildId;
 			getData.guildMemberId = guildMemberId;
-			send(GuildMemberManagerAgent::requestGetBuffer, getData);
+			send(GuildMemberManagerAgent::requestFetchBuffer, getData);
 			managerAgent.start();
 			GuildMember guildMember = receive(GuildMemberManagerAgent::outBuffer);
 			agent::wait(&managerAgent);

@@ -138,10 +138,9 @@ namespace DiscordCoreInternal {
 
 		WebSocketConnectionAgent(ITarget<json>& target, ThreadContext threadContextNew = {nullptr ,nullptr, nullptr})
 			:
-			agent(*threadContext.scheduler),
-			webSocketMessageTarget(target)
-		{
-			this->threadContext = threadContext;
+			agent(*threadContextNew.scheduler),
+			webSocketMessageTarget(target) {
+			this->threadContext = threadContextNew;
 		}
 
 		void initialize(hstring botTokenNew) {
@@ -180,6 +179,7 @@ namespace DiscordCoreInternal {
 
 		void run() {
 			this->connect();
+
 		}
 
 		void cleanup() {
@@ -260,10 +260,10 @@ namespace DiscordCoreInternal {
 		}
 
 		void OnHeartbeat(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
-			this->sendHeartBeat();
+			this->sendHeartBeat().get();
 		}
 
-		fire_and_forget sendHeartBeat() {
+		task<void> sendHeartBeat() {
 			try {
 				if (this->didWeReceiveHeartbeatAck == false) {
 					this->cleanup();

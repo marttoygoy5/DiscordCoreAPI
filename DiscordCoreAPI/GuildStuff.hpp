@@ -44,6 +44,7 @@ namespace DiscordCoreAPI
 		}
 
 		task<void> initialize(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, GuildManager* guildsNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
+			co_await resume_foreground(*threadsNew->at(0).threadQueue.get());
 			this->threads = threadsNew;
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
@@ -53,6 +54,7 @@ namespace DiscordCoreAPI
 				DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
 				Channel channel(channelData, this, this->agentResources, this->channels, this->threads);
 				ChannelManagerAgent::cache.insert(make_pair(channelData.id, channel));
+				cout << ChannelManagerAgent::cache.at(channelData.id).data.name << endl;
 			}
 			this->guildMembers = new GuildMemberManager(this, this->agentResources, this->threads);
 			for (unsigned int x = 0; x < data.members.size(); x += 1) {
@@ -60,15 +62,13 @@ namespace DiscordCoreAPI
 				GuildMember guildMember(guildMemberData, this, this->guildMembers);
 				GuildMemberManagerAgent::cache.insert(make_pair(guildMember.guild->data.id + guildMemberData.user.id, guildMember));
 			}
-			/*
+			this->roles = new RoleManager(this, this->agentResources, this->threads);
+			for (auto const& [key, value] : data.roles) {
+				DiscordCoreInternal::RoleData roleData = value;
+				Role role(roleData, this->agentResources, this->roles, this);
+				RoleManagerAgent::cache.insert(make_pair(key, role));
+			}
 			
-		this->roles = make_self<RoleManager>(this, this->agentResources, this->pSystemThreads);
-		for (auto const& [key, value] : data.roles) {
-			DiscordCoreInternal::RoleData roleData = value;
-			Role role(roleData, this->agentResources, this->roles, this);
-			this->roles->insert(make_pair(key, role));
-		}
-		*/
 			co_return;
 		}
 	};
@@ -103,12 +103,11 @@ namespace DiscordCoreAPI
 		}
 
 		task<Guild> getObjectAsync(string guildId, Guild guild) {
-			co_await resume_foreground(*this->threads->at(3).threadQueue.get());
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_GUILD;
 			workload.relativePath = "/guilds/" + guildId;
-			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(3).scheduler);
+			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(2).scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
 			json jsonValue = receive(requestAgent.workReturnBuffer);
@@ -169,7 +168,6 @@ namespace DiscordCoreAPI
 		GuildManager() {}
 
 		task<Guild> fetchAsync(string guildId) {
-			co_await resume_foreground(*this->threads->at(3).threadQueue.get());
 			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this);
 			send(GuildManagerAgent::requestFetchBuffer, guildId);
 			guildManagerAgent.start();
@@ -179,7 +177,6 @@ namespace DiscordCoreAPI
 		}
 
 		task<Guild> getGuildAsync(string guildId) {
-			co_await resume_foreground(*this->threads->at(3).threadQueue.get());
 			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this);
 			send(GuildManagerAgent::requestGetBuffer, guildId);
 			guildManagerAgent.start();

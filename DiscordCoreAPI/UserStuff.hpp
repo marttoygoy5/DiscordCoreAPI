@@ -12,12 +12,12 @@
 #include "DiscordDataStructs.hpp"
 
 namespace DiscordCoreAPI {
-
+	/*
 	class User {
 	public:
 
 		User() {}
-		~USer() {}
+		~User() {}
 	protected:
 
 	};
@@ -31,10 +31,10 @@ namespace DiscordCoreAPI {
 
 	class UserManager {
 	public:
-		UserManager() {}
-		~UserManager() {}
-	proteced:
-
+		//UserManager() {}
+	protected:
+		//~UserManager() {}
 	};
+	*/
 }
 #endif
