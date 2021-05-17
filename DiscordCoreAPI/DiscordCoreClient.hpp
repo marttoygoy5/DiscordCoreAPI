@@ -21,7 +21,8 @@ namespace DiscordCoreAPI {
 	class DiscordCoreClient : public agent {
 	public:
 
-		//DiscordCoreAPI::User currentUser;
+		DiscordCoreAPI::User currentUser;
+		UserManager* users{ nullptr };
 		GuildManager* guilds{ nullptr };
 		shared_ptr<EventMachine> EventMachine{ nullptr };
 		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
@@ -77,12 +78,14 @@ namespace DiscordCoreAPI {
 			agentResources.pSocketPath = pWebSocketConnectionAgent->returnSocketPathPointer();
 			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->getThreads().get()->at(2).scheduler);
 			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(1));
-			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources);
+			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources);
+			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources, this->users);
 			GuildManagerAgent::initialize().get();
 			ChannelManagerAgent::initialize().get();
 			MessageManagerAgent::initialize().get();
 			ReactionManagerAgent::initialize().get();
 			RoleManagerAgent::initialize().get();
+			UserManagerAgent::initialize().get();
 		}
 
 		task<DiscordCoreAPI::GuildCreationData>createGuild(DiscordCoreInternal::GuildData guildData) {
@@ -94,7 +97,7 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 				GuildCreationData guildCreationData;
-				guildCreationData.guild = Guild(guildData, agentResources, this->guilds, this->pSystemThreads.get()->getThreads().get());
+				guildCreationData.guild = Guild(guildData, agentResources, this->guilds, this->pSystemThreads.get()->getThreads().get(), this->users);
 				co_await mainThread;
 				co_return guildCreationData;
 			}

@@ -897,6 +897,12 @@ namespace  DiscordCoreInternal {
         string roleId;
     };
 
+    struct GetUserData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string userId;
+    };
+
     struct PostMessageData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
