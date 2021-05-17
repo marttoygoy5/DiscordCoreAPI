@@ -9,7 +9,7 @@
 #define _GUILD_STUFF_
 
 #include "pch.h"
-#include "DiscordDataStructs.hpp"
+#include "FoundationEntities.hpp"
 #include "DataParsingFunctions.hpp"
 #include "ChannelStuff.hpp"
 #include "GuildMemberStuff.hpp"

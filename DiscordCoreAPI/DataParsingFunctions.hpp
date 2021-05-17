@@ -9,7 +9,7 @@
 #define _DATA_PARSING_FUNCTIONS_
 
 #include "pch.h"
-#include "DiscordDataStructs.hpp"
+#include "FoundationEntities.hpp"
 
 namespace DiscordCoreInternal {
     

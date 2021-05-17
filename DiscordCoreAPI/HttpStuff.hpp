@@ -11,7 +11,6 @@
 #include "pch.h"
 #include "JSONifier.hpp"
 
-
 namespace DiscordCoreInternal {
 
 	class HttpRequestAgent;

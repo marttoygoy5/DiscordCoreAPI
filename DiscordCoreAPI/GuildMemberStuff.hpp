@@ -9,7 +9,7 @@
 #define _GUILD_MEMBER_STUFF_
 
 #include "pch.h"
-#include "DiscordDataStructs.hpp"
+#include "FoundationEntities.hpp"
 
 namespace DiscordCoreAPI {
 

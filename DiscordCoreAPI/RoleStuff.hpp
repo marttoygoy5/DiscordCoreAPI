@@ -9,7 +9,7 @@
 #define _ROLE_STUFF_
 
 #include "pch.h"
-#include "DiscordDataStructs.hpp"
+#include "FoundationEntities.hpp"
 
 namespace DiscordCoreAPI {
 

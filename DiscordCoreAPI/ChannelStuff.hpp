@@ -9,7 +9,7 @@
 #define _CHANNEL_STUFF_
 
 #include "pch.h"
-#include "DiscordDataStructs.hpp"
+#include "FoundationEntities.hpp"
 #include "MessageStuff.hpp"
 #include "HttpStuff.hpp"
 

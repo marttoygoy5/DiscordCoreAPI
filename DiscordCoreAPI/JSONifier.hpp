@@ -9,7 +9,7 @@
 #define _JSONIFIER_
 
 #include "pch.h"
-#include "DiscordDataStructs.hpp"
+#include "FoundationEntities.hpp"
 
 namespace DiscordCoreInternal {
 
