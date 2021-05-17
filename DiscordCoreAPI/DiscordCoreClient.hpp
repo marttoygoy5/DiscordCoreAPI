@@ -112,9 +112,22 @@ namespace DiscordCoreAPI {
 						DiscordCoreAPI::MessageCreationData messageCreationData;
 						Guild guild = this->guilds->getGuildAsync(messageData.guildId).get();
 						MessageManager* msgManager = guild.channels->getChannelAsync(messageData.channelId).get().messages;
-						DiscordCoreAPI::Message message(messageData, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
+						Message message(messageData, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
 						messageCreationData.message = message;
 						this->EventMachine->onMessageCreationEvent(messageCreationData);
+					}
+					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::REACTION_ADD) {
+						DiscordCoreInternal::ReactionData reactionData;
+						DiscordCoreInternal::parseObject(workload.payLoad, &reactionData);
+						DiscordCoreInternal::HttpAgentResources agentResources;
+						agentResources.baseURL = this->baseURL;
+						agentResources.botToken = this->botToken;
+						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
+						ReactionAddData reactionAddData;
+						Guild guild = this->guilds->fetchAsync(reactionData.guildId).get();
+						Reaction reaction(agentResources, reactionData, &guild);
+						reactionAddData.reaction = reaction;
+						this->EventMachine->onReactionAddEvent(reactionAddData);
 					}
 				}
 			}

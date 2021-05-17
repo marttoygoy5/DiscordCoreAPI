@@ -174,7 +174,11 @@ namespace DiscordCoreAPI
 			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this);
 			send(GuildManagerAgent::requestFetchBuffer, guildId);
 			guildManagerAgent.start();
-			Guild guild = receive(GuildManagerAgent::outBuffer);
+			Guild guild;
+			try {
+				guild = receive(GuildManagerAgent::outBuffer, 100U);
+			}
+			catch (exception error) {}
 			agent::wait(&guildManagerAgent);
 			co_return guild;
 		}
@@ -183,7 +187,11 @@ namespace DiscordCoreAPI
 			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this);
 			send(GuildManagerAgent::requestGetBuffer, guildId);
 			guildManagerAgent.start();
-			Guild guild = receive(GuildManagerAgent::outBuffer);
+			Guild guild;
+			try {
+				guild = receive(GuildManagerAgent::outBuffer, 100U);
+			}
+			catch (exception error) {}
 			agent::wait(&guildManagerAgent);
 			co_return guild;
 		}

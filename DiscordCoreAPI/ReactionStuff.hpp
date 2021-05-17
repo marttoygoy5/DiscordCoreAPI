@@ -122,12 +122,30 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 
+		task<void> deleteObjectData(DeleteOwnReactionData dataPackage) {
+			DiscordCoreInternal::HttpWorkload workload;
+			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_REACTION;
+			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
+			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.messageId + "/reactions/" + dataPackage.encodedEmoji + "/@me";
+			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(7).scheduler);
+			requestAgent.start();
+			send(requestAgent.workSubmissionBuffer, workload);
+			json jsonValue = receive(requestAgent.workReturnBuffer);
+			agent::wait(&requestAgent);
+			co_return;
+		}
+
 		void run() {
-			PutReactionData dataPackage;
 			try {
-				dataPackage = receive(ReactionManagerAgent::requestPutBuffer, 1U);
+				PutReactionData dataPackage = receive(ReactionManagerAgent::requestPutBuffer, 1U);
 				this->putObjectAsync(dataPackage).get();
-				send(ReactionManagerAgent::outBuffer, Reaction());
+				DiscordCoreInternal::ReactionData reactionData;
+				send(ReactionManagerAgent::outBuffer, Reaction(this->agentResources, reactionData, this->pGuild));
+			}
+			catch (exception error) {}
+			try {
+				DeleteOwnReactionData dataPackage = receive(ReactionManagerAgent::requestDeleteOwnReactionBuffer, 1u);
+				this->deleteObjectData(dataPackage).get();
 			}
 			catch (exception error) {}
 			done();
@@ -164,6 +182,31 @@ namespace DiscordCoreAPI {
 			send(ReactionManagerAgent::requestPutBuffer, putReactionData);
 			reactionManagerAgent.start();
 			Reaction reaction = receive(ReactionManagerAgent::outBuffer);
+			agent::wait(&reactionManagerAgent);
+			co_await resume_foreground(*this->threads->at(0).threadQueue.get());
+			co_return;
+		}
+
+		task<void> deleteOwnReactionAsync(DiscordCoreInternal::DeleteOwnReactionData createReactionData) {
+			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads);
+			DeleteOwnReactionData deleteReactionData;
+			deleteReactionData.channelId = this->channelId;
+			deleteReactionData.messageId = this->messageId;
+			string emoji;
+			if (createReactionData.emojiId != string()) {
+				emoji += ":" + createReactionData.emojiName + ":" + createReactionData.emojiId;
+			}
+			else {
+				emoji = createReactionData.emojiName;
+			}
+			CURL* curl = curl_easy_init();
+			char* output = nullptr;
+			if (curl) {
+				output = curl_easy_escape(curl, emoji.c_str(), 0);
+			}
+			deleteReactionData.encodedEmoji = output;
+			send(ReactionManagerAgent::requestDeleteOwnReactionBuffer, deleteReactionData);
+			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			co_return;
 		}

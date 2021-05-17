@@ -68,6 +68,8 @@ namespace DiscordCoreAPI {
 	struct GetMessageData {
 		string channelId;
 		string id;
+		DiscordCoreInternal::ThreadContext threadContext;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 
 	class MessageManagerAgent : public agent {
@@ -112,7 +114,7 @@ namespace DiscordCoreAPI {
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_MESSAGE;
 			workload.relativePath = "/channels/" + getObjectData.channelId + "/messages/" + getObjectData.id;
-			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(3).scheduler);
+			DiscordCoreInternal::HttpRequestAgent requestAgent(getObjectData.agentResources, getObjectData.threadContext.scheduler);
 			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
 			json jsonValue = receive(requestAgent.workReturnBuffer);
@@ -252,7 +254,20 @@ namespace DiscordCoreAPI {
 			send(MessageManagerAgent::requestDeleteBuffer, dataPackage);
 			agent::wait(&messageManagerAgent);
 			co_return;
-		}		
+		}
+
+		task<Message> fetchMessageAsync(GetMessageData getMessageData) {
+			co_await resume_foreground(*this->threads->at(3).threadQueue.get());
+			getMessageData.agentResources = this->agentResources;
+			getMessageData.threadContext = this->threads->at(3);
+			GetMessageData dataPackage = getMessageData;
+			MessageManagerAgent messageManagerAgent(this->agentResources, this, this->guild, this->threads);
+			messageManagerAgent.start();
+			send(MessageManagerAgent::requestFetchBuffer, dataPackage);
+			Message message = receive(MessageManagerAgent::outBuffer);
+			agent::wait(&messageManagerAgent);
+			co_return message;
+		}
 
 	protected:
 		friend class Channel;
