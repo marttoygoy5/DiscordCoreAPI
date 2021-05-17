@@ -132,7 +132,6 @@ namespace DiscordCoreAPI {
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 				ReactionAddData reactionAddData;
 				Guild guild = this->guilds->getGuildAsync(reactionData.guildId).get();
-				cout << "CHANNEL NAME: " << guild.channels->getChannelAsync(reactionData.channelId).get().data.name << endl;
 				Reaction reaction(agentResources, reactionData, &guild);
 				reactionAddData.reaction = reaction;
 				co_await mainThread;
