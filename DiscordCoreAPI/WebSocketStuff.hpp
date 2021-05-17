@@ -9,6 +9,7 @@
 #define _WEBSOCKET_STUFF_
 
 #include "pch.h"
+#include "JSONifier.hpp"
 
 namespace DiscordCoreInternal {
 

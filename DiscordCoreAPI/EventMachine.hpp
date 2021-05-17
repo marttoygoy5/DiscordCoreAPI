@@ -9,7 +9,6 @@
 #define _EVENT_MACHINE_
 
 #include "pch.h"
-#include "GuildStuff.hpp"
 
 namespace DiscordCoreAPI {
 	

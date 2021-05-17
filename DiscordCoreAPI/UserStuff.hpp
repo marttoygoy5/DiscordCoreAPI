@@ -9,7 +9,6 @@
 #define _USER_STUFF_
 
 #include "pch.h"
-#include "DiscordDataStructs.hpp"
 
 namespace DiscordCoreAPI {
 	/*

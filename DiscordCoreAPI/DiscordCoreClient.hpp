@@ -111,8 +111,12 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				agentResources.baseURL = this->baseURL;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-				Guild guild = this->guilds->getGuildAsync(messageData.guildId).get();
-				MessageManager* msgManager = guild.channels->getChannelAsync(messageData.channelId).get().messages;
+				GetGuildData getGuildData;
+				getGuildData.guildId = messageData.guildId;
+				Guild guild = this->guilds->getGuildAsync(getGuildData).get();
+				GetChannelData getChannelData;
+				getChannelData.channelId = messageData.channelId;
+				MessageManager* msgManager = guild.channels->getChannelAsync(getChannelData).get().messages;
 				Message message(messageData, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
 				MessageCreationData messageCreationData;
 				messageCreationData.message = message;
@@ -134,7 +138,9 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 				ReactionAddData reactionAddData;
-				Guild guild = this->guilds->getGuildAsync(reactionData.guildId).get();
+				GetGuildData getGuildData;
+				getGuildData.guildId = reactionData.guildId;
+				Guild guild = this->guilds->getGuildAsync(getGuildData).get();
 				Reaction reaction(agentResources, reactionData, &guild);
 				reactionAddData.reaction = reaction;
 				co_await mainThread;

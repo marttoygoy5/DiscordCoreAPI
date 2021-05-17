@@ -73,12 +73,16 @@ namespace DiscordCoreAPI
 		}
 	};
 
+	struct GetGuildData{
+		string guildId;
+	};
+
 	class GuildManagerAgent : public agent {
 	protected:
 		friend class DiscordCoreClient;
 		friend class GuildManager;
-		static unbounded_buffer<string>* requestFetchBuffer;
-		static unbounded_buffer<string>* requestGetBuffer;
+		static unbounded_buffer<DiscordCoreInternal::GetGuildData>* requestFetchBuffer;
+		static unbounded_buffer<DiscordCoreInternal::GetGuildData>* requestGetBuffer;
 		static unbounded_buffer<Guild>* outBuffer;
 		static concurrent_queue<Guild> guildsToInsert;
 		static map<string, Guild> cache;
@@ -96,34 +100,34 @@ namespace DiscordCoreAPI
 		}
 
 		static task<void> initialize() {
-			GuildManagerAgent::requestFetchBuffer = new unbounded_buffer<string>;
-			GuildManagerAgent::requestGetBuffer = new unbounded_buffer<string>;
+			GuildManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::GetGuildData>;
+			GuildManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetGuildData>;
 			GuildManagerAgent::outBuffer = new unbounded_buffer<Guild>;
 			co_return;
 		}
 
-		task<Guild> getObjectAsync(string guildId, Guild guild) {
+		task<Guild> getObjectAsync(DiscordCoreInternal::GetGuildData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_GUILD;
-			workload.relativePath = "/guilds/" + guildId;
-			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(2).scheduler);
+			workload.relativePath = "/guilds/" + dataPackage.guildId;
+			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
 			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
-			DiscordCoreInternal::GuildData guildData = guild.data;
+			DiscordCoreInternal::GuildData guildData = dataPackage.oldGuildData;
 			DiscordCoreInternal::parseObject(jsonValue, &guildData);
 			Guild guildNew(guildData, this->agentResources, this->pGuildManager, this->threads);
 			co_return guildNew;
 		}
 
 		void run() {
-			string guildId;
+			DiscordCoreInternal::GetGuildData getData;
 			try {
-				guildId = receive(GuildManagerAgent::requestGetBuffer, 1U);
-				if (GuildManagerAgent::cache.contains(guildId)) {
-					Guild guild = GuildManagerAgent::cache.at(guildId);
+				getData = receive(GuildManagerAgent::requestGetBuffer, 1U);
+				if (GuildManagerAgent::cache.contains(getData.guildId)) {
+					Guild guild = GuildManagerAgent::cache.at(getData.guildId);
 					send(GuildManagerAgent::outBuffer, guild);
 				}
 				else {
@@ -134,17 +138,17 @@ namespace DiscordCoreAPI
 			}
 			catch (exception error) {}
 			try {
-				guildId = receive(GuildManagerAgent::requestFetchBuffer, 1U);
-				if (GuildManagerAgent::cache.contains(guildId)) {
-					Guild guild = GuildManagerAgent::cache.at(guildId);
-					GuildManagerAgent::cache.erase(guildId);
-					guild = getObjectAsync(guildId, guild).get();
-					GuildManagerAgent::cache.insert(make_pair(guildId, guild));
+				getData = receive(GuildManagerAgent::requestFetchBuffer, 1U);
+				if (GuildManagerAgent::cache.contains(getData.guildId)) {
+					getData.oldGuildData = GuildManagerAgent::cache.at(getData.guildId).data;
+					GuildManagerAgent::cache.erase(getData.guildId);
+					Guild guild = getObjectAsync(getData).get();
+					GuildManagerAgent::cache.insert(make_pair(getData.guildId, guild));
 					send(GuildManagerAgent::outBuffer, guild);
 				}
 				else {
-					Guild guild = getObjectAsync(guildId, guild).get();
-					GuildManagerAgent::cache.insert(make_pair(guildId, guild));
+					Guild guild = getObjectAsync(getData).get();
+					GuildManagerAgent::cache.insert(make_pair(getData.guildId, guild));
 					send(GuildManagerAgent::outBuffer, guild);
 				}
 			}
@@ -167,18 +171,26 @@ namespace DiscordCoreAPI
 
 		GuildManager() {}
 
-		task<Guild> fetchAsync(string guildId) {
-			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this);
-			send(GuildManagerAgent::requestFetchBuffer, guildId);
+		task<Guild> fetchAsync(GetGuildData getGuildData) {
+			DiscordCoreInternal::GetGuildData dataPackage;
+			dataPackage.agentResources = this->agentResources;
+			dataPackage.threadContext = this->threads->at(2);
+			dataPackage.guildId = getGuildData.guildId;
+			GuildManagerAgent guildManagerAgent(this->threads, dataPackage.agentResources, this);
+			send(GuildManagerAgent::requestFetchBuffer, dataPackage);
 			guildManagerAgent.start();
 			Guild guild = receive(GuildManagerAgent::outBuffer);
 			agent::wait(&guildManagerAgent);
 			co_return guild;
 		}
 
-		task<Guild> getGuildAsync(string guildId) {
-			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this);
-			send(GuildManagerAgent::requestGetBuffer, guildId);
+		task<Guild> getGuildAsync(GetGuildData getGuildData) {
+			DiscordCoreInternal::GetGuildData dataPackage;
+			dataPackage.agentResources = this->agentResources;
+			dataPackage.threadContext = this->threads->at(2);
+			dataPackage.guildId = getGuildData.guildId;
+			GuildManagerAgent guildManagerAgent(this->threads, dataPackage.agentResources, this);
+			send(GuildManagerAgent::requestGetBuffer, dataPackage);
 			guildManagerAgent.start();
 			Guild guild = receive(GuildManagerAgent::outBuffer);
 			agent::wait(&guildManagerAgent);
@@ -209,8 +221,8 @@ namespace DiscordCoreAPI
 
 	};
 	map<string, Guild> GuildManagerAgent::cache;
-	unbounded_buffer<string>* GuildManagerAgent::requestFetchBuffer;
-	unbounded_buffer<string>* GuildManagerAgent::requestGetBuffer;
+	unbounded_buffer<DiscordCoreInternal::GetGuildData>* GuildManagerAgent::requestFetchBuffer;
+	unbounded_buffer<DiscordCoreInternal::GetGuildData>* GuildManagerAgent::requestGetBuffer;
 	unbounded_buffer<Guild>* GuildManagerAgent::outBuffer;
 	concurrent_queue<Guild> GuildManagerAgent::guildsToInsert;
 }

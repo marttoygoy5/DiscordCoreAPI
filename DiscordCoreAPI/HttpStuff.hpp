@@ -9,65 +9,12 @@
 #define _HTTP_STUFF_
 
 #include "pch.h"
-#include "DiscordDataStructs.hpp"
 #include "JSONifier.hpp"
+
 
 namespace DiscordCoreInternal {
 
 	class HttpRequestAgent;
-
-	enum class HttpWorkloadClass {
-		GET = 0,
-		PUT = 1,
-		POST = 2,
-		PATCH = 3,
-		DELETED = 4
-	};
-
-	enum class HttpWorkloadType {
-		UNSET = 0,
-		GET_MESSAGE = 1,
-		POST_MESSAGE = 2,
-		DELETE_MESSAGE = 3,
-		GET_USER = 4,
-		GET_USER_SELF = 5,
-		GET_GUILD = 6,
-		GET_CHANNEL = 7,
-		GET_REACTION = 8,
-		PUT_REACTION = 9,
-		DELETE_REACTION = 10,
-		PATCH_MESSAGE = 11,
-		DELETE_ALL_REACTION = 12,
-		GET_GUILD_MEMBER = 13,
-		GET_GUILD_MEMBERS = 14,
-		GET_ROLES = 15,
-		GET_USER_GUILDS = 16
-	};
-
-	struct HttpAgentResources {
-		hstring botToken;
-		hstring baseURL;
-		hstring* pSocketPath;
-	};
-
-	struct HttpData {
-		json data;
-	};
-
-	struct HttpWorkload {
-		HttpWorkloadClass workloadClass;
-		HttpWorkloadType workloadType;
-		string relativePath;
-		string content;
-	};
-
-	struct RateLimitData {
-		HttpWorkloadType workloadType;
-		float timeStartedAt = 0;
-		int getsRemaining = 1;
-		float msRemain = 0;
-		string bucket;
-	};
 
 	class HttpRequestAgent :public agent {
 	public:
@@ -102,7 +49,7 @@ namespace DiscordCoreInternal {
 				httpResponse = getHttpClient.GetAsync(this->baseURI).get();
 				hstring httpResponseBody = httpResponse.Content().ReadAsStringAsync().get().c_str();
 				std::wstringstream stream;
-				stream << parseSocketPath(httpResponseBody.c_str()).c_str();
+				stream << DiscordCoreInternal::parseSocketPath(httpResponseBody.c_str()).c_str();
 				stream << L"/?v=9&encoding=json";
 				*agentResources.pSocketPath = stream.str();
 			}

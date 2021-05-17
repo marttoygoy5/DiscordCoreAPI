@@ -127,7 +127,7 @@ namespace DiscordCoreAPI {
 			else if (dataPackage.deletionType == DiscordCoreAPI::ReactionDeletionType::USER_DELETE) {
 				workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.messageId + "/reactions/" + dataPackage.encodedEmoji + "/" + dataPackage.userId;
 			}			
-			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(7).scheduler);
+			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(6).scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
 			json jsonValue = receive(requestAgent.workReturnBuffer);
