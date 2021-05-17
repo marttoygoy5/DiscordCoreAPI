@@ -24,6 +24,8 @@ namespace DiscordCoreAPI {
 		string channelId;
 		string messageId;
 		unsigned int timeDelay = 0;
+		DiscordCoreInternal::ThreadContext threadContext;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 	};
 
 	class Message {
@@ -138,23 +140,24 @@ namespace DiscordCoreAPI {
 			co_return messageNew;
 		}
 
-		void onDelete(DeleteMessageData dataPackage) {
+		task<void> onDelete(DeleteMessageData dataPackage) {
+			co_await resume_foreground(*dataPackage.threadContext.threadQueue.get());
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_MESSAGE;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
 			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.messageId;
-			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(7).scheduler);
-			requestAgent.start();
+			DiscordCoreInternal::HttpRequestAgent  requestAgent = DiscordCoreInternal::HttpRequestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
+			requestAgent.start();
 			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
 		}
 
 		task<void> deleteObjectAsync(DeleteMessageData dataPackage) {
-			DispatcherQueueTimer timer = this->threads->at(7).threadQueue->CreateTimer();
+			DispatcherQueueTimer timer = this->threads->at(0).threadQueue->CreateTimer();
 			timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
 			timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
-				onDelete(dataPackage);
+				onDelete(dataPackage).get();
 				timer.Stop();
 				});
 			timer.Start();
@@ -203,7 +206,7 @@ namespace DiscordCoreAPI {
 				if (MessageManagerAgent::cache.contains(dataPackage.channelId + dataPackage.messageId)) {
 					MessageManagerAgent::cache.erase(dataPackage.channelId + dataPackage.messageId);
 				}
-				deleteObjectAsync(dataPackage);
+				deleteObjectAsync(dataPackage).get();
 			}
 			catch (exception error) {}
 			Message message;
@@ -237,8 +240,11 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
+			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
 			DeleteMessageData dataPackage;
 			dataPackage.channelId = deleteMessageData.channelId;
+			dataPackage.agentResources = this->agentResources;
+			dataPackage.threadContext = this->threads->at(7);
 			dataPackage.messageId = deleteMessageData.messageId;
 			dataPackage.timeDelay = deleteMessageData.timeDelay;
 			MessageManagerAgent messageManagerAgent(this->agentResources, this, this->guild, this->threads);
