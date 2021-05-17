@@ -38,9 +38,9 @@ namespace DiscordCoreAPI {
 	public:
 		Guild* guild{ nullptr };
 		GuildMemberManager() {}
-		GuildMemberManager(Guild* guildNew, DiscordCoreInternal::HttpAgentPointers pointers) {
+		GuildMemberManager(Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew) {
 			this->guild = guildNew;
-			this->pointers = pointers;
+			this->agentResources = agentResourcesNew;
 		}
 
 		task<GuildMember> fetchAsync(string guildId, string guildMemberId) {
@@ -57,7 +57,7 @@ namespace DiscordCoreAPI {
 		~GuildMemberManager() {}
 
 	protected:
-		DiscordCoreInternal::HttpAgentPointers pointers;
+		DiscordCoreInternal::HttpAgentResources agentResources;
 		friend class Guild;
 	};
 };

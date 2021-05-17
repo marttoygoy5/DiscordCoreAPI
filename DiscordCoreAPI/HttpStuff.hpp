@@ -14,7 +14,7 @@
 
 namespace DiscordCoreInternal {
 
-	struct HttpRequestAgent;
+	class HttpRequestAgent;
 
 	enum class HttpWorkloadClass {
 		GET = 0,
@@ -44,14 +44,6 @@ namespace DiscordCoreInternal {
 		GET_USER_GUILDS = 16
 	};
 
-	struct HttpAgentPointers {
-		shared_ptr<HttpRequestAgent> pGETAgent;
-		shared_ptr<HttpRequestAgent> pPUTAgent;
-		shared_ptr<HttpRequestAgent> pPOSTAgent;
-		shared_ptr<HttpRequestAgent> pPATCHAgent;
-		shared_ptr<HttpRequestAgent> pDELETEAgent;
-	};
-
 	struct HttpAgentResources {
 		hstring botToken;
 		hstring baseURL;
@@ -77,7 +69,7 @@ namespace DiscordCoreInternal {
 		string bucket;
 	};
 
-	struct HttpRequestAgent :agent, implements<HttpRequestAgent, winrt::Windows::Foundation::IInspectable> {
+	class HttpRequestAgent :public agent {
 	public:
 		unbounded_buffer<HttpWorkload> workSubmissionBuffer;
 		unbounded_buffer<json> workReturnBuffer;

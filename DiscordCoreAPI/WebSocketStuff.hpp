@@ -28,7 +28,7 @@ namespace DiscordCoreInternal {
 		WebSocketEventType eventType;
 	};
 
-	struct WebSocketReceiverAgent : agent, implements<WebSocketReceiverAgent, winrt::Windows::Foundation::IInspectable> {
+	class WebSocketReceiverAgent : public agent {
 	public:
 		WebSocketReceiverAgent(ISource<json>& pWorkloadSource, ITarget<WebSocketWorkload>& pWorkloadTarget, ThreadContext threadContextNew = {nullptr, nullptr, nullptr})
 			:workloadSource(pWorkloadSource),
@@ -133,7 +133,7 @@ namespace DiscordCoreInternal {
 
 	};
 
-	struct WebSocketConnectionAgent :agent, implements<WebSocketConnectionAgent, winrt::Windows::Foundation::IInspectable> {
+	class WebSocketConnectionAgent :public agent {
 	public:
 
 		WebSocketConnectionAgent(ITarget<json>& target, ThreadContext threadContextNew = {nullptr ,nullptr, nullptr})
@@ -259,7 +259,7 @@ namespace DiscordCoreInternal {
 			cout << "Send Complete" << endl;
 		}
 
-		void OnHeartbeat(IInspectable const& sender, IInspectable const& args) {
+		void OnHeartbeat(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
 			this->sendHeartBeat();
 		}
 

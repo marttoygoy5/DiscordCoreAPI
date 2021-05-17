@@ -17,10 +17,10 @@
 
 namespace DiscordCoreAPI {
 
-	struct DiscordCoreClient : agent, implements<DiscordCoreClient, winrt::Windows::Foundation::IInspectable> {
+	class DiscordCoreClient : public agent {
 	public:
 
-		shared_ptr<GuildManager> guilds{ nullptr };
+		GuildManager* guilds{ nullptr };
 		shared_ptr<EventMachine> EventMachine{ nullptr };
 		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		DiscordCoreClient(hstring botTokenNew)
@@ -75,7 +75,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->getThreads().get()->at(3).scheduler);
 			this->pWebSocketReceiverAgent = make_shared<DiscordCoreInternal::WebSocketReceiverAgent>(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(2));
 			this->pWebSocketConnectionAgent->initialize(botTokenNew);
-			this->guilds = make_shared<GuildManager>(this->pSystemThreads->getThreads().get(), agentResources);
+			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources);
 			GuildManagerAgent::initialize().get();
 			ChannelManagerAgent::initialize().get();
 			MessageManagerAgent::initialize().get();
@@ -91,7 +91,7 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 				GuildCreationData guildCreationData;
-				guildCreationData.guild = Guild(guildData, agentResources, this->guilds.get(), this->pSystemThreads.get()->getThreads().get());
+				guildCreationData.guild = Guild(guildData, agentResources, this->guilds, this->pSystemThreads.get()->getThreads().get());
 				co_await mainThread;
 				co_return guildCreationData;
 			}

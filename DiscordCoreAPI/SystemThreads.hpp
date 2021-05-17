@@ -12,21 +12,21 @@
 
 namespace DiscordCoreInternal {
 
-    struct SystemThreads;
+    class SystemThreads;
 
     struct ThreadContext {
-        Scheduler* scheduler;
-        shared_ptr<task_group> taskGroup;
+        Scheduler* scheduler{ nullptr };
+        shared_ptr<task_group> taskGroup{ nullptr };
         shared_ptr<DispatcherQueue> threadQueue{ nullptr };
     };
 
     class SystemThreadsAgent :public agent {
     protected:
-        friend struct SystemThreads;
+        friend class SystemThreads;
         unbounded_buffer<bool> requestBuffer;
         unbounded_buffer<concurrent_vector<ThreadContext>*> submitBuffer;
-        unbounded_buffer <concurrent_vector<ThreadContext>*> responseBuffer;
-
+        unbounded_buffer<concurrent_vector<ThreadContext>*> responseBuffer;
+        
         SystemThreadsAgent(concurrent_vector<ThreadContext>* threads)
             : agent(*threads->at(0).scheduler)
         {}
@@ -37,14 +37,14 @@ namespace DiscordCoreInternal {
         }
 
         void run() {
-            bool startVal = receive(requestBuffer, 50U);
+            bool startVal = receive(requestBuffer, 1U);
             concurrent_vector<ThreadContext>* threads = receive(submitBuffer);
             send(responseBuffer, threads);
             done();
         }
     };
 
-    struct SystemThreads : implements<SystemThreads, winrt::Windows::Foundation::IInspectable> {
+    class SystemThreads  {
     public:
 
         ThreadContext mainThreadContext;

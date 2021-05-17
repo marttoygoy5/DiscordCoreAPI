@@ -13,8 +13,6 @@
 namespace DiscordCoreInternal {
 
     struct DeleteReactionData {
-        string channelId;
-        string messageId;
         string emojiName;
         string emojiId;
         string userId;
@@ -26,16 +24,11 @@ namespace DiscordCoreInternal {
     };
 
     struct DeleteAllReactionsByEmojiData {
-        string channelId;
-        string messageId;
         string emojiName;
         string emojiId;
     };
 
-    struct DeleteAllReactionsData {
-        string channelId;
-        string messageId;
-    };
+    struct DeleteAllReactionsData {};
 
     struct AllowedMentionsData {
         vector<string> parse;
@@ -652,8 +645,8 @@ namespace DiscordCoreInternal {
     };
 
     struct CreateReactionData {
-        string name;
-        string id;
+        string emojiName;
+        string emojiId;
     };
 
     struct ReactionAddEventData {

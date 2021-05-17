@@ -105,7 +105,7 @@ namespace DiscordCoreAPI {
 		~RoleManager() {}
 	protected:
 		friend class Guild;
-		friend struct DiscordCoreClient;
+		friend class DiscordCoreClient;
 		DiscordCoreInternal::SystemThreads* pSystemThreads;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 	};

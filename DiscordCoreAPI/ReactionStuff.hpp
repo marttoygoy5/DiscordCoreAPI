@@ -28,7 +28,7 @@ namespace DiscordCoreAPI {
 		Reaction() {}
 
 	protected:
-		friend struct DiscordCoreClient;
+		friend class DiscordCoreClient;
 		friend class ReactionManager;
 		friend class  ReactionManagerAgent;
 
@@ -64,7 +64,7 @@ namespace DiscordCoreAPI {
 
 	class ReactionManagerAgent : public agent {
 	protected:
-		friend struct DiscordCoreClient;
+		friend class DiscordCoreClient;
 		friend class ReactionManager;
 
 		static unbounded_buffer<PutReactionData>* requestPutBuffer;
@@ -162,16 +162,17 @@ namespace DiscordCoreAPI {
 		Guild* guild;
 
 		task<void> createReactionAsync(DiscordCoreInternal::CreateReactionData createReactionData){
+			co_await resume_foreground(*this->threads->at(4).threadQueue.get());
 			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads);
 			PutReactionData putReactionData;
 			putReactionData.channelId = this->channelId;
 			putReactionData.messageId = this->messageId;
 			string emoji;
-			if (createReactionData.id != string()) {
-				emoji += ":" + createReactionData.name + ":" + createReactionData.id;
+			if (createReactionData.emojiId != string()) {
+				emoji += ":" + createReactionData.emojiName + ":" + createReactionData.emojiId;
 			}
 			else {
-				emoji = createReactionData.name;
+				emoji = createReactionData.emojiName;
 			}
 			CURL* curl = curl_easy_init();
 			char* output = nullptr;
@@ -187,6 +188,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteUserReactionAsync(DiscordCoreInternal::DeleteReactionData deleteReactionDataOld) {
+			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
 			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads);
 			DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = this->channelId;
@@ -214,6 +216,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteOwnReactionAsync(DiscordCoreInternal::DeleteOwnReactionData deleteReactionDataOld) {
+			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
 			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads);
 			DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = this->channelId;
@@ -238,7 +241,8 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 
-		task<void> deleteReactionByEmoji(DiscordCoreInternal::DeleteAllReactionsByEmojiData deleteReactionDataOld) {
+		task<void> deleteReactionByEmojiAsync(DiscordCoreInternal::DeleteAllReactionsByEmojiData deleteReactionDataOld) {
+			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
 			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads);
 			DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = this->channelId;
@@ -264,12 +268,16 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteAllReactionsAsync(DiscordCoreInternal::DeleteAllReactionsData deleteReactionDataOld) {
+			cout << "TESTING HERE TESTING TESTING HERE" << endl;
+			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
+			cout << "TESTING HERE TESTING TESTING HERE22222" << endl;
 			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads);
 			DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = this->channelId;
 			deleteReactionData.messageId = this->messageId;
 			deleteReactionData.deletionType = DiscordCoreAPI::ReactionDeletionType::ALL_DELETE;
 			send(ReactionManagerAgent::requestDeleteBuffer, deleteReactionData);
+			cout << "TESTING HERE TESTING TESTING HERE333333" << endl;
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			co_return;

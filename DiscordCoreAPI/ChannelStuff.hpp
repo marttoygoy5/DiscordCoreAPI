@@ -59,7 +59,7 @@ namespace DiscordCoreAPI {
 
 	class ChannelManagerAgent : public agent {
 	protected:
-		friend struct DiscordCoreClient;
+		friend class DiscordCoreClient;
 		friend class Guild;
 		friend class ChannelManager;
 
@@ -149,7 +149,6 @@ namespace DiscordCoreAPI {
 			done();
 		}
 
-		~ChannelManagerAgent() {}
 	};
 
 	class ChannelManager : concurrent_unordered_map<string, Channel> {
@@ -185,7 +184,6 @@ namespace DiscordCoreAPI {
 			this->threads = threadsNew;
 		}
 
-		~ChannelManager() {}
 	};
 	map<string, Channel> ChannelManagerAgent::cache;
 	unbounded_buffer<string>* ChannelManagerAgent::requestFetchBuffer;

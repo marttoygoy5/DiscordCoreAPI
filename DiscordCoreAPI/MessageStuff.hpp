@@ -42,7 +42,7 @@ namespace DiscordCoreAPI {
 		}
 
 	protected:
-		friend struct DiscordCoreClient;
+		friend class DiscordCoreClient;
 		friend class MessageManager;
 		friend class MessageManagerAgent;
 
@@ -74,7 +74,7 @@ namespace DiscordCoreAPI {
 
 	class MessageManagerAgent : public agent {
 	protected:
-		friend struct DiscordCoreClient;
+		friend class DiscordCoreClient;
 		friend class MessageManager;
 		friend class Message;
 
@@ -119,7 +119,7 @@ namespace DiscordCoreAPI {
 			send(requestAgent.workSubmissionBuffer, workload);
 			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
-			DiscordCoreInternal::MessageData messageData = message.data;
+			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
 			Message messageNew(messageData, this->pGuild, this->agentResources, this->pMessageManager, this->threads);
 			co_return messageNew;
@@ -155,7 +155,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteObjectAsync(DeleteMessageData dataPackage) {
-			co_await resume_foreground(*dataPackage.threadContext.threadQueue.get());
+			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
 			DispatcherQueueTimer timer = dataPackage.threadContext.threadQueue->CreateTimer();
 			timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
 			timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
@@ -220,7 +220,6 @@ namespace DiscordCoreAPI {
 			}
 			done();
 		}
-
 	};
 
 	class MessageManager : concurrent_unordered_map<string, Message>, public implements<MessageManager, winrt::Windows::Foundation::IInspectable> {
@@ -228,6 +227,7 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		task<Message> createMessageAsync(DiscordCoreInternal::CreateMessageData createMessageData, string channelId) {
+			co_await resume_foreground(*this->threads->at(5).threadQueue.get());
 			PostMessageData dataPackage;
 			dataPackage.channelId = channelId;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageData);
@@ -241,6 +241,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
+			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
 			DeleteMessageData dataPackage;
 			dataPackage.channelId = deleteMessageData.channelId;
 			dataPackage.agentResources = this->agentResources;
@@ -255,6 +256,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<Message> fetchMessageAsync(GetMessageData getMessageData) {
+			co_await resume_foreground(*this->threads->at(3).threadQueue.get());
 			getMessageData.agentResources = this->agentResources;
 			getMessageData.threadContext = this->threads->at(3);
 			GetMessageData dataPackage = getMessageData;
