@@ -109,7 +109,7 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 
-		task<Message> getObjectAsync(GetMessageData getObjectData, Message message) {
+		task<Message> getObjectAsync(GetMessageData getObjectData) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_MESSAGE;
@@ -118,9 +118,13 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
 			json jsonValue = receive(requestAgent.workReturnBuffer);
+			cout << "TESTING HERE TESTING HERE1111" << endl;
 			agent::wait(&requestAgent);
+			cout << "TESTING HERE TESTING HERE2222" << endl;
 			DiscordCoreInternal::MessageData messageData;
+			cout << "TESTING HERE TESTING HERE3333" << endl;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
+			cout << "TESTING HERE TESTING HERE4444" << endl;
 			Message messageNew(messageData, this->pGuild, this->agentResources, this->pMessageManager, this->threads);
 			co_return messageNew;
 		}
@@ -143,6 +147,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> onDelete(DeleteMessageData dataPackage) {
+			co_await resume_foreground(*dataPackage.threadContext.threadQueue.get());
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_MESSAGE;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
@@ -155,8 +160,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteObjectAsync(DeleteMessageData dataPackage) {
-			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
-			DispatcherQueueTimer timer = dataPackage.threadContext.threadQueue->CreateTimer();
+			DispatcherQueueTimer timer = this->threads->at(8).threadQueue->CreateTimer();
 			timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
 			timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
 				onDelete(dataPackage).get();
@@ -189,17 +193,21 @@ namespace DiscordCoreAPI {
 			catch (exception error) {}
 			try {
 				GetMessageData dataPackage = receive(MessageManagerAgent::requestFetchBuffer, 1U);
+				cout << "HERE HERE HERE THIS IS IT THIS IS IT" << endl;
 				if (MessageManagerAgent::cache.contains(dataPackage.channelId + dataPackage.id)) {
 					Message message = MessageManagerAgent::cache.at(dataPackage.channelId + dataPackage.id);
 					MessageManagerAgent::cache.erase(dataPackage.channelId + dataPackage.id);
-					message = getObjectAsync(dataPackage, message).get();
+					message = getObjectAsync(dataPackage).get();
 					MessageManagerAgent::cache.insert(make_pair(dataPackage.channelId + dataPackage.id, message));
 					send(MessageManagerAgent::outBuffer, message);
 				}
 				else {
-					Message message = getObjectAsync(dataPackage, message).get();
+					Message message = getObjectAsync(dataPackage).get();
+					cout << "HERE HERE HERE THIS IS IT THIS IS IT2222222" << endl;
 					MessageManagerAgent::cache.insert(make_pair(dataPackage.channelId + dataPackage.id, message));
+					cout << "HERE HERE HERE THIS IS IT THIS IS IT3333333" << endl;
 					send(MessageManagerAgent::outBuffer, message);
+					cout << "HERE HERE HERE THIS IS IT THIS IS IT44444" << endl;
 				}
 			}
 			catch (exception error) {}
@@ -227,7 +235,6 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		task<Message> createMessageAsync(DiscordCoreInternal::CreateMessageData createMessageData, string channelId) {
-			co_await resume_foreground(*this->threads->at(5).threadQueue.get());
 			PostMessageData dataPackage;
 			dataPackage.channelId = channelId;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageData);
@@ -241,7 +248,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
-			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
+			co_await resume_foreground(*this->threads->at(8).threadQueue.get());
 			DeleteMessageData dataPackage;
 			dataPackage.channelId = deleteMessageData.channelId;
 			dataPackage.agentResources = this->agentResources;
@@ -256,15 +263,20 @@ namespace DiscordCoreAPI {
 		}
 
 		task<Message> fetchMessageAsync(GetMessageData getMessageData) {
-			co_await resume_foreground(*this->threads->at(3).threadQueue.get());
 			getMessageData.agentResources = this->agentResources;
 			getMessageData.threadContext = this->threads->at(3);
 			GetMessageData dataPackage = getMessageData;
+			cout << "TESTING HERE TESTING HERE1111" << endl;
 			MessageManagerAgent messageManagerAgent(this->agentResources, this, this->guild, this->threads);
-			messageManagerAgent.start();
+			cout << "TESTING HERE TESTING HERE2222" << endl;
 			send(MessageManagerAgent::requestFetchBuffer, dataPackage);
+			cout << "TESTING HERE TESTING HERE3333" << endl;
+			messageManagerAgent.start();
+			cout << "TESTING HERE TESTING HERE4444" << endl;
 			Message message = receive(MessageManagerAgent::outBuffer);
+			cout << "TESTING HERE TESTING HERE5555" << endl;
 			agent::wait(&messageManagerAgent);
+			cout << "TESTING HERE TESTING HERE6666" << endl;
 			co_return message;
 		}
 
