@@ -92,7 +92,7 @@ namespace DiscordCoreAPI {
 		Guild* pGuild;
 
 		MessageManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::MessageManager* pMessageManagerNew, Guild* pGuildNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew)
-			:agent(*threadsNew->at(0).scheduler)
+			:agent(*threadsNew->at(8).scheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
@@ -143,7 +143,6 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> onDelete(DeleteMessageData dataPackage) {
-			co_await resume_foreground(*dataPackage.threadContext.threadQueue.get());
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_MESSAGE;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
@@ -156,7 +155,8 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteObjectAsync(DeleteMessageData dataPackage) {
-			DispatcherQueueTimer timer = this->threads->at(0).threadQueue->CreateTimer();
+			co_await resume_foreground(*dataPackage.threadContext.threadQueue.get());
+			DispatcherQueueTimer timer = dataPackage.threadContext.threadQueue->CreateTimer();
 			timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
 			timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
 				onDelete(dataPackage).get();
@@ -228,7 +228,6 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		task<Message> createMessageAsync(DiscordCoreInternal::CreateMessageData createMessageData, string channelId) {
-			co_await resume_foreground(*this->threads->at(5).threadQueue.get());
 			PostMessageData dataPackage;
 			dataPackage.channelId = channelId;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageData);
@@ -242,7 +241,6 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
-			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
 			DeleteMessageData dataPackage;
 			dataPackage.channelId = deleteMessageData.channelId;
 			dataPackage.agentResources = this->agentResources;
@@ -257,7 +255,6 @@ namespace DiscordCoreAPI {
 		}
 
 		task<Message> fetchMessageAsync(GetMessageData getMessageData) {
-			co_await resume_foreground(*this->threads->at(3).threadQueue.get());
 			getMessageData.agentResources = this->agentResources;
 			getMessageData.threadContext = this->threads->at(3);
 			GetMessageData dataPackage = getMessageData;

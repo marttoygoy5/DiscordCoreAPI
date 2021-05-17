@@ -9,17 +9,32 @@
 #define _USER_STUFF_
 
 #include "pch.h"
+#include "DiscordDataStructs.hpp"
 
 namespace DiscordCoreAPI {
 
 	class User {
+	public:
+
 		User() {}
 		~USer() {}
+	protected:
+
+	};
+
+	class UserManagerAgent :agent {
+	protected:
+
+
+
 	};
 
 	class UserManager {
+	public:
 		UserManager() {}
 		~UserManager() {}
+	proteced:
+
 	};
 }
 #endif

@@ -107,8 +107,8 @@ namespace DiscordCoreAPI
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_GUILD;
 			workload.relativePath = "/guilds/" + guildId;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(3).scheduler);
-			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
+			requestAgent.start();
 			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::GuildData guildData = guild.data;
@@ -174,11 +174,7 @@ namespace DiscordCoreAPI
 			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this);
 			send(GuildManagerAgent::requestFetchBuffer, guildId);
 			guildManagerAgent.start();
-			Guild guild;
-			try {
-				guild = receive(GuildManagerAgent::outBuffer, 100U);
-			}
-			catch (exception error) {}
+			Guild guild = receive(GuildManagerAgent::outBuffer);
 			agent::wait(&guildManagerAgent);
 			co_return guild;
 		}
@@ -187,11 +183,7 @@ namespace DiscordCoreAPI
 			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this);
 			send(GuildManagerAgent::requestGetBuffer, guildId);
 			guildManagerAgent.start();
-			Guild guild;
-			try {
-				guild = receive(GuildManagerAgent::outBuffer, 100U);
-			}
-			catch (exception error) {}
+			Guild guild = receive(GuildManagerAgent::outBuffer);
 			agent::wait(&guildManagerAgent);
 			co_return guild;
 		}

@@ -32,7 +32,6 @@ namespace DiscordCoreInternal {
         string emojiId;
     };
 
-
     struct DeleteAllReactionsData {
         string channelId;
         string messageId;

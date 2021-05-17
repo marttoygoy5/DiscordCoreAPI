@@ -23,7 +23,6 @@ namespace DiscordCoreAPI {
 		shared_ptr<GuildManager> guilds{ nullptr };
 		shared_ptr<EventMachine> EventMachine{ nullptr };
 		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
-
 		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
@@ -45,10 +44,6 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 
-		~DiscordCoreClient() {
-
-		}
-
 	protected:
 		friend class GuildManager;
 		friend class Guild;
@@ -56,8 +51,8 @@ namespace DiscordCoreAPI {
 		friend class GuildMember;
 		friend class ChannelManager;
 		friend class Channel;
-		hstring botToken;
 		bool doWeQuit = false;
+		hstring botToken;
 		hstring baseURL = L"https://discord.com/api/v9";
 		shared_ptr<DiscordCoreInternal::WebSocketConnectionAgent> pWebSocketConnectionAgent{ nullptr };
 		shared_ptr<DiscordCoreInternal::WebSocketReceiverAgent> pWebSocketReceiverAgent{ nullptr };
@@ -87,46 +82,87 @@ namespace DiscordCoreAPI {
 			ReactionManagerAgent::initialize().get();
 		}
 
+		task<DiscordCoreAPI::GuildCreationData>createGuild(DiscordCoreInternal::GuildData guildData) {
+			try {
+				apartment_context mainThread;
+				co_await resume_foreground(*this->pSystemThreads->threads->at(9).threadQueue.get());
+				DiscordCoreInternal::HttpAgentResources agentResources;
+				agentResources.baseURL = this->baseURL;
+				agentResources.botToken = this->botToken;
+				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
+				GuildCreationData guildCreationData;
+				guildCreationData.guild = Guild(guildData, agentResources, this->guilds.get(), this->pSystemThreads.get()->getThreads().get());
+				co_await mainThread;
+				co_return guildCreationData;
+			}
+			catch (exception error) {
+				cout << "Error Message: " << error.what() << endl;
+			}
+		}
+
+		task<DiscordCoreAPI::MessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
+			try {
+				apartment_context mainThread;
+				co_await resume_foreground(*this->pSystemThreads->threads->at(9).threadQueue.get());
+				DiscordCoreInternal::HttpAgentResources agentResources;
+				agentResources.botToken = this->botToken;
+				agentResources.baseURL = this->baseURL;
+				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
+				Guild guild = this->guilds->getGuildAsync(messageData.guildId).get();
+				MessageManager* msgManager = guild.channels->getChannelAsync(messageData.channelId).get().messages;
+				Message message(messageData, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
+				MessageCreationData messageCreationData;
+				messageCreationData.message = message;
+				co_await mainThread;
+				co_return messageCreationData;
+			}
+			catch (exception error) {
+				cout << "Error Message: " << error.what() << endl;
+			}
+			
+		}
+
+		task<DiscordCoreAPI::ReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
+			try {
+				apartment_context mainThread;
+				co_await resume_foreground(*this->pSystemThreads->threads->at(9).threadQueue.get());
+				DiscordCoreInternal::HttpAgentResources agentResources;
+				agentResources.baseURL = this->baseURL;
+				agentResources.botToken = this->botToken;
+				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
+				ReactionAddData reactionAddData;
+				Guild guild = this->guilds->getGuildAsync(reactionData.guildId).get();
+				cout << "CHANNEL NAME: " << guild.channels->getChannelAsync(reactionData.channelId).get().data.name << endl;
+				Reaction reaction(agentResources, reactionData, &guild);
+				reactionAddData.reaction = reaction;
+				co_await mainThread;
+				co_return reactionAddData;
+			}
+			catch (exception error) {
+				cout << "Error Message: " << error.what() << endl;
+			}			
+		}
+
 		void run() {
 			while (doWeQuit == false) {
 				DiscordCoreInternal::WebSocketWorkload workload;
 				if (try_receive(this->webSocketWorkloadSource, workload)) {
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
-						DiscordCoreAPI::GuildCreationData guildCreationData;
 						DiscordCoreInternal::GuildData guildData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &guildData);
-						DiscordCoreInternal::HttpAgentResources agentResources;
-						agentResources.baseURL = this->baseURL;
-						agentResources.botToken = this->botToken;
-						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-						guildCreationData.guild = Guild(guildData, agentResources, this->guilds.get(), this->pSystemThreads.get()->getThreads().get());
+						GuildCreationData guildCreationData = createGuild(guildData).get();
 						this->EventMachine->onGuildCreationEvent(guildCreationData);
 					}
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
 						DiscordCoreInternal::MessageData messageData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
-						DiscordCoreInternal::HttpAgentResources agentResources;
-						agentResources.baseURL = this->baseURL;
-						agentResources.botToken = this->botToken;
-						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-						DiscordCoreAPI::MessageCreationData messageCreationData;
-						Guild guild = this->guilds->getGuildAsync(messageData.guildId).get();
-						MessageManager* msgManager = guild.channels->getChannelAsync(messageData.channelId).get().messages;
-						Message message(messageData, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
-						messageCreationData.message = message;
+						MessageCreationData messageCreationData = createMessage(messageData).get();
 						this->EventMachine->onMessageCreationEvent(messageCreationData);
 					}
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::REACTION_ADD) {
 						DiscordCoreInternal::ReactionData reactionData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &reactionData);
-						DiscordCoreInternal::HttpAgentResources agentResources;
-						agentResources.baseURL = this->baseURL;
-						agentResources.botToken = this->botToken;
-						agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-						ReactionAddData reactionAddData;
-						Guild guild = this->guilds->fetchAsync(reactionData.guildId).get();
-						Reaction reaction(agentResources, reactionData, &guild);
-						reactionAddData.reaction = reaction;
+						ReactionAddData reactionAddData = createReaction(reactionData).get();
 						this->EventMachine->onReactionAddEvent(reactionAddData);
 					}
 				}

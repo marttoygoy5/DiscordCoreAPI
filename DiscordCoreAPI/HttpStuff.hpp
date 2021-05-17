@@ -119,70 +119,83 @@ namespace DiscordCoreInternal {
 			}
 		}
 
+		bool get_error(exception& e)
+		{
+			return try_receive(_error, e);
+		}
+
 	protected:
 
 		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
 		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
+		single_assignment<exception> _error;
+
 
 		void run() {
-			transformer<HttpWorkload, json> completeHttpRequest([this](HttpWorkload workload) -> json {
-				RateLimitData rateLimitData;
-				try {
-					string bucket = HttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
-					rateLimitData = HttpRequestAgent::rateLimitData.at(bucket);
-				}
-				catch (exception error) {
-					cout << "HttpRequestAgent Error: " << error.what() << endl;
-				}
-				if (rateLimitData.getsRemaining == 0) {
-					float loopStartTime = rateLimitData.timeStartedAt;
-					float targetTime = loopStartTime + static_cast<float> (rateLimitData.msRemain);
-					float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-					while (rateLimitData.msRemain > 0.0f) {
-						currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-						rateLimitData.msRemain = targetTime - currentTime;
+			try {
+				transformer<HttpWorkload, json> completeHttpRequest([this](HttpWorkload workload) -> json {
+					RateLimitData rateLimitData;
+					try {
+						string bucket = HttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
+						rateLimitData = HttpRequestAgent::rateLimitData.at(bucket);
 					}
-				}
-				HttpData returnData;
-				if (workload.workloadClass == HttpWorkloadClass::GET) {
-					returnData = httpGETObjectDataAsync(workload.relativePath, &rateLimitData).get();
-				}
-				else if (workload.workloadClass == HttpWorkloadClass::POST) {
-					returnData = httpPOSTObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
-				}
-				else if (workload.workloadClass == HttpWorkloadClass::PUT) {
-					returnData = httpPUTObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
-				}
-				else if (workload.workloadClass == HttpWorkloadClass::PATCH) {
-					returnData = httpPATCHObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
-				}
-				else if (workload.workloadClass == HttpWorkloadClass::DELETED) {
-					returnData = httpDELETEObjectDataAsync(workload.relativePath, &rateLimitData).get();
-				}
-				try {
-					HttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
-					HttpRequestAgent::rateLimitDataBucketValues.unsafe_erase(workload.workloadType);
-					HttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
-				}
-				catch (exception error) {
-					cout << "HttpRequestAgent Error: " << error.what() << endl;
-					HttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
-				}
-				try {
-					HttpRequestAgent::rateLimitData.at(rateLimitData.bucket);
-					HttpRequestAgent::rateLimitData.unsafe_erase(rateLimitData.bucket);
-					HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
-				}
-				catch (exception error) {
-					cout << "HttpRequestAgent Error: " << error.what() << endl;
-					HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
-				}
-				return returnData.data;
-				});
-			completeHttpRequest.link_target(&this->workReturnBuffer);
-			HttpWorkload workload = receive(&this->workSubmissionBuffer);
-			send(&completeHttpRequest, workload);
-			done();
+					catch (exception error) {
+						cout << "HttpRequestAgent Error: " << error.what() << endl;
+					}
+					if (rateLimitData.getsRemaining == 0) {
+						float loopStartTime = rateLimitData.timeStartedAt;
+						float targetTime = loopStartTime + static_cast<float> (rateLimitData.msRemain);
+						float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+						while (rateLimitData.msRemain > 0.0f) {
+							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+							rateLimitData.msRemain = targetTime - currentTime;
+						}
+					}
+					HttpData returnData;
+					if (workload.workloadClass == HttpWorkloadClass::GET) {
+						returnData = httpGETObjectDataAsync(workload.relativePath, &rateLimitData).get();
+					}
+					else if (workload.workloadClass == HttpWorkloadClass::POST) {
+						returnData = httpPOSTObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
+					}
+					else if (workload.workloadClass == HttpWorkloadClass::PUT) {
+						returnData = httpPUTObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
+					}
+					else if (workload.workloadClass == HttpWorkloadClass::PATCH) {
+						returnData = httpPATCHObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
+					}
+					else if (workload.workloadClass == HttpWorkloadClass::DELETED) {
+						returnData = httpDELETEObjectDataAsync(workload.relativePath, &rateLimitData).get();
+					}
+					try {
+						HttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
+						HttpRequestAgent::rateLimitDataBucketValues.unsafe_erase(workload.workloadType);
+						HttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
+					}
+					catch (exception error) {
+						cout << "HttpRequestAgent Error: " << error.what() << endl;
+						HttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
+					}
+					try {
+						HttpRequestAgent::rateLimitData.at(rateLimitData.bucket);
+						HttpRequestAgent::rateLimitData.unsafe_erase(rateLimitData.bucket);
+						HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
+					}
+					catch (exception error) {
+						cout << "HttpRequestAgent Error: " << error.what() << endl;
+						HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
+					}
+					return returnData.data;
+					});
+				completeHttpRequest.link_target(&this->workReturnBuffer);
+				HttpWorkload workload = receive(&this->workSubmissionBuffer);
+				send(&completeHttpRequest, workload);
+				done();
+			}
+			catch (exception error) {
+				send(_error, error);
+			}
+			
 		}
 
 		task<HttpData> httpGETObjectDataAsync(string relativeURL, RateLimitData* pRateLimitData) {
@@ -414,6 +427,7 @@ namespace DiscordCoreInternal {
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 			}
+			wcout << httpResponse.Content().ReadAsStringAsync().get().c_str() << endl;
 			deleteData.data = jsonValue;
 			co_return deleteData;
 		}

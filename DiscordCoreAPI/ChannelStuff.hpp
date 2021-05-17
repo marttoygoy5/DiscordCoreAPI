@@ -47,8 +47,8 @@ namespace DiscordCoreAPI {
 			this->channels = channelsNew;
 			this->guild = guildNew;
 			this->threads = threadsNew;
-			co_await resume_foreground(*this->threads->at(0).threadQueue.get());
 			this->messages = new MessageManager(this->agentResources, this->guild, this->threads);
+			co_return;
 		}
 	};
 
@@ -95,8 +95,8 @@ namespace DiscordCoreAPI {
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_CHANNEL;
 			workload.relativePath = "/channels/" + getData.channelId;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(3).scheduler);
-			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
+			requestAgent.start();
 			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::ChannelData channelData = getData.oldChannel.data;

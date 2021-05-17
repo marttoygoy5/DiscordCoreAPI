@@ -20,8 +20,9 @@ namespace DiscordCoreInternal {
         shared_ptr<DispatcherQueue> threadQueue{ nullptr };
     };
 
-    class SystemThreadsAgent :public agent{
-    public:
+    class SystemThreadsAgent :public agent {
+    protected:
+        friend struct SystemThreads;
         unbounded_buffer<bool> requestBuffer;
         unbounded_buffer<concurrent_vector<ThreadContext>*> submitBuffer;
         unbounded_buffer <concurrent_vector<ThreadContext>*> responseBuffer;
@@ -35,10 +36,6 @@ namespace DiscordCoreInternal {
             co_return;
         }
 
-        ~SystemThreadsAgent() {}
-
-    protected:
-        shared_ptr<SystemThreads> pSystemThreads;
         void run() {
             bool startVal = receive(requestBuffer, 50U);
             concurrent_vector<ThreadContext>* threads = receive(submitBuffer);
