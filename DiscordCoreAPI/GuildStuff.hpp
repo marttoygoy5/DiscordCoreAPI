@@ -54,13 +54,14 @@ namespace DiscordCoreAPI
 				Channel channel(channelData, this, this->agentResources, this->channels, this->threads);
 				ChannelManagerAgent::cache.insert(make_pair(channelData.id, channel));
 			}
+			this->guildMembers = new GuildMemberManager(this, this->agentResources, this->threads);
+			for (unsigned int x = 0; x < data.members.size(); x += 1) {
+				DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
+				GuildMember guildMember(guildMemberData, this, this->guildMembers);
+				GuildMemberManagerAgent::cache.insert(make_pair(guildMember.guild->data.id + guildMemberData.user.id, guildMember));
+			}
 			/*
-		this->guildMembers = make_self<GuildMemberManager>(this, this->agentResources);
-		for (unsigned int x = 0; x < data.members.size(); x += 1) {
-			DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
-			GuildMember guildMember(guildMemberData, this, this->guildMembers);
-			this->guildMembers->insert(make_pair(guildMemberData.user.id, guildMember));
-		}
+			
 		this->roles = make_self<RoleManager>(this, this->agentResources, this->pSystemThreads);
 		for (auto const& [key, value] : data.roles) {
 			DiscordCoreInternal::RoleData roleData = value;
