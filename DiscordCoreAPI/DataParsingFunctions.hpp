@@ -1551,6 +1551,32 @@ namespace DiscordCoreInternal {
             reactionData.emoji = theValue;
         }
 
+        if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
+            string theValue = jsonObjectData.at("guild_id");
+            reactionData.guildId = theValue;
+        }
+
+        if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
+            string theValue = jsonObjectData.at("channel_id");
+            reactionData.channelId = theValue;
+        }
+
+        if (jsonObjectData.contains("user_id") && !jsonObjectData.at("user_id").is_null()) {
+            string theValue = jsonObjectData.at("user_id");
+            reactionData.userId = theValue;
+        }
+
+        if (jsonObjectData.contains("message_id") && !jsonObjectData.at("message_id").is_null()) {
+            string theValue = jsonObjectData.at("message_id");
+            reactionData.messageId = theValue;
+        }
+
+        if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
+            GuildMemberData theValue = reactionData.member;
+            parseObject(jsonObjectData.at("member"), &theValue);
+            reactionData.member = theValue;
+        }
+
         *pDataStructure = reactionData;
     }
 
