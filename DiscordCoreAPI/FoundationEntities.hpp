@@ -289,6 +289,7 @@ namespace  DiscordCoreInternal {
     };
 
     struct GuildMemberData {
+        string guildId;
         UserData user;
         string nick;
         vector<string> roles;

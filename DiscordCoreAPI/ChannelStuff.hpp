@@ -144,15 +144,11 @@ namespace DiscordCoreAPI {
 		}
 	};
 
-
 	class ChannelManager : concurrent_unordered_map<string, Channel> {
 	public:
 		Guild* guild{ nullptr };
 
 		task<Channel> fetchAsync(GetChannelData getChannelData) {
-			critical_section lock;
-			lock.lock();
-			co_await resume_foreground(*this->threads->at(0).threadQueue.get());
 			DiscordCoreInternal::GetChannelData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(4);
@@ -162,7 +158,6 @@ namespace DiscordCoreAPI {
 			channelManagerAgent.start();
 			Channel channel = receive(ChannelManagerAgent::outBuffer);
 			agent::wait(&channelManagerAgent);
-			lock.unlock();
 			co_return channel;
 		}
 
@@ -177,6 +172,15 @@ namespace DiscordCoreAPI {
 			Channel channel = receive(ChannelManagerAgent::outBuffer);
 			agent::wait(&channelManagerAgent);
 			co_return channel;
+		}
+
+		task<void> insertChannel(Channel channel) {
+			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this, this->guild, this->threads->at(3).scheduler);
+			channelManagerAgent.start();
+			ChannelManagerAgent::channelsToInsert.push(channel);
+			channelManagerAgent.wait(&channelManagerAgent);
+			cout << "CURRENT CHANNEL NAME: " << ChannelManagerAgent::cache.at(channel.data.id).data.name << endl;
+			co_return;
 		}
 
 	protected:

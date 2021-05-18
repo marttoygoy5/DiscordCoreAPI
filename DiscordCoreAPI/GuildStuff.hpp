@@ -51,28 +51,34 @@ namespace DiscordCoreAPI
 			this->agentResources = agentResourcesNew;
 			this->guilds = guildsNew;
 			this->channels = new ChannelManager(this, this->agentResources, this->threads);
-			for (unsigned int x = 0; x < data.channels.size(); x += 1) {
-				DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
-				Channel channel(channelData, this, this->agentResources, this->channels, this->threads);
-				ChannelManagerAgent::cache.insert(make_pair(channelData.id, channel));
+			try {
+				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
+					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
+					Channel channel(channelData, this, this->agentResources, this->channels, this->threads);
+					this->channels->insertChannel(channel).get();
+				}
+				this->guildMembers = new GuildMemberManager(this, this->agentResources, this->threads);
+				for (unsigned int x = 0; x < data.members.size(); x += 1) {
+					DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
+					guildMemberData.guildId = this->data.id;
+					GuildMember guildMember(guildMemberData, this, this->guildMembers);
+					this->guildMembers->insertGuildMember(guildMember).get();
+				}
+				this->roles = new RoleManager(this, this->agentResources, this->threads);
+				for (auto const& [key, value] : data.roles) {
+					DiscordCoreInternal::RoleData roleData = value;
+					Role role(roleData, this->agentResources, this->roles, this);
+					this->roles->insertRole(role).get();;
+				}
+				this->users = usersNew;
+				for (unsigned int x = 0; x < data.members.size(); x += 1) {
+					DiscordCoreInternal::UserData userData = data.members.at(x).user;
+					User newUser(this->threads, this->agentResources, userData, this->users);
+					this->users->insertUser(newUser);
+				}
 			}
-			this->guildMembers = new GuildMemberManager(this, this->agentResources, this->threads);
-			for (unsigned int x = 0; x < data.members.size(); x += 1) {
-				DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
-				GuildMember guildMember(guildMemberData, this, this->guildMembers);
-				GuildMemberManagerAgent::cache.insert(make_pair(guildMember.guild->data.id + guildMemberData.user.id, guildMember));
-			}
-			this->roles = new RoleManager(this, this->agentResources, this->threads);
-			for (auto const& [key, value] : data.roles) {
-				DiscordCoreInternal::RoleData roleData = value;
-				Role role(roleData, this->agentResources, this->roles, this);
-				RoleManagerAgent::cache.insert(make_pair(key, role));
-			}
-			this->users = usersNew;
-			for (unsigned int x = 0; x < data.members.size(); x += 1) {
-				DiscordCoreInternal::UserData userData = data.members.at(x).user;
-				User newUser(this->threads, this->agentResources, userData, this->users);
-				UserManagerAgent::cache.insert(make_pair(userData.id, newUser));
+			catch (exception error) {
+				cout << "Error: " << error.what() << endl;
 			}
 			
 			co_return;

@@ -171,7 +171,6 @@ namespace DiscordCoreAPI {
 		Guild* guild;
 
 		task<void> createReactionAsync(PutReactionData createReactionData){
-			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads, this->threads->at(4).scheduler);
 			DiscordCoreInternal::PutReactionData putReactionData;
 			putReactionData.channelId = this->channelId;
 			putReactionData.messageId = this->messageId;
@@ -190,6 +189,7 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			putReactionData.emoji = output;
+			ReactionManagerAgent reactionManagerAgent(putReactionData.agentResources, this, this->guild, this->threads, this->threads->at(4).scheduler);
 			send(ReactionManagerAgent::requestPutBuffer, putReactionData);
 			reactionManagerAgent.start();
 			Reaction reaction = receive(ReactionManagerAgent::outBuffer);
@@ -198,7 +198,6 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteUserReactionAsync(DeleteUserReactionData deleteUserReactionData) {
-			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads, this->threads->at(8).scheduler);
 			DiscordCoreInternal::DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = this->channelId;
 			deleteReactionData.messageId = this->messageId;
@@ -220,6 +219,7 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			deleteReactionData.encodedEmoji = output;
+			ReactionManagerAgent reactionManagerAgent(deleteReactionData.agentResources, this, this->guild, this->threads, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteBuffer, deleteReactionData);
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
@@ -227,7 +227,6 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteOwnReactionAsync(DeleteOwnReactionData deleteOwnReactionData) {
-			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads, this->threads->at(8).scheduler);
 			DiscordCoreInternal::DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = this->channelId;
 			deleteReactionData.messageId = this->messageId;
@@ -247,6 +246,7 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			deleteReactionData.encodedEmoji = output;
+			ReactionManagerAgent reactionManagerAgent(deleteReactionData.agentResources, this, this->guild, this->threads, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteBuffer, deleteReactionData);
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
@@ -254,7 +254,6 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteReactionByEmojiAsync(DeleteAllReactionsByEmojiData deleteReactionDataOld) {
-			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads, this->threads->at(8).scheduler);
 			DiscordCoreInternal::DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = this->channelId;
 			deleteReactionData.messageId = this->messageId;
@@ -274,6 +273,7 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			deleteReactionData.encodedEmoji = output;
+			ReactionManagerAgent reactionManagerAgent(deleteReactionData.agentResources, this, this->guild, this->threads, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteBuffer, deleteReactionData);
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
@@ -281,13 +281,13 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteAllReactionsAsync(DeleteAllReactionsData deleteReactionDataOld) {
-			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads, this->threads->at(8).scheduler);
 			DiscordCoreInternal::DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = this->channelId;
 			deleteReactionData.messageId = this->messageId;
 			deleteReactionData.deletionType = DiscordCoreInternal::ReactionDeletionType::ALL_DELETE;
 			deleteReactionData.agentResources = this->agentResources;
 			deleteReactionData.threadContext = this->threads->at(9);
+			ReactionManagerAgent reactionManagerAgent(deleteReactionData.agentResources, this, this->guild, this->threads, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteBuffer, deleteReactionData);
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);

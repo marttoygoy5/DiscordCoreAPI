@@ -132,10 +132,15 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
 			json jsonValue = receive(requestAgent.workReturnBuffer);
+			cout << "TEST 1" << endl<<jsonValue << endl;
 			agent::wait(&requestAgent);
+			cout << "TEST 2" << endl << jsonValue << endl;
 			DiscordCoreInternal::MessageData messageData;
+			cout << "TEST 3" << endl << jsonValue << endl;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
+			cout << "TEST 4" << endl << jsonValue << endl;
 			Message messageNew(messageData, this->pGuild, this->agentResources, this->pMessageManager, this->threads);
+			cout << "TEST 5" << endl << jsonValue << endl;
 			co_return messageNew;
 		}
 
@@ -168,7 +173,9 @@ namespace DiscordCoreAPI {
 			try {
 				DiscordCoreInternal::PostMessageData dataPackage = receive(MessageManagerAgent::requestPostBuffer, 1U);
 				Message message = this->postObjectAsync(dataPackage).get();
+				cout << message.data.content << endl;
 				send(MessageManagerAgent::outBuffer, message);
+				cout << message.data.content << endl;
 			}
 			catch (exception error) {}
 			try {
@@ -188,7 +195,7 @@ namespace DiscordCoreAPI {
 			}
 			catch (exception error) {}
 			try {
-				DiscordCoreInternal::DeleteMessageData dataPackageDelete = receive(MessageManagerAgent::requestDeleteBuffer);
+				DiscordCoreInternal::DeleteMessageData dataPackageDelete = receive(MessageManagerAgent::requestDeleteBuffer, 1U);
 				MessageManagerAgent::cache.erase(dataPackageDelete.channelId + dataPackageDelete.messageId);
 				deleteObjectAsync(dataPackageDelete).get();
 			}
@@ -209,7 +216,6 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		task<Message> createMessageAsync(DiscordCoreInternal::CreateMessageData createMessageData, string channelId) {
-			apartment_context mainThread;
 			DiscordCoreInternal::PostMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(6);
@@ -220,24 +226,26 @@ namespace DiscordCoreAPI {
 			messageManagerAgent.start();
 			Message message = receive(MessageManagerAgent::outBuffer);
 			MessageManagerAgent::cache.insert(make_pair(message.data.channelId + message.data.id, message));
+			cout << message.data.content << endl;
 			agent::wait(&messageManagerAgent);
-			co_await mainThread;
+			cout << message.data.content << endl;
 			co_return message;
 		}
 
 		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
-			apartment_context mainThread;
 			DiscordCoreInternal::DeleteMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(9);
 			dataPackage.channelId = deleteMessageData.channelId;
 			dataPackage.messageId = deleteMessageData.messageId;
 			dataPackage.timeDelay = deleteMessageData.timeDelay;
+			cout << "DELETING DELETING DELETING!" << endl;
 			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->guild, this->threads->at(8).scheduler);
 			send(MessageManagerAgent::requestDeleteBuffer, dataPackage);
+			cout << "DELETING DELETING DELETING222!" << endl;
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
-			co_await mainThread;
+			cout << "DELETING DELETING DELETING3333!" << endl;
 			co_return;
 		}
 

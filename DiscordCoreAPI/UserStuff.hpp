@@ -174,7 +174,7 @@ namespace DiscordCoreAPI {
 			userManagerAgent.start();
 			UserManagerAgent::usersToInsert.push(user);
 			userManagerAgent.wait(&userManagerAgent);
-			//cout << "CURRENT USER NAME: " << UserManagerAgent::cache.at(user.data.id).data.username << endl;
+			cout << "CURRENT USER NAME: " << UserManagerAgent::cache.at(user.data.id).data.username << endl;
 			co_return;
 		}
 
