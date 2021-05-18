@@ -39,10 +39,10 @@ namespace DiscordCoreAPI {
 		friend class MessageManager;
 		friend class MessageManagerAgent;
 
-		vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 
-		Message(DiscordCoreInternal::MessageData dataNew, Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, MessageManager* pMessageManagerNew, vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
+		Message(DiscordCoreInternal::MessageData dataNew, Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, MessageManager* pMessageManagerNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
 			this->guild = guildNew;
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
@@ -84,11 +84,11 @@ namespace DiscordCoreAPI {
 		static map<string, Message> cache;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreAPI::MessageManager* pMessageManager;
 		Guild* pGuild;
 
-		MessageManagerAgent(vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::MessageManager* pMessageManagerNew, Guild* pGuildNew, Scheduler* pScheduler)
+		MessageManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::MessageManager* pMessageManagerNew, Guild* pGuildNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
@@ -267,10 +267,10 @@ namespace DiscordCoreAPI {
 		friend class Channel;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 
 		MessageManager() {}
-		MessageManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, Guild* guildNew, vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
+		MessageManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, Guild* guildNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
 			this->agentResources = agentResourcesNew;
 			this->guild = guildNew;
 			this->threads = threadsNew;

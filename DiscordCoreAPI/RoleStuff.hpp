@@ -44,6 +44,10 @@ namespace DiscordCoreAPI {
 	};
 
 	class RoleManagerAgent :agent {
+	public:
+
+		static map<string, Role> cache;
+
 	protected:
 		friend class DiscordCoreClient;
 		friend class Guild;
@@ -53,14 +57,13 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::GetRoleData>* requestGetBuffer;
 		static unbounded_buffer<Role>* outBuffer;
 		static concurrent_queue<Role> rolesToInsert;
-		static map<string, Role> cache;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreAPI::RoleManager* pRoleManager;
 		Guild* pGuild;
 
-		RoleManagerAgent(vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::RoleManager* pRoleManagerNew, Guild* pGuildNew)
+		RoleManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::RoleManager* pRoleManagerNew, Guild* pGuildNew)
 			:agent(*pScheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
@@ -183,17 +186,16 @@ namespace DiscordCoreAPI {
 			roleManagerAgent.start();
 			RoleManagerAgent::rolesToInsert.push(role);
 			roleManagerAgent.wait(&roleManagerAgent);
-			cout << "CURRENT ROLE NAME: " << RoleManagerAgent::cache.at(role.data.id).data.name << endl;
 			co_return;
 		}
 
 	protected:
 		friend class Guild;
 		friend class DiscordCoreClient;
-		vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 
-		RoleManager(Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
+		RoleManager(Guild* guildNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
 			this->agentResources = agentResourcesNew;
 			this->guild = guildNew;
 			this->threads = threadsNew;

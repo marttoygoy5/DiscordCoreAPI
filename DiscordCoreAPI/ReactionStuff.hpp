@@ -82,11 +82,11 @@ namespace DiscordCoreAPI {
 		static map<string, Reaction> cache;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 		DiscordCoreAPI::ReactionManager* pReactionManager{ nullptr };
 		Guild* pGuild{ nullptr };
 
-		ReactionManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::ReactionManager* pReactionManagerNew, Guild* pGuildNew, vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler)
+		ReactionManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::ReactionManager* pReactionManagerNew, Guild* pGuildNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
@@ -298,10 +298,10 @@ namespace DiscordCoreAPI {
 		friend class Message;
 		friend class ReactionManagerAgent;
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		string messageId, channelId;
 
-		ReactionManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, Guild* guildNew, vector<DiscordCoreInternal::ThreadContext>* threadsNew, string channalIdNew, string messageIdNew) {
+		ReactionManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, Guild* guildNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, string channalIdNew, string messageIdNew) {
 			this->agentResources = agentResourcesNew;
 			this->guild = guildNew;
 			this->threads = threadsNew;

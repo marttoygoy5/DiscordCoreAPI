@@ -31,13 +31,13 @@ namespace DiscordCoreAPI {
 		friend class Guild;
 		friend class GuildManager;
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 
-		User(vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreInternal::UserData dataNew,  UserManager* usersNew) {
+		User(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreInternal::UserData dataNew,  UserManager* usersNew) {
 			this->initialize(threadsNew, agentResourcesNew, dataNew, usersNew).get();
 		}
 
-		task<void> initialize(vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreInternal::UserData dataNew, UserManager* usersNew) {
+		task<void> initialize(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreInternal::UserData dataNew, UserManager* usersNew) {
 			this->threads = threadsNew;
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
@@ -65,10 +65,10 @@ namespace DiscordCoreAPI {
 		
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreAPI::UserManager* pUserManager;
 
-		UserManagerAgent(vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::UserManager* pUserManagerNew, Scheduler* pScheduler)
+		UserManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::UserManager* pUserManagerNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
@@ -174,7 +174,6 @@ namespace DiscordCoreAPI {
 			userManagerAgent.start();
 			UserManagerAgent::usersToInsert.push(user);
 			userManagerAgent.wait(&userManagerAgent);
-			cout << "CURRENT USER NAME: " << UserManagerAgent::cache.at(user.data.id).data.username << endl;
 			co_return;
 		}
 
@@ -182,11 +181,11 @@ namespace DiscordCoreAPI {
 
 		friend class DiscordCoreClient;
 
-		vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 
-		UserManager(vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew) {
+		UserManager(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew) {
 			this->threads = threadsNew;
 			this->agentResources = agentResourcesNew;
 		}

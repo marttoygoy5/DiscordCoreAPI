@@ -98,7 +98,7 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 				GuildCreationData guildCreationData;
-				guildCreationData.guild = Guild(guildData, agentResources, this->guilds, this->pSystemThreads.get()->getThreads().get(), this->users);
+				guildCreationData.guild = Guild(guildData, agentResources, this->guilds, this->pSystemThreads->getThreads().get(), this->users);
 				co_return guildCreationData;
 			}
 			catch (exception error) {
