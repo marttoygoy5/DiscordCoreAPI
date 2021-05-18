@@ -24,21 +24,21 @@ namespace DiscordCoreInternal {
     protected:
         friend class SystemThreads;
         unbounded_buffer<bool> requestBuffer;
-        unbounded_buffer<concurrent_vector<ThreadContext>*> submitBuffer;
-        unbounded_buffer<concurrent_vector<ThreadContext>*> responseBuffer;
+        unbounded_buffer<vector<ThreadContext>*> submitBuffer;
+        unbounded_buffer<vector<ThreadContext>*> responseBuffer;
         
-        SystemThreadsAgent(concurrent_vector<ThreadContext>* threads)
+        SystemThreadsAgent(vector<ThreadContext>* threads)
             : agent(*threads->at(0).scheduler)
         {}
 
-        task<void> submitThreads(concurrent_vector<ThreadContext>* threads) {
+        task<void> submitThreads(vector<ThreadContext>* threads) {
             send(submitBuffer, threads);
             co_return;
         }
 
         void run() {
             bool startVal = receive(requestBuffer, 1U);
-            concurrent_vector<ThreadContext>* threads = receive(submitBuffer);
+            vector<ThreadContext>* threads = receive(submitBuffer);
             send(responseBuffer, threads);
             done();
         }
@@ -48,14 +48,14 @@ namespace DiscordCoreInternal {
     public:
 
         ThreadContext mainThreadContext;
-        static concurrent_vector<ThreadContext>* threads;
+        static vector<ThreadContext>* threads;
 
-        task<concurrent_vector<ThreadContext>*> getThreads() {
+        task<vector<ThreadContext>*> getThreads() {
             SystemThreadsAgent systemThreadsAgent(SystemThreads::threads);
             systemThreadsAgent.start();
             systemThreadsAgent.submitThreads(SystemThreads::threads).get();
             send(systemThreadsAgent.requestBuffer, true);
-            concurrent_vector<ThreadContext>* threadsNew = receive(systemThreadsAgent.responseBuffer);
+            vector<ThreadContext>* threadsNew = receive(systemThreadsAgent.responseBuffer);
             co_return threadsNew;
         }
 
@@ -81,7 +81,7 @@ namespace DiscordCoreInternal {
             this->mainThreadContext.scheduler = CurrentScheduler::Get();
             shared_ptr<task_group> newTaskGroup = make_shared<task_group>();
             this->mainThreadContext.taskGroup = newTaskGroup;
-            SystemThreads::threads = new concurrent_vector<ThreadContext>();
+            SystemThreads::threads = new vector<ThreadContext>();
             for (unsigned int x = 0; x < this->MaxThreads - 1; x += 1) {
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
                 ThreadContext threadContext;
@@ -107,6 +107,6 @@ namespace DiscordCoreInternal {
         unsigned int MaxThreads;
 
     };
-    concurrent_vector<ThreadContext>* SystemThreads::threads;
+    vector<ThreadContext>* SystemThreads::threads;
 }
 #endif

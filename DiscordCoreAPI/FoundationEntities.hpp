@@ -626,11 +626,6 @@ namespace  DiscordCoreInternal {
         MessageDataOld referencedMessage;
     };
 
-    struct CreateReactionData {
-        string emojiName;
-        string emojiId;
-    };
-
     struct ReactionAddEventData {
         string userId;
         string channelId;
@@ -859,23 +854,30 @@ namespace  DiscordCoreInternal {
         string guildId;
     };
 
-    struct DeleteReactionData {
-        string emojiName;
-        string emojiId;
+    struct PutReactionData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string channelId;
+        string messageId;
+        string emoji;
+    };
+
+    enum class ReactionDeletionType {
+        SELF_DELETE = 0,
+        USER_DELETE = 1,
+        EMOJI_DELETE = 2,
+        ALL_DELETE = 3
+    };
+
+    struct DeleteReactionDataAll {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string channelId;
+        string messageId;
+        string encodedEmoji;
         string userId;
+        ReactionDeletionType deletionType;
     };
-
-    struct DeleteOwnReactionData {
-        string emojiName;
-        string emojiId;
-    };
-
-    struct DeleteAllReactionsByEmojiData {
-        string emojiName;
-        string emojiId;
-    };
-
-    struct DeleteAllReactionsData {};
 
     struct GetChannelData {
         HttpAgentResources agentResources;

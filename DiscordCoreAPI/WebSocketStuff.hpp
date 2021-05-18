@@ -227,8 +227,8 @@ namespace DiscordCoreInternal {
 			catch (hresult result) {
 				cout << result.value << endl;
 			}
-		}
-		
+		}		
+
 		void onClosed(IWebSocket const&, WebSocketClosedEventArgs const& args) {
 			wcout << L"WebSocket_Closed; Code: " << args.Code() << ", Reason: " << args.Reason().c_str() << endl;
 		}

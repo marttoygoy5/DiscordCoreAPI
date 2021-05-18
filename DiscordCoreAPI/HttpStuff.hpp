@@ -17,8 +17,8 @@ namespace DiscordCoreInternal {
 
 	class HttpRequestAgent :public agent {
 	public:
-		unbounded_buffer<HttpWorkload> workSubmissionBuffer;
 		unbounded_buffer<json> workReturnBuffer;
+		unbounded_buffer<HttpWorkload> workSubmissionBuffer;
 		HttpRequestAgent(HttpAgentResources agentResources, Scheduler* pScheduler = nullptr) 
 			:
 			agent(*pScheduler)
