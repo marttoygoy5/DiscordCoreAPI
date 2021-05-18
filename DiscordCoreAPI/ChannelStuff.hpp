@@ -150,6 +150,8 @@ namespace DiscordCoreAPI {
 		Guild* guild{ nullptr };
 
 		task<Channel> fetchAsync(GetChannelData getChannelData) {
+			apartment_context mainThread;
+			co_await resume_foreground(*this->threads->at(2).threadQueue.get());
 			DiscordCoreInternal::GetChannelData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(2);
@@ -159,6 +161,7 @@ namespace DiscordCoreAPI {
 			channelManagerAgent.start();
 			Channel channel = receive(ChannelManagerAgent::outBuffer);
 			agent::wait(&channelManagerAgent);
+			co_await mainThread;
 			co_return channel;
 		}
 

@@ -126,7 +126,8 @@ namespace DiscordCoreAPI {
 			}
 			else if (dataPackage.deletionType == DiscordCoreAPI::ReactionDeletionType::USER_DELETE) {
 				workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.messageId + "/reactions/" + dataPackage.encodedEmoji + "/" + dataPackage.userId;
-			}			
+			}
+			cout << workload.relativePath << endl;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(6).scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
@@ -187,11 +188,13 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteUserReactionAsync(DiscordCoreInternal::DeleteReactionData deleteReactionDataOld) {
+			apartment_context mainThread;
+			co_await resume_foreground(*this->threads->at(7).threadQueue.get());
 			ReactionManagerAgent reactionManagerAgent(this->agentResources, this, this->guild, this->threads);
 			DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = this->channelId;
 			deleteReactionData.messageId = this->messageId;
-			deleteReactionData.userId = deleteReactionData.userId;
+			deleteReactionData.userId = deleteReactionDataOld.userId;
 			deleteReactionData.deletionType = DiscordCoreAPI::ReactionDeletionType::USER_DELETE;
 			string emoji;
 			if (deleteReactionDataOld.emojiId != string()) {
@@ -210,6 +213,7 @@ namespace DiscordCoreAPI {
 			send(ReactionManagerAgent::requestDeleteBuffer, deleteReactionData);
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
+			co_await mainThread;
 			co_return;
 		}
 

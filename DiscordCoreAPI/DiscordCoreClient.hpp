@@ -47,8 +47,8 @@ namespace DiscordCoreAPI {
 			this->start();
 			co_return;
 		}
-
 	protected:
+
 		friend class GuildManager;
 		friend class Guild;
 		friend class GuildMemberManager;

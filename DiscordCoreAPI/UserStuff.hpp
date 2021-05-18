@@ -52,6 +52,9 @@ namespace DiscordCoreAPI {
 	};
 
 	class UserManagerAgent : public agent {
+	public:
+		static map<string, User> cache;
+
 	protected:
 		friend class DiscordCoreClient;
 		friend class UserManager;
@@ -59,7 +62,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::GetUserData>* requestGetBuffer;
 		static unbounded_buffer<User>* outBuffer;
 		static concurrent_queue<User> usersToInsert;
-		static map<string, User> cache;
+		
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
@@ -171,7 +174,7 @@ namespace DiscordCoreAPI {
 			managerAgent.start();
 			UserManagerAgent::usersToInsert.push(user);
 			managerAgent.wait(&managerAgent);
-			cout << "CURRENT USER NAME: " << UserManagerAgent::cache.at(user.data.id).data.username << endl;
+			//cout << "CURRENT USER NAME: " << UserManagerAgent::cache.at(user.data.id).data.username << endl;
 			co_return;
 		}
 

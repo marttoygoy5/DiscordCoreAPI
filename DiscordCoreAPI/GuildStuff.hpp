@@ -55,7 +55,6 @@ namespace DiscordCoreAPI
 				DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
 				Channel channel(channelData, this, this->agentResources, this->channels, this->threads);
 				ChannelManagerAgent::cache.insert(make_pair(channelData.id, channel));
-				cout << ChannelManagerAgent::cache.at(channelData.id).data.name << endl;
 			}
 			this->guildMembers = new GuildMemberManager(this, this->agentResources, this->threads);
 			for (unsigned int x = 0; x < data.members.size(); x += 1) {
@@ -73,8 +72,10 @@ namespace DiscordCoreAPI
 			for (unsigned int x = 0; x < data.members.size(); x += 1) {
 				DiscordCoreInternal::UserData userData = data.members.at(x).user;
 				User newUser(this->threads, this->agentResources, userData, this->users);
-				this->users->insertUser(newUser);
+				UserManagerAgent::cache.insert(make_pair(userData.id, newUser));
+				cout << UserManagerAgent::cache.at(userData.id).data.username << endl;
 			}
+			
 			co_return;
 		}
 
