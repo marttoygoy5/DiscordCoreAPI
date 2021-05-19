@@ -93,6 +93,7 @@ namespace DiscordCoreAPI {
 
 		task<DiscordCoreAPI::GuildCreationData>createGuild(DiscordCoreInternal::GuildData guildData) {
 			try {
+				co_await resume_foreground(*this->pSystemThreads->threads->at(0).threadQueue.get());
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
@@ -108,6 +109,7 @@ namespace DiscordCoreAPI {
 
 		task<DiscordCoreAPI::MessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
 			try {
+				co_await resume_foreground(*this->pSystemThreads->threads->at(0).threadQueue.get());
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.botToken = this->botToken;
 				agentResources.baseURL = this->baseURL;
@@ -117,8 +119,9 @@ namespace DiscordCoreAPI {
 				Guild guild = this->guilds->getGuildAsync(getGuildData).get();
 				GetChannelData getChannelData;
 				getChannelData.channelId = messageData.channelId;
-				MessageManager* msgManager = guild.channels->getChannelAsync(getChannelData).get().messages;
-				Message message(messageData, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
+				Channel channel = guild.channels->getChannelAsync(getChannelData).get();
+				MessageManager* msgManager = channel.messages;
+				Message message(messageData, &channel, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
 				MessageCreationData messageCreationData;
 				messageCreationData.message = message;
 				co_return messageCreationData;
@@ -130,6 +133,7 @@ namespace DiscordCoreAPI {
 
 		task<DiscordCoreAPI::ReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
 			try {
+				co_await resume_foreground(*this->pSystemThreads->threads->at(0).threadQueue.get());
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
@@ -138,7 +142,10 @@ namespace DiscordCoreAPI {
 				GetGuildData getGuildData;
 				getGuildData.guildId = reactionData.guildId;
 				Guild guild = this->guilds->getGuildAsync(getGuildData).get();
-				Reaction reaction(agentResources, reactionData, &guild);
+				GetChannelData getChannelData;
+				getChannelData.channelId = reactionData.channelId;
+				Channel channel = guild.channels->getChannelAsync(getChannelData).get();
+				Reaction reaction(agentResources, reactionData, &guild, &channel);
 				reactionAddData.reaction = reaction;
 				co_return reactionAddData;
 			}

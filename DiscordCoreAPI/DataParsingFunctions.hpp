@@ -978,6 +978,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
+            /*
             json roleDataArray = jsonObjectData.at("roles");
             for (unsigned int x = 0; x < roleDataArray.size(); x += 1) {
                 if (guildData.roles.contains(roleDataArray.at(x).at("id"))) {
@@ -992,6 +993,7 @@ namespace DiscordCoreInternal {
                     guildData.roles.insert(make_pair(roleDataArray.at(x).at("id"), roleData));
                 }
             }
+            */
         }
 
         if (jsonObjectData.contains("owner") && !jsonObjectData.at("owner").is_null()) {

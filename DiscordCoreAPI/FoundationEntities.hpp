@@ -504,7 +504,7 @@ namespace  DiscordCoreInternal {
         DefaultMessageNotificationLevel defaultMessageNotifications = DefaultMessageNotificationLevel::ALL_MESSAGES;
         ExplicitContentFilterLevel explicitContentFilter = ExplicitContentFilterLevel::DISABLED;
         vector<EmojiData> emoji{};
-        map<string, RoleData> roles{};
+        //map<string, RoleData> roles{};
         int systemChannelFlags = 0;
         MFALevel mfaLevel = MFALevel::NONE;
         bool large = false;
