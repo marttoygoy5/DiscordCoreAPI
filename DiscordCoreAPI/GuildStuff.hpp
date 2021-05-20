@@ -51,26 +51,24 @@ namespace DiscordCoreAPI
 				this->data = dataNew;
 				this->agentResources = agentResourcesNew;
 				this->guilds = guildsNew;
-				this->channels = new ChannelManager(this, this->agentResources, this->threads);
+				this->channels = new ChannelManager(this->agentResources, this->threads);
 				cout << "Caching guild: " << this->data.name << endl;
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
-					Channel channel(channelData, this, this->agentResources, this->channels, this->threads);
+					Channel channel(channelData,  this->agentResources, this->channels, this->threads);
 					this->channels->insertChannel(channel).get();
 				}
-				/*
-				this->guildMembers = new GuildMemberManager(this, this->agentResources, this->threads);
+				this->guildMembers = new GuildMemberManager(this->agentResources, this->threads);
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
 					guildMemberData.guildId = this->data.id;
-					GuildMember guildMember(guildMemberData, this, this->guildMembers);
+					GuildMember guildMember(guildMemberData, this->guildMembers);
 					this->guildMembers->insertGuildMember(guildMember).get();
 				}
-				*/
-				this->roles = new RoleManager(this, this->agentResources, this->threads);
+				this->roles = new RoleManager(this->agentResources, this->threads);
 				for (auto const& [key, value] : data.roles) {
 					DiscordCoreInternal::RoleData roleData = value;
-					Role role(roleData, this->agentResources, this->roles, this);
+					Role role(roleData, this->agentResources, this->roles);
 					this->roles->insertRole(role).get();;
 				}
 				this->users = usersNew;
@@ -109,7 +107,7 @@ namespace DiscordCoreAPI
 		DiscordCoreAPI::UserManager* pUserManager;
 
 		GuildManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::GuildManager* pGuildManagerNew, DiscordCoreAPI::UserManager* pUserManagerNew, Scheduler* pScheduler)
-			:agent(*threadsNew->at(8).scheduler)
+			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;

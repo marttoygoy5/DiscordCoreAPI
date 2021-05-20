@@ -68,7 +68,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreAPI::UserManager* pUserManager;
 
 		UserManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::UserManager* pUserManagerNew, Scheduler* pScheduler)
-			:agent(*threadsNew->at(8).scheduler)
+			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
@@ -147,7 +147,7 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userId = getUserData.userId;
-			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(0).scheduler);
+			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(4).scheduler);
 			send(UserManagerAgent::requestFetchBuffer, dataPackage);
 			userManagerAgent.start();
 			User user = receive(UserManagerAgent::outBuffer);
@@ -160,7 +160,7 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userId = getUserData.userId;
-			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(0).scheduler);
+			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(4).scheduler);
 			send(UserManagerAgent::requestGetBuffer, dataPackage);
 			userManagerAgent.start();
 			User user = receive(UserManagerAgent::outBuffer);
@@ -169,7 +169,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> insertUser(User user) {
-			UserManagerAgent userManagerAgent(this->threads, this->agentResources, this, this->threads->at(0).scheduler);
+			UserManagerAgent userManagerAgent(this->threads, this->agentResources, this, this->threads->at(4).scheduler);
 			userManagerAgent.start();
 			UserManagerAgent::usersToInsert.push(user);
 			userManagerAgent.wait(&userManagerAgent);

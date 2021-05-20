@@ -86,7 +86,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreAPI::ReactionManager* pReactionManager{ nullptr };
 
 		ReactionManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::ReactionManager* pReactionManagerNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler)
-			:agent(*threadsNew->at(8).scheduler)
+			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
@@ -175,7 +175,6 @@ namespace DiscordCoreAPI {
 			putReactionData.agentResources = this->agentResources;
 			putReactionData.threadContext = this->threads->at(4);
 			string emoji;
-			cout << "WEHERE WE HERE WE HERE!" << endl;
 			if (createReactionData.emojiId != string()) {
 				emoji += ":" + createReactionData.emojiName + ":" + createReactionData.emojiId;
 			}
@@ -188,14 +187,11 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			putReactionData.emoji = output;
-			ReactionManagerAgent reactionManagerAgent(putReactionData.agentResources, this, this->threads, this->threads->at(4).scheduler);
+			ReactionManagerAgent reactionManagerAgent(putReactionData.agentResources, this, this->threads, this->threads->at(5).scheduler);
 			send(ReactionManagerAgent::requestPutBuffer, putReactionData);
-			cout << "WEHERE WE HERE WE HERE!" << endl;
 			reactionManagerAgent.start();
 			Reaction reaction = receive(ReactionManagerAgent::outBuffer);
-			cout << "WEHERE WE HERE WE HERE!" << endl;
 			agent::wait(&reactionManagerAgent);
-			cout << "WEHERE WE HERE WE HERE!" << endl;
 			co_return;
 		}
 

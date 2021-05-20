@@ -36,7 +36,6 @@ namespace DiscordCoreAPI {
 			this->doWeQuit = true;
 			this->pWebSocketReceiverAgent->terminate();
 			this->pWebSocketConnectionAgent->terminate();
-			this->terminate();
 		}
 
 		task<void> login() {
@@ -93,7 +92,6 @@ namespace DiscordCoreAPI {
 
 		task<DiscordCoreAPI::GuildCreationData>createGuild(DiscordCoreInternal::GuildData guildData) {
 			try {
-				co_await resume_foreground(*this->pSystemThreads->threads->at(0).threadQueue.get());
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
@@ -108,7 +106,6 @@ namespace DiscordCoreAPI {
 		}
 
 		task<DiscordCoreAPI::MessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
-				co_await resume_foreground(*this->pSystemThreads->threads->at(0).threadQueue.get());
 			try {
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.botToken = this->botToken;
@@ -133,7 +130,6 @@ namespace DiscordCoreAPI {
 
 		task<DiscordCoreAPI::ReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
 			try {
-				co_await resume_foreground(*this->pSystemThreads->threads->at(0).threadQueue.get());
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
