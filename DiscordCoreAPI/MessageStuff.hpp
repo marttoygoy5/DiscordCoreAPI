@@ -275,6 +275,7 @@ namespace DiscordCoreAPI {
 			dataPackage.content = DiscordCoreInternal::getEditMessagePayload(editMessageDataNew);
 			dataPackage.threadContext = this->threads->at(6);
 			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(6).scheduler);
+			cout << "TESTING TESTING TESTING!" << endl;
 			send(MessageManagerAgent::requestPatchBuffer, dataPackage);
 			messageManagerAgent.start();
 			Message message = receive(MessageManagerAgent::outBuffer);
