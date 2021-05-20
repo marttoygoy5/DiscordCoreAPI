@@ -90,7 +90,7 @@ namespace DiscordCoreAPI {
 			co_await mainThread;
 		}
 
-		task<DiscordCoreAPI::GuildCreationData>createGuild(DiscordCoreInternal::GuildData guildData) {
+		task<DiscordCoreAPI::GuildCreationData> createGuild(DiscordCoreInternal::GuildData guildData) {
 			try {
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.baseURL = this->baseURL;
