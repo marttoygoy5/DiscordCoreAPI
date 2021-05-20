@@ -87,6 +87,7 @@ namespace DiscordCoreInternal {
 						while (rateLimitData.msRemain > 0.0f) {
 							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							rateLimitData.msRemain = targetTime - currentTime;
+							cout << rateLimitData.msRemain << endl;
 						}
 					}
 					HttpData returnData;

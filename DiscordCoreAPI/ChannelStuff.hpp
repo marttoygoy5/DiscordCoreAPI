@@ -51,8 +51,8 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 	};
-
 	struct GetChannelData {
+
 		string channelId;
 	};
 
@@ -74,7 +74,7 @@ namespace DiscordCoreAPI {
 		Guild* pGuild;
 
 		ChannelManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::ChannelManager* pChannelManagerNew, Guild* pGuildNew, Scheduler* pScheduler)
-			:agent(*pScheduler) {
+			:agent(*threadsNew->at(8).scheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
 			this->pChannelManager = pChannelManagerNew;
@@ -134,10 +134,12 @@ namespace DiscordCoreAPI {
 					cacheTemp = receive(ChannelManagerAgent::cache, 1U);
 				}
 				catch (exception error) {}
+				
 				if (cacheTemp.contains(channelNew.data.id)) {
 					cacheTemp.erase(channelNew.data.id);
 				}
 				cacheTemp.insert(make_pair(channelNew.data.id, channelNew));
+				
 				asend(cache, cacheTemp);
 
 			}
@@ -152,9 +154,9 @@ namespace DiscordCoreAPI {
 		task<Channel> fetchAsync(GetChannelData getChannelData) {
 			DiscordCoreInternal::GetChannelData dataPackage;
 			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(4);
+			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getChannelData.channelId;
-			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->guild, this->threads->at(3).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->guild, this->threads->at(0).scheduler);
 			send(ChannelManagerAgent::requestFetchBuffer, dataPackage);
 			channelManagerAgent.start();
 			Channel channel = receive(ChannelManagerAgent::outBuffer);
@@ -164,19 +166,22 @@ namespace DiscordCoreAPI {
 
 		task<Channel> getChannelAsync(GetChannelData getChannelData) {
 			DiscordCoreInternal::GetChannelData dataPackage;
+			critical_section critSection;
+			critSection.lock();
 			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(4);
+			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getChannelData.channelId;
-			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->guild, this->threads->at(3).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->guild, this->threads->at(0).scheduler);
 			send(ChannelManagerAgent::requestGetBuffer, dataPackage);
 			channelManagerAgent.start();
 			Channel channel = receive(ChannelManagerAgent::outBuffer);
 			agent::wait(&channelManagerAgent);
+			critSection.unlock();
 			co_return channel;
 		}
 
 		task<void> insertChannel(Channel channel) {
-			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this, this->guild, this->threads->at(3).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this, this->guild, this->threads->at(0).scheduler);
 			channelManagerAgent.start();
 			ChannelManagerAgent::channelsToInsert.push(channel);
 			channelManagerAgent.wait(&channelManagerAgent);

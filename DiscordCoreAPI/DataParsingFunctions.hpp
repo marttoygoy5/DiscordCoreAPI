@@ -136,13 +136,13 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("permission_overwrites") && !jsonObjectData.at("permission_overwrites").is_null()) {
             json overWritesArray = jsonObjectData.at("permission_overwrites");
             for (unsigned int x = 0; x < overWritesArray.size(); x += 1) {
-                if (channelData.permissionOverwrites.contains(overWritesArray.at(x).at("id"))) {
+                try {
                     OverWriteData overWriteData = channelData.permissionOverwrites.at(overWritesArray.at(x).at("id"));
-                    channelData.permissionOverwrites.erase(overWritesArray.at(x).at("id"));
+                    channelData.permissionOverwrites.unsafe_erase(overWritesArray.at(x).at("id"));
                     parseObject(overWritesArray.at(x), &overWriteData);
                     channelData.permissionOverwrites.insert(make_pair(overWriteData.id, overWriteData));
                 }
-                else {
+                catch (exception error) {
                     OverWriteData overWriteData;
                     parseObject(overWritesArray.at(x), &overWriteData);
                     channelData.permissionOverwrites.insert(make_pair(overWriteData.id, overWriteData));
@@ -978,7 +978,6 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
-            /*
             json roleDataArray = jsonObjectData.at("roles");
             for (unsigned int x = 0; x < roleDataArray.size(); x += 1) {
                 if (guildData.roles.contains(roleDataArray.at(x).at("id"))) {
@@ -993,7 +992,6 @@ namespace DiscordCoreInternal {
                     guildData.roles.insert(make_pair(roleDataArray.at(x).at("id"), roleData));
                 }
             }
-            */
         }
 
         if (jsonObjectData.contains("owner") && !jsonObjectData.at("owner").is_null()) {

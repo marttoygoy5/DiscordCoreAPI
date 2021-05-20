@@ -61,7 +61,7 @@ namespace DiscordCoreAPI {
 		Guild* pGuild;
 
 		RoleManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::RoleManager* pRoleManagerNew, Guild* pGuildNew)
-			:agent(*pScheduler) {
+			:agent(*threadsNew->at(8).scheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
 			this->pRoleManager = pRoleManagerNew;
@@ -155,10 +155,10 @@ namespace DiscordCoreAPI {
 		task<Role> fetchAsync(GetRoleData getRoleData) {
 			DiscordCoreInternal::GetRoleData dataPackage;
 			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(4);
+			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getRoleData.guildId;
 			dataPackage.roleId = getRoleData.roleId;
-			RoleManagerAgent managerAgent(this->threads, this->threads->at(3).scheduler, dataPackage.agentResources, this, this->guild);
+			RoleManagerAgent managerAgent(this->threads, this->threads->at(4).scheduler, dataPackage.agentResources, this, this->guild);
 			send(RoleManagerAgent::requestFetchBuffer, dataPackage);
 			managerAgent.start();
 			Role newRole = receive(RoleManagerAgent::outBuffer);
@@ -169,10 +169,10 @@ namespace DiscordCoreAPI {
 		task<Role> getRoleAsync(GetRoleData getRoleData) {
 			DiscordCoreInternal::GetRoleData dataPackage;
 			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(4);
+			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getRoleData.guildId;
 			dataPackage.roleId = getRoleData.roleId;
-			RoleManagerAgent managerAgent(this->threads, this->threads->at(3).scheduler, dataPackage.agentResources, this, this->guild);
+			RoleManagerAgent managerAgent(this->threads, this->threads->at(4).scheduler, dataPackage.agentResources, this, this->guild);
 			send(RoleManagerAgent::requestGetBuffer, dataPackage);
 			managerAgent.start();
 			Role newRole = receive(RoleManagerAgent::outBuffer);
@@ -181,7 +181,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> insertRole(Role role) {
-			RoleManagerAgent roleManagerAgent(this->threads, this->threads->at(3).scheduler, this->agentResources, this, this->guild);
+			RoleManagerAgent roleManagerAgent(this->threads, this->threads->at(4).scheduler, this->agentResources, this, this->guild);
 			roleManagerAgent.start();
 			RoleManagerAgent::rolesToInsert.push(role);
 			roleManagerAgent.wait(&roleManagerAgent);

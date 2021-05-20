@@ -108,8 +108,8 @@ namespace DiscordCoreAPI {
 		}
 
 		task<DiscordCoreAPI::MessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
-			try {
 				co_await resume_foreground(*this->pSystemThreads->threads->at(0).threadQueue.get());
+			try {
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.botToken = this->botToken;
 				agentResources.baseURL = this->baseURL;
@@ -121,7 +121,7 @@ namespace DiscordCoreAPI {
 				getChannelData.channelId = messageData.channelId;
 				Channel channel = guild.channels->getChannelAsync(getChannelData).get();
 				MessageManager* msgManager = channel.messages;
-				Message message(messageData, &channel, &guild, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
+				Message message(messageData,  agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
 				MessageCreationData messageCreationData;
 				messageCreationData.message = message;
 				co_return messageCreationData;
@@ -145,7 +145,7 @@ namespace DiscordCoreAPI {
 				GetChannelData getChannelData;
 				getChannelData.channelId = reactionData.channelId;
 				Channel channel = guild.channels->getChannelAsync(getChannelData).get();
-				Reaction reaction(agentResources, reactionData, &guild, &channel);
+				Reaction reaction(agentResources, reactionData);
 				reactionAddData.reaction = reaction;
 				co_return reactionAddData;
 			}
