@@ -278,8 +278,6 @@ namespace DiscordCoreInternal {
 			string connectionPath = to_string(this->baseURL) + relativeURL;
 			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 			HttpContentDispositionHeaderValue headerValue(L"payload_json");
-			cout << connectionPath << endl;
-			cout << content << endl;
 			HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
 			auto contentHeaderCollection = HttpRequestHeaderCollection(nullptr);
 			HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
@@ -364,6 +362,7 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+				wcout << httpResponse.Content().ReadAsStringAsync().get().c_str() << endl;
 			}
 			deleteData.data = jsonValue;
 			co_return deleteData;

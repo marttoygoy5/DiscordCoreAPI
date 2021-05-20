@@ -180,7 +180,6 @@ namespace DiscordCoreInternal {
 
 		void run() {
 			this->connect();
-
 		}
 
 		void cleanup() {
@@ -193,7 +192,7 @@ namespace DiscordCoreInternal {
 			}
 
 			if (this->webSocket != nullptr) {
-				this->webSocket.Close(1000, to_hstring("Closed due to user request."));
+				this->webSocket.Close(1000, L"Closed due to user request.");
 				this->webSocket = nullptr;
 			}
 
@@ -281,7 +280,7 @@ namespace DiscordCoreInternal {
 			}
 		}
 
-		void onMessageReceived(MessageWebSocket const&, MessageWebSocketMessageReceivedEventArgs const& args) {
+		task<void> onMessageReceived(MessageWebSocket const&, MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
 				DataReader dataReader{ args.GetDataReader() };
 				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
@@ -295,11 +294,11 @@ namespace DiscordCoreInternal {
 				}
 
 				if (payload.at("t") == "PRESENCE_UPDATE") {
-					return;
+					co_return;
 				}
 
 				if (payload.at("t") == "GUILD_CREATE") {
-					return;
+					co_return;
 				}
 
 				if (payload.at("op") == 6) {

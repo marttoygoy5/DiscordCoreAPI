@@ -137,13 +137,14 @@ namespace DiscordCoreInternal {
 		return data.dump();
 	}
 
-	string getEditMessagePayload(EditMessageData editMessageData) {
+	task<string> getEditMessagePayload(EditMessageData editMessageData) {
 		auto fields = json::array();
 
 		for (unsigned int x = 0; x < editMessageData.embed.fields.size(); x += 1) {
 			json field = { {"inline", editMessageData.embed.fields.at(x).Inline},
 							{"value", editMessageData.embed.fields.at(x).value},
 							{"name", editMessageData.embed.fields.at(x).name} };
+			cout << field << endl;
 			fields.push_back(field);
 		}
 
@@ -211,7 +212,7 @@ namespace DiscordCoreInternal {
 		}}
 		};
 
-		return data.dump();
+		co_return data.dump();
 	}
 }
 #endif

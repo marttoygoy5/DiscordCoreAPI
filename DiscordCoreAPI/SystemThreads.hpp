@@ -66,8 +66,8 @@ namespace DiscordCoreInternal {
         task<void> initialize() {
             DispatcherQueueOptions options{
                 sizeof(DispatcherQueueOptions),
-                DQTYPE_THREAD_DEDICATED,
-                DQTAT_COM_STA
+                DQTYPE_THREAD_CURRENT,
+                DQTAT_COM_NONE
             };
             ABI::Windows::System::IDispatcherQueueController* ptrNew{};
             winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));
@@ -90,10 +90,10 @@ namespace DiscordCoreInternal {
                 policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
                 apartment_context mainThread;
+                co_await resume_foreground(threadQueue);
                 Scheduler* newScheduler = Scheduler::Create(policy);
                 threadContext.scheduler = newScheduler;
                 threadContext.threadQueue = make_shared<DispatcherQueue>(threadQueue);
-                co_await resume_foreground(threadQueue);
                 newTaskGroup = make_shared<task_group>();
                 threadContext.taskGroup = newTaskGroup;
                 newScheduler->Attach();

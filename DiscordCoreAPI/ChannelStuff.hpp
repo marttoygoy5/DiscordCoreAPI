@@ -92,7 +92,7 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::ChannelData channelData;
 			DiscordCoreInternal::parseObject(jsonValue, &channelData);
-			Channel channelNew(channelData,  this->agentResources, this->pChannelManager, this->threads);
+			Channel channelNew(channelData, this->agentResources, this->pChannelManager, this->threads);
 			co_return channelNew;
 		}
 
@@ -107,7 +107,7 @@ namespace DiscordCoreAPI {
 					}
 				}
 			}
-			if (try_receive(ChannelManagerAgent::requestGetBuffer, getData)) {
+			if (try_receive(ChannelManagerAgent::requestFetchBuffer, getData)) {
 				map<string, Channel> cacheTemp;
 				if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
 					if (cacheTemp.contains(getData.channelId)) {
