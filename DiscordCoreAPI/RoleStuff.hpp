@@ -128,13 +128,13 @@ namespace DiscordCoreAPI {
 			Role roleNew;
 			while (RoleManagerAgent::rolesToInsert.try_pop(roleNew)) {
 				map<string, Role> cacheTemp;
-				try_receive(RoleManagerAgent::cache, cacheTemp);
-				if (cacheTemp.contains(roleNew.data.id)) {
-					cacheTemp.erase(roleNew.data.id);
+				if (try_receive(RoleManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(roleNew.data.id)) {
+						cacheTemp.erase(roleNew.data.id);
+					}
 				}
 				cacheTemp.insert(make_pair(roleNew.data.id, roleNew));
 				asend(RoleManagerAgent::cache, cacheTemp);
-
 			}
 			done();
 		}

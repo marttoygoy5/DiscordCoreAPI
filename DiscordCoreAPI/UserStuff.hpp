@@ -97,41 +97,38 @@ namespace DiscordCoreAPI {
 		}
 
 		void run() {
-			try {
-				DiscordCoreInternal::GetUserData getData = receive(UserManagerAgent::requestGetBuffer, 1U);
-				map<string, User> cacheTemp = receive(UserManagerAgent::cache, 1U);
-				if (cacheTemp.contains(getData.userId)) {
-					User user = cacheTemp.at(getData.userId);
-					send(UserManagerAgent::outBuffer, user);
+			DiscordCoreInternal::GetUserData getData;
+			if (try_receive(UserManagerAgent::requestGetBuffer, getData)) {
+				map<string, User> cacheTemp;
+				if (try_receive(UserManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(getData.userId)) {
+						User user = cacheTemp.at(getData.userId);
+						send(UserManagerAgent::outBuffer, user);
+					}
 				}
 			}
-			catch (exception error) {}
-			try {
-				DiscordCoreInternal::GetUserData getData = receive(UserManagerAgent::requestFetchBuffer, 1U);
-				map<string, User> cacheTemp = receive(UserManagerAgent::cache, 1U);
-				if (cacheTemp.contains(getData.userId)) {
-					cacheTemp.erase(getData.userId);
+			if (try_receive(UserManagerAgent::requestFetchBuffer, getData)) {
+				map<string, User> cacheTemp;
+				if (try_receive(UserManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(getData.userId)) {
+						cacheTemp.erase(getData.userId);
+					}
 				}
 				User user = getObjectAsync(getData).get();
 				cacheTemp.insert(make_pair(getData.userId, user));
 				send(UserManagerAgent::outBuffer, user);
 				asend(UserManagerAgent::cache, cacheTemp);
 			}
-			catch (exception error) {}
-			DiscordCoreInternal::UserData userData;
-			User user(this->threads, this->agentResources, userData, this->pUserManager);
-			
+			User user;
 			while (UserManagerAgent::usersToInsert.try_pop(user)) {
 				map<string, User> cacheTemp;
-				try {
-					cacheTemp = receive(UserManagerAgent::cache, 1U);
-				}
-				catch (exception error) {}
-				if (cacheTemp.contains(user.data.id)) {
-					cacheTemp.erase(user.data.id);
+				if (try_receive(UserManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(user.data.id)) {
+						cacheTemp.erase(user.data.id);
+					}
 				}
 				cacheTemp.insert(make_pair(user.data.id, user));
-				asend(UserManagerAgent::cache, cacheTemp);
+				send(UserManagerAgent::cache, cacheTemp);
 			}
 			done();
 		}
@@ -171,6 +168,7 @@ namespace DiscordCoreAPI {
 			userManagerAgent.start();
 			UserManagerAgent::usersToInsert.push(user);
 			userManagerAgent.wait(&userManagerAgent);
+			cout << user.data.username << endl;
 			co_return;
 		}
 

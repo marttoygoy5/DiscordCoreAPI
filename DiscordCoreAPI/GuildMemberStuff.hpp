@@ -110,14 +110,13 @@ namespace DiscordCoreAPI {
 			GuildMember guildMember;
 			while (GuildMemberManagerAgent::guildMembersToInsert.try_pop(guildMember)) {
 				map<string, GuildMember> cacheTemp;
-				try_receive(GuildMemberManagerAgent::cache, cacheTemp);
-				if (cacheTemp.contains(guildMember.data.guildId + guildMember.data.user.id)) {
-					cacheTemp.erase(guildMember.data.guildId + guildMember.data.user.id);
+				if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(guildMember.data.guildId + guildMember.data.user.id)) {
+						cacheTemp.erase(guildMember.data.guildId + guildMember.data.user.id);
+					}
 				}
 				cacheTemp.insert(make_pair(guildMember.data.guildId + guildMember.data.user.id, guildMember));
-
 				asend(GuildMemberManagerAgent::cache, cacheTemp);
-
 			}
 			done();
 		}

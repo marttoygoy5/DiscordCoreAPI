@@ -192,20 +192,18 @@ namespace DiscordCoreAPI {
 		}
 
 		void run() {
-			try {
-				DiscordCoreInternal::PostMessageData dataPackage = receive(MessageManagerAgent::requestPostBuffer, 1U);
+			DiscordCoreInternal::PostMessageData dataPackage;
+			if (try_receive(MessageManagerAgent::requestPostBuffer, dataPackage)) {
 				Message message = this->postObjectAsync(dataPackage).get();
 				send(MessageManagerAgent::outBuffer, message);
-			}
-			catch (exception error) {}
-			try {
-				DiscordCoreInternal::GetMessageData dataPackageNew = receive(MessageManagerAgent::requestGetBuffer, 1U);
+			};
+			DiscordCoreInternal::GetMessageData dataPackageNew;;
+			if (try_receive(MessageManagerAgent::requestGetBuffer, dataPackageNew)) {
 				Message message = MessageManagerAgent::cache.at(dataPackageNew.channelId + dataPackageNew.id);
 				send(MessageManagerAgent::outBuffer, message);
-			}
-			catch (exception error) {}
-			try {
-				DiscordCoreInternal::GetMessageData dataPackageGet = receive(MessageManagerAgent::requestFetchBuffer, 1U);
+			};
+			DiscordCoreInternal::GetMessageData dataPackageGet; 
+			if (try_receive(MessageManagerAgent::requestFetchBuffer, dataPackageGet)) {
 				if (MessageManagerAgent::cache.contains(dataPackageGet.channelId + dataPackageGet.id)) {
 					MessageManagerAgent::cache.erase(dataPackageGet.channelId + dataPackageGet.id);
 				}
@@ -213,23 +211,20 @@ namespace DiscordCoreAPI {
 				MessageManagerAgent::cache.insert(make_pair(dataPackageGet.channelId + dataPackageGet.id, message));
 				send(MessageManagerAgent::outBuffer, message);
 			}
-			catch (exception error) {}
-			try {
-				DiscordCoreInternal::PatchMessageData dataPackageGet = receive(MessageManagerAgent::requestPatchBuffer, 1U);
-				if (MessageManagerAgent::cache.contains(dataPackageGet.channelId + dataPackageGet.messageId)) {
-					MessageManagerAgent::cache.erase(dataPackageGet.channelId + dataPackageGet.messageId);
+			DiscordCoreInternal::PatchMessageData dataPackageGetNew; 
+			if (try_receive(MessageManagerAgent::requestPatchBuffer, dataPackageGetNew)) {
+				if (MessageManagerAgent::cache.contains(dataPackageGet.channelId + dataPackageGet.id)) {
+					MessageManagerAgent::cache.erase(dataPackageGet.channelId + dataPackageGet.id);
 				}
-				Message message = patchObjectAsync(dataPackageGet).get();
-				MessageManagerAgent::cache.insert(make_pair(dataPackageGet.channelId + dataPackageGet.messageId, message));
+				Message message = patchObjectAsync(dataPackageGetNew).get();
+				MessageManagerAgent::cache.insert(make_pair(dataPackageGet.channelId + dataPackageGet.id, message));
 				send(MessageManagerAgent::outBuffer, message);
 			}
-			catch (exception error) {}
-			try {
-				DiscordCoreInternal::DeleteMessageData dataPackageDelete = receive(MessageManagerAgent::requestDeleteBuffer, 1U);
+			DiscordCoreInternal::DeleteMessageData dataPackageDelete;
+			if (try_receive(MessageManagerAgent::requestDeleteBuffer, dataPackageDelete)) {
 				MessageManagerAgent::cache.erase(dataPackageDelete.channelId + dataPackageDelete.messageId);
 				deleteObjectAsync(dataPackageDelete).get();
 			}
-			catch (exception error) {}
 			Message message;
 			while (MessageManagerAgent::messagesToInsert.try_pop(message)) {
 				if (MessageManagerAgent::cache.contains(message.data.channelId + message.data.id)) {

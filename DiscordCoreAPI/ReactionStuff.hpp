@@ -146,18 +146,16 @@ namespace DiscordCoreAPI {
 		}
 
 		void run() {
-			try {
-				DiscordCoreInternal::PutReactionData dataPackage = receive(ReactionManagerAgent::requestPutBuffer, 1U);
+			DiscordCoreInternal::PutReactionData dataPackage;
+			if (try_receive(ReactionManagerAgent::requestPutBuffer, dataPackage)) {
 				this->putObjectAsync(dataPackage).get();
 				DiscordCoreInternal::ReactionData reactionData;
 				send(ReactionManagerAgent::outBuffer, Reaction(this->agentResources, reactionData));
 			}
-			catch (exception error) {}
-			try {
-				DiscordCoreInternal::DeleteReactionDataAll dataPackage = receive(ReactionManagerAgent::requestDeleteBuffer, 1U);
-				this->deleteObjectAsync(dataPackage).get();
+			DiscordCoreInternal::DeleteReactionDataAll dataPackageDelete;
+			if (try_receive(ReactionManagerAgent::requestDeleteBuffer, dataPackageDelete)) {
+				this->deleteObjectAsync(dataPackageDelete).get();
 			}
-			catch (exception error) {}
 			done();
 		}
 	};

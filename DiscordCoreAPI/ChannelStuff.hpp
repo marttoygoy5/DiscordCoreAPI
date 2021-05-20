@@ -122,14 +122,13 @@ namespace DiscordCoreAPI {
 			Channel channelNew;
 			while (ChannelManagerAgent::channelsToInsert.try_pop(channelNew)) {
 				map<string, Channel> cacheTemp;
-				try_receive(ChannelManagerAgent::cache, cacheTemp);
-				if (cacheTemp.contains(channelNew.data.id)) {
-					cacheTemp.erase(channelNew.data.id);
-				}
+				if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(channelNew.data.id)) {
+						cacheTemp.erase(channelNew.data.id);
+					}
+				}				
 				cacheTemp.insert(make_pair(channelNew.data.id, channelNew));
-				
 				asend(cache, cacheTemp);
-
 			}
 			done();
 		}

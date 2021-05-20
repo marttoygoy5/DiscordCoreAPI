@@ -73,13 +73,12 @@ namespace DiscordCoreAPI
 					DiscordCoreInternal::RoleData roleData = value;
 					Role role(roleData, this->agentResources, this->roles);
 					this->roles->insertRole(role).get();
-				}/*
+				}
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::UserData userData = data.members.at(x).user;
 					User user(this->threads, this->agentResources, userData, this->users);
 					this->users->insertUser(user).get();
 				}
-				*/
 			}
 			catch (exception error) {
 				cout << "Error: " << error.what() << endl;
