@@ -18,6 +18,17 @@
 
 namespace DiscordCoreAPI {
 
+	string commandPrefix{ "!" };
+
+	struct DiscordCoreFunctionBaseArguments {
+		vector<string> argumentsArray;
+	};
+
+	struct DiscordCoreFunction {
+		string commandName;
+		void(*functionPtr)(DiscordCoreFunctionBaseArguments*);
+	};
+
 	class DiscordCoreClient : public agent {
 	public:
 
