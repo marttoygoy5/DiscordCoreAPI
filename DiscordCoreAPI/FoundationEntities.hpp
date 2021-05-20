@@ -394,7 +394,7 @@ namespace  DiscordCoreInternal {
         AssetsData assets;
         SecretsData secrets;
         bool instance;
-        int flags;
+        int flags = 0;
         vector<ButtonData> buttons;
     };
 
@@ -551,7 +551,7 @@ namespace  DiscordCoreInternal {
         string primarySkuId;
         string slug;
         string coverImage;
-        int flags;
+        int flags = 0;
     };
 
     struct MessageStickerData {
@@ -569,7 +569,7 @@ namespace  DiscordCoreInternal {
         string content;
         vector<EmbedData> embeds;
         AllowedMentionsData allowedMentions;
-        int flags;
+        int flags = 0;
     };
 
     struct InteractionData {
@@ -601,7 +601,7 @@ namespace  DiscordCoreInternal {
         MessageActivityData activity;
         ApplicationData application;
         MessageReferenceData messageReference;;
-        int flags;
+        int flags = 0;
         vector<MessageStickerData> stickers;
         InteractionData interaction;
     };
@@ -915,7 +915,7 @@ namespace  DiscordCoreInternal {
     struct EditMessageData {
         string content;
         DiscordCoreInternal::EmbedData embed;
-        int flags;
+        int flags = 0;
         vector<DiscordCoreInternal::AttachmentData> attachments;
         DiscordCoreInternal::AllowedMentionsData allowedMentions;
     };

@@ -320,7 +320,6 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-				wcout << httpResponse.Content().ReadAsStringAsync().get().c_str() << endl;
 			}
 			patchData.data = jsonValue;
 			co_return patchData;
@@ -362,7 +361,6 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-				wcout << httpResponse.Content().ReadAsStringAsync().get().c_str() << endl;
 			}
 			deleteData.data = jsonValue;
 			co_return deleteData;
