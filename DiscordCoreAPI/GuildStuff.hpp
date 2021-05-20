@@ -55,27 +55,31 @@ namespace DiscordCoreAPI
 		task<void> initialize() {
 			try {
 				cout << "Caching guild: " << this->data.name << endl << endl;
+				
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
 					Channel channel(channelData, this->agentResources, this->channels, this->threads);
 					this->channels->insertChannel(channel).get();
 				}
+				
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
 					guildMemberData.guildId = this->data.id;
 					GuildMember guildMember(guildMemberData, this->guildMembers);
 					this->guildMembers->insertGuildMember(guildMember).get();
-				}
+				}				
+
 				for (auto const& [key, value] : data.roles) {
 					DiscordCoreInternal::RoleData roleData = value;
 					Role role(roleData, this->agentResources, this->roles);
 					this->roles->insertRole(role).get();
-				}
+				}/*
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::UserData userData = data.members.at(x).user;
 					User user(this->threads, this->agentResources, userData, this->users);
 					this->users->insertUser(user).get();
 				}
+				*/
 			}
 			catch (exception error) {
 				cout << "Error: " << error.what() << endl;
@@ -98,7 +102,7 @@ namespace DiscordCoreAPI
 		static unbounded_buffer<Guild>* outBuffer;
 		static concurrent_queue<Guild> guildsToInsert;
 		static overwrite_buffer<map<string, Guild>> cache;
-
+		
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreAPI::GuildManager* pGuildManager;
@@ -138,38 +142,36 @@ namespace DiscordCoreAPI
 
 		void run() {
 			DiscordCoreInternal::GetGuildData dataPackage;
-			try {
-				dataPackage = receive(GuildManagerAgent::requestGetBuffer, 1U);
-				map<string, Guild> cacheTemp = receive(GuildManagerAgent::cache, 1U);
-				if (cacheTemp.contains(dataPackage.guildId)) {
-					Guild guild = cacheTemp.at(dataPackage.guildId);
-					send(GuildManagerAgent::outBuffer, guild);
+			if (try_receive(GuildManagerAgent::requestGetBuffer, dataPackage)) {
+				map<string, Guild> cacheTemp;
+				if (try_receive(GuildManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(dataPackage.guildId)) {
+						Guild guild = cacheTemp.at(dataPackage.guildId);
+						send(GuildManagerAgent::outBuffer, guild);
+					}
 				}
 			}
-			catch (exception error) {}
-			try {
-				dataPackage = receive(GuildManagerAgent::requestFetchBuffer, 1U);
-				map<string, Guild> cacheTemp = receive(GuildManagerAgent::cache, 1U);
-				if (cacheTemp.contains(dataPackage.guildId)) {
-					dataPackage.oldGuildData = cacheTemp.at(dataPackage.guildId).data;
-					cacheTemp.erase(dataPackage.guildId);
+			if (try_receive(GuildManagerAgent::requestFetchBuffer, dataPackage)) {
+				map<string, Guild> cacheTemp;
+				if (try_receive(GuildManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(dataPackage.guildId)) {
+						dataPackage.oldGuildData = cacheTemp.at(dataPackage.guildId).data;
+						cacheTemp.erase(dataPackage.guildId);
+					}
 				}
 				Guild guild = getObjectAsync(dataPackage).get();
 				cacheTemp.insert(make_pair(dataPackage.guildId, guild));
 				send(GuildManagerAgent::outBuffer, guild);
 				asend(cache, cacheTemp);
 			}
-			catch (exception error) {}
 			Guild guildNew;
 			while (GuildManagerAgent::guildsToInsert.try_pop(guildNew)) {
 				map<string, Guild> cacheTemp;
-				try {
-					cacheTemp = receive(GuildManagerAgent::cache, 1U);
-				}
-				catch (exception error) {}
-				if (cacheTemp.contains(guildNew.data.id)) {
-					cacheTemp.erase(guildNew.data.id);
-				}
+				if (try_receive(GuildManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(guildNew.data.id)) {
+						cacheTemp.erase(guildNew.data.id);
+					}
+				}				
 				guildNew.initialize();
 				cacheTemp.insert(make_pair(guildNew.data.id, guildNew));
 				asend(cache, cacheTemp);

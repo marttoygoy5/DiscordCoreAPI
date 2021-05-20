@@ -132,24 +132,24 @@ namespace DiscordCoreInternal {
             int theValue = jsonObjectData.at("position");
             channelData.position = theValue;
         }
-
+        
         if (jsonObjectData.contains("permission_overwrites") && !jsonObjectData.at("permission_overwrites").is_null()) {
             json overWritesArray = jsonObjectData.at("permission_overwrites");
             for (unsigned int x = 0; x < overWritesArray.size(); x += 1) {
-                try {
+                if (channelData.permissionOverwrites.contains(overWritesArray.at(x).at("id"))) {
                     OverWriteData overWriteData = channelData.permissionOverwrites.at(overWritesArray.at(x).at("id"));
-                    channelData.permissionOverwrites.unsafe_erase(overWritesArray.at(x).at("id"));
+                    channelData.permissionOverwrites.erase(overWritesArray.at(x).at("id"));
                     parseObject(overWritesArray.at(x), &overWriteData);
                     channelData.permissionOverwrites.insert(make_pair(overWriteData.id, overWriteData));
                 }
-                catch (exception error) {
+                else {
                     OverWriteData overWriteData;
                     parseObject(overWritesArray.at(x), &overWriteData);
                     channelData.permissionOverwrites.insert(make_pair(overWriteData.id, overWriteData));
                 }
             }
         }
-
+        
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
             std::string theValue = jsonObjectData.at("name");
             channelData.name = theValue;
@@ -992,6 +992,7 @@ namespace DiscordCoreInternal {
                     guildData.roles.insert(make_pair(roleDataArray.at(x).at("id"), roleData));
                 }
             }
+            
         }
 
         if (jsonObjectData.contains("owner") && !jsonObjectData.at("owner").is_null()) {

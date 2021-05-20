@@ -424,7 +424,7 @@ namespace  DiscordCoreInternal {
         int type;
         string guildId;
         int position;
-        concurrent_unordered_map<string, OverWriteData> permissionOverwrites;
+        map<string, OverWriteData> permissionOverwrites;
         string name;
         string topic;
         bool nsfw;
@@ -456,23 +456,6 @@ namespace  DiscordCoreInternal {
         bool selfVideo;
         bool suppress;
         string requestToSpeakTimestamp;
-    };
-
-    struct EditMessageData {
-        string content;
-        EmbedData embed;
-        int flags;
-        AllowedMentionsData allowedMentions;
-        vector<AttachmentData> attachments;
-    };
-
-    struct CreateMessageData {
-        string content;
-        int nonce;
-        bool tts = false;
-        EmbedData embed;
-        AllowedMentionsData allowedMentions;
-        MessageReferenceData messageReference;
     };
 
     struct GuildData {
@@ -913,12 +896,37 @@ namespace  DiscordCoreInternal {
         string content;
     };
 
+    struct PatchMessageData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string content;
+        string channelId;
+        string messageId;
+    };
+
     struct DeleteMessageData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         unsigned int timeDelay = 0;
         string channelId;
         string messageId;
+    };
+
+    struct EditMessageData {
+        string content;
+        DiscordCoreInternal::EmbedData embed;
+        int flags;
+        vector<DiscordCoreInternal::AttachmentData> attachments;
+        DiscordCoreInternal::AllowedMentionsData allowedMentions;
+    };
+
+    struct CreateMessageData {
+        string content;
+        int nonce;
+        bool tts = false;
+        DiscordCoreInternal::EmbedData embed;
+        DiscordCoreInternal::AllowedMentionsData allowedMentions;
+        DiscordCoreInternal::MessageReferenceData messageReference;
     };
 
     struct GetGuildMemberData {

@@ -98,35 +98,31 @@ namespace DiscordCoreAPI {
 
 		void run() {
 			DiscordCoreInternal::GetChannelData getData;
-			try {
-				getData = receive(ChannelManagerAgent::requestGetBuffer, 1U);
-				map<string, Channel> cacheTemp = receive(cache, 1U);
-				if (cacheTemp.contains(getData.channelId)) {
-					Channel channel = cacheTemp.at(getData.channelId);
-					send(ChannelManagerAgent::outBuffer, channel);
+			if (try_receive(ChannelManagerAgent::requestGetBuffer, getData)) {
+				map<string, Channel> cacheTemp;
+				if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(getData.channelId)) {
+						Channel channel = cacheTemp.at(getData.channelId);
+						send(ChannelManagerAgent::outBuffer, channel);
+					}
 				}
 			}
-			catch (exception error) {}
-			try {
-				getData = receive(ChannelManagerAgent::requestFetchBuffer, 1U);
-				map<string, Channel> cacheTemp = receive(ChannelManagerAgent::cache, 1U);
-				if (cacheTemp.contains(getData.channelId)) {
-					cacheTemp.erase(getData.channelId);
+			if (try_receive(ChannelManagerAgent::requestGetBuffer, getData)) {
+				map<string, Channel> cacheTemp;
+				if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(getData.channelId)) {
+						cacheTemp.erase(getData.channelId);
+					}
 				}
 				Channel channel = getChannelAsync(getData).get();
 				cacheTemp.insert(make_pair(getData.channelId, channel));
 				send(ChannelManagerAgent::outBuffer, channel);
 				asend(cache, cacheTemp);
 			}
-			catch (exception error) {}
 			Channel channelNew;
 			while (ChannelManagerAgent::channelsToInsert.try_pop(channelNew)) {
 				map<string, Channel> cacheTemp;
-				try {
-					cacheTemp = receive(ChannelManagerAgent::cache, 1U);
-				}
-				catch (exception error) {}
-				
+				try_receive(ChannelManagerAgent::cache, cacheTemp);
 				if (cacheTemp.contains(channelNew.data.id)) {
 					cacheTemp.erase(channelNew.data.id);
 				}
@@ -157,8 +153,6 @@ namespace DiscordCoreAPI {
 
 		task<Channel> getChannelAsync(GetChannelData getChannelData) {
 			DiscordCoreInternal::GetChannelData dataPackage;
-			critical_section critSection;
-			critSection.lock();
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getChannelData.channelId;
@@ -167,7 +161,6 @@ namespace DiscordCoreAPI {
 			channelManagerAgent.start();
 			Channel channel = receive(ChannelManagerAgent::outBuffer);
 			agent::wait(&channelManagerAgent);
-			critSection.unlock();
 			co_return channel;
 		}
 

@@ -85,40 +85,39 @@ namespace DiscordCoreAPI {
 
 		void run() {
 			DiscordCoreInternal::GetGuildMemberData getData;
-			try {
-				getData = receive(GuildMemberManagerAgent::requestGetBuffer, 1U);
-				map<string, GuildMember> cacheTemp = receive(GuildMemberManagerAgent::cache, 1U);
-				if (cacheTemp.contains(getData.guildId + getData.guildMemberId)) {
-					GuildMember GuildMember = cacheTemp.at(getData.guildId + getData.guildMemberId);
-					send(GuildMemberManagerAgent::outBuffer, GuildMember);
+			if (try_receive(GuildMemberManagerAgent::requestGetBuffer, getData)) {
+				map<string, GuildMember> cacheTemp;
+				if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(getData.guildId + getData.guildMemberId)) {
+						GuildMember GuildMember = cacheTemp.at(getData.guildId + getData.guildMemberId);
+						send(GuildMemberManagerAgent::outBuffer, GuildMember);
+					}
 				}
 			}
-			catch (exception error) {}
-			try {
-				getData = receive(GuildMemberManagerAgent::requestFetchBuffer, 1U);
-				map<string, GuildMember> cacheTemp = receive(GuildMemberManagerAgent::cache, 1U);
-				if (cacheTemp.contains(getData.guildId + getData.guildMemberId)) {
-					getData.oldGuildMemberData = cacheTemp.at(getData.guildId + getData.guildMemberId).data;
-					cacheTemp.erase(getData.guildId + getData.guildMemberId);
-				}
+			if (try_receive(GuildMemberManagerAgent::requestFetchBuffer, getData)) {
+				map<string, GuildMember> cacheTemp;
+				if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(getData.guildId + getData.guildMemberId)) {
+						getData.oldGuildMemberData = cacheTemp.at(getData.guildId + getData.guildMemberId).data;
+						cacheTemp.erase(getData.guildId + getData.guildMemberId);
+					}
+				}				
 				GuildMember GuildMember = getGuildMemberAsync(getData).get();
 				cacheTemp.insert(make_pair(getData.guildId + getData.guildMemberId, GuildMember));
 				send(GuildMemberManagerAgent::outBuffer, GuildMember);
 				asend(GuildMemberManagerAgent::cache, cacheTemp);
 			}
-			catch (exception error) {}
 			GuildMember guildMember;
 			while (GuildMemberManagerAgent::guildMembersToInsert.try_pop(guildMember)) {
 				map<string, GuildMember> cacheTemp;
-				try {
-					cacheTemp = receive(GuildMemberManagerAgent::cache, 1U);
-				}
-				catch (exception error) {}
+				try_receive(GuildMemberManagerAgent::cache, cacheTemp);
 				if (cacheTemp.contains(guildMember.data.guildId + guildMember.data.user.id)) {
 					cacheTemp.erase(guildMember.data.guildId + guildMember.data.user.id);
 				}
 				cacheTemp.insert(make_pair(guildMember.data.guildId + guildMember.data.user.id, guildMember));
+
 				asend(GuildMemberManagerAgent::cache, cacheTemp);
+
 			}
 			done();
 		}

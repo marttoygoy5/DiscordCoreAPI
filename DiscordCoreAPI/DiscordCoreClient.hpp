@@ -82,6 +82,7 @@ namespace DiscordCoreAPI {
 			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources);
 			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources, this->users);
 			GuildManagerAgent::initialize().get();
+			GuildMemberManagerAgent::initialize();
 			ChannelManagerAgent::initialize().get();
 			MessageManagerAgent::initialize().get();
 			ReactionManagerAgent::initialize().get();
