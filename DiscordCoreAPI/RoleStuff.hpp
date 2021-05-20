@@ -79,12 +79,12 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
+			map<string, Role> cacheTemp = receive(RoleManagerAgent::cache, 1U);
 			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
 				DiscordCoreInternal::RoleData roleData;
-				map<string, Role> cacheTemp = receive(RoleManagerAgent::cache, 1U);
-				if (cacheTemp.contains(jsonValue.at(x).at("id"))) {
-					roleData = cacheTemp.at(jsonValue.at(x).at("id")).data;
-					cacheTemp.erase(jsonValue.at(x).at("id"));
+				if (cacheTemp.contains(dataPackage.roleId)) {
+					roleData = cacheTemp.at(dataPackage.roleId).data;
+					cacheTemp.erase(dataPackage.roleId);
 					DiscordCoreInternal::parseObject(jsonValue, &roleData);
 					Role newRole(roleData, this->agentResources, this->pRoleManager);
 					cacheTemp.insert(make_pair(newRole.data.id, newRole));
@@ -94,10 +94,9 @@ namespace DiscordCoreAPI {
 					DiscordCoreInternal::parseObject(jsonValue, &roleData);
 					Role newRole(roleData, this->agentResources, this->pRoleManager);
 					cacheTemp.insert(make_pair(newRole.data.id, newRole));
-					co_return newRole;
 				}
 			}
-			
+			asend(RoleManagerAgent::cache, cacheTemp);
 		}
 
 		void run() {

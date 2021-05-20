@@ -79,7 +79,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::DeleteReactionDataAll>* requestDeleteBuffer;
 		static unbounded_buffer<Reaction>* outBuffer;
 		static concurrent_queue<Reaction> reactionsToInser;
-		static map<string, Reaction> cache;
+		static overwrite_buffer<map<string, Reaction>> cache;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
@@ -133,7 +133,6 @@ namespace DiscordCoreAPI {
 			else if (dataPackage.deletionType == DiscordCoreInternal::ReactionDeletionType::USER_DELETE) {
 				workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.messageId + "/reactions/" + dataPackage.encodedEmoji + "/" + dataPackage.userId;
 			}
-			cout << workload.relativePath << endl;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
@@ -309,6 +308,6 @@ namespace DiscordCoreAPI {
 	unbounded_buffer<DiscordCoreInternal::DeleteReactionDataAll>* ReactionManagerAgent::requestDeleteBuffer;
 	unbounded_buffer<Reaction>* ReactionManagerAgent::outBuffer;
 	concurrent_queue<Reaction> ReactionManagerAgent::reactionsToInser;
-	map<string, Reaction> ReactionManagerAgent::cache;
+	overwrite_buffer<map<string, Reaction>> ReactionManagerAgent::cache;
 }
 #endif

@@ -150,7 +150,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteObjectAsync(DiscordCoreInternal::DeleteMessageData dataPackage) {
-			DispatcherQueueTimer timer = this->threads->at(10).threadQueue.get()->CreateTimer();
+			DispatcherQueueTimer timer = this->threads->at(9).threadQueue.get()->CreateTimer();
 			timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
 			timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
 				onDelete(dataPackage).get();
@@ -165,9 +165,7 @@ namespace DiscordCoreAPI {
 			try {
 				DiscordCoreInternal::PostMessageData dataPackage = receive(MessageManagerAgent::requestPostBuffer, 1U);
 				Message message = this->postObjectAsync(dataPackage).get();
-				cout << message.data.content << endl;
 				send(MessageManagerAgent::outBuffer, message);
-				cout << message.data.content << endl;
 			}
 			catch (exception error) {}
 			try {
@@ -203,7 +201,7 @@ namespace DiscordCoreAPI {
 		}
 	};
 
-	class MessageManager : concurrent_unordered_map<string, Message> {
+	class MessageManager  {
 	public:
 
 		task<Message> createMessageAsync(DiscordCoreInternal::CreateMessageData createMessageData, string channelId) {
@@ -224,11 +222,11 @@ namespace DiscordCoreAPI {
 		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
 			DiscordCoreInternal::DeleteMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(7);
+			dataPackage.threadContext = this->threads->at(8);
 			dataPackage.channelId = deleteMessageData.channelId;
 			dataPackage.messageId = deleteMessageData.messageId;
 			dataPackage.timeDelay = deleteMessageData.timeDelay;
-			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(8).scheduler);
+			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(7).scheduler);
 			send(MessageManagerAgent::requestDeleteBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);

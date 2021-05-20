@@ -68,7 +68,6 @@ namespace DiscordCoreInternal {
 		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
 		single_assignment<exception> _error;
 
-
 		void run() {
 			try {
 				transformer<HttpWorkload, json> completeHttpRequest([this](HttpWorkload workload) -> json {
@@ -87,6 +86,7 @@ namespace DiscordCoreInternal {
 						while (rateLimitData.msRemain > 0.0f) {
 							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							rateLimitData.msRemain = targetTime - currentTime;
+							cout << rateLimitData.msRemain << endl;
 						}
 					}
 					HttpData returnData;
@@ -133,7 +133,6 @@ namespace DiscordCoreInternal {
 			catch (exception error) {
 				send(_error, error);
 			}
-			
 		}
 
 		task<HttpData> httpGETObjectDataAsync(string relativeURL, RateLimitData* pRateLimitData) {

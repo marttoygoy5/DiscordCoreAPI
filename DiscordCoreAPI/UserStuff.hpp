@@ -52,9 +52,6 @@ namespace DiscordCoreAPI {
 	};
 
 	class UserManagerAgent : public agent {
-	public:
-		static map<string, User> cache;
-
 	protected:
 		friend class DiscordCoreClient;
 		friend class UserManager;
@@ -62,6 +59,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::GetUserData>* requestGetBuffer;
 		static unbounded_buffer<User>* outBuffer;
 		static concurrent_queue<User> usersToInsert;
+		static overwrite_buffer<map<string, User>> cache;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
@@ -101,39 +99,39 @@ namespace DiscordCoreAPI {
 		void run() {
 			try {
 				DiscordCoreInternal::GetUserData getData = receive(UserManagerAgent::requestGetBuffer, 1U);
-				if (UserManagerAgent::cache.contains(getData.userId)) {
-					User user = UserManagerAgent::cache.at(getData.userId);
-					send(UserManagerAgent::outBuffer, user);
-				}
-				else {
-					DiscordCoreInternal::UserData userData;
-					User user(this->threads, this->agentResources, userData, this->pUserManager);
+				map<string, User> cacheTemp = receive(UserManagerAgent::cache, 1U);
+				if (cacheTemp.contains(getData.userId)) {
+					User user = cacheTemp.at(getData.userId);
 					send(UserManagerAgent::outBuffer, user);
 				}
 			}
 			catch (exception error) {}
 			try {
 				DiscordCoreInternal::GetUserData getData = receive(UserManagerAgent::requestFetchBuffer, 1U);
-				if (UserManagerAgent::cache.contains(getData.userId)) {
-					UserManagerAgent::cache.erase(getData.userId);
-					User user = getObjectAsync(getData).get();
-					UserManagerAgent::cache.insert(make_pair(getData.userId, user));
-					send(UserManagerAgent::outBuffer, user);
+				map<string, User> cacheTemp = receive(UserManagerAgent::cache, 1U);
+				if (cacheTemp.contains(getData.userId)) {
+					cacheTemp.erase(getData.userId);
 				}
-				else {
-					User user = getObjectAsync(getData).get();
-					UserManagerAgent::cache.insert(make_pair(getData.userId, user));
-					send(UserManagerAgent::outBuffer, user);
-				}
+				User user = getObjectAsync(getData).get();
+				cacheTemp.insert(make_pair(getData.userId, user));
+				send(UserManagerAgent::outBuffer, user);
+				asend(UserManagerAgent::cache, cacheTemp);
 			}
 			catch (exception error) {}
 			DiscordCoreInternal::UserData userData;
 			User user(this->threads, this->agentResources, userData, this->pUserManager);
+			
 			while (UserManagerAgent::usersToInsert.try_pop(user)) {
-				if (UserManagerAgent::cache.contains(user.data.id)) {
-					UserManagerAgent::cache.erase(user.data.id);
+				map<string, User> cacheTemp;
+				try {
+					cacheTemp = receive(UserManagerAgent::cache, 1U);
 				}
-				UserManagerAgent::cache.insert(make_pair(user.data.id, user));
+				catch (exception error) {}
+				if (cacheTemp.contains(user.data.id)) {
+					cacheTemp.erase(user.data.id);
+				}
+				cacheTemp.insert(make_pair(user.data.id, user));
+				asend(UserManagerAgent::cache, cacheTemp);
 			}
 			done();
 		}
@@ -190,7 +188,7 @@ namespace DiscordCoreAPI {
 		}
 
 	};
-	map<string, User> UserManagerAgent::cache;
+	overwrite_buffer<map<string, User>> UserManagerAgent::cache;
 	unbounded_buffer<DiscordCoreInternal::GetUserData>* UserManagerAgent::requestFetchBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetUserData>* UserManagerAgent::requestGetBuffer;
 	unbounded_buffer<User>* UserManagerAgent::outBuffer;

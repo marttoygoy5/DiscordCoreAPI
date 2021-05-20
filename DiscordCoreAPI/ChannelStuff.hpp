@@ -61,11 +61,10 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<Channel>* outBuffer;
 		static concurrent_queue<Channel> channelsToInsert;
 		static overwrite_buffer<map<string, Channel>> cache;
+		
 		DiscordCoreInternal::HttpAgentResources agentResources;
-
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreAPI::ChannelManager* pChannelManager;
-		Guild* pGuild;
 
 		ChannelManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::ChannelManager* pChannelManagerNew,  Scheduler* pScheduler)
 			:agent(*pScheduler) {
@@ -140,7 +139,7 @@ namespace DiscordCoreAPI {
 		}
 	};
 
-	class ChannelManager : concurrent_unordered_map<string, Channel> {
+	class ChannelManager {
 	public:
 
 		task<Channel> fetchAsync(GetChannelData getChannelData) {

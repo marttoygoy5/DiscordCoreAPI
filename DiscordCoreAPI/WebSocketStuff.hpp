@@ -269,6 +269,7 @@ namespace DiscordCoreInternal {
 				if (this->didWeReceiveHeartbeatAck == false) {
 					this->cleanup();
 					this->connect();
+					this->didWeReceiveHeartbeatAck = true;
 					co_return;
 				}
 				string heartbeat = getHeartbeatPayload(this->lastNumberReceived);

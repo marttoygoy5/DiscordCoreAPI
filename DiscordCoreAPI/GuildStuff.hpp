@@ -54,7 +54,7 @@ namespace DiscordCoreAPI
 
 		task<void> initialize() {
 			try {
-				cout << "Caching guild: " << this->data.name << endl;
+				cout << "Caching guild: " << this->data.name << endl << endl;
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
 					Channel channel(channelData, this->agentResources, this->channels, this->threads);
@@ -73,19 +73,18 @@ namespace DiscordCoreAPI
 				}
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::UserData userData = data.members.at(x).user;
-					User newUser(this->threads, this->agentResources, userData, this->users);
-					this->users->insertUser(newUser).get();
+					User user(this->threads, this->agentResources, userData, this->users);
+					this->users->insertUser(user).get();
 				}
 			}
 			catch (exception error) {
 				cout << "Error: " << error.what() << endl;
 			}
-			
+
 			co_return;
 		}
-
 	};
-
+	
 	struct GetGuildData {
 		string guildId;
 	};
@@ -138,25 +137,25 @@ namespace DiscordCoreAPI
 		}
 
 		void run() {
-			DiscordCoreInternal::GetGuildData getData;
+			DiscordCoreInternal::GetGuildData dataPackage;
 			try {
-				getData = receive(GuildManagerAgent::requestGetBuffer, 1U);
+				dataPackage = receive(GuildManagerAgent::requestGetBuffer, 1U);
 				map<string, Guild> cacheTemp = receive(GuildManagerAgent::cache, 1U);
-				if (cacheTemp.contains(getData.guildId)) {
-					Guild guild = cacheTemp.at(getData.guildId);
+				if (cacheTemp.contains(dataPackage.guildId)) {
+					Guild guild = cacheTemp.at(dataPackage.guildId);
 					send(GuildManagerAgent::outBuffer, guild);
 				}
 			}
 			catch (exception error) {}
 			try {
-				getData = receive(GuildManagerAgent::requestFetchBuffer, 1U);
+				dataPackage = receive(GuildManagerAgent::requestFetchBuffer, 1U);
 				map<string, Guild> cacheTemp = receive(GuildManagerAgent::cache, 1U);
-				if (cacheTemp.contains(getData.guildId)) {
-					getData.oldGuildData = cacheTemp.at(getData.guildId).data;
-					cacheTemp.erase(getData.guildId);
+				if (cacheTemp.contains(dataPackage.guildId)) {
+					dataPackage.oldGuildData = cacheTemp.at(dataPackage.guildId).data;
+					cacheTemp.erase(dataPackage.guildId);
 				}
-				Guild guild = getObjectAsync(getData).get();
-				cacheTemp.insert(make_pair(getData.guildId, guild));
+				Guild guild = getObjectAsync(dataPackage).get();
+				cacheTemp.insert(make_pair(dataPackage.guildId, guild));
 				send(GuildManagerAgent::outBuffer, guild);
 				asend(cache, cacheTemp);
 			}
@@ -181,8 +180,6 @@ namespace DiscordCoreAPI
 
 	class GuildManager {
 	public:
-
-		GuildManager() {}
 
 		task<Guild> fetchAsync(GetGuildData getGuildData) {
 			DiscordCoreInternal::GetGuildData dataPackage;
