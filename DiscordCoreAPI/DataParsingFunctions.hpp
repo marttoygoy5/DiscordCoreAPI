@@ -1510,23 +1510,9 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("fields") && !jsonObjectData.at("fields").is_null()) {
             json fieldsArray = jsonObjectData.at("fields");
             for (unsigned int x = 0; x < fieldsArray.size(); x += 1) {
-                bool isItFound = false;
-                for (unsigned int y = 0; y < embedData.fields.size(); y += 1) {
-                    if (embedData.fields.at(y).name == fieldsArray.at(x).at("name")) {
-                        isItFound = true;
-                        embedData.fields.erase(embedData.fields.begin() + y);
-                        EmbedFieldData fieldData = embedData.fields.at(y);
-                        parseObject(fieldsArray.at(x), &fieldData);
-                        embedData.fields.push_back(fieldData);
-                        break;
-                    }
-                }
-                if (isItFound == false) {
-                    EmbedFieldData fieldData;
-                    parseObject(fieldsArray.at(x), &fieldData);
-                    embedData.fields.push_back(fieldData);
-                    break;
-                }
+                EmbedFieldData fieldData;
+                parseObject(fieldsArray.at(x), &fieldData);
+                embedData.fields.push_back(fieldData);
             }
         }
 

@@ -161,7 +161,7 @@ namespace DiscordCoreInternal {
 			attachments.push_back(attachment);
 		}
 
-		int colorValue = editMessageData.embed.actualColorVal;
+		int colorValue = editMessageData.embed.actualColor();
 
 		json data = {
 			{"flags", editMessageData.flags},

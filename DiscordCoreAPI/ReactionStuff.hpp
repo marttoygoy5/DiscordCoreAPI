@@ -170,7 +170,7 @@ namespace DiscordCoreAPI {
 			putReactionData.channelId = this->channelId;
 			putReactionData.messageId = this->messageId;
 			putReactionData.agentResources = this->agentResources;
-			putReactionData.threadContext = this->threads->at(4);
+			putReactionData.threadContext = this->threads->at(5);
 			string emoji;
 			if (createReactionData.emojiId != string()) {
 				emoji += ":" + createReactionData.emojiName + ":" + createReactionData.emojiId;
@@ -184,7 +184,7 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			putReactionData.emoji = output;
-			ReactionManagerAgent reactionManagerAgent(putReactionData.agentResources, this, this->threads, this->threads->at(5).scheduler);
+			ReactionManagerAgent reactionManagerAgent(putReactionData.agentResources, this, this->threads, this->threads->at(4).scheduler);
 			send(ReactionManagerAgent::requestPutBuffer, putReactionData);
 			reactionManagerAgent.start();
 			Reaction reaction = receive(ReactionManagerAgent::outBuffer);
@@ -199,7 +199,7 @@ namespace DiscordCoreAPI {
 			deleteReactionData.userId = deleteUserReactionData.userId;
 			deleteReactionData.deletionType = DiscordCoreInternal::ReactionDeletionType::USER_DELETE;
 			deleteReactionData.agentResources = this->agentResources;
-			deleteReactionData.threadContext = this->threads->at(7);
+			deleteReactionData.threadContext = this->threads->at(9);
 			string emoji;
 			if (deleteUserReactionData.emojiId != string()) {
 				emoji += ":" + deleteUserReactionData.emojiName + ":" + deleteUserReactionData.emojiId;
@@ -227,7 +227,7 @@ namespace DiscordCoreAPI {
 			deleteReactionData.messageId = this->messageId;
 			deleteReactionData.deletionType = DiscordCoreInternal::ReactionDeletionType::SELF_DELETE;
 			deleteReactionData.agentResources = this->agentResources;
-			deleteReactionData.threadContext = this->threads->at(7);
+			deleteReactionData.threadContext = this->threads->at(9);
 			string emoji;
 			if (deleteOwnReactionData.emojiId != string()) {
 				emoji += ":" + deleteOwnReactionData.emojiName + ":" + deleteOwnReactionData.emojiId;
@@ -254,7 +254,7 @@ namespace DiscordCoreAPI {
 			deleteReactionData.messageId = this->messageId;
 			deleteReactionData.deletionType = DiscordCoreInternal::ReactionDeletionType::EMOJI_DELETE;
 			deleteReactionData.agentResources = this->agentResources;
-			deleteReactionData.threadContext = this->threads->at(7);
+			deleteReactionData.threadContext = this->threads->at(9);
 			string emoji;
 			if (deleteReactionDataOld.emojiId != string()) {
 				emoji += ":" + deleteReactionDataOld.emojiName + ":" + deleteReactionDataOld.emojiId;
@@ -281,7 +281,7 @@ namespace DiscordCoreAPI {
 			deleteReactionData.messageId = this->messageId;
 			deleteReactionData.deletionType = DiscordCoreInternal::ReactionDeletionType::ALL_DELETE;
 			deleteReactionData.agentResources = this->agentResources;
-			deleteReactionData.threadContext = this->threads->at(7);
+			deleteReactionData.threadContext = this->threads->at(9);
 			ReactionManagerAgent reactionManagerAgent(deleteReactionData.agentResources, this, this->threads, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteBuffer, deleteReactionData);
 			reactionManagerAgent.start();

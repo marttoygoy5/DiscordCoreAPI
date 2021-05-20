@@ -45,8 +45,8 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 	};
-	struct GetChannelData {
 
+	struct GetChannelData {
 		string channelId;
 	};
 
@@ -60,8 +60,8 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::GetChannelData>* requestGetBuffer;
 		static unbounded_buffer<Channel>* outBuffer;
 		static concurrent_queue<Channel> channelsToInsert;
-		static overwrite_buffer<map<string, Channel>> cache;
-		
+		static overwrite_buffer<map<string, Channel>> cache;		
+
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreAPI::ChannelManager* pChannelManager;
@@ -142,7 +142,7 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getChannelData.channelId;
-			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(4).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestFetchBuffer, dataPackage);
 			channelManagerAgent.start();
 			Channel channel = receive(ChannelManagerAgent::outBuffer);
@@ -155,7 +155,7 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getChannelData.channelId;
-			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(4).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestGetBuffer, dataPackage);
 			channelManagerAgent.start();
 			Channel channel = receive(ChannelManagerAgent::outBuffer);
@@ -164,7 +164,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> insertChannel(Channel channel) {
-			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this, this->threads->at(4).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this, this->threads->at(2).scheduler);
 			channelManagerAgent.start();
 			ChannelManagerAgent::channelsToInsert.push(channel);
 			channelManagerAgent.wait(&channelManagerAgent);

@@ -86,7 +86,6 @@ namespace DiscordCoreInternal {
 						while (rateLimitData.msRemain > 0.0f) {
 							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 							rateLimitData.msRemain = targetTime - currentTime;
-							cout << rateLimitData.msRemain << endl;
 						}
 					}
 					HttpData returnData;
@@ -276,9 +275,11 @@ namespace DiscordCoreInternal {
 
 		task<HttpData> httpPATCHObjectDataAsync(string relativeURL, string content, RateLimitData* pRateLimitData) {
 			HttpData patchData;
-			string connectionPath = to_string(baseURL) + relativeURL;
+			string connectionPath = to_string(this->baseURL) + relativeURL;
 			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 			HttpContentDispositionHeaderValue headerValue(L"payload_json");
+			cout << connectionPath << endl;
+			cout << content << endl;
 			HttpMediaTypeHeaderValue typeHeaderValue(L"application/json");
 			auto contentHeaderCollection = HttpRequestHeaderCollection(nullptr);
 			HttpStringContent contents(to_hstring(content), UnicodeEncoding::Utf8);
@@ -321,6 +322,7 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+				wcout << httpResponse.Content().ReadAsStringAsync().get().c_str() << endl;
 			}
 			patchData.data = jsonValue;
 			co_return patchData;

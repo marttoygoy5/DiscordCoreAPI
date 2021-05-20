@@ -72,13 +72,13 @@ namespace DiscordCoreAPI {
 			co_await resume_foreground(*this->pSystemThreads->getThreads().get()->at(0).threadQueue.get());
 			this->EventMachine = make_shared<DiscordCoreAPI::EventMachine>();
 			this->botToken = botTokenNew;
-			this->pWebSocketConnectionAgent = new DiscordCoreInternal::WebSocketConnectionAgent(this->webSocketIncWorkloadBuffer, this->pSystemThreads->getThreads().get()->at(1));
+			this->pWebSocketConnectionAgent = new DiscordCoreInternal::WebSocketConnectionAgent(this->webSocketIncWorkloadBuffer, this->pSystemThreads->getThreads().get()->at(0));
 			DiscordCoreInternal::HttpAgentResources agentResources;
 			agentResources.baseURL = this->baseURL;
 			agentResources.botToken = this->botToken;
 			agentResources.pSocketPath = pWebSocketConnectionAgent->returnSocketPathPointer();
 			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->getThreads().get()->at(3).scheduler);
-			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(2));
+			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(1));
 			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources);
 			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources, this->users);
 			GuildManagerAgent::initialize().get();

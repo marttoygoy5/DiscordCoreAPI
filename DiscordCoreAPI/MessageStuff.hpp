@@ -138,6 +138,7 @@ namespace DiscordCoreAPI {
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_MESSAGE;
 			workload.relativePath = "/channels/" + getObjectData.channelId + "/messages/" + getObjectData.messageId;
+			workload.content = getObjectData.content;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(getObjectData.agentResources, getObjectData.threadContext.scheduler);
 			requestAgent.start();
 			send(requestAgent.workSubmissionBuffer, workload);
@@ -180,7 +181,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteObjectAsync(DiscordCoreInternal::DeleteMessageData dataPackage) {
-			DispatcherQueueTimer timer = this->threads->at(9).threadQueue.get()->CreateTimer();
+			DispatcherQueueTimer timer = this->threads->at(10).threadQueue.get()->CreateTimer();
 			timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
 			timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
 				onDelete(dataPackage).get();
@@ -242,7 +243,7 @@ namespace DiscordCoreAPI {
 		task<Message> createMessageAsync(CreateMessageData createMessageData, string channelId) {
 			DiscordCoreInternal::PostMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(5);
+			dataPackage.threadContext = this->threads->at(7);
 			dataPackage.channelId = channelId;
 			DiscordCoreInternal::CreateMessageData createMessageDataNew;
 			createMessageDataNew.allowedMentions = createMessageData.allowedMentions;
@@ -273,9 +274,8 @@ namespace DiscordCoreAPI {
 			editMessageDataNew.embed = editMessageData.embed;
 			editMessageDataNew.flags = editMessageData.flags;
 			dataPackage.content = DiscordCoreInternal::getEditMessagePayload(editMessageDataNew);
-			dataPackage.threadContext = this->threads->at(6);
+			dataPackage.threadContext = this->threads->at(7);
 			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(6).scheduler);
-			cout << "TESTING TESTING TESTING!" << endl;
 			send(MessageManagerAgent::requestPatchBuffer, dataPackage);
 			messageManagerAgent.start();
 			Message message = receive(MessageManagerAgent::outBuffer);
@@ -290,11 +290,11 @@ namespace DiscordCoreAPI {
 		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
 			DiscordCoreInternal::DeleteMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(8);
+			dataPackage.threadContext = this->threads->at(9);
 			dataPackage.channelId = deleteMessageData.channelId;
 			dataPackage.messageId = deleteMessageData.messageId;
 			dataPackage.timeDelay = deleteMessageData.timeDelay;
-			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(7).scheduler);
+			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(8).scheduler);
 			send(MessageManagerAgent::requestDeleteBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
@@ -307,7 +307,7 @@ namespace DiscordCoreAPI {
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getMessageData.channelId;
 			dataPackage.id = getMessageData.id;
-			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this,  this->threads->at(4).scheduler);
+			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestFetchBuffer, dataPackage);
 			messageManagerAgent.start();
 			Message message = receive(MessageManagerAgent::outBuffer);

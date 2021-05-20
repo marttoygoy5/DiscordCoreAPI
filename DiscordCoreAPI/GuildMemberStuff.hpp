@@ -131,7 +131,7 @@ namespace DiscordCoreAPI {
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getGuildMemberData.guildId;
 			dataPackage.guildMemberId = getGuildMemberData.guildMemberId;
-			GuildMemberManagerAgent managerAgent(this->threads, this->threads->at(4).scheduler, dataPackage.agentResources, this);
+			GuildMemberManagerAgent managerAgent(this->threads, this->threads->at(2).scheduler, dataPackage.agentResources, this);
 			DiscordCoreInternal::GuildMemberData guildMemberDat;
 			send(GuildMemberManagerAgent::requestFetchBuffer, dataPackage);
 			managerAgent.start();
@@ -146,7 +146,7 @@ namespace DiscordCoreAPI {
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getGuildMemberData.guildId;
 			dataPackage.guildMemberId = getGuildMemberData.guildMemberId;
-			GuildMemberManagerAgent managerAgent(this->threads, this->threads->at(4).scheduler, dataPackage.agentResources, this);
+			GuildMemberManagerAgent managerAgent(this->threads, this->threads->at(2).scheduler, dataPackage.agentResources, this);
 			send(GuildMemberManagerAgent::requestGetBuffer, dataPackage);
 			managerAgent.start();
 			GuildMember guildMember = receive(GuildMemberManagerAgent::outBuffer);
@@ -155,7 +155,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> insertGuildMember(GuildMember guildMember) {
-			GuildMemberManagerAgent guildMemberManagerAgent(this->threads, this->threads->at(4).scheduler, this->agentResources, this);
+			GuildMemberManagerAgent guildMemberManagerAgent(this->threads, this->threads->at(2).scheduler, this->agentResources, this);
 			guildMemberManagerAgent.start();
 			GuildMemberManagerAgent::guildMembersToInsert.push(guildMember);
 			guildMemberManagerAgent.wait(&guildMemberManagerAgent);
