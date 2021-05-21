@@ -29,6 +29,7 @@ namespace DiscordCoreAPI {
 		friend class ChannelManagerAgent;
 		friend class ChannelManager;
 		friend class Guild;
+		friend class UserManagerAgent;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 
@@ -174,6 +175,7 @@ namespace DiscordCoreAPI {
 		}
 
 	protected:
+		friend class DiscordCoreClient;
 		friend class Guild;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 		DiscordCoreInternal::HttpAgentResources agentResources;

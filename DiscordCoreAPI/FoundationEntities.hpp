@@ -803,7 +803,8 @@ namespace  DiscordCoreInternal {
         GET_GUILD_MEMBER = 13,
         GET_GUILD_MEMBERS = 14,
         GET_ROLES = 15,
-        GET_USER_GUILDS = 16
+        GET_USER_GUILDS = 16,
+        POST_USER_DM = 17
     };
 
     struct HttpAgentResources {
@@ -893,6 +894,12 @@ namespace  DiscordCoreInternal {
         ThreadContext threadContext;
         string userId;
         GetUserDataType userType;
+    };
+
+    struct PostUserDMData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        UserData userData;
     };
 
     struct PostMessageData {
