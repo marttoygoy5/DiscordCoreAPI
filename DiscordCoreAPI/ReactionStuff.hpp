@@ -13,9 +13,9 @@
 #include "FoundationEntities.hpp"
 
 namespace DiscordCoreAPI {
-
-	class ReactionManager;
 	
+	class ReactionManager;
+
 	class Reaction {
 	public:
 
@@ -104,7 +104,7 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 
-		task<void> putObjectAsync(DiscordCoreInternal::PutReactionData dataPackage) {
+		task<Reaction> putObjectAsync(DiscordCoreInternal::PutReactionData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PUT_REACTION;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PUT;
@@ -112,13 +112,16 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
+			json jsonValue = receive(requestAgent.workReturnBuffer);
 			exception error;
 			if (requestAgent.get_error(error)) {
 				cout << "Error Message: " << error.what() << endl;
 			}
-			co_return;
+			DiscordCoreInternal::ReactionData reactionData;
+			DiscordCoreInternal::parseObject(jsonValue, &reactionData);
+			Reaction reaction(reactionData, this->reactions);
+			co_return reaction;
 		}
 
 		task<void> deleteObjectAsync(DiscordCoreInternal::DeleteReactionDataAll dataPackage) {
@@ -140,8 +143,8 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
+			json jsonValue = receive(requestAgent.workReturnBuffer);
 			exception error;
 			if (requestAgent.get_error(error)) {
 				cout << "Error Message: " << error.what() << endl;
@@ -152,9 +155,8 @@ namespace DiscordCoreAPI {
 		void run() {
 			DiscordCoreInternal::PutReactionData dataPackage;
 			if (try_receive(ReactionManagerAgent::requestPutBuffer, dataPackage)) {
-				this->putObjectAsync(dataPackage).get();
-				DiscordCoreInternal::ReactionData reactionData;
-				send(ReactionManagerAgent::outBuffer, Reaction(reactionData, this->reactions));
+				Reaction reaction = this->putObjectAsync(dataPackage).get();
+				send(ReactionManagerAgent::outBuffer, reaction);
 			}
 			DiscordCoreInternal::DeleteReactionDataAll dataPackageDelete;
 			if (try_receive(ReactionManagerAgent::requestDeleteBuffer, dataPackageDelete)) {
@@ -167,7 +169,7 @@ namespace DiscordCoreAPI {
 	class ReactionManager {
 	public:
 
-		task<void> createReactionAsync(PutReactionData createReactionData){
+		task<Reaction> createReactionAsync(PutReactionData createReactionData){
 			DiscordCoreInternal::PutReactionData putReactionData;
 			putReactionData.channelId = createReactionData.channelId;
 			putReactionData.messageId = createReactionData.messageId;
@@ -193,7 +195,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::ReactionData reactionData;
 			Reaction reaction(reactionData, this);
 			try_receive(ReactionManagerAgent::outBuffer, reaction);
-			co_return;
+			co_return reaction;
 		}
 
 		task<void> deleteUserReactionAsync(DeleteUserReactionData deleteUserReactionData) {
