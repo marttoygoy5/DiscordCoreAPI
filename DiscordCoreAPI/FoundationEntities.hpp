@@ -267,6 +267,20 @@ namespace  DiscordCoreInternal {
         DeferredChannelMessageWithSource = 5
     };
 
+    enum class ChannelType {
+        GUILD_TEXT = 0,
+        DM = 1,
+        GUILD_VOICE = 2,
+        GROUP_DM = 3,
+        GUILD_CATEGORY = 4,
+        GUILD_NEWS = 5,
+        GUILD_STORE = 6,
+        GUILD_NEWS_THREAD = 10,
+        GUILD_PUBLIC_THREAD = 11,
+        GUILD_PRIVATE_THREAD = 12,
+        GUILD_STAGE_VOICE = 13
+    };
+
     struct UserData {
         string username;
         string id;
@@ -421,7 +435,7 @@ namespace  DiscordCoreInternal {
 
     struct ChannelData {
         string id;
-        int type;
+        ChannelType type;
         string guildId;
         int position;
         map<string, OverWriteData> permissionOverwrites;
@@ -625,8 +639,8 @@ namespace  DiscordCoreInternal {
             if (permissionString == "") {
                 return false;
             }
-            int permissionsInteger = stoll(permissionString);
-            if ((permissionsInteger & (int)permission) == (int)permission) {
+            __int64 permissionsInteger = stoll(permissionString);
+            if ((permissionsInteger & (__int64)permission) == (__int64)permission) {
                 return true;
             }
             else {
@@ -638,9 +652,9 @@ namespace  DiscordCoreInternal {
             if (originalPermissionString == "") {
                 originalPermissionString = "0";
             }
-            int permissionsInteger = stoll(originalPermissionString);
+            __int64 permissionsInteger = stoll(originalPermissionString);
             for (unsigned int x = 0; x < quantityOfPermsToAdd; x += 1) {
-                permissionsInteger = permissionsInteger | (int)permissionsToAdd[x];
+                permissionsInteger = permissionsInteger | (__int64)permissionsToAdd[x];
             }
             stringstream sstream;
             sstream << permissionsInteger;
@@ -651,9 +665,9 @@ namespace  DiscordCoreInternal {
             if (originalPermissionString == "") {
                 originalPermissionString = "0";
             }
-            int permissionsInteger = stoll(originalPermissionString);
+            __int64 permissionsInteger = stoll(originalPermissionString);
             for (unsigned int x = 0; x < quantityOfPermsToRemove; x += 1) {
-                permissionsInteger = permissionsInteger & ~(int)permissionsToRemove[x];
+                permissionsInteger = permissionsInteger & ~(__int64)permissionsToRemove[x];
             }
             stringstream sstream;
             sstream << permissionsInteger;
@@ -664,7 +678,7 @@ namespace  DiscordCoreInternal {
             if (permissionString == "") {
                 permissionString = "0";
             }
-            int permissionsInteger = stoll(permissionString);
+            __int64 permissionsInteger = stoll(permissionString);
             stringstream sstream;
             if (permissionsInteger & (1 << 0)) {
                 sstream << "CREATE_INSTANT_INVITE" << endl;
@@ -804,7 +818,8 @@ namespace  DiscordCoreInternal {
         GET_GUILD_MEMBERS = 14,
         GET_ROLES = 15,
         GET_USER_GUILDS = 16,
-        POST_USER_DM = 17
+        POST_USER_DM = 17,
+        GET_DM_CHANNEL = 18
     };
 
     struct HttpAgentResources {

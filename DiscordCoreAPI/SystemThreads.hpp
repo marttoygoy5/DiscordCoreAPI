@@ -37,7 +37,7 @@ namespace DiscordCoreInternal {
         }
 
         void run() {
-            bool startVal = receive(requestBuffer, 1U);
+            receive(requestBuffer, 1U);
             concurrent_vector<ThreadContext>* threads = receive(submitBuffer);
             send(responseBuffer, threads);
             done();
@@ -85,16 +85,11 @@ namespace DiscordCoreInternal {
             SystemThreads::threads = new concurrent_vector<ThreadContext>();
             for (unsigned int x = 0; x < this->MaxThreads - 1; x += 1) {
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
-                DispatcherQueueOptions options{
-                sizeof(DispatcherQueueOptions),
-                DQTYPE_THREAD_DEDICATED,
-                DQTAT_COM_ASTA
-                };
-                ABI::Windows::System::IDispatcherQueueController* ptrNew{};
-                winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));
-                DispatcherQueueController queueController = { ptrNew, take_ownership_from_abi };
+                ABI::Windows::System::IDispatcherQueueController* ptrNew2{};
+                winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew2));
+                DispatcherQueueController queueController2 = { ptrNew2, take_ownership_from_abi };
                 ThreadContext threadContext;
-                DispatcherQueue threadQueue = queueController.DispatcherQueue();
+                DispatcherQueue threadQueue = queueController2.DispatcherQueue();
                 policy.SetConcurrencyLimits(1, 1);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);

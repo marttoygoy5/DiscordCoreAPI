@@ -120,7 +120,7 @@ namespace DiscordCoreInternal {
 
         if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
             int theValue = jsonObjectData.at("type");
-            channelData.type = theValue;
+            channelData.type = (DiscordCoreInternal::ChannelType)theValue;
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {

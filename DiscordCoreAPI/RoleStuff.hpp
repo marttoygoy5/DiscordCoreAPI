@@ -53,13 +53,13 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
-		DiscordCoreAPI::RoleManager* pRoleManager;
+		DiscordCoreAPI::RoleManager* roles;
 
-		RoleManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::RoleManager* pRoleManagerNew)
+		RoleManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::RoleManager* rolesNew)
 			:agent(*pScheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->pRoleManager = pRoleManagerNew;
+			this->roles = rolesNew;
 		}
 
 		static task<void> initialize() {
@@ -86,13 +86,13 @@ namespace DiscordCoreAPI {
 					roleData = cacheTemp.at(dataPackage.roleId).data;
 					cacheTemp.erase(dataPackage.roleId);
 					DiscordCoreInternal::parseObject(jsonValue, &roleData);
-					Role newRole(roleData, this->agentResources, this->pRoleManager);
+					Role newRole(roleData, this->agentResources, this->roles);
 					cacheTemp.insert(make_pair(newRole.data.id, newRole));
 					co_return newRole;
 				}
 				else {
 					DiscordCoreInternal::parseObject(jsonValue, &roleData);
-					Role newRole(roleData, this->agentResources, this->pRoleManager);
+					Role newRole(roleData, this->agentResources, this->roles);
 					cacheTemp.insert(make_pair(newRole.data.id, newRole));
 				}
 			}
@@ -184,7 +184,7 @@ namespace DiscordCoreAPI {
 	protected:
 		friend class Guild;
 		friend class DiscordCoreClient;
-		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 
 		RoleManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {

@@ -63,7 +63,6 @@ namespace DiscordCoreInternal {
 		}
 
 	protected:
-
 		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
 		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
 		single_assignment<exception> _error;
@@ -264,6 +263,7 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+				cout << jsonValue << endl;
 			}
 			postData.data = jsonValue;
 			co_return postData;

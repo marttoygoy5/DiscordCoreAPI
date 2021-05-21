@@ -97,14 +97,14 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
-		DiscordCoreAPI::MessageManager* pMessageManager;
+		DiscordCoreAPI::MessageManager* messages;
 
-		MessageManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::MessageManager* pMessageManagerNew, Scheduler* pScheduler)
+		MessageManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::MessageManager* messagesNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->pMessageManager = pMessageManagerNew;
+			this->messages = messagesNew;
 		}
 
 		static task<void> initialize() {
@@ -129,7 +129,7 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
-			Message messageNew(messageData, this->agentResources, this->pMessageManager, this->threads);
+			Message messageNew(messageData, this->agentResources, this->messages, this->threads);
 			co_return messageNew;
 		}
 
@@ -146,7 +146,7 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
-			Message messageNew(messageData, this->agentResources, this->pMessageManager, this->threads);
+			Message messageNew(messageData, this->agentResources, this->messages, this->threads);
 			co_return messageNew;
 		}
 
@@ -163,7 +163,7 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
-			Message messageNew(messageData, this->agentResources, this->pMessageManager, this->threads);
+			Message messageNew(messageData, this->agentResources, this->messages, this->threads);
 			co_return messageNew;
 		}
 
@@ -359,7 +359,9 @@ namespace DiscordCoreAPI {
 
 	protected:
 		friend class Channel;
+		friend class DMChannel;
 		friend class Guild;
+		friend class DiscordCoreClient;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;

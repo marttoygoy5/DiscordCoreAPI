@@ -50,14 +50,14 @@ namespace DiscordCoreAPI {
 		static overwrite_buffer<map<string, GuildMember>> cache;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
-		DiscordCoreAPI::GuildMemberManager* pGuildMemberManager;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };;
+		DiscordCoreAPI::GuildMemberManager* guildMembers{ nullptr };;
 
-		GuildMemberManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::GuildMemberManager* pGuildMemberManagerNew)
+		GuildMemberManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, Scheduler* pScheduler, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::GuildMemberManager* guildMembersNew)
 			:agent(*pScheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->pGuildMemberManager = pGuildMemberManagerNew;
+			this->guildMembers = guildMembersNew;
 		}
 
 		static task<void> initialize() {
@@ -79,7 +79,7 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::GuildMemberData guildMemberData = getData.oldGuildMemberData;
 			DiscordCoreInternal::parseObject(jsonValue, &guildMemberData);
-			GuildMember guildMemberNew(guildMemberData, this->pGuildMemberManager);
+			GuildMember guildMemberNew(guildMemberData, this->guildMembers);
 			co_return guildMemberNew;
 		}
 

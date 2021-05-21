@@ -14,6 +14,7 @@
 #include "WebSocketStuff.hpp"
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
+//#include "DMChannelStuff.hpp"
 #include "EventMachine.hpp"
 
 void myPurecallHandler(void) {
@@ -36,6 +37,8 @@ namespace DiscordCoreAPI {
 		DiscordCoreAPI::User currentUser;
 		UserManager* users{ nullptr };
 		GuildManager* guilds{ nullptr };
+		ChannelManager* channels{ nullptr };
+		MessageManager* messages{ nullptr };
 		shared_ptr<EventMachine> EventMachine{ nullptr };
 		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		DiscordCoreClient(hstring botTokenNew)
@@ -92,8 +95,6 @@ namespace DiscordCoreAPI {
 			agentResources.pSocketPath = pWebSocketConnectionAgent->returnSocketPathPointer();
 			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->getThreads().get()->at(3).scheduler);
 			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(1));
-			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources);
-			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources, this->users);
 			GuildManagerAgent::initialize().get();
 			GuildMemberManagerAgent::initialize();
 			ChannelManagerAgent::initialize().get();
@@ -101,6 +102,10 @@ namespace DiscordCoreAPI {
 			ReactionManagerAgent::initialize().get();
 			RoleManagerAgent::initialize().get();
 			UserManagerAgent::initialize().get();
+			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources);
+			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources, this->users);
+			this->messages = new MessageManager(agentResources, this->pSystemThreads->threads);
+			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads, this->messages);
 			this->currentUser = this->users->fetchCurrentUser().get();
 			co_await mainThread;
 		}
@@ -126,14 +131,11 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				agentResources.baseURL = this->baseURL;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-				GetGuildData getGuildData;
-				getGuildData.guildId = messageData.guildId;
-				Guild guild = this->guilds->getGuildAsync(getGuildData).get();
 				GetChannelData getChannelData;
 				getChannelData.channelId = messageData.channelId;
-				Channel channel = guild.channels->getChannelAsync(getChannelData).get();
+				Channel channel = this->channels->getChannelAsync(getChannelData).get();
 				MessageManager* msgManager = channel.messages;
-				Message message(messageData,  agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
+				Message message(messageData, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
 				MessageCreationData messageCreationData;
 				messageCreationData.message = message;
 				co_return messageCreationData;
@@ -150,12 +152,9 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 				ReactionAddData reactionAddData;
-				GetGuildData getGuildData;
-				getGuildData.guildId = reactionData.guildId;
-				Guild guild = this->guilds->getGuildAsync(getGuildData).get();
 				GetChannelData getChannelData;
 				getChannelData.channelId = reactionData.channelId;
-				Channel channel = guild.channels->getChannelAsync(getChannelData).get();
+				Channel channel = this->channels->getChannelAsync(getChannelData).get();
 				Reaction reaction(agentResources, reactionData);
 				reactionAddData.reaction = reaction;
 				co_return reactionAddData;

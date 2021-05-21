@@ -62,15 +62,15 @@ namespace DiscordCoreAPI {
 		static overwrite_buffer<map<string, User>> cache;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
-		DiscordCoreAPI::UserManager* pUserManager;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
+		DiscordCoreAPI::UserManager* users{ nullptr };
 
-		UserManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::UserManager* pUserManagerNew, Scheduler* pScheduler)
+		UserManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::UserManager* usersNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->pUserManager = pUserManagerNew;
+			this->users = usersNew;
 		}
 
 		static task<void> initialize() {
@@ -97,7 +97,7 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::UserData userData;
 			DiscordCoreInternal::parseObject(jsonValue, &userData);
-			User userNew(this->threads, this->agentResources, userData, this->pUserManager);
+			User userNew(this->threads, this->agentResources, userData, this->users);
 			co_return userNew;
 		}
 

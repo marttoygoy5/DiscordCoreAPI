@@ -294,7 +294,7 @@ namespace DiscordCoreAPI {
 		friend class Message;
 		friend class ReactionManagerAgent;
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 
 		ReactionManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, string channalIdNew, string messageIdNew) {
 			this->agentResources = agentResourcesNew;
