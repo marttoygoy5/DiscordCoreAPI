@@ -819,7 +819,8 @@ namespace  DiscordCoreInternal {
         GET_ROLES = 15,
         GET_USER_GUILDS = 16,
         POST_USER_DM = 17,
-        GET_DM_CHANNEL = 18
+        GET_DM_CHANNEL = 18,
+        PATCH_ROLE = 19
     };
 
     struct HttpAgentResources {
@@ -971,6 +972,45 @@ namespace  DiscordCoreInternal {
         GuildMemberData oldGuildMemberData;
         string guildId;
         string guildMemberId;
+    };
+
+    struct ModifyRoleDataInternal {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string content;
+        string guildId;
+        string roleId;
+    };
+
+    struct ModifyRoleData {
+        string name;
+        string permissions;
+        int colorFirst[3];
+        int color;
+        bool hoist;
+        bool mentionable;
+        int actualColor() {
+            if (this->colorFirst[0] > 255) {
+                this->colorFirst[0] = 255;
+            }
+            else if (this->colorFirst[0] < 0) {
+                this->colorFirst[0] = 0;
+            }
+            if (this->colorFirst[1] > 255) {
+                this->colorFirst[1] = 255;
+            }
+            else if (this->colorFirst[1] < 0) {
+                this->colorFirst[1] = 0;
+            }
+            if (this->colorFirst[2] > 255) {
+                this->colorFirst[2] = 255;
+            }
+            else if (this->colorFirst[2] < 0) {
+                this->colorFirst[2] = 0;
+            }
+            int colorValue = 65536 * this->colorFirst[0] + 256 * this->colorFirst[1] + this->colorFirst[2];
+            return colorValue;
+        };
     };
 }
 #endif

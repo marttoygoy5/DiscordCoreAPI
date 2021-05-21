@@ -213,5 +213,19 @@ namespace DiscordCoreInternal {
 
 		return data.dump();
 	}
+
+	string getModifyRolePayload(ModifyRoleData modifyRoleData) {
+		modifyRoleData.color = modifyRoleData.actualColor();
+
+		json data = {
+			{"color", modifyRoleData.color},
+			{"hoist", modifyRoleData.hoist},
+			{"mendtionable", modifyRoleData.mentionable},
+			{"name", modifyRoleData.name},
+			{"permissions", modifyRoleData.permissions}
+		};
+
+		return data.dump();
+	}
 }
 #endif
