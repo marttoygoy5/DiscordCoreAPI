@@ -196,25 +196,27 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::PostMessageData dataPackage;
 			if (try_receive(MessageManagerAgent::requestPostBuffer, dataPackage)) {
 				Message message = this->postObjectAsync(dataPackage).get();
-				send(MessageManagerAgent::outBuffer, message);
 				map<string, Message> cacheTemp;
 				try_receive(MessageManagerAgent::cache, cacheTemp);
 				cacheTemp.insert(make_pair(message.data.channelId + message.data.id, message));
+				send(MessageManagerAgent::outBuffer, message);
 				send(MessageManagerAgent::cache, cacheTemp);
 			};
 			DiscordCoreInternal::GetMessageData dataPackageNew;;
 			if (try_receive(MessageManagerAgent::requestGetBuffer, dataPackageNew)) {
 				map<string, Message> cacheTemp;
-				try_receive(MessageManagerAgent::cache, cacheTemp);
-				Message message = cacheTemp.at(dataPackageNew.channelId + dataPackageNew.id);
-				send(MessageManagerAgent::outBuffer, message);
+				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					Message message = cacheTemp.at(dataPackageNew.channelId + dataPackageNew.id);
+					send(MessageManagerAgent::outBuffer, message);
+				}
 			};
 			DiscordCoreInternal::GetMessageData dataPackageGet;
 			if (try_receive(MessageManagerAgent::requestFetchBuffer, dataPackageGet)) {
 				map<string, Message> cacheTemp;
-				try_receive(MessageManagerAgent::cache, cacheTemp);
-				if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.id)) {
-					cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.id);
+				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.id)) {
+						cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.id);
+					}
 				}
 				Message message = getObjectAsync(dataPackageGet).get();
 				cacheTemp.insert(make_pair(dataPackageGet.channelId + dataPackageGet.id, message));
@@ -224,9 +226,10 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::PatchMessageData dataPackageGetNew;
 			if (try_receive(MessageManagerAgent::requestPatchBuffer, dataPackageGetNew)) {
 				map<string, Message> cacheTemp;
-				try_receive(MessageManagerAgent::cache, cacheTemp);
-				if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.id)) {
-					cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.id);
+				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.id)) {
+						cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.id);
+					}
 				}
 				Message message = patchObjectAsync(dataPackageGetNew).get();
 				cacheTemp.insert(make_pair(dataPackageGet.channelId + dataPackageGet.id, message));
@@ -236,9 +239,10 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::DeleteMessageData dataPackageDelete;
 			if (try_receive(MessageManagerAgent::requestDeleteBuffer, dataPackageDelete)) {
 				map<string, Message> cacheTemp;
-				try_receive(MessageManagerAgent::cache, cacheTemp);
-				if (cacheTemp.contains(dataPackageDelete.channelId + dataPackageDelete.messageId)) {
-					cacheTemp.erase(dataPackageDelete.channelId + dataPackageDelete.messageId);
+				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(dataPackageDelete.channelId + dataPackageDelete.messageId)) {
+						cacheTemp.erase(dataPackageDelete.channelId + dataPackageDelete.messageId);
+					}
 				}				
 				deleteObjectAsync(dataPackageDelete).get();
 				send(MessageManagerAgent::cache, cacheTemp);
@@ -246,9 +250,10 @@ namespace DiscordCoreAPI {
 			Message message;
 			while (MessageManagerAgent::messagesToInsert.try_pop(message)) {
 				map<string, Message> cacheTemp;
-				try_receive(MessageManagerAgent::cache, cacheTemp);
-				if (cacheTemp.contains(message.data.channelId + message.data.id)) {
-					cacheTemp.erase(message.data.channelId + message.data.id);
+				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(message.data.channelId + message.data.id)) {
+						cacheTemp.erase(message.data.channelId + message.data.id);
+					}
 				}
 				cacheTemp.insert(make_pair(message.data.channelId + message.data.id, message));
 				send(MessageManagerAgent::cache, cacheTemp);

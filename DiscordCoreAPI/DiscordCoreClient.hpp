@@ -16,6 +16,11 @@
 #include "UserStuff.hpp"
 #include "EventMachine.hpp"
 
+void myPurecallHandler(void) {
+	cout << "CURRENT THREAD: " << this_thread::get_id() << endl;
+	return;
+}
+
 namespace DiscordCoreAPI {
 
 	class DiscordCoreClient;
@@ -71,8 +76,9 @@ namespace DiscordCoreAPI {
 		ITarget<DiscordCoreInternal::WebSocketWorkload>& webSocketWorkloadTarget;
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
-
+		
 		task<void> initialize(hstring botTokenNew) {
+			_set_purecall_handler(myPurecallHandler);
 			this->pSystemThreads = make_shared<DiscordCoreInternal::SystemThreads>();
 			this->pSystemThreads->initialize().get();
 			apartment_context mainThread;
