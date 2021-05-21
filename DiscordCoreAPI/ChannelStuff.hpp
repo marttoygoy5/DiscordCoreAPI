@@ -76,11 +76,12 @@ namespace DiscordCoreAPI {
 		DiscordCoreAPI::ChannelManager* pChannelManager;
 		MessageManager* messageManager;
 
-		ChannelManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::ChannelManager* pChannelManagerNew,  Scheduler* pScheduler)
+		ChannelManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, MessageManager* pMessageManager, DiscordCoreAPI::ChannelManager* pChannelManagerNew,  Scheduler* pScheduler)
 			:agent(*pScheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
 			this->pChannelManager = pChannelManagerNew;
+			this->messageManager = pMessageManager;
 		}
 
 		static task<void> initialize() {
@@ -160,11 +161,13 @@ namespace DiscordCoreAPI {
 				if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
 					bool isItFound = false;
 					for (auto const& [key, value] : cacheTemp) {
-						if (value.data.recipients.at(0).id == sendDMData.userId) {
-							isItFound = true;
-							Message message = this->messageManager->createMessageAsync(dataPackage.messageData, value.data.id).get();
-							send(ChannelManagerAgent::outMessageBuffer, message);
-						}
+						if (value.data.recipients.size() > 0) {
+							if (value.data.recipients.at(0).id == sendDMData.userId) {
+								isItFound = true;
+								Message message = this->messageManager->createMessageAsync(dataPackage.messageData, value.data.id).get();
+								send(ChannelManagerAgent::outMessageBuffer, message);
+							}
+						}						
 					}
 					if (isItFound == false) {
 						Channel channel = postObjectAsync(sendDMData).get();
@@ -205,7 +208,7 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getChannelData.channelId;
-			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this->messageManager, this, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestFetchBuffer, dataPackage);
 			channelManagerAgent.start();
 			agent::wait(&channelManagerAgent);
@@ -219,7 +222,7 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getChannelData.channelId;
-			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this->messageManager, this, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestGetBuffer, dataPackage);
 			channelManagerAgent.start();
 			agent::wait(&channelManagerAgent);
@@ -239,7 +242,7 @@ namespace DiscordCoreAPI {
 			dataPackage.messageData.messageReference = sendDMData.messageData.messageReference;
 			dataPackage.messageData.nonce = sendDMData.messageData.nonce;
 			dataPackage.messageData.tts = sendDMData.messageData.tts;
-			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this->messageManager, this, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestSendDMBuffer, dataPackage);
 			channelManagerAgent.start();
 			agent::wait(&channelManagerAgent);
@@ -249,7 +252,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> insertChannel(Channel channel) {
-			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this, this->threads->at(2).scheduler);
+			ChannelManagerAgent channelManagerAgent(this->threads, this->agentResources, this->messageManager,this, this->threads->at(2).scheduler);
 			channelManagerAgent.start();
 			ChannelManagerAgent::channelsToInsert.push(channel);
 			channelManagerAgent.wait(&channelManagerAgent);

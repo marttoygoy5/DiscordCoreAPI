@@ -166,7 +166,6 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-				cout << jsonValue << endl;
 			}
 			getData.data = jsonValue;
 			co_return getData;
@@ -216,7 +215,6 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-				cout << jsonValue << endl;
 			}
 			putData.data = jsonValue;
 			co_return putData;
@@ -266,7 +264,6 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-				cout << jsonValue << endl;
 			}
 			postData.data = jsonValue;
 			co_return postData;
@@ -319,7 +316,6 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-				cout << jsonValue << endl;
 			}
 			patchData.data = jsonValue;
 			co_return patchData;
@@ -361,7 +357,6 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
-				cout << jsonValue << endl;
 			}
 			deleteData.data = jsonValue;
 			co_return deleteData;

@@ -11,8 +11,9 @@
 #include "pch.h"
 
 namespace DiscordCoreAPI {
+
 	struct GuildMemberAddData {
-		//DiscordCoreAPI::GuildMember guildMember;
+		DiscordCoreAPI::GuildMember guildMember;
 	};
 
 	struct MessageCreationData {
