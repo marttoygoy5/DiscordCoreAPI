@@ -33,7 +33,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreAPI::Guild guild;
 	};
 
-	struct EventMachine : implements<EventMachine, winrt::Windows::Foundation::IInspectable> {
+	class EventMachine  {
 	public:
 
 		winrt::event_token onGuildCreation(winrt::delegate<GuildCreationData> const& handler) {

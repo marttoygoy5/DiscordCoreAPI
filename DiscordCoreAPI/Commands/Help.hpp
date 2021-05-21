@@ -18,6 +18,10 @@ namespace DiscordCoreAPI {
 	class HelpCommand : public  BaseFunction {
 	public:
 		virtual  void execute(DiscordCoreAPI::DiscordCoreFunctionBaseArguments args) {
+			Guild guild = args.pClient->guilds->fetchAsync({ args.message.data.guildId }).get();
+			Channel channel = guild.channels->fetchAsync({ args.message.data.channelId }).get();
+			cout << guild.data.name << endl;
+			cout << channel.data.name << endl;
 			for (unsigned int x = 0; x < args.argumentsArray.size(); x += 1) {
 				cout << args.argumentsArray.at(x) << endl;
 			}

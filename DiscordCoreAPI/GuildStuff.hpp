@@ -55,20 +55,17 @@ namespace DiscordCoreAPI
 		task<void> initialize() {
 			try {
 				cout << "Caching guild: " << this->data.name << endl << endl;
-				
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
 					Channel channel(channelData, this->agentResources, this->channels, this->threads);
 					this->channels->insertChannel(channel).get();
 				}
-				
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
 					guildMemberData.guildId = this->data.id;
 					GuildMember guildMember(guildMemberData, this->guildMembers);
 					this->guildMembers->insertGuildMember(guildMember).get();
-				}				
-
+				}
 				for (auto const& [key, value] : data.roles) {
 					DiscordCoreInternal::RoleData roleData = value;
 					Role role(roleData, this->agentResources, this->roles);

@@ -17,6 +17,8 @@ namespace DiscordCoreAPI {
 
 	struct DiscordCoreFunctionBaseArguments {
 		vector<string> argumentsArray;
+		shared_ptr<DiscordCoreAPI::DiscordCoreClient> pClient;
+		Message message;
 	};
 
 	class BaseFunction {
@@ -27,12 +29,30 @@ namespace DiscordCoreAPI {
 
 	class CommandController {
 	public:
+
 		static void addCommand(BaseFunction* newFunction, string newFunctionName) {
 			newFunction->commandName = newFunctionName;
 			DiscordCoreAPI::CommandController::commands.insert(make_pair(newFunction->commandName, newFunction));
 		}
 
-		static BaseFunction* checkForCommand(string messageContents) {
+		static void checkForAndRunCommand(CommandData commandData) {
+			BaseFunction* functionPointer = getCommand(commandData.message.data.content);
+
+			if (functionPointer == nullptr) {
+				return;
+			}
+
+			DiscordCoreFunctionBaseArguments args = parseArguments(commandData.message.data.content);
+			args.pClient = commandData.pClient;
+			args.message = commandData.message;
+
+			functionPointer->execute(args);
+		}
+		
+	protected:
+		static map<string, BaseFunction*> commands;
+
+		static BaseFunction* getCommand(string messageContents) {
 			if (messageContents[0] == commandPrefix[0]) {
 				for (auto const& [key, value] : DiscordCoreAPI::CommandController::commands) {
 					if (messageContents.find(key) != string::npos) {
@@ -55,7 +75,6 @@ namespace DiscordCoreAPI {
 			if (startingPosition == string::npos) {
 				return args;
 			}
-
 			string newString = messageContents.substr(startingPosition + 1);
 			if (newString.find(",") == string::npos) {
 				size_t startingPositionNew = newString.find_first_not_of(" ");
@@ -109,25 +128,6 @@ namespace DiscordCoreAPI {
 			}
 			return args;
 		}
-
-		static void checkForAndRunCommand(string messageContents) {
-			BaseFunction* functionPointer = checkForCommand(messageContents);
-
-			if (functionPointer == nullptr) {
-				return;
-			}
-
-			DiscordCoreFunctionBaseArguments args = parseArguments(messageContents);
-
-			functionPointer->execute(args);
-			/*
-			for (unsigned int x = 0; x < args.argumentsArray.size(); x += 1) {
-				cout << args.argumentsArray.at(x) << endl;
-			}
-			*/
-		}
-	protected:
-		static map<string, BaseFunction*> commands;
 	};
 	
 	map<string, BaseFunction*> CommandController::commands;

@@ -66,8 +66,8 @@ namespace DiscordCoreInternal {
         task<void> initialize() {
             DispatcherQueueOptions options{
                 sizeof(DispatcherQueueOptions),
-                DQTYPE_THREAD_CURRENT,
-                DQTAT_COM_NONE
+                DQTYPE_THREAD_DEDICATED,
+                DQTAT_COM_ASTA
             };
             ABI::Windows::System::IDispatcherQueueController* ptrNew{};
             winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));
@@ -84,8 +84,16 @@ namespace DiscordCoreInternal {
             SystemThreads::threads = new concurrent_vector<ThreadContext>();
             for (unsigned int x = 0; x < this->MaxThreads - 1; x += 1) {
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
+                DispatcherQueueOptions options{
+                sizeof(DispatcherQueueOptions),
+                DQTYPE_THREAD_DEDICATED,
+                DQTAT_COM_ASTA
+                };
+                ABI::Windows::System::IDispatcherQueueController* ptrNew{};
+                winrt::check_hresult(CreateDispatcherQueueController(options, &ptrNew));
+                DispatcherQueueController queueController = { ptrNew, take_ownership_from_abi };
                 ThreadContext threadContext;
-                DispatcherQueue threadQueue = threadQueueController.DispatcherQueue();
+                DispatcherQueue threadQueue = queueController.DispatcherQueue();
                 policy.SetConcurrencyLimits(1, 1);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
                 policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);

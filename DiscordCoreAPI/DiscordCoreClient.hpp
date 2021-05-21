@@ -18,6 +18,13 @@
 
 namespace DiscordCoreAPI {
 
+	class DiscordCoreClient;
+
+	struct CommandData {
+		Message message;
+		shared_ptr<DiscordCoreClient> pClient;
+	};
+
 	class DiscordCoreClient : public agent {
 	public:
 
@@ -69,7 +76,7 @@ namespace DiscordCoreAPI {
 			this->pSystemThreads = make_shared<DiscordCoreInternal::SystemThreads>();
 			this->pSystemThreads->initialize().get();
 			apartment_context mainThread;
-			co_await resume_foreground(*this->pSystemThreads->threads->at(0).threadQueue.get());
+			co_await resume_foreground(*this->pSystemThreads->mainThreadContext.threadQueue.get());
 			this->EventMachine = make_shared<DiscordCoreAPI::EventMachine>();
 			this->botToken = botTokenNew;
 			this->pWebSocketConnectionAgent = new DiscordCoreInternal::WebSocketConnectionAgent(this->webSocketIncWorkloadBuffer, this->pSystemThreads->getThreads().get()->at(0));
