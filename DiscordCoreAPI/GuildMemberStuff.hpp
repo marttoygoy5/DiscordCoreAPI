@@ -20,13 +20,17 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::GuildMemberData data;
 		GuildMemberManager* guildMembers{ nullptr };
 
+		GuildMember() {};
+
+	protected:
+		friend class GuildMemberManager;
+		friend class GuildMemberManagerAgent;
+		friend class Guild;
+
 		GuildMember(DiscordCoreInternal::GuildMemberData guildMemberData, GuildMemberManager* guildMembersNew) {
 			this->data = guildMemberData;
 			this->guildMembers = guildMembersNew;
 		}
-
-	protected:
-		friend class GuildMemberManager;
 
 	};
 

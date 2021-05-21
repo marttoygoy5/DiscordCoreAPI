@@ -23,6 +23,8 @@ namespace DiscordCoreAPI {
 		MessageManager* messages;
 		ReactionManager* reactions;
 
+		Message() {};
+
 	protected:
 		friend class DiscordCoreClient;
 		friend class MessageManager;

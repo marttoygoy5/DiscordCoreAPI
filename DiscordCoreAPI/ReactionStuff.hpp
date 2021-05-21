@@ -21,7 +21,7 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::ReactionData data;
 		ReactionManager* reactions{ nullptr };
-
+		Reaction() {};
 	protected:
 		friend class DiscordCoreClient;
 		friend class ReactionManager;

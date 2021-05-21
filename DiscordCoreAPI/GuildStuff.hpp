@@ -32,6 +32,8 @@ namespace DiscordCoreAPI
 		GuildManager* guilds{ nullptr };
 		UserManager* users{ nullptr };
 
+		Guild() {};
+
 	protected:
 		friend class GuildManagerAgent;
 		friend class DiscordCoreClient;

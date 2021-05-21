@@ -21,6 +21,8 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::UserData data;
 		UserManager* users{ nullptr };
 
+		User() {};
+
 	protected:
 		friend class DiscordCoreClient;
 		friend class UserManagerAgent;

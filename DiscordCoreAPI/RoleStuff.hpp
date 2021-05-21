@@ -20,6 +20,8 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::RoleData data;
 		RoleManager* roles{ nullptr };
 
+		Role() {};
+
 	protected:
 		friend class RoleManager;
 		friend class RoleManagerAgent;

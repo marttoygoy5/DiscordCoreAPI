@@ -150,16 +150,8 @@ namespace DiscordCoreAPI {
 
 		task<DiscordCoreAPI::ReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
 			try {
-				DiscordCoreInternal::HttpAgentResources agentResources;
-				agentResources.baseURL = this->baseURL;
-				agentResources.botToken = this->botToken;
-				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-				GetChannelData getChannelData;
-				getChannelData.channelId = reactionData.channelId;
-				Channel channel = this->channels->getChannelAsync(getChannelData).get();
 				Reaction reaction(reactionData, this->reactions);
 				ReactionAddData reactionAddData(reaction);
-				reactionAddData.reaction = reaction;
 				co_return reactionAddData;
 			}
 			catch (exception error) {

@@ -16,9 +16,9 @@ namespace DiscordCoreAPI {
 	string commandPrefix{ "!" };
 
 	struct DiscordCoreFunctionBaseArguments {
+		Message message;
 		vector<string> argumentsArray;
 		shared_ptr<DiscordCoreAPI::DiscordCoreClient> pClient;
-		Message message;
 	};
 
 	class BaseFunction {
@@ -42,8 +42,9 @@ namespace DiscordCoreAPI {
 				return;
 			}
 
-			DiscordCoreFunctionBaseArguments args = parseArguments(commandData.message.data.content);
+			DiscordCoreFunctionBaseArguments args(commandData.message);;
 			args.pClient = commandData.pClient;
+			args.argumentsArray = parseArguments(commandData.message.data.content);
 			args.message = commandData.message;
 
 			functionPointer->execute(args);
@@ -69,9 +70,9 @@ namespace DiscordCoreAPI {
 			return nullptr;
 		}
 
-		static DiscordCoreFunctionBaseArguments parseArguments(string messageContents) {
+		static vector<string >parseArguments(string messageContents) {
 			size_t startingPosition = messageContents.find("=");
-			DiscordCoreFunctionBaseArguments args;
+			vector<string> args;
 			if (startingPosition == string::npos) {
 				return args;
 			}
@@ -86,12 +87,12 @@ namespace DiscordCoreAPI {
 				string argument;
 				if (endingPosition == string::npos) {
 					argument = newString.substr(0);
-					args.argumentsArray.push_back(argument);
+					args.push_back(argument);
 					return args;
 				}
 				argument = newString.substr(0, endingPosition);
 				newString = newString.substr(endingPosition + 1);
-				args.argumentsArray.push_back(argument);
+				args.push_back(argument);
 				return args;
 			}
 			while (newString.find(",") != string::npos) {
@@ -104,12 +105,12 @@ namespace DiscordCoreAPI {
 				string argument;
 				if (endingPosition == string::npos) {
 					argument = newString.substr(0);
-					args.argumentsArray.push_back(argument);
+					args.push_back(argument);
 					return args;
 				}
 				argument = newString.substr(0, endingPosition);
 				newString = newString.substr(endingPosition + 1);
-				args.argumentsArray.push_back(argument);
+				args.push_back(argument);
 				if (newString.find(",") == string::npos) {
 					startingPositionNew = newString.find_first_not_of(" ");
 					if (startingPositionNew == string::npos) {
@@ -119,11 +120,11 @@ namespace DiscordCoreAPI {
 					endingPosition = newString.find(",");
 					if (endingPosition == string::npos) {
 						argument = newString.substr(0);
-						args.argumentsArray.push_back(argument);
+						args.push_back(argument);
 						return args;
 					}
 					argument = newString.substr(0, endingPosition);
-					args.argumentsArray.push_back(argument);
+					args.push_back(argument);
 				}
 			}
 			return args;
