@@ -171,7 +171,7 @@ namespace DiscordCoreAPI {
 					cacheTemp.insert(make_pair(channel.data.id, channel));
 					send(ChannelManagerAgent::outBuffer, channel);
 					asend(cache, cacheTemp);
-				}
+				}				
 			}
 			DiscordCoreInternal::ChannelData channelData;
 			Channel channelNew(channelData, this->channels);
