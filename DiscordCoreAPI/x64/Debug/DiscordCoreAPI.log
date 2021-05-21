@@ -1,1 +1,42 @@
+﻿  main.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\ws2tcpip.h(738,14): warning C4459: declaration of 'Error' hides global declaration
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\winrt\AsyncInfo.h(77,52): message : see declaration of 'Error'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\ws2tcpip.h(784,14): warning C4459: declaration of 'Error' hides global declaration
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\winrt\AsyncInfo.h(77,52): message : see declaration of 'Error'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\ws2tcpip.h(835,14): warning C4459: declaration of 'Error' hides global declaration
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\winrt\AsyncInfo.h(77,52): message : see declaration of 'Error'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\ws2tcpip.h(883,14): warning C4459: declaration of 'Error' hides global declaration
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\winrt\AsyncInfo.h(77,52): message : see declaration of 'Error'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\ws2tcpip.h(976,14): warning C4459: declaration of 'Error' hides global declaration
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\winrt\AsyncInfo.h(77,52): message : see declaration of 'Error'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\ws2tcpip.h(1006,14): warning C4459: declaration of 'Error' hides global declaration
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\winrt\AsyncInfo.h(77,52): message : see declaration of 'Error'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\ws2tcpip.h(1062,14): warning C4459: declaration of 'Error' hides global declaration
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\winrt\AsyncInfo.h(77,52): message : see declaration of 'Error'
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\SystemThreads.hpp(40,18): warning C4189: 'startVal': local variable is initialized but not referenced
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\SystemThreads.hpp(87,1): warning C4456: declaration of 'options' hides previous local declaration
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\SystemThreads.hpp(67,36): message : see declaration of 'options'
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\SystemThreads.hpp(92,1): warning C4456: declaration of 'ptrNew' hides previous local declaration
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\SystemThreads.hpp(72,63): message : see declaration of 'ptrNew'
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\SystemThreads.hpp(94,1): warning C4456: declaration of 'queueController' hides previous local declaration
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\SystemThreads.hpp(74,39): message : see declaration of 'queueController'
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(203,36): warning C4293: '<<': shift count negative or too big, undefined behavior
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(204,34): warning C4293: '<<': shift count negative or too big, undefined behavior
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(205,38): warning C4293: '<<': shift count negative or too big, undefined behavior
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(206,39): warning C4293: '<<': shift count negative or too big, undefined behavior
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(628,36): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(641,36): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
 C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(642,40): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(654,36): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(655,40): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(667,36): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(765,1): warning C4293: '<<': shift count negative or too big, undefined behavior
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(768,1): warning C4293: '<<': shift count negative or too big, undefined behavior
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(771,1): warning C4293: '<<': shift count negative or too big, undefined behavior
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\FoundationEntities.hpp(774,1): warning C4293: '<<': shift count negative or too big, undefined behavior
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\WebSocketStuff.hpp(262,124): warning C4100: 'args': unreferenced formal parameter
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\WebSocketStuff.hpp(262,68): warning C4100: 'sender': unreferenced formal parameter
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\MessageStuff.hpp(186,146): warning C4100: 'args': unreferenced formal parameter
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\MessageStuff.hpp(186,90): warning C4100: 'sender': unreferenced formal parameter
+C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\DiscordCoreAPI\Commands\Commands.hpp(57): warning C4702: unreachable code
+  DiscordCoreAPI.vcxproj -> C:\Users\Chris\source\repos\DiscordCoreAPI - Revamp\x64\Debug\DiscordCoreAPI.exe

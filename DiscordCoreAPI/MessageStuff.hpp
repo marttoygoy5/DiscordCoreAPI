@@ -236,7 +236,7 @@ namespace DiscordCoreAPI {
 			};
 			DiscordCoreInternal::SendDMData dataPackageNewer;
 			if (try_receive(MessageManagerAgent::requestPostDMBuffer, dataPackageNewer)) {
-				Message message = this->postObjectAsync(dataPackage).get();
+				Message message = this->postObjectAsync(dataPackageNewer).get();
 				map<string, Message> cacheTemp;
 				try_receive(MessageManagerAgent::cache, cacheTemp);
 				cacheTemp.insert(make_pair(message.data.channelId + message.data.id, message));
@@ -326,7 +326,7 @@ namespace DiscordCoreAPI {
 		task<Message> createMessageAsync(CreateMessageData createMessageData, string channelId) {
 			DiscordCoreInternal::PostMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(7);
+			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = channelId;
 			DiscordCoreInternal::CreateMessageData createMessageDataNew;
 			createMessageDataNew.allowedMentions = createMessageData.allowedMentions;
@@ -336,7 +336,7 @@ namespace DiscordCoreAPI {
 			createMessageDataNew.nonce = createMessageData.nonce;
 			createMessageDataNew.tts = createMessageData.tts;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this, this->reactions, this->threads->at(6).scheduler);
+			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this, this->reactions, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestPostBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
