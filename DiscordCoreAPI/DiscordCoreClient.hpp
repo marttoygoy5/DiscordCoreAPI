@@ -33,8 +33,7 @@ namespace DiscordCoreAPI {
 
 	class DiscordCoreClient : public agent {
 	public:
-
-		DiscordCoreAPI::User currentUser;
+		User* currentUser{ nullptr };
 		UserManager* users{ nullptr };
 		GuildManager* guilds{ nullptr };
 		ChannelManager* channels{ nullptr };
@@ -108,18 +107,13 @@ namespace DiscordCoreAPI {
 
 			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->threads);
 			this->users = new UserManager(agentResources, this->pSystemThreads->threads);
-			this->messages = new MessageManager();
-			ChannelManager* channels{ nullptr };
-			MessageManager* messages{ nullptr };
-			RoleManager* roles{ nullptr };
-			GuildMemberManager* guildMembers{ nullptr };
-			GuildManager* guilds{ nullptr };
-
-			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources);;
-			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources, this->users);
-			this->messages = new MessageManager(agentResources, this->pSystemThreads->threads);
-			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads, this->messages);
-			this->currentUser = this->users->fetchCurrentUser().get();
+			this->messages = new MessageManager(agentResources, this->pSystemThreads->threads, this->reactions);
+			this->roles = new RoleManager(agentResources, this->pSystemThreads->threads);
+			this->guildMembers = new GuildMemberManager(agentResources, this->pSystemThreads->threads);
+			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads);
+			this->guilds = new GuildManager(agentResources, this->pSystemThreads->threads, this->guildMembers, this->roles, this->channels, this->users);
+			User user = this->users->fetchCurrentUser().get();
+			this->currentUser = &user;
 			co_await mainThread;
 		}
 
@@ -129,8 +123,8 @@ namespace DiscordCoreAPI {
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-				GuildCreationData guildCreationData;
-				guildCreationData.guild = Guild(guildData, agentResources, this->guilds, this->pSystemThreads->getThreads().get(), this->users);
+				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, this->guilds, this->users, this->guildMembers, this->roles, this->channels);
+				GuildCreationData guildCreationData(guild);
 				co_return guildCreationData;
 			}
 			catch (exception error) {
@@ -144,13 +138,9 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				agentResources.baseURL = this->baseURL;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-				GetChannelData getChannelData;
-				getChannelData.channelId = messageData.channelId;
-				Channel channel = this->channels->getChannelAsync(getChannelData).get();
-				MessageManager* msgManager = channel.messages;
-				Message message(messageData, agentResources, msgManager, this->pSystemThreads.get()->getThreads().get());
-				MessageCreationData messageCreationData;
-				messageCreationData.message = message;
+				MessageManager* msgManager = this->messages;
+				Message message(messageData, msgManager, this->reactions);
+				MessageCreationData messageCreationData(message);
 				co_return messageCreationData;
 			}
 			catch (exception error) {
@@ -164,11 +154,11 @@ namespace DiscordCoreAPI {
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-				ReactionAddData reactionAddData;
 				GetChannelData getChannelData;
 				getChannelData.channelId = reactionData.channelId;
 				Channel channel = this->channels->getChannelAsync(getChannelData).get();
-				Reaction reaction(agentResources, reactionData);
+				Reaction reaction(reactionData, this->reactions);
+				ReactionAddData reactionAddData(reaction);
 				reactionAddData.reaction = reaction;
 				co_return reactionAddData;
 			}

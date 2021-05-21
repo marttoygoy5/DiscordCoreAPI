@@ -885,6 +885,12 @@ namespace  DiscordCoreInternal {
         string channelId;
     };
 
+    struct GetDMChannelData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
+        string userId;
+    };
+
     struct GetMessageData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
@@ -955,7 +961,8 @@ namespace  DiscordCoreInternal {
         DiscordCoreInternal::HttpAgentResources agentResources;
         DiscordCoreInternal::ThreadContext threadContext;
         string userId;
-        CreateMessageData messageData;
+        string channelId;
+        string content;
     };
 
     struct GetGuildMemberData {

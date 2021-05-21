@@ -15,13 +15,11 @@ namespace DiscordCoreAPI {
 
 	class GuildMemberManager;
 
-	class Guild;
-	
 	class GuildMember {
 	public:
 		DiscordCoreInternal::GuildMemberData data;
 		GuildMemberManager* guildMembers{ nullptr };
-		GuildMember() {}
+
 		GuildMember(DiscordCoreInternal::GuildMemberData guildMemberData, GuildMemberManager* guildMembersNew) {
 			this->data = guildMemberData;
 			this->guildMembers = guildMembersNew;
@@ -107,7 +105,8 @@ namespace DiscordCoreAPI {
 				send(GuildMemberManagerAgent::outBuffer, GuildMember);
 				asend(GuildMemberManagerAgent::cache, cacheTemp);
 			}
-			GuildMember guildMember;
+			DiscordCoreInternal::GuildMemberData guildMemberData;
+			GuildMember guildMember(guildMemberData, this->guildMembers);
 			while (GuildMemberManagerAgent::guildMembersToInsert.try_pop(guildMember)) {
 				map<string, GuildMember> cacheTemp;
 				if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
@@ -136,7 +135,8 @@ namespace DiscordCoreAPI {
 			send(GuildMemberManagerAgent::requestFetchBuffer, dataPackage);
 			managerAgent.start();
 			agent::wait(&managerAgent);
-			GuildMember guildMember;
+			DiscordCoreInternal::GuildMemberData guildMemberData;
+			GuildMember guildMember(guildMemberData, this);
 			try_receive(GuildMemberManagerAgent::outBuffer, guildMember);
 			co_return guildMember;
 		}
@@ -151,7 +151,8 @@ namespace DiscordCoreAPI {
 			send(GuildMemberManagerAgent::requestGetBuffer, dataPackage);
 			managerAgent.start();
 			agent::wait(&managerAgent);
-			GuildMember guildMember;
+			DiscordCoreInternal::GuildMemberData guildMemberData;
+			GuildMember guildMember(guildMemberData, this);
 			try_receive(GuildMemberManagerAgent::outBuffer, guildMember);
 			co_return guildMember;
 		}
@@ -165,9 +166,10 @@ namespace DiscordCoreAPI {
 		}
 
 	protected:
+		friend class Guild;
+		friend class DiscordCoreClient;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
-		friend class Guild;
 
 		GuildMemberManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
 			this->agentResources = agentResourcesNew;

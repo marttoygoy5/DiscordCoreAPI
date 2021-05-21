@@ -19,7 +19,6 @@ namespace DiscordCoreAPI {
 	public:
 
 		DiscordCoreInternal::UserData data;
-
 		UserManager* users{ nullptr };
 
 	protected:
@@ -28,17 +27,13 @@ namespace DiscordCoreAPI {
 		friend class UserManager;
 		friend class Guild;
 		friend class GuildManager;
-		DiscordCoreInternal::HttpAgentResources agentResources;
-		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 
-		User(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew,  DiscordCoreInternal::UserData dataNew,  UserManager* usersNew) {
-			this->initialize(agentResourcesNew, threadsNew, dataNew, usersNew).get();
+		User(DiscordCoreInternal::UserData dataNew,  UserManager* usersNew) {
+			this->initialize(dataNew, usersNew).get();
 		}
 
-		task<void> initialize(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::UserData dataNew, UserManager* usersNew) {
-			this->threads = threadsNew;
+		task<void> initialize(DiscordCoreInternal::UserData dataNew, UserManager* usersNew) {
 			this->data = dataNew;
-			this->agentResources = agentResourcesNew;
 			this->users = usersNew;
 			co_return;
 		}
@@ -95,7 +90,7 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::UserData userData;
 			DiscordCoreInternal::parseObject(jsonValue, &userData);
-			User userNew(this->agentResources, this->threads, userData, this->users);
+			User userNew(userData, this->users);
 			co_return userNew;
 		}
 
@@ -135,7 +130,7 @@ namespace DiscordCoreAPI {
 				asend(UserManagerAgent::cache, cacheTemp);
 			}
 			DiscordCoreInternal::UserData userData;
-			User user(this->agentResources, this->threads, userData, this->users);
+			User user(userData, this->users);
 			while (UserManagerAgent::usersToInsert.try_pop(user)) {
 				map<string, User> cacheTemp;
 				if (try_receive(UserManagerAgent::cache, cacheTemp)) {
@@ -164,7 +159,7 @@ namespace DiscordCoreAPI {
 			userManagerAgent.start();
 			agent::wait(&userManagerAgent);
 			DiscordCoreInternal::UserData userData;
-			User user(this->agentResources, this->threads, userData, this);
+			User user(userData, this);
 			try_receive(UserManagerAgent::outBuffer, user);
 			co_return user;
 		}
@@ -179,7 +174,7 @@ namespace DiscordCoreAPI {
 			userManagerAgent.start();
 			agent::wait(&userManagerAgent);
 			DiscordCoreInternal::UserData userData;
-			User user(this->agentResources, this->threads, userData, this);
+			User user(userData, this);
 			try_receive(UserManagerAgent::outBuffer, user);
 			co_return user;
 		}
@@ -194,7 +189,7 @@ namespace DiscordCoreAPI {
 			userManagerAgent.start();
 			agent::wait(&userManagerAgent);
 			DiscordCoreInternal::UserData userData;
-			User user(this->agentResources, this->threads, userData, this);
+			User user(userData, this);
 			try_receive(UserManagerAgent::outBuffer, user);
 			co_return user;
 		}

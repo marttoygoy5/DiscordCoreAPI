@@ -21,15 +21,13 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::ReactionData data;
 		ReactionManager* reactions{ nullptr };
+
 	protected:
 		friend class DiscordCoreClient;
 		friend class ReactionManager;
 		friend class  ReactionManagerAgent;
 
-		DiscordCoreInternal::HttpAgentResources agentResources;
-
-		Reaction(DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreInternal::ReactionData reactionData, ReactionManager* reactionsNew) {
-			this->agentResources = agentResourcesNew;
+		Reaction(DiscordCoreInternal::ReactionData reactionData, ReactionManager* reactionsNew) {
 			this->data = reactionData;
 			this->reactions = reactionsNew;
 		}
@@ -156,7 +154,7 @@ namespace DiscordCoreAPI {
 			if (try_receive(ReactionManagerAgent::requestPutBuffer, dataPackage)) {
 				this->putObjectAsync(dataPackage).get();
 				DiscordCoreInternal::ReactionData reactionData;
-				send(ReactionManagerAgent::outBuffer, Reaction(this->agentResources, reactionData, this->reactions));
+				send(ReactionManagerAgent::outBuffer, Reaction(reactionData, this->reactions));
 			}
 			DiscordCoreInternal::DeleteReactionDataAll dataPackageDelete;
 			if (try_receive(ReactionManagerAgent::requestDeleteBuffer, dataPackageDelete)) {
@@ -193,7 +191,7 @@ namespace DiscordCoreAPI {
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			DiscordCoreInternal::ReactionData reactionData;
-			Reaction reaction(this->agentResources, reactionData, this);
+			Reaction reaction(reactionData, this);
 			try_receive(ReactionManagerAgent::outBuffer, reaction);
 			co_return;
 		}
