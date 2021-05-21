@@ -76,9 +76,7 @@ namespace DiscordCoreInternal {
 						string bucket = HttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
 						rateLimitData = HttpRequestAgent::rateLimitData.at(bucket);
 					}
-					catch (exception error) {
-						cout << "HttpRequestAgent Error: " << error.what() << endl;
-					}
+					catch (exception error) {}
 					if (rateLimitData.getsRemaining == 0) {
 						float loopStartTime = rateLimitData.timeStartedAt;
 						float targetTime = loopStartTime + static_cast<float> (rateLimitData.msRemain);
@@ -110,7 +108,6 @@ namespace DiscordCoreInternal {
 						HttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
 					}
 					catch (exception error) {
-						cout << "HttpRequestAgent Error: " << error.what() << endl;
 						HttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
 					}
 					try {
@@ -119,7 +116,6 @@ namespace DiscordCoreInternal {
 						HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
 					}
 					catch (exception error) {
-						cout << "HttpRequestAgent Error: " << error.what() << endl;
 						HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
 					}
 					return returnData.data;
@@ -170,6 +166,7 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+				cout << jsonValue << endl;
 			}
 			getData.data = jsonValue;
 			co_return getData;
@@ -219,6 +216,7 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+				cout << jsonValue << endl;
 			}
 			putData.data = jsonValue;
 			co_return putData;
@@ -268,6 +266,7 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+				cout << jsonValue << endl;
 			}
 			postData.data = jsonValue;
 			co_return postData;
@@ -320,6 +319,7 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+				cout << jsonValue << endl;
 			}
 			patchData.data = jsonValue;
 			co_return patchData;
@@ -361,6 +361,7 @@ namespace DiscordCoreInternal {
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
+				cout << jsonValue << endl;
 			}
 			deleteData.data = jsonValue;
 			co_return deleteData;

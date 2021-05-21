@@ -152,8 +152,9 @@ namespace DiscordCoreAPI {
 			RoleManagerAgent managerAgent(this->threads, this->threads->at(2).scheduler, dataPackage.agentResources, this);
 			send(RoleManagerAgent::requestFetchBuffer, dataPackage);
 			managerAgent.start();
-			Role newRole = receive(RoleManagerAgent::outBuffer);
 			agent::wait(&managerAgent);
+			Role newRole;
+			try_receive(RoleManagerAgent::outBuffer, newRole);
 			co_return newRole;
 		}
 
@@ -166,8 +167,9 @@ namespace DiscordCoreAPI {
 			RoleManagerAgent managerAgent(this->threads, this->threads->at(2).scheduler, dataPackage.agentResources, this);
 			send(RoleManagerAgent::requestGetBuffer, dataPackage);
 			managerAgent.start();
-			Role newRole = receive(RoleManagerAgent::outBuffer);
 			agent::wait(&managerAgent);
+			Role newRole;
+			try_receive(RoleManagerAgent::outBuffer, newRole);
 			co_return newRole;
 		}
 

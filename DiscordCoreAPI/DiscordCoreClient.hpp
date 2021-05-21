@@ -101,6 +101,7 @@ namespace DiscordCoreAPI {
 			ReactionManagerAgent::initialize().get();
 			RoleManagerAgent::initialize().get();
 			UserManagerAgent::initialize().get();
+			this->currentUser = this->users->fetchCurrentUser().get();
 			co_await mainThread;
 		}
 

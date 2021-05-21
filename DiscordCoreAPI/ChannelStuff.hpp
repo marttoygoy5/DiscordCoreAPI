@@ -145,8 +145,9 @@ namespace DiscordCoreAPI {
 			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestFetchBuffer, dataPackage);
 			channelManagerAgent.start();
-			Channel channel = receive(ChannelManagerAgent::outBuffer);
 			agent::wait(&channelManagerAgent);
+			Channel channel;
+			try_receive(ChannelManagerAgent::outBuffer, channel);
 			co_return channel;
 		}
 
@@ -158,8 +159,9 @@ namespace DiscordCoreAPI {
 			ChannelManagerAgent channelManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestGetBuffer, dataPackage);
 			channelManagerAgent.start();
-			Channel channel = receive(ChannelManagerAgent::outBuffer);
 			agent::wait(&channelManagerAgent);
+			Channel channel;
+			try_receive(ChannelManagerAgent::outBuffer, channel);
 			co_return channel;
 		}
 

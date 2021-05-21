@@ -56,6 +56,7 @@ namespace DiscordCoreInternal {
             systemThreadsAgent.submitThreads(SystemThreads::threads).get();
             send(systemThreadsAgent.requestBuffer, true);
             concurrent_vector<ThreadContext>* threadsNew = receive(systemThreadsAgent.responseBuffer);
+            agent::wait(&systemThreadsAgent);
             co_return threadsNew;
         }
 

@@ -84,7 +84,12 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_GUILD;
-			workload.relativePath = "/users/" + dataPackage.userId;
+			if (dataPackage.userType == DiscordCoreInternal::GetUserDataType::USER) {
+				workload.relativePath = "/users/" + dataPackage.userId;
+			}
+			else if (dataPackage.userType == DiscordCoreInternal::GetUserDataType::SELF) {
+				workload.relativePath = "/users/@me";
+			}			
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
@@ -142,11 +147,13 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userId = getUserData.userId;
+			dataPackage.userType = DiscordCoreInternal::GetUserDataType::USER;
 			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestFetchBuffer, dataPackage);
 			userManagerAgent.start();
-			User user = receive(UserManagerAgent::outBuffer);
 			agent::wait(&userManagerAgent);
+			User user;
+			try_receive(UserManagerAgent::outBuffer, user);
 			co_return user;
 		}
 
@@ -158,8 +165,23 @@ namespace DiscordCoreAPI {
 			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestGetBuffer, dataPackage);
 			userManagerAgent.start();
-			User user = receive(UserManagerAgent::outBuffer);
 			agent::wait(&userManagerAgent);
+			User user;
+			try_receive(UserManagerAgent::outBuffer, user);
+			co_return user;
+		}
+
+		task<User> fetchCurrentUser() {
+			DiscordCoreInternal::GetUserData dataPackage;
+			dataPackage.agentResources = this->agentResources;
+			dataPackage.threadContext = this->threads->at(3);
+			dataPackage.userType = DiscordCoreInternal::GetUserDataType::SELF;
+			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
+			send(UserManagerAgent::requestFetchBuffer, dataPackage);
+			userManagerAgent.start();
+			agent::wait(&userManagerAgent);
+			User user;
+			try_receive(UserManagerAgent::outBuffer, user);
 			co_return user;
 		}
 

@@ -883,10 +883,16 @@ namespace  DiscordCoreInternal {
         string roleId;
     };
 
+    enum class GetUserDataType {
+        SELF = 0,
+        USER = 1
+    };
+
     struct GetUserData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         string userId;
+        GetUserDataType userType;
     };
 
     struct PostMessageData {

@@ -54,23 +54,27 @@ namespace DiscordCoreAPI
 
 		task<void> initialize() {
 			try {
-				cout << "Caching guild: " << this->data.name << endl << endl;
+				cout << "Caching guild: " << this->data.name << endl;
+				cout << "Caching channels for guild: " << this->data.name << endl;
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
 					Channel channel(channelData, this->agentResources, this->channels, this->threads);
 					this->channels->insertChannel(channel).get();
 				}
+				cout << "Caching guild members for guild: " << this->data.name << endl;
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
 					guildMemberData.guildId = this->data.id;
 					GuildMember guildMember(guildMemberData, this->guildMembers);
 					this->guildMembers->insertGuildMember(guildMember).get();
 				}
+				cout << "Caching roles for guild: " << this->data.name << endl;
 				for (auto const& [key, value] : data.roles) {
 					DiscordCoreInternal::RoleData roleData = value;
 					Role role(roleData, this->agentResources, this->roles);
 					this->roles->insertRole(role).get();
 				}
+				cout << "Caching users for guild: " << this->data.name << endl << endl;
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::UserData userData = data.members.at(x).user;
 					User user(this->threads, this->agentResources, userData, this->users);
@@ -187,8 +191,9 @@ namespace DiscordCoreAPI
 			GuildManagerAgent guildManagerAgent(this->threads, dataPackage.agentResources, this, this->pUserManager, this->threads->at(2).scheduler);
 			send(GuildManagerAgent::requestFetchBuffer, dataPackage);
 			guildManagerAgent.start();
-			Guild guild = receive(GuildManagerAgent::outBuffer);
 			agent::wait(&guildManagerAgent);
+			Guild guild; 
+			try_receive(GuildManagerAgent::outBuffer, guild);
 			co_return guild;
 		}
 
@@ -200,8 +205,9 @@ namespace DiscordCoreAPI
 			GuildManagerAgent guildManagerAgent(this->threads, dataPackage.agentResources, this, this->pUserManager, this->threads->at(2).scheduler);
 			send(GuildManagerAgent::requestGetBuffer, dataPackage);
 			guildManagerAgent.start();
-			Guild guild = receive(GuildManagerAgent::outBuffer);
 			agent::wait(&guildManagerAgent);
+			Guild guild;
+			try_receive(GuildManagerAgent::outBuffer, guild);
 			co_return guild;
 		}
 

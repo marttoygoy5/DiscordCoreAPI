@@ -187,8 +187,9 @@ namespace DiscordCoreAPI {
 			ReactionManagerAgent reactionManagerAgent(putReactionData.agentResources, this, this->threads, this->threads->at(4).scheduler);
 			send(ReactionManagerAgent::requestPutBuffer, putReactionData);
 			reactionManagerAgent.start();
-			Reaction reaction = receive(ReactionManagerAgent::outBuffer);
 			agent::wait(&reactionManagerAgent);
+			Reaction reaction;
+			try_receive(ReactionManagerAgent::outBuffer, reaction);
 			co_return;
 		}
 

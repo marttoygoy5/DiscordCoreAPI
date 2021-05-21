@@ -135,8 +135,9 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::GuildMemberData guildMemberDat;
 			send(GuildMemberManagerAgent::requestFetchBuffer, dataPackage);
 			managerAgent.start();
-			GuildMember guildMember = receive(GuildMemberManagerAgent::outBuffer);
 			agent::wait(&managerAgent);
+			GuildMember guildMember;
+			try_receive(GuildMemberManagerAgent::outBuffer, guildMember);
 			co_return guildMember;
 		}
 
@@ -149,8 +150,9 @@ namespace DiscordCoreAPI {
 			GuildMemberManagerAgent managerAgent(this->threads, this->threads->at(2).scheduler, dataPackage.agentResources, this);
 			send(GuildMemberManagerAgent::requestGetBuffer, dataPackage);
 			managerAgent.start();
-			GuildMember guildMember = receive(GuildMemberManagerAgent::outBuffer);
 			agent::wait(&managerAgent);
+			GuildMember guildMember;
+			try_receive(GuildMemberManagerAgent::outBuffer, guildMember);
 			co_return guildMember;
 		}
 

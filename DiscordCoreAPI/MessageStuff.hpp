@@ -206,8 +206,10 @@ namespace DiscordCoreAPI {
 			if (try_receive(MessageManagerAgent::requestGetBuffer, dataPackageNew)) {
 				map<string, Message> cacheTemp;
 				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
-					Message message = cacheTemp.at(dataPackageNew.channelId + dataPackageNew.id);
-					send(MessageManagerAgent::outBuffer, message);
+					if (cacheTemp.contains(dataPackageNew.channelId + dataPackageNew.id)) {
+						Message message = cacheTemp.at(dataPackageNew.channelId + dataPackageNew.id);
+						send(MessageManagerAgent::outBuffer, message);
+					}
 				}
 			};
 			DiscordCoreInternal::GetMessageData dataPackageGet;
@@ -281,8 +283,9 @@ namespace DiscordCoreAPI {
 			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(6).scheduler);
 			send(MessageManagerAgent::requestPostBuffer, dataPackage);
 			messageManagerAgent.start();
-			Message message = receive(MessageManagerAgent::outBuffer);
 			agent::wait(&messageManagerAgent);
+			Message message;
+			try_receive(MessageManagerAgent::outBuffer, message);
 			co_return message;
 		}
 
@@ -302,8 +305,9 @@ namespace DiscordCoreAPI {
 			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(6).scheduler);
 			send(MessageManagerAgent::requestPatchBuffer, dataPackage);
 			messageManagerAgent.start();
-			Message message = receive(MessageManagerAgent::outBuffer);
 			agent::wait(&messageManagerAgent);
+			Message message;
+			try_receive(MessageManagerAgent::outBuffer, message);
 			co_return message;
 		}
 
@@ -318,7 +322,24 @@ namespace DiscordCoreAPI {
 			send(MessageManagerAgent::requestDeleteBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
+			Message message;
+			try_receive(MessageManagerAgent::outBuffer, message);
 			co_return;
+		}
+
+		task<Message> getMessageAsync(GetMessageData getMessageData) {
+			DiscordCoreInternal::GetMessageData dataPackage;
+			dataPackage.agentResources = this->agentResources;
+			dataPackage.threadContext = this->threads->at(3);
+			dataPackage.channelId = getMessageData.channelId;
+			dataPackage.id = getMessageData.id;
+			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
+			send(MessageManagerAgent::requestGetBuffer, dataPackage);
+			messageManagerAgent.start();
+			agent::wait(&messageManagerAgent);
+			Message message;
+			try_receive(MessageManagerAgent::outBuffer, message);
+			co_return message;
 		}
 
 		task<Message> fetchAsync(GetMessageData getMessageData) {
@@ -330,8 +351,9 @@ namespace DiscordCoreAPI {
 			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestFetchBuffer, dataPackage);
 			messageManagerAgent.start();
-			Message message = receive(MessageManagerAgent::outBuffer);
 			agent::wait(&messageManagerAgent);
+			Message message;
+			try_receive(MessageManagerAgent::outBuffer, message);
 			co_return message;
 		}
 
