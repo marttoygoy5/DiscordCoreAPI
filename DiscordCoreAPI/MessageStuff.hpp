@@ -359,6 +359,7 @@ namespace DiscordCoreAPI {
 
 	protected:
 		friend class Channel;
+		friend class Guild;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;

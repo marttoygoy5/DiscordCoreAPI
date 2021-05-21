@@ -896,12 +896,6 @@ namespace  DiscordCoreInternal {
         GetUserDataType userType;
     };
 
-    struct PostUserDMData {
-        HttpAgentResources agentResources;
-        ThreadContext threadContext;
-        UserData userData;
-    };
-
     struct PostMessageData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
@@ -940,6 +934,13 @@ namespace  DiscordCoreInternal {
         DiscordCoreInternal::EmbedData embed;
         DiscordCoreInternal::AllowedMentionsData allowedMentions;
         DiscordCoreInternal::MessageReferenceData messageReference;
+    };
+
+    struct SendDMData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
+        string userId;
+        CreateMessageData messageData;
     };
 
     struct GetGuildMemberData {

@@ -31,6 +31,7 @@ namespace DiscordCoreAPI
 		RoleManager* roles{ nullptr };
 		GuildManager* guilds{ nullptr };
 		UserManager* users{ nullptr };
+		
 
 		Guild() {}
 
@@ -40,13 +41,15 @@ namespace DiscordCoreAPI
 		friend class GuildManager;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
+		MessageManager* messages{ nullptr };
 
 		Guild(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, GuildManager* guildsNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, UserManager* usersNew) {
 			this->threads = threadsNew;
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
 			this->guilds = guildsNew;
-			this->channels = new ChannelManager(this->agentResources, this->threads);
+			this->messages = new MessageManager(this->agentResources, this->threads);
+			this->channels = new ChannelManager(this->agentResources, this->threads, this->messages);
 			this->guildMembers = new GuildMemberManager(this->agentResources, this->threads);
 			this->roles = new RoleManager(this->agentResources, this->threads);
 			this->users = usersNew;
@@ -58,7 +61,7 @@ namespace DiscordCoreAPI
 				cout << "Caching channels for guild: " << this->data.name << endl;
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
-					Channel channel(channelData, this->agentResources, this->channels, this->threads);
+					Channel channel(channelData, this->agentResources, this->channels, this->messages, this->threads);
 					this->channels->insertChannel(channel).get();
 				}
 				cout << "Caching guild members for guild: " << this->data.name << endl;

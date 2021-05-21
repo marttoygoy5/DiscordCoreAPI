@@ -92,8 +92,7 @@ namespace DiscordCoreAPI {
 			agentResources.pSocketPath = pWebSocketConnectionAgent->returnSocketPathPointer();
 			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->getThreads().get()->at(3).scheduler);
 			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(1));
-			ChannelManager* channels = new ChannelManager(agentResources, this->pSystemThreads->threads);
-			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources, channels);
+			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources);
 			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources, this->users);
 			GuildManagerAgent::initialize().get();
 			GuildMemberManagerAgent::initialize();
