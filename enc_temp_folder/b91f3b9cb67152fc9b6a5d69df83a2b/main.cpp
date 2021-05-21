@@ -100,7 +100,7 @@ task<void> onReactionAddDelegate(DiscordCoreAPI::ReactionAddData reactionAddData
 
 int main() {
     winrt::init_apartment();
-    hstring botToken = L"";
+    hstring botToken = L"ODI2ODI3MTM1NzA4NTYxNDc4.YGSIxg.zZkL6wfnsOF4BcA37rlIqDqw1gI";
     shared_ptr<DiscordCoreAPI::DiscordCoreClient> pdiscordCoreAPI = make_shared<DiscordCoreAPI::DiscordCoreClient>(botToken);
     pDiscordCoreAPI.reset(pdiscordCoreAPI.get());
     // Do other work here
