@@ -10,23 +10,20 @@
 
 #include "../pch.h"
 #include "../DiscordCoreClient.hpp"
+#include "Commands.hpp"
 
 namespace DiscordCoreAPI {
-	extern map<string, DiscordCoreAPI::DiscordCoreFunction> commands;
-	extern shared_ptr<DiscordCoreAPI::DiscordCoreClient> pDiscordCoreAPI;
+	extern shared_ptr<DiscordCoreClient> pDiscordCoreAPI;
 
-	struct HelpArguments:DiscordCoreAPI::DiscordCoreFunctionBaseArguments {
-		string commandName;
+	class HelpCommand : public  BaseFunction {
+	public:
+		virtual  void execute(DiscordCoreAPI::DiscordCoreFunctionBaseArguments args) {
+			for (unsigned int x = 0; x < args.argumentsArray.size(); x += 1) {
+				cout << args.argumentsArray.at(x) << endl;
+			}
+		}
 	};
 
-	void Help(DiscordCoreAPI::DiscordCoreFunctionBaseArguments* arguments) {
-		HelpArguments* args = (HelpArguments*)arguments;
-		DiscordCoreAPI::DiscordCoreFunction helpCommand;
-		helpCommand.commandName = "help";
-		helpCommand.functionPtr = &Help;
-	}
-
-	
-
+	HelpCommand helpCommand{};
 }
-#endif
+#endif.

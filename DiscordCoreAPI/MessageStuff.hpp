@@ -273,7 +273,7 @@ namespace DiscordCoreAPI {
 			editMessageDataNew.content = editMessageData.content;
 			editMessageDataNew.embed = editMessageData.embed;
 			editMessageDataNew.flags = editMessageData.flags;
-			dataPackage.content = DiscordCoreInternal::getEditMessagePayload(editMessageDataNew).get();
+			dataPackage.content = DiscordCoreInternal::getEditMessagePayload(editMessageDataNew);
 			dataPackage.threadContext = this->threads->at(7);
 			MessageManagerAgent messageManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(6).scheduler);
 			send(MessageManagerAgent::requestPatchBuffer, dataPackage);

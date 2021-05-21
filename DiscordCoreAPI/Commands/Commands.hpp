@@ -10,63 +10,126 @@
 
 #include "../pch.h"
 #include "../DiscordCoreClient.hpp"
-#include "Help.hpp"
 
-namespace DiscordCoreAPI {	
+namespace DiscordCoreAPI {
 
-	typedef void (*fncPtr)(DiscordCoreAPI::DiscordCoreFunctionBaseArguments*);
+	string commandPrefix{ "!" };
 
-	map<string, DiscordCoreFunction> commands;
+	struct DiscordCoreFunctionBaseArguments {
+		vector<string> argumentsArray;
+	};
+
+	class BaseFunction {
+	public:
+		virtual void execute(DiscordCoreFunctionBaseArguments args) = 0;
+		string commandName;
+	};
 
 	class CommandController {
 	public:
-		static fncPtr checkForCommand(string messageContents) {
+		static void addCommand(BaseFunction* newFunction, string newFunctionName) {
+			newFunction->commandName = newFunctionName;
+			DiscordCoreAPI::CommandController::commands.insert(make_pair(newFunction->commandName, newFunction));
+		}
+
+		static BaseFunction* checkForCommand(string messageContents) {
 			if (messageContents[0] == commandPrefix[0]) {
-				for (auto const& [key, value] : commands) {
-					if (messageContents.find(key) == 2) {
-						return value.functionPtr;
+				for (auto const& [key, value] : DiscordCoreAPI::CommandController::commands) {
+					if (messageContents.find(key) != string::npos) {
+						return value;
+					}
+					else {
+						return nullptr;
 					}
 				}
 			}
+			else {
+				return nullptr;
+			}
+			return nullptr;
 		}
 
 		static DiscordCoreFunctionBaseArguments parseArguments(string messageContents) {
-			unsigned int startingPosition = messageContents.find("=");
+			size_t startingPosition = messageContents.find("=");
 			DiscordCoreFunctionBaseArguments args;
 			if (startingPosition == string::npos) {
 				return args;
 			}
 
 			string newString = messageContents.substr(startingPosition + 1);
-			cout << "NewString: " << newString << endl;
-			while (newString.find(",") != string::npos) {
-				unsigned int startingPositionNew = newString.find(",");
+			if (newString.find(",") == string::npos) {
+				size_t startingPositionNew = newString.find_first_not_of(" ");
 				if (startingPositionNew == string::npos) {
 					return args;
 				}
-				string newerString = newString.substr(startingPositionNew);
-				unsigned int endingPosition = newerString.find(",");
+				newString = newString.substr(startingPositionNew);
+				size_t endingPosition = newString.find(",");
+				string argument;
 				if (endingPosition == string::npos) {
+					argument = newString.substr(0);
+					args.argumentsArray.push_back(argument);
 					return args;
 				}
-				string argument = newerString.substr(startingPositionNew, endingPosition);
-				newString = newerString.substr(startingPositionNew);
+				argument = newString.substr(0, endingPosition);
+				newString = newString.substr(endingPosition + 1);
 				args.argumentsArray.push_back(argument);
+				return args;
+			}
+			while (newString.find(",") != string::npos) {
+				size_t startingPositionNew = newString.find_first_not_of(" ");
+				if (startingPositionNew == string::npos) {
+					return args;
+				}
+				newString = newString.substr(startingPositionNew);
+				size_t endingPosition = newString.find(",");
+				string argument;
+				if (endingPosition == string::npos) {
+					argument = newString.substr(0);
+					args.argumentsArray.push_back(argument);
+					return args;
+				}
+				argument = newString.substr(0, endingPosition);
+				newString = newString.substr(endingPosition + 1);
+				args.argumentsArray.push_back(argument);
+				if (newString.find(",") == string::npos) {
+					startingPositionNew = newString.find_first_not_of(" ");
+					if (startingPositionNew == string::npos) {
+						return args;
+					}
+					newString = newString.substr(startingPositionNew);
+					endingPosition = newString.find(",");
+					if (endingPosition == string::npos) {
+						argument = newString.substr(0);
+						args.argumentsArray.push_back(argument);
+						return args;
+					}
+					argument = newString.substr(0, endingPosition);
+					args.argumentsArray.push_back(argument);
+				}
 			}
 			return args;
 		}
 
 		static void checkForAndRunCommand(string messageContents) {
-			fncPtr functionPointer = checkForCommand(messageContents);
+			BaseFunction* functionPointer = checkForCommand(messageContents);
+
+			if (functionPointer == nullptr) {
+				return;
+			}
 
 			DiscordCoreFunctionBaseArguments args = parseArguments(messageContents);
 
+			functionPointer->execute(args);
+			/*
 			for (unsigned int x = 0; x < args.argumentsArray.size(); x += 1) {
 				cout << args.argumentsArray.at(x) << endl;
 			}
+			*/
 		}
+	protected:
+		static map<string, BaseFunction*> commands;
 	};
 	
-
+	map<string, BaseFunction*> CommandController::commands;
 };
 #endif

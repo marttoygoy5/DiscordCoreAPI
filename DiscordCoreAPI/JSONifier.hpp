@@ -137,7 +137,7 @@ namespace DiscordCoreInternal {
 		return data.dump();
 	}
 
-	task<string> getEditMessagePayload(EditMessageData editMessageData) {
+	string getEditMessagePayload(EditMessageData editMessageData) {
 		auto fields = json::array();
 
 		for (unsigned int x = 0; x < editMessageData.embed.fields.size(); x += 1) {
@@ -211,7 +211,7 @@ namespace DiscordCoreInternal {
 		}}
 		};
 
-		co_return data.dump();
+		return data.dump();
 	}
 }
 #endif
