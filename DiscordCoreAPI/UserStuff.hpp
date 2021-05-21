@@ -18,8 +18,6 @@ namespace DiscordCoreAPI {
 	class User {
 	public:
 
-		User() {}
-
 		DiscordCoreInternal::UserData data;
 
 		UserManager* users{ nullptr };
@@ -33,11 +31,11 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 
-		User(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreInternal::UserData dataNew,  UserManager* usersNew) {
-			this->initialize(threadsNew, agentResourcesNew, dataNew, usersNew).get();
+		User(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew,  DiscordCoreInternal::UserData dataNew,  UserManager* usersNew) {
+			this->initialize(agentResourcesNew, threadsNew, dataNew, usersNew).get();
 		}
 
-		task<void> initialize(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreInternal::UserData dataNew, UserManager* usersNew) {
+		task<void> initialize(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::UserData dataNew, UserManager* usersNew) {
 			this->threads = threadsNew;
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
@@ -63,9 +61,9 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreAPI::UserManager* users{ nullptr };
+		UserManager* users{ nullptr };
 
-		UserManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::UserManager* usersNew, Scheduler* pScheduler)
+		UserManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, UserManager* usersNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
@@ -97,7 +95,7 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::UserData userData;
 			DiscordCoreInternal::parseObject(jsonValue, &userData);
-			User userNew(this->threads, this->agentResources, userData, this->users);
+			User userNew(this->agentResources, this->threads, userData, this->users);
 			co_return userNew;
 		}
 
@@ -110,6 +108,18 @@ namespace DiscordCoreAPI {
 						User user = cacheTemp.at(getData.userId);
 						send(UserManagerAgent::outBuffer, user);
 					}
+					else {
+						User user = getObjectAsync(getData).get();
+						cacheTemp.insert(make_pair(getData.userId, user));
+						send(UserManagerAgent::outBuffer, user);
+						asend(UserManagerAgent::cache, cacheTemp);
+					}
+				}
+				else {
+					User user = getObjectAsync(getData).get();
+					cacheTemp.insert(make_pair(getData.userId, user));
+					send(UserManagerAgent::outBuffer, user);
+					asend(UserManagerAgent::cache, cacheTemp);
 				}
 			}
 			if (try_receive(UserManagerAgent::requestFetchBuffer, getData)) {
@@ -124,7 +134,8 @@ namespace DiscordCoreAPI {
 				send(UserManagerAgent::outBuffer, user);
 				asend(UserManagerAgent::cache, cacheTemp);
 			}
-			User user;
+			DiscordCoreInternal::UserData userData;
+			User user(this->agentResources, this->threads, userData, this->users);
 			while (UserManagerAgent::usersToInsert.try_pop(user)) {
 				map<string, User> cacheTemp;
 				if (try_receive(UserManagerAgent::cache, cacheTemp)) {
@@ -133,7 +144,7 @@ namespace DiscordCoreAPI {
 					}
 				}
 				cacheTemp.insert(make_pair(user.data.id, user));
-				send(UserManagerAgent::cache, cacheTemp);
+				asend(UserManagerAgent::cache, cacheTemp);
 			}
 			done();
 		}
@@ -148,11 +159,12 @@ namespace DiscordCoreAPI {
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userId = getUserData.userId;
 			dataPackage.userType = DiscordCoreInternal::GetUserDataType::USER;
-			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
+			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestFetchBuffer, dataPackage);
 			userManagerAgent.start();
 			agent::wait(&userManagerAgent);
-			User user;
+			DiscordCoreInternal::UserData userData;
+			User user(this->agentResources, this->threads, userData, this);
 			try_receive(UserManagerAgent::outBuffer, user);
 			co_return user;
 		}
@@ -162,11 +174,12 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userId = getUserData.userId;
-			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
+			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestGetBuffer, dataPackage);
 			userManagerAgent.start();
 			agent::wait(&userManagerAgent);
-			User user;
+			DiscordCoreInternal::UserData userData;
+			User user(this->agentResources, this->threads, userData, this);
 			try_receive(UserManagerAgent::outBuffer, user);
 			co_return user;
 		}
@@ -176,17 +189,18 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userType = DiscordCoreInternal::GetUserDataType::SELF;
-			UserManagerAgent userManagerAgent(this->threads, dataPackage.agentResources, this, this->threads->at(2).scheduler);
+			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestFetchBuffer, dataPackage);
 			userManagerAgent.start();
 			agent::wait(&userManagerAgent);
-			User user;
+			DiscordCoreInternal::UserData userData;
+			User user(this->agentResources, this->threads, userData, this);
 			try_receive(UserManagerAgent::outBuffer, user);
 			co_return user;
 		}
 
 		task<void> insertUser(User user) {
-			UserManagerAgent userManagerAgent(this->threads, this->agentResources, this, this->threads->at(2).scheduler);
+			UserManagerAgent userManagerAgent(this->agentResources, this->threads, this, this->threads->at(2).scheduler);
 			userManagerAgent.start();
 			UserManagerAgent::usersToInsert.push(user);
 			userManagerAgent.wait(&userManagerAgent);
@@ -201,7 +215,7 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 
-		UserManager(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew) {
+		UserManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
 			this->threads = threadsNew;
 			this->agentResources = agentResourcesNew;
 		}

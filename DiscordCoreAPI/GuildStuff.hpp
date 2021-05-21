@@ -11,10 +11,10 @@
 #include "pch.h"
 #include "FoundationEntities.hpp"
 #include "DataParsingFunctions.hpp"
+#include "HttpStuff.hpp"
 #include "ChannelStuff.hpp"
 #include "GuildMemberStuff.hpp"
 #include "RoleStuff.hpp"
-#include "HttpStuff.hpp"
 #include "UserStuff.hpp"
 
 namespace DiscordCoreAPI
@@ -31,9 +31,6 @@ namespace DiscordCoreAPI
 		RoleManager* roles{ nullptr };
 		GuildManager* guilds{ nullptr };
 		UserManager* users{ nullptr };
-		MessageManager* messages{ nullptr };
-
-		Guild() {}
 
 	protected:
 		friend class GuildManagerAgent;
@@ -42,15 +39,15 @@ namespace DiscordCoreAPI
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 
-		Guild(DiscordCoreInternal::GuildData dataNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, GuildManager* guildsNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, UserManager* usersNew) {
+		Guild(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::GuildData dataNew,  GuildManager* guildsNew, UserManager* usersNew, GuildMemberManager* guildMembersNew,
+			RoleManager* rolesNew, ChannelManager* channelsNew) {
 			this->threads = threadsNew;
 			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
+			this->channels = channelsNew;
+			this->guildMembers = guildMembersNew;
+			this->roles = rolesNew;
 			this->guilds = guildsNew;
-			this->messages = new MessageManager(this->agentResources, this->threads);
-			this->channels = new ChannelManager(this->agentResources, this->threads, this->messages);
-			this->guildMembers = new GuildMemberManager(this->agentResources, this->threads);
-			this->roles = new RoleManager(this->agentResources, this->threads);
 			this->users = usersNew;
 		}
 
@@ -107,16 +104,22 @@ namespace DiscordCoreAPI
 		
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreAPI::GuildManager* guilds{ nullptr };
-		DiscordCoreAPI::UserManager* users{ nullptr };
+		UserManager* users{ nullptr };
+		GuildManager* guilds{ nullptr };
+		GuildMemberManager* guildMembers{ nullptr };
+		RoleManager* roles{ nullptr };
+		ChannelManager* channels{ nullptr };
 
-		GuildManagerAgent(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::GuildManager* guildsNew, DiscordCoreAPI::UserManager* usersNew, Scheduler* pScheduler)
+		GuildManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, GuildManager* guildsNew, GuildMemberManager* guildMembersNew, RoleManager* rolesNew, ChannelManager* channelsNew, UserManager* usersNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
 			this->guilds = guildsNew;
 			this->users = usersNew;
+			this->channels = channelsNew;
+			this->guildMembers = guildMembersNew;
+			this->roles = rolesNew;
 		}
 
 		static task<void> initialize() {
@@ -138,7 +141,7 @@ namespace DiscordCoreAPI
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::GuildData guildData = dataPackage.oldGuildData;
 			DiscordCoreInternal::parseObject(jsonValue, &guildData);
-			Guild guildNew(guildData, this->agentResources, this->guilds, this->threads, this->users);
+			Guild guildNew(this->agentResources, this->threads, guildData, this->guilds, this->users, this->guildMembers, this->roles, this->channels);
 			co_return guildNew;
 		}
 
@@ -151,6 +154,18 @@ namespace DiscordCoreAPI
 						Guild guild = cacheTemp.at(dataPackage.guildId);
 						send(GuildManagerAgent::outBuffer, guild);
 					}
+					else {
+						Guild guild = getObjectAsync(dataPackage).get();
+						cacheTemp.insert(make_pair(dataPackage.guildId, guild));
+						send(GuildManagerAgent::outBuffer, guild);
+						asend(cache, cacheTemp);
+					}
+				}
+				else {
+					Guild guild = getObjectAsync(dataPackage).get();
+					cacheTemp.insert(make_pair(dataPackage.guildId, guild));
+					send(GuildManagerAgent::outBuffer, guild);
+					asend(cache, cacheTemp);
 				}
 			}
 			if (try_receive(GuildManagerAgent::requestFetchBuffer, dataPackage)) {
@@ -166,7 +181,8 @@ namespace DiscordCoreAPI
 				send(GuildManagerAgent::outBuffer, guild);
 				asend(cache, cacheTemp);
 			}
-			Guild guildNew;
+			DiscordCoreInternal::GuildData guildData;
+			Guild guildNew(this->agentResources, this->threads, guildData, this->guilds, this->users, this->guildMembers, this->roles, this->channels);
 			while (GuildManagerAgent::guildsToInsert.try_pop(guildNew)) {
 				map<string, Guild> cacheTemp;
 				if (try_receive(GuildManagerAgent::cache, cacheTemp)) {
@@ -190,11 +206,12 @@ namespace DiscordCoreAPI
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getGuildData.guildId;
-			GuildManagerAgent guildManagerAgent(this->threads, dataPackage.agentResources, this, this->users, this->threads->at(2).scheduler);
+			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->guilds, this->guildMembers, this->roles, this->channels, this->users, this->threads->at(2).scheduler);
 			send(GuildManagerAgent::requestFetchBuffer, dataPackage);
 			guildManagerAgent.start();
 			agent::wait(&guildManagerAgent);
-			Guild guild;
+			DiscordCoreInternal::GuildData guildData;
+			Guild guild(this->agentResources, this->threads, guildData, this->guilds, this->users, this->guildMembers, this->roles, this->channels);
 			try_receive(GuildManagerAgent::outBuffer, guild);
 			co_return guild;
 		}
@@ -204,17 +221,18 @@ namespace DiscordCoreAPI
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getGuildData.guildId;
-			GuildManagerAgent guildManagerAgent(this->threads, dataPackage.agentResources, this, this->users, this->threads->at(2).scheduler);
+			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->guilds, this->guildMembers, this->roles, this->channels, this->users, this->threads->at(2).scheduler);
 			send(GuildManagerAgent::requestGetBuffer, dataPackage);
 			guildManagerAgent.start();
 			agent::wait(&guildManagerAgent);
-			Guild guild;
+			DiscordCoreInternal::GuildData guildData;
+			Guild guild(this->agentResources, this->threads, guildData, this->guilds, this->users, this->guildMembers, this->roles, this->channels);
 			try_receive(GuildManagerAgent::outBuffer, guild);
 			co_return guild;
 		}
 
 		task<void> insertGuild(Guild guild) {
-			GuildManagerAgent guildManagerAgent(this->threads, this->agentResources, this, this->users, this->threads->at(2).scheduler);
+			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->guilds, this->guildMembers, this->roles, this->channels, this->users, this->threads->at(2).scheduler);
 			guildManagerAgent.start();
 			GuildManagerAgent::guildsToInsert.push(guild);
 			guildManagerAgent.wait(&guildManagerAgent);
@@ -229,12 +247,20 @@ namespace DiscordCoreAPI
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 
-		DiscordCoreAPI::UserManager* users{ nullptr };
+		UserManager* users{ nullptr };
+		GuildManager* guilds{ nullptr };
+		GuildMemberManager* guildMembers{ nullptr };
+		RoleManager* roles{ nullptr };
+		ChannelManager* channels{ nullptr };
 
-		GuildManager(concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::HttpAgentResources agentResourcesNew, DiscordCoreAPI::UserManager* usersNew) {
+		GuildManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, GuildManager* guildsNew, GuildMemberManager* guildMembersNew, RoleManager* rolesNew, ChannelManager* channelsNew,  UserManager* usersNew) {
 			this->threads = threadsNew;
 			this->agentResources = agentResourcesNew;
-			this->users= usersNew;
+			this->users = usersNew;
+			this->channels = channelsNew;
+			this->guildMembers = guildMembersNew;
+			this->roles = rolesNew;
+			this->guilds = guildsNew;
 		}
 
 	};

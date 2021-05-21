@@ -39,6 +39,9 @@ namespace DiscordCoreAPI {
 		GuildManager* guilds{ nullptr };
 		ChannelManager* channels{ nullptr };
 		MessageManager* messages{ nullptr };
+		RoleManager* roles{ nullptr };
+		GuildMemberManager* guildMembers{ nullptr };
+		ReactionManager* reactions{ nullptr };
 		shared_ptr<EventMachine> EventMachine{ nullptr };
 		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		DiscordCoreClient(hstring botTokenNew)
@@ -102,7 +105,17 @@ namespace DiscordCoreAPI {
 			ReactionManagerAgent::initialize().get();
 			RoleManagerAgent::initialize().get();
 			UserManagerAgent::initialize().get();
-			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources);
+
+			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->threads);
+			this->users = new UserManager(agentResources, this->pSystemThreads->threads);
+			this->messages = new MessageManager();
+			ChannelManager* channels{ nullptr };
+			MessageManager* messages{ nullptr };
+			RoleManager* roles{ nullptr };
+			GuildMemberManager* guildMembers{ nullptr };
+			GuildManager* guilds{ nullptr };
+
+			this->users = new UserManager(this->pSystemThreads->getThreads().get(), agentResources);;
 			this->guilds = new GuildManager(this->pSystemThreads->getThreads().get(), agentResources, this->users);
 			this->messages = new MessageManager(agentResources, this->pSystemThreads->threads);
 			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads, this->messages);
