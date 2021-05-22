@@ -134,7 +134,7 @@ namespace  DiscordCoreInternal {
         string description;
         string url;
         string timestamp;
-        int color[3];
+        int color[3] = { 255, 255, 255 };
         EmbedFooterData footer;
         EmbedImageData image;
         EmbedThumbnailData thumbnail;
@@ -164,6 +164,7 @@ namespace  DiscordCoreInternal {
             int colorValue = 65536 * this->color[0] + 256 * this->color[1] + this->color[2];
             return colorValue;
         };
+        int actualColorVal;
     };
 
     enum class Permissions {
@@ -1017,7 +1018,7 @@ namespace  DiscordCoreInternal {
         int color;
         bool hoist;
         bool mentionable;
-        int actualColor() {
+        void actualColor() {
             if (this->colorFirst[0] > 255) {
                 this->colorFirst[0] = 255;
             }
@@ -1037,7 +1038,7 @@ namespace  DiscordCoreInternal {
                 this->colorFirst[2] = 0;
             }
             int colorValue = 65536 * this->colorFirst[0] + 256 * this->colorFirst[1] + this->colorFirst[2];
-            return colorValue;
+            this->color = colorValue;
         };
     };
 }

@@ -253,6 +253,9 @@ namespace DiscordCoreAPI {
 
 		task<Role> updateRoleAsync(UpdateRoleData modifyRoleData) {
 			DiscordCoreInternal::ModifyRoleData modifyRoleDataNew;
+			modifyRoleDataNew.colorFirst[0] = modifyRoleData.colorFirst[0];
+			modifyRoleDataNew.colorFirst[1] = modifyRoleData.colorFirst[1];
+			modifyRoleDataNew.colorFirst[2] = modifyRoleData.colorFirst[2];
 			modifyRoleDataNew.color = modifyRoleData.color;
 			modifyRoleDataNew.hoist = modifyRoleData.hoist;
 			modifyRoleDataNew.mentionable = modifyRoleData.mentionable;

@@ -28,7 +28,17 @@ namespace DiscordCoreAPI {
 			cout << "GET ROLE: " << role.data.name << endl;
 			role.roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" });
 			cout << "FATCH ROLE: " << role.data.name << endl;
-			role = role.roles->updateRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592", .name = "TESTING ROLETWO",.permissions = newPerms,  .colorFirst = {255, 0,  0}, .hoist = true, .mentionable = true, }).get();
+			DiscordCoreAPI::UpdateRoleData updateRoleData;
+			updateRoleData.guildId = guild.data.id;
+			updateRoleData.colorFirst[0] = 0;
+			updateRoleData.colorFirst[1] = 255;
+			updateRoleData.colorFirst[2] = 255;
+			updateRoleData.hoist = true;
+			updateRoleData.mentionable = true;
+			updateRoleData.name = "TESTING ROLE THREE";
+			updateRoleData.permissions = newPerms;
+			updateRoleData.roleId = "790460906450583592";
+			role = role.roles->updateRoleAsync(updateRoleData).get();
 
 			for (unsigned int x = 0; x < args.argumentsArray.size(); x += 1) {
 				cout << args.argumentsArray.at(x) << endl;

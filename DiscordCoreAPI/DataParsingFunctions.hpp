@@ -17,7 +17,7 @@ namespace DiscordCoreInternal {
         OverWriteData overWriteData = *pDataStructure;
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             overWriteData.id = theValue;
         }
 
@@ -27,12 +27,12 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("allow") && !jsonObjectData.at("allow").is_null()) {
-            std::string theValue = jsonObjectData.at("allow");
+            string theValue = jsonObjectData.at("allow");
             overWriteData.allow = theValue;
         }
 
         if (jsonObjectData.contains("deny") && !jsonObjectData.at("deny").is_null()) {
-            std::string theValue = jsonObjectData.at("deny");
+            string theValue = jsonObjectData.at("deny");
             overWriteData.deny = theValue;
         }
 
@@ -43,22 +43,22 @@ namespace DiscordCoreInternal {
         UserData userData = *pDataStructure;
 
         if (jsonObjectData.contains("username") && !jsonObjectData.at("username").is_null()) {
-            std::string theValue = jsonObjectData.at("username");
+            string theValue = jsonObjectData.at("username");
             userData.username = theValue;
         }
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             userData.id = theValue;
         }
 
         if (jsonObjectData.contains("discriminator") && !jsonObjectData.at("discriminator").is_null()) {
-            std::string theValue = jsonObjectData.at("discriminator");
+            string theValue = jsonObjectData.at("discriminator");
             userData.discriminator = theValue;
         }
 
         if (jsonObjectData.contains("avatar") && !jsonObjectData.at("avatar").is_null()) {
-            std::string theValue = jsonObjectData.at("avatar");
+            string theValue = jsonObjectData.at("avatar");
             userData.avatar = theValue;
         }
 
@@ -78,7 +78,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("locale") && !jsonObjectData.at("locale").is_null()) {
-            std::string theValue = jsonObjectData.at("locale");
+            string theValue = jsonObjectData.at("locale");
             userData.locale = theValue;
         }
 
@@ -88,7 +88,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("email") && !jsonObjectData.at("email").is_null()) {
-            std::string theValue = jsonObjectData.at("email");
+            string theValue = jsonObjectData.at("email");
             userData.email = theValue;
         }
 
@@ -114,7 +114,7 @@ namespace DiscordCoreInternal {
         ChannelData channelData = *pDataStructure;
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             channelData.id = theValue;
         }
 
@@ -124,7 +124,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
-            std::string theValue = jsonObjectData.at("guild_id");
+            string theValue = jsonObjectData.at("guild_id");
             channelData.guildId = theValue;
         }
 
@@ -151,12 +151,12 @@ namespace DiscordCoreInternal {
         }
         
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             channelData.name = theValue;
         }
 
         if (jsonObjectData.contains("topic") && !jsonObjectData.at("topic").is_null()) {
-            std::string theValue = jsonObjectData.at("topic");
+            string theValue = jsonObjectData.at("topic");
             channelData.topic = theValue;
         }
 
@@ -166,7 +166,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("last_message_id") && !jsonObjectData.at("last_message_id").is_null()) {
-            std::string theValue = jsonObjectData.at("last_message_id");
+            string theValue = jsonObjectData.at("last_message_id");
             channelData.lastMessageId = theValue;
         }
 
@@ -207,32 +207,32 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("icon") && !jsonObjectData.at("icon").is_null()) {
-            std::string theValue = jsonObjectData.at("icon");
+            string theValue = jsonObjectData.at("icon");
             channelData.icon = theValue;
         }
 
         if (jsonObjectData.contains("owner_id") && !jsonObjectData.at("owner_id").is_null()) {
-            std::string theValue = jsonObjectData.at("owner_id");
+            string theValue = jsonObjectData.at("owner_id");
             channelData.ownerId = theValue;
         }
 
         if (jsonObjectData.contains("application_id") && !jsonObjectData.at("application_id").is_null()) {
-            std::string theValue = jsonObjectData.at("application_id");
+            string theValue = jsonObjectData.at("application_id");
             channelData.applicationId = theValue;
         }
 
         if (jsonObjectData.contains("parent_id") && !jsonObjectData.at("parent_id").is_null()) {
-            std::string theValue = jsonObjectData.at("parent_id");
+            string theValue = jsonObjectData.at("parent_id");
             channelData.parentId = theValue;
         }
 
         if (jsonObjectData.contains("last_pin_timestamp") && !jsonObjectData.at("last_pin_timestamp").is_null()) {
-            std::string theValue = jsonObjectData.at("last_pin_timestamp");
+            string theValue = jsonObjectData.at("last_pin_timestamp");
             channelData.lastPinTimestamp = theValue;
         }
 
         if (jsonObjectData.contains("rtc_region") && !jsonObjectData.at("rtc_region").is_null()) {
-            std::string theValue = jsonObjectData.at("rtc_region");
+            string theValue = jsonObjectData.at("rtc_region");
             channelData.rtcRegion = theValue;
         }
 
@@ -248,12 +248,12 @@ namespace DiscordCoreInternal {
         RoleTagsData roleTagsData = *pDataStructure;
 
         if (jsonObjectData.contains("bot_id") && !jsonObjectData.at("bot_id").is_null()) {
-            std::string theValue = jsonObjectData.at("bot_id");
+            string theValue = jsonObjectData.at("bot_id");
             roleTagsData.botId = theValue;
         }
 
         if (jsonObjectData.contains("integration_id") && !jsonObjectData.at("integration_id").is_null()) {
-            std::string theValue = jsonObjectData.at("integration_id");
+            string theValue = jsonObjectData.at("integration_id");
             roleTagsData.integrationId = theValue;
         }
 
@@ -264,12 +264,12 @@ namespace DiscordCoreInternal {
         RoleData roleData = *pDataStructure;
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             roleData.id = theValue;
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             roleData.name = theValue;
         }
 
@@ -289,7 +289,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("permissions") && !jsonObjectData.at("permissions").is_null()) {
-            std::string theValue = jsonObjectData.at("permissions");
+            string theValue = jsonObjectData.at("permissions");
             roleData.permissions = theValue;
         }
 
@@ -322,7 +322,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("nick") && !jsonObjectData.at("nick").is_null()) {
-            std::string theValue = jsonObjectData.at("nick");
+            string theValue = jsonObjectData.at("nick");
             guildMemberData.nick = theValue;
         }
 
@@ -343,12 +343,12 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("joined_at") && !jsonObjectData.at("joined_at").is_null()) {
-            std::string theValue = jsonObjectData.at("joined_at");
+            string theValue = jsonObjectData.at("joined_at");
             guildMemberData.joined_at = theValue;
         }
 
         if (jsonObjectData.contains("premium_since") && !jsonObjectData.at("premium_since").is_null()) {
-            std::string theValue = jsonObjectData.at("premium_since");
+            string theValue = jsonObjectData.at("premium_since");
             guildMemberData.premium_since = theValue;
         }
 
@@ -368,7 +368,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("permissions") && !jsonObjectData.at("permissions").is_null()) {
-            std::string theValue = jsonObjectData.at("permissions");
+            string theValue = jsonObjectData.at("permissions");
             guildMemberData.permissions = theValue;
         }
 
@@ -379,12 +379,12 @@ namespace DiscordCoreInternal {
         EmojiData emojiData = *pDataStructure;
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             emojiData.id = theValue;
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             emojiData.name = theValue;
         }
 
@@ -438,17 +438,17 @@ namespace DiscordCoreInternal {
         VoiceStateData voiceStateData = *pDataStructure;
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
-            std::string theValue = jsonObjectData.at("guild_id");
+            string theValue = jsonObjectData.at("guild_id");
             voiceStateData.guildId = theValue;
         }
 
         if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("channel_id");
+            string theValue = jsonObjectData.at("channel_id");
             voiceStateData.channelId = theValue;
         }
 
         if (jsonObjectData.contains("user_id") && !jsonObjectData.at("user_id").is_null()) {
-            std::string theValue = jsonObjectData.at("user_id");
+            string theValue = jsonObjectData.at("user_id");
             voiceStateData.userId = theValue;
         }
 
@@ -459,7 +459,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("session_id") && !jsonObjectData.at("session_id").is_null()) {
-            std::string theValue = jsonObjectData.at("session_id");
+            string theValue = jsonObjectData.at("session_id");
             voiceStateData.sessionId = theValue;
         }
 
@@ -499,7 +499,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("request_to_speak_timestamp") && !jsonObjectData.at("request_to_speak_timestamp").is_null()) {
-            std::string theValue = jsonObjectData.at("request_to_speak_timestamp");
+            string theValue = jsonObjectData.at("request_to_speak_timestamp");
             voiceStateData.requestToSpeakTimestamp = theValue;
         }
 
@@ -510,7 +510,7 @@ namespace DiscordCoreInternal {
         PartyData partyData = *pDataStructure;
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             partyData.id = theValue;
         }
 
@@ -529,22 +529,22 @@ namespace DiscordCoreInternal {
         AssetsData assetData = *pDataStructure;
 
         if (jsonObjectData.contains("large_image") && !jsonObjectData.at("large_image").is_null()) {
-            std::string theValue = jsonObjectData.at("large_image");
+            string theValue = jsonObjectData.at("large_image");
             assetData.largeImage = theValue;
         }
 
         if (jsonObjectData.contains("large_text") && !jsonObjectData.at("large_text").is_null()) {
-            std::string theValue = jsonObjectData.at("large_text");
+            string theValue = jsonObjectData.at("large_text");
             assetData.largeText = theValue;
         }
 
         if (jsonObjectData.contains("small_image") && !jsonObjectData.at("small_image").is_null()) {
-            std::string theValue = jsonObjectData.at("small_image");
+            string theValue = jsonObjectData.at("small_image");
             assetData.smallImage = theValue;
         }
 
         if (jsonObjectData.contains("small_text") && !jsonObjectData.at("small_text").is_null()) {
-            std::string theValue = jsonObjectData.at("small_text");
+            string theValue = jsonObjectData.at("small_text");
             assetData.smallText = theValue;
         }
 
@@ -555,17 +555,17 @@ namespace DiscordCoreInternal {
         SecretsData secretData = *pDataStructure;
 
         if (jsonObjectData.contains("join") && !jsonObjectData.at("join").is_null()) {
-            std::string theValue = jsonObjectData.at("join");
+            string theValue = jsonObjectData.at("join");
             secretData.join = theValue;
         }
 
         if (jsonObjectData.contains("spectate") && !jsonObjectData.at("spectate").is_null()) {
-            std::string theValue = jsonObjectData.at("spectate");
+            string theValue = jsonObjectData.at("spectate");
             secretData.spectate = theValue;
         }
 
         if (jsonObjectData.contains("match") && !jsonObjectData.at("match").is_null()) {
-            std::string theValue = jsonObjectData.at("match");
+            string theValue = jsonObjectData.at("match");
             secretData.match = theValue;
         }
 
@@ -577,12 +577,12 @@ namespace DiscordCoreInternal {
         ButtonData buttonData = *pDataStructure;
 
         if (jsonObjectData.contains("label") && !jsonObjectData.at("label").is_null()) {
-            std::string theValue = jsonObjectData.at("label");
+            string theValue = jsonObjectData.at("label");
             buttonData.label = theValue;
         }
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
-            std::string theValue = jsonObjectData.at("url");
+            string theValue = jsonObjectData.at("url");
             buttonData.url = theValue;
         }
 
@@ -593,17 +593,17 @@ namespace DiscordCoreInternal {
         ClientStatusData clientStatusData = *pDataStructure;
 
         if (jsonObjectData.contains("desktop") && !jsonObjectData.at("desktop").is_null()) {
-            std::string theValue = jsonObjectData.at("desktop");
+            string theValue = jsonObjectData.at("desktop");
             clientStatusData.desktop = theValue;
         }
 
         if (jsonObjectData.contains("mobile") && !jsonObjectData.at("mobile").is_null()) {
-            std::string theValue = jsonObjectData.at("mobile");
+            string theValue = jsonObjectData.at("mobile");
             clientStatusData.mobile = theValue;
         }
 
         if (jsonObjectData.contains("web") && !jsonObjectData.at("web").is_null()) {
-            std::string theValue = jsonObjectData.at("web");
+            string theValue = jsonObjectData.at("web");
             clientStatusData.web = theValue;
         }
 
@@ -630,7 +630,7 @@ namespace DiscordCoreInternal {
         ActivityData activityData = *pDataStructure;
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             activityData.name = theValue;
         }
 
@@ -640,7 +640,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
-            std::string theValue = jsonObjectData.at("url");
+            string theValue = jsonObjectData.at("url");
             activityData.url = theValue;
         }
 
@@ -656,17 +656,17 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("application_id") && !jsonObjectData.at("application_id").is_null()) {
-            std::string theValue = jsonObjectData.at("application_id");
+            string theValue = jsonObjectData.at("application_id");
             activityData.applicationId = theValue;
         }
 
         if (jsonObjectData.contains("details") && !jsonObjectData.at("details").is_null()) {
-            std::string theValue = jsonObjectData.at("details");
+            string theValue = jsonObjectData.at("details");
             activityData.details = theValue;
         }
 
         if (jsonObjectData.contains("state") && !jsonObjectData.at("state").is_null()) {
-            std::string theValue = jsonObjectData.at("state");
+            string theValue = jsonObjectData.at("state");
             activityData.state = theValue;
         }
 
@@ -739,12 +739,12 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
-            std::string theValue = jsonObjectData.at("guild_id");
+            string theValue = jsonObjectData.at("guild_id");
             presenceUpdateData.guildId = theValue;
         }
 
         if (jsonObjectData.contains("status") && !jsonObjectData.at("status").is_null()) {
-            std::string theValue = jsonObjectData.at("status");
+            string theValue = jsonObjectData.at("status");
             presenceUpdateData.status = theValue;
         }
 
@@ -783,22 +783,22 @@ namespace DiscordCoreInternal {
         WelcomeScreenChannelData welcomeSceenChannelData = *pDataStructure;
 
         if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("channel_id");
+            string theValue = jsonObjectData.at("channel_id");
             welcomeSceenChannelData.channelId = theValue;
         }
 
         if (jsonObjectData.contains("description") && !jsonObjectData.at("description").is_null()) {
-            std::string theValue = jsonObjectData.at("description");
+            string theValue = jsonObjectData.at("description");
             welcomeSceenChannelData.description = theValue;
         }
 
         if (jsonObjectData.contains("emoji_id") && !jsonObjectData.at("emoji_id").is_null()) {
-            std::string theValue = jsonObjectData.at("emoji_id");
+            string theValue = jsonObjectData.at("emoji_id");
             welcomeSceenChannelData.emojiId = theValue;
         }
 
         if (jsonObjectData.contains("emoji_name") && !jsonObjectData.at("emoji_name").is_null()) {
-            std::string theValue = jsonObjectData.at("emoji_name");
+            string theValue = jsonObjectData.at("emoji_name");
             welcomeSceenChannelData.emojiName = theValue;
         }
 
@@ -809,7 +809,7 @@ namespace DiscordCoreInternal {
         WelcomeScreenData welcomeScreenData = *pDataStructure;
 
         if (jsonObjectData.contains("description") && !jsonObjectData.at("description").is_null()) {
-            std::string theValue = jsonObjectData.at("description");
+            string theValue = jsonObjectData.at("description");
             welcomeScreenData.description = theValue;
         }
 
@@ -842,117 +842,117 @@ namespace DiscordCoreInternal {
         GuildData guildData = *pDataStructure;
         
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             guildData.id = theValue;
         }
 
         if (jsonObjectData.contains("afk_channel_id") && !jsonObjectData.at("afk_channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("afk_channel_id");
+            string theValue = jsonObjectData.at("afk_channel_id");
             guildData.afkChannelID = theValue;
         }
 
         if (jsonObjectData.contains("icon") && !jsonObjectData.at("icon").is_null()) {
-            std::string theValue = jsonObjectData.at("icon");
+            string theValue = jsonObjectData.at("icon");
             guildData.icon = theValue;
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             guildData.name = theValue;
         }
 
         if (jsonObjectData.contains("icon_hash") && !jsonObjectData.at("icon_hash").is_null()) {
-            std::string theValue = jsonObjectData.at("icon_hash");
+            string theValue = jsonObjectData.at("icon_hash");
             guildData.iconHash = theValue;
         }
 
         if (jsonObjectData.contains("splash") && !jsonObjectData.at("splash").is_null()) {
-            std::string theValue = jsonObjectData.at("splash");
+            string theValue = jsonObjectData.at("splash");
             guildData.splash = theValue;
         }
 
         if (jsonObjectData.contains("discovery_splash") && !jsonObjectData.at("discovery_splash").is_null()) {
-            std::string theValue = jsonObjectData.at("discovery_splash");
+            string theValue = jsonObjectData.at("discovery_splash");
             guildData.discoverySplash = theValue;
         }
 
-        if (jsonObjectData.contains<std::string>("owner") && !jsonObjectData.at("owner").is_null()) {
+        if (jsonObjectData.contains<string>("owner") && !jsonObjectData.at("owner").is_null()) {
             bool theValue = jsonObjectData.at("owner");
             guildData.owner = theValue;
         }
 
         if (jsonObjectData.contains("owner_id") && !jsonObjectData.at("owner_id").is_null()) {
-            std::string theValue = jsonObjectData.at("owner_id");
+            string theValue = jsonObjectData.at("owner_id");
             guildData.ownerID = theValue;
         }
 
         if (jsonObjectData.contains("preferred_locale") && !jsonObjectData.at("preferred_locale").is_null()) {
-            std::string theValue = jsonObjectData.at("preferred_locale");
+            string theValue = jsonObjectData.at("preferred_locale");
             guildData.preferredLocale = theValue;
         }
 
         if (jsonObjectData.contains("public_updates_channel_id") && !jsonObjectData.at("public_updates_channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("public_updates_channel_id");
+            string theValue = jsonObjectData.at("public_updates_channel_id");
             guildData.publicUpdatesChannelID = theValue;
         }
 
         if (jsonObjectData.contains("vanity_url_code") && !jsonObjectData.at("vanity_url_code").is_null()) {
-            std::string theValue = jsonObjectData.at("vanity_url_code");
+            string theValue = jsonObjectData.at("vanity_url_code");
             guildData.vanityURLCode = theValue;
         }
 
         if (jsonObjectData.contains("description") && !jsonObjectData.at("description").is_null()) {
-            std::string theValue = jsonObjectData.at("description");
+            string theValue = jsonObjectData.at("description");
             guildData.description = theValue;
         }
 
         if (jsonObjectData.contains("banner") && !jsonObjectData.at("banner").is_null()) {
-            std::string theValue = jsonObjectData.at("banner");
+            string theValue = jsonObjectData.at("banner");
             guildData.banner = theValue;
         }
 
         if (jsonObjectData.contains("rule_Channel_id") && !jsonObjectData.at("rule_Channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("rule_Channel_id");
+            string theValue = jsonObjectData.at("rule_Channel_id");
             guildData.ruleChannelID = theValue;
         }
 
         if (jsonObjectData.contains("application_id") && !jsonObjectData.at("application_id").is_null()) {
-            std::string theValue = jsonObjectData.at("application_id");
+            string theValue = jsonObjectData.at("application_id");
             guildData.applicationID = theValue;
         }
 
         if (jsonObjectData.contains("joined_at") && !jsonObjectData.at("joined_at").is_null()) {
-            std::string theValue = jsonObjectData.at("joined_at");
+            string theValue = jsonObjectData.at("joined_at");
             guildData.joinedAt = theValue;
         }
 
         if (jsonObjectData.contains("widget_channel_id") && !jsonObjectData.at("widget_channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("widget_channel_id");
+            string theValue = jsonObjectData.at("widget_channel_id");
             guildData.widgetChannelID = theValue;
         }
 
         if (jsonObjectData.contains("system_channel_id") && !jsonObjectData.at("system_channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("system_channel_id");
+            string theValue = jsonObjectData.at("system_channel_id");
             guildData.systemChannelID = theValue;
         }
 
         if (jsonObjectData.contains("region") && !jsonObjectData.at("region").is_null()) {
-            std::string theValue = jsonObjectData.at("region");
+            string theValue = jsonObjectData.at("region");
             guildData.region = theValue;
         }
 
         if (jsonObjectData.contains("afk_channel_id") && !jsonObjectData.at("afk_channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("afk_channel_id");
+            string theValue = jsonObjectData.at("afk_channel_id");
             guildData.afkChannelID = theValue;
         }
 
         if (jsonObjectData.contains("owner_id") && !jsonObjectData.at("owner_id").is_null()) {
-            std::string theValue = jsonObjectData.at("owner_id");
+            string theValue = jsonObjectData.at("owner_id");
             guildData.ownerID = theValue;
         }
 
         if (jsonObjectData.contains("region") && !jsonObjectData.at("region").is_null()) {
-            std::string theValue = jsonObjectData.at("region");
+            string theValue = jsonObjectData.at("region");
             guildData.region = theValue;
         }
 
@@ -973,7 +973,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("permissions") && !jsonObjectData.at("permissions").is_null()) {
-            std::string theValue = jsonObjectData.at("permissions");
+            string theValue = jsonObjectData.at("permissions");
             guildData.permissions = theValue;
         }
 
@@ -1208,12 +1208,12 @@ namespace DiscordCoreInternal {
         ChannelMentionData channelMentionData = *pDataStructure;
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             channelMentionData.id = theValue;
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
-            std::string theValue = jsonObjectData.at("guild_id");
+            string theValue = jsonObjectData.at("guild_id");
             channelMentionData.guildId = theValue;
         }
 
@@ -1223,7 +1223,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             channelMentionData.name = theValue;
         }
 
@@ -1234,17 +1234,17 @@ namespace DiscordCoreInternal {
         AttachmentData attachmentData = *pDataStructure;
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             attachmentData.id = theValue;
         }
 
         if (jsonObjectData.contains("filename") && !jsonObjectData.at("filename").is_null()) {
-            std::string theValue = jsonObjectData.at("filename");
+            string theValue = jsonObjectData.at("filename");
             attachmentData.filename = theValue;
         }
 
         if (jsonObjectData.contains("content_type") && !jsonObjectData.at("content_type").is_null()) {
-            std::string theValue = jsonObjectData.at("content_type");
+            string theValue = jsonObjectData.at("content_type");
             attachmentData.contentType = theValue;
         }
 
@@ -1254,12 +1254,12 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
-            std::string theValue = jsonObjectData.at("url");
+            string theValue = jsonObjectData.at("url");
             attachmentData.url = theValue;
         }
 
         if (jsonObjectData.contains("proxy_url") && !jsonObjectData.at("proxy_url").is_null()) {
-            std::string theValue = jsonObjectData.at("proxy_url");
+            string theValue = jsonObjectData.at("proxy_url");
             attachmentData.proxyUrl = theValue;
         }
 
@@ -1280,17 +1280,17 @@ namespace DiscordCoreInternal {
         EmbedFooterData footerData = *pDataStructure;
 
         if (jsonObjectData.contains("text") && !jsonObjectData.at("text").is_null()) {
-            std::string theValue = jsonObjectData.at("text");
+            string theValue = jsonObjectData.at("text");
             footerData.text = theValue;
         }
 
         if (jsonObjectData.contains("icon_url") && !jsonObjectData.at("icon_url").is_null()) {
-            std::string theValue = jsonObjectData.at("icon_url");
+            string theValue = jsonObjectData.at("icon_url");
             footerData.iconUrl = theValue;
         }
 
         if (jsonObjectData.contains("proxy_icon_url") && !jsonObjectData.at("proxy_icon_url").is_null()) {
-            std::string theValue = jsonObjectData.at("proxy_icon_url");
+            string theValue = jsonObjectData.at("proxy_icon_url");
             footerData.proxyIconUrl = theValue;
         }
 
@@ -1301,12 +1301,12 @@ namespace DiscordCoreInternal {
         EmbedImageData imageData = *pDataStructure;
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
-            std::string theValue = jsonObjectData.at("url");
+            string theValue = jsonObjectData.at("url");
             imageData.url = theValue;
         }
 
         if (jsonObjectData.contains("proxy_url") && !jsonObjectData.at("proxy_url").is_null()) {
-            std::string theValue = jsonObjectData.at("proxy_url");
+            string theValue = jsonObjectData.at("proxy_url");
             imageData.proxyUrl = theValue;
         }
 
@@ -1327,12 +1327,12 @@ namespace DiscordCoreInternal {
         EmbedThumbnailData thumbnailData = *pDataStructure;
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
-            std::string theValue = jsonObjectData.at("url");
+            string theValue = jsonObjectData.at("url");
             thumbnailData.url = theValue;
         }
 
         if (jsonObjectData.contains("proxy_url") && !jsonObjectData.at("proxy_url").is_null()) {
-            std::string theValue = jsonObjectData.at("proxy_url");
+            string theValue = jsonObjectData.at("proxy_url");
             thumbnailData.proxyUrl = theValue;
         }
 
@@ -1353,12 +1353,12 @@ namespace DiscordCoreInternal {
         EmbedVideoData videoData = *pDataStructure;
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
-            std::string theValue = jsonObjectData.at("url");
+            string theValue = jsonObjectData.at("url");
             videoData.url = theValue;
         }
 
         if (jsonObjectData.contains("proxy_url") && !jsonObjectData.at("proxy_url").is_null()) {
-            std::string theValue = jsonObjectData.at("proxy_url");
+            string theValue = jsonObjectData.at("proxy_url");
             videoData.proxyUrl = theValue;
         }
 
@@ -1379,22 +1379,22 @@ namespace DiscordCoreInternal {
         EmbedAuthorData authorData = *pDataStructure;
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
-            std::string theValue = jsonObjectData.at("url");
+            string theValue = jsonObjectData.at("url");
             authorData.url = theValue;
         }
 
         if (jsonObjectData.contains("proxy_icon_url") && !jsonObjectData.at("proxy_icon_url").is_null()) {
-            std::string theValue = jsonObjectData.at("proxy_icon_url");
+            string theValue = jsonObjectData.at("proxy_icon_url");
             authorData.proxyIconUrl = theValue;
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             authorData.name = theValue;
         }
 
         if (jsonObjectData.contains("icon_url") && !jsonObjectData.at("icon_url").is_null()) {
-            std::string theValue = jsonObjectData.at("icon_url");
+            string theValue = jsonObjectData.at("icon_url");
             authorData.iconUrl = theValue;
         }
 
@@ -1405,12 +1405,12 @@ namespace DiscordCoreInternal {
         EmbedProviderData providerData = *pDataStructure;
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
-            std::string theValue = jsonObjectData.at("url");
+            string theValue = jsonObjectData.at("url");
             providerData.url = theValue;
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             providerData.name = theValue;
         }
 
@@ -1426,12 +1426,12 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             fieldData.name = theValue;
         }
 
         if (jsonObjectData.contains("value") && !jsonObjectData.at("value").is_null()) {
-            std::string theValue = jsonObjectData.at("value");
+            string theValue = jsonObjectData.at("value");
             fieldData.value = theValue;
         }
 
@@ -1442,27 +1442,27 @@ namespace DiscordCoreInternal {
         EmbedData embedData = *pDataStructure;
 
         if (jsonObjectData.contains("title") && !jsonObjectData.at("title").is_null()) {
-            std::string theValue = jsonObjectData.at("title");
+            string theValue = jsonObjectData.at("title");
             embedData.title = theValue;
         }
 
         if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
-            std::string theValue = jsonObjectData.at("type");
+            string theValue = jsonObjectData.at("type");
             embedData.type = theValue;
         }
 
         if (jsonObjectData.contains("description") && !jsonObjectData.at("description").is_null()) {
-            std::string theValue = jsonObjectData.at("description");
+            string theValue = jsonObjectData.at("description");
             embedData.description = theValue;
         }
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
-            std::string theValue = jsonObjectData.at("url");
+            string theValue = jsonObjectData.at("url");
             embedData.url = theValue;
         }
 
         if (jsonObjectData.contains("timestamp") && !jsonObjectData.at("timestamp").is_null()) {
-            std::string theValue = jsonObjectData.at("timestamp");
+            string theValue = jsonObjectData.at("timestamp");
             embedData.timestamp = theValue;
         }
 
@@ -1576,7 +1576,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("party_id") && !jsonObjectData.at("party_id").is_null()) {
-            std::string theValue = jsonObjectData.at("party_id");
+            string theValue = jsonObjectData.at("party_id");
             messageActivityData.partyId = theValue;
         }
 
@@ -1592,7 +1592,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("team_id") && !jsonObjectData.at("team_id").is_null()) {
-            std::string theValue = jsonObjectData.at("team_id");
+            string theValue = jsonObjectData.at("team_id");
             teamMemberObjectData.teamId = theValue;
         }
 
@@ -1625,12 +1625,12 @@ namespace DiscordCoreInternal {
         TeamObjectData teamObjectData = *pDataStructure;
 
         if (jsonObjectData.contains("icon") && !jsonObjectData.at("icon").is_null()) {
-            std::string theValue = jsonObjectData.at("icon");
+            string theValue = jsonObjectData.at("icon");
             teamObjectData.icon = theValue;
         }
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             teamObjectData.id = theValue;
         }
 
@@ -1658,7 +1658,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("owner_user_id") && !jsonObjectData.at("owner_user_id").is_null()) {
-            std::string theValue = jsonObjectData.at("owner_user_id");
+            string theValue = jsonObjectData.at("owner_user_id");
             teamObjectData.ownerUserId = theValue;
         }
 
@@ -1669,22 +1669,22 @@ namespace DiscordCoreInternal {
         ApplicationData applicationData = *pDataStructure;
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             applicationData.id = theValue;
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             applicationData.name = theValue;
         }
 
         if (jsonObjectData.contains("icon") && !jsonObjectData.at("icon").is_null()) {
-            std::string theValue = jsonObjectData.at("icon");
+            string theValue = jsonObjectData.at("icon");
             applicationData.icon = theValue;
         }
 
         if (jsonObjectData.contains("description") && !jsonObjectData.at("description").is_null()) {
-            std::string theValue = jsonObjectData.at("description");
+            string theValue = jsonObjectData.at("description");
             applicationData.description = theValue;
         }
 
@@ -1715,12 +1715,12 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("terms_of_service_url") && !jsonObjectData.at("terms_of_service_url").is_null()) {
-            std::string theValue = jsonObjectData.at("terms_of_service_url");
+            string theValue = jsonObjectData.at("terms_of_service_url");
             applicationData.termsOfServiceUrl = theValue;
         }
 
         if (jsonObjectData.contains("privacy_policy_url") && !jsonObjectData.at("privacy_policy_url").is_null()) {
-            std::string theValue = jsonObjectData.at("privacy_policy_url");
+            string theValue = jsonObjectData.at("privacy_policy_url");
             applicationData.privacyPolicyUrl = theValue;
         }
 
@@ -1731,12 +1731,12 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("summary") && !jsonObjectData.at("summary").is_null()) {
-            std::string theValue = jsonObjectData.at("summary");
+            string theValue = jsonObjectData.at("summary");
             applicationData.summary = theValue;
         }
 
         if (jsonObjectData.contains("verify_key") && !jsonObjectData.at("verify_key").is_null()) {
-            std::string theValue = jsonObjectData.at("verify_key");
+            string theValue = jsonObjectData.at("verify_key");
             applicationData.verifyKey = theValue;
         }
 
@@ -1747,27 +1747,27 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
-            std::string theValue = jsonObjectData.at("guild_id");
+            string theValue = jsonObjectData.at("guild_id");
             applicationData.guildId = theValue;
         }
 
         if (jsonObjectData.contains("primary_sku_id") && !jsonObjectData.at("primary_sku_id").is_null()) {
-            std::string theValue = jsonObjectData.at("primary_sku_id");
+            string theValue = jsonObjectData.at("primary_sku_id");
             applicationData.primarySkuId = theValue;
         }
 
         if (jsonObjectData.contains("slug") && !jsonObjectData.at("slug").is_null()) {
-            std::string theValue = jsonObjectData.at("slug");
+            string theValue = jsonObjectData.at("slug");
             applicationData.slug = theValue;
         }
 
         if (jsonObjectData.contains("cover_image") && !jsonObjectData.at("cover_image").is_null()) {
-            std::string theValue = jsonObjectData.at("cover_image");
+            string theValue = jsonObjectData.at("cover_image");
             applicationData.coverImage = theValue;
         }
 
         if (jsonObjectData.contains("flags") && !jsonObjectData.at("flags").is_null()) {
-            std::string theValue = jsonObjectData.at("flags");
+            string theValue = jsonObjectData.at("flags");
             applicationData.coverImage = theValue;
         }
 
@@ -1778,17 +1778,17 @@ namespace DiscordCoreInternal {
         MessageReferenceData messageReferenceData = *pDataStructure;
 
         if (jsonObjectData.contains("message_id") && !jsonObjectData.at("message_id").is_null()) {
-            std::string theValue = jsonObjectData.at("message_id");
+            string theValue = jsonObjectData.at("message_id");
             messageReferenceData.messageId = theValue;
         }
 
         if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("channel_id");
+            string theValue = jsonObjectData.at("channel_id");
             messageReferenceData.channelId = theValue;
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
-            std::string theValue = jsonObjectData.at("guild_id");
+            string theValue = jsonObjectData.at("guild_id");
             messageReferenceData.guildId = theValue;
         }
 
@@ -1804,32 +1804,32 @@ namespace DiscordCoreInternal {
         MessageStickerData messageStickerData = *pDataStructure;
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             messageStickerData.id = theValue;
         }
 
         if (jsonObjectData.contains("pack_id") && !jsonObjectData.at("pack_id").is_null()) {
-            std::string theValue = jsonObjectData.at("pack_id");
+            string theValue = jsonObjectData.at("pack_id");
             messageStickerData.packId = theValue;
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
-            std::string theValue = jsonObjectData.at("name");
+            string theValue = jsonObjectData.at("name");
             messageStickerData.name = theValue;
         }
 
         if (jsonObjectData.contains("description") && !jsonObjectData.at("description").is_null()) {
-            std::string theValue = jsonObjectData.at("description");
+            string theValue = jsonObjectData.at("description");
             messageStickerData.description = theValue;
         }
 
         if (jsonObjectData.contains("tags") && !jsonObjectData.at("tags").is_null()) {
-            std::string theValue = jsonObjectData.at("tags");
+            string theValue = jsonObjectData.at("tags");
             messageStickerData.tags = theValue;
         }
 
         if (jsonObjectData.contains("asset") && !jsonObjectData.at("asset").is_null()) {
-            std::string theValue = jsonObjectData.at("asset");
+            string theValue = jsonObjectData.at("asset");
             messageStickerData.asset = theValue;
         }
 
@@ -1909,7 +1909,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("content") && !jsonObjectData.at("content").is_null()) {
-            std::string theValue = jsonObjectData.at("content");
+            string theValue = jsonObjectData.at("content");
             interactionAppCommandCallbackData.content = theValue;
         }
 
@@ -1969,22 +1969,22 @@ namespace DiscordCoreInternal {
         ReactionAddEventData reactionAddData = *pDataStructure;
 
         if (jsonObjectData.contains("user_id") && !jsonObjectData.at("user_id").is_null()) {
-            std::string theValue = jsonObjectData.at("user_id");
+            string theValue = jsonObjectData.at("user_id");
             reactionAddData.userId = theValue;
         }
 
         if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("channel_id");
+            string theValue = jsonObjectData.at("channel_id");
             reactionAddData.channelId = theValue;
         }
 
         if (jsonObjectData.contains("message_id") && !jsonObjectData.at("message_id").is_null()) {
-            std::string theValue = jsonObjectData.at("message_id");
+            string theValue = jsonObjectData.at("message_id");
             reactionAddData.messageId = theValue;
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
-            std::string theValue = jsonObjectData.at("guild_id");
+            string theValue = jsonObjectData.at("guild_id");
             reactionAddData.guildId = theValue;
         }
 
@@ -2007,22 +2007,22 @@ namespace DiscordCoreInternal {
         MessageData messageData = *pDataStructure;
 
         if (jsonObjectData.contains("content") && !jsonObjectData.at("content").is_null()) {
-            std::string theValue = jsonObjectData.at("content");
+            string theValue = jsonObjectData.at("content");
             messageData.content = theValue;
         }
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
-            std::string theValue = jsonObjectData.at("id");
+            string theValue = jsonObjectData.at("id");
             messageData.id = theValue;
         }
 
         if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
-            std::string theValue = jsonObjectData.at("channel_id");
+            string theValue = jsonObjectData.at("channel_id");
             messageData.channelId = theValue;
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
-            std::string theValue = jsonObjectData.at("guild_id");
+            string theValue = jsonObjectData.at("guild_id");
             messageData.guildId = theValue;
         }
 
@@ -2039,12 +2039,12 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("timestamp") && !jsonObjectData.at("timestamp").is_null()) {
-            std::string theValue = jsonObjectData.at("timestamp");
+            string theValue = jsonObjectData.at("timestamp");
             messageData.timestamp = theValue;
         }
 
         if (jsonObjectData.contains("edited_timestamp") && !jsonObjectData.at("edited_timestamp").is_null()) {
-            std::string theValue = jsonObjectData.at("edited_timestamp");
+            string theValue = jsonObjectData.at("edited_timestamp");
             messageData.editedTimestamp = theValue;
         }
 
@@ -2182,7 +2182,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("nonce") && !jsonObjectData.at("nonce").is_null()) {
-            std::string theValue = jsonObjectData.at("nonce");
+            string theValue = jsonObjectData.at("nonce");
             messageData.nonce = theValue;
         }
 
@@ -2192,7 +2192,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("webhook_id") && !jsonObjectData.at("webhook_id").is_null()) {
-            std::string theValue = jsonObjectData.at("webhook_id");
+            string theValue = jsonObjectData.at("webhook_id");
             messageData.webhookId = theValue;
         }
 
