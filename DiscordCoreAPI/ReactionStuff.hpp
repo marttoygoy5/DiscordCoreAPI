@@ -40,13 +40,6 @@ namespace DiscordCoreAPI {
 		string emojiId;
 	};
 
-	struct PutReactionData {
-		string channelId;
-		string messageId;
-		string emojiName;
-		string emojiId;
-	};
-
 	struct DeleteUserReactionData {
 		string channelId;
 		string messageId;
@@ -62,7 +55,7 @@ namespace DiscordCoreAPI {
 		string emojiId;
 	};
 
-	struct DeleteAllReactionsByEmojiData {
+	struct DeleteReactionsByEmojiData {
 		string channelId;
 		string messageId;
 		string emojiName;
@@ -169,7 +162,7 @@ namespace DiscordCoreAPI {
 	class ReactionManager {
 	public:
 
-		task<Reaction> createReactionAsync(PutReactionData createReactionData){
+		task<Reaction> createReactionAsync(CreateReactionData createReactionData){
 			DiscordCoreInternal::PutReactionData putReactionData;
 			putReactionData.channelId = createReactionData.channelId;
 			putReactionData.messageId = createReactionData.messageId;
@@ -254,7 +247,7 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 
-		task<void> deleteReactionByEmojiAsync(DeleteAllReactionsByEmojiData deleteReactionDataOld) {
+		task<void> deleteReactionsByEmojiAsync(DeleteReactionsByEmojiData deleteReactionDataOld) {
 			DiscordCoreInternal::DeleteReactionDataAll deleteReactionData;
 			deleteReactionData.channelId = deleteReactionDataOld.channelId;
 			deleteReactionData.messageId = deleteReactionDataOld.messageId;

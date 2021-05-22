@@ -164,7 +164,6 @@ namespace  DiscordCoreInternal {
             int colorValue = 65536 * this->color[0] + 256 * this->color[1] + this->color[2];
             return colorValue;
         };
-        int actualColorVal = actualColor();
     };
 
     enum class Permissions {
@@ -857,6 +856,13 @@ namespace  DiscordCoreInternal {
         string guildId;
     };
 
+    struct FetchGuildData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        GuildData oldGuildData;
+        string guildId;
+    };
+
     struct PutReactionData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
@@ -883,6 +889,12 @@ namespace  DiscordCoreInternal {
     };
 
     struct GetChannelData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string channelId;
+    };
+
+    struct FetchChannelData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         string channelId;
@@ -921,6 +933,13 @@ namespace  DiscordCoreInternal {
     };
 
     struct GetUserData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string userId;
+        GetUserDataType userType;
+    };
+
+    struct FetchUserData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         string userId;

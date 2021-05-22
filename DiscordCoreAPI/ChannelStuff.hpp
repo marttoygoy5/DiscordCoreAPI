@@ -45,6 +45,10 @@ namespace DiscordCoreAPI {
 		string channelId;
 	};
 
+	struct FetchChannelData {
+		string channelId;
+	};
+
 	struct GetDMChannelData {
 		string userId;
 	};
@@ -55,7 +59,7 @@ namespace DiscordCoreAPI {
 		friend class Guild;
 		friend class ChannelManager;
 
-		static unbounded_buffer<DiscordCoreInternal::GetChannelData>* requestFetchBuffer;
+		static unbounded_buffer<DiscordCoreInternal::FetchChannelData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetChannelData>* requestGetBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetDMChannelData>* requestDMChannelBuffer;
 		static unbounded_buffer<Channel>* outBuffer;
@@ -74,14 +78,14 @@ namespace DiscordCoreAPI {
 		}
 
 		static task<void> initialize() {
-			ChannelManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::GetChannelData>;
+			ChannelManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::FetchChannelData>;
 			ChannelManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetChannelData>;
 			ChannelManagerAgent::requestDMChannelBuffer = new unbounded_buffer<DiscordCoreInternal::GetDMChannelData>;
 			ChannelManagerAgent::outBuffer = new unbounded_buffer<Channel>;
 			co_return;
 		}
 
-		task<Channel> getChannelAsync(DiscordCoreInternal::GetChannelData dataPackage) {
+		task<Channel> getChannelAsync(DiscordCoreInternal::FetchChannelData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_CHANNEL;
@@ -126,29 +130,18 @@ namespace DiscordCoreAPI {
 						Channel channel = cacheTemp.at(getData.channelId);
 						send(ChannelManagerAgent::outBuffer, channel);
 					}
-					else {
-						Channel channel = getChannelAsync(getData).get();
-						cacheTemp.insert(make_pair(getData.channelId, channel));
-						send(ChannelManagerAgent::outBuffer, channel);
-						asend(cache, cacheTemp);
-					}
-				}
-				else {
-					Channel channel = getChannelAsync(getData).get();
-					cacheTemp.insert(make_pair(getData.channelId, channel));
-					send(ChannelManagerAgent::outBuffer, channel);
-					asend(cache, cacheTemp);
 				}
 			}
-			if (try_receive(ChannelManagerAgent::requestFetchBuffer, getData)) {
+			DiscordCoreInternal::FetchChannelData fetchData;
+			if (try_receive(ChannelManagerAgent::requestFetchBuffer, fetchData)) {
 				map<string, Channel> cacheTemp;
 				if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(getData.channelId)) {
-						cacheTemp.erase(getData.channelId);
+					if (cacheTemp.contains(fetchData.channelId)) {
+						cacheTemp.erase(fetchData.channelId);
 					}
 				}
-				Channel channel = getChannelAsync(getData).get();
-				cacheTemp.insert(make_pair(getData.channelId, channel));
+				Channel channel = getChannelAsync(fetchData).get();
+				cacheTemp.insert(make_pair(fetchData.channelId, channel));
 				send(ChannelManagerAgent::outBuffer, channel);
 				asend(cache, cacheTemp);
 			}
@@ -194,8 +187,8 @@ namespace DiscordCoreAPI {
 	class ChannelManager {
 	public:
 
-		task<Channel> fetchAsync(GetChannelData getChannelData) {
-			DiscordCoreInternal::GetChannelData dataPackage;
+		task<Channel> fetchAsync(FetchChannelData getChannelData) {
+			DiscordCoreInternal::FetchChannelData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getChannelData.channelId;
@@ -239,7 +232,7 @@ namespace DiscordCoreAPI {
 			co_return channel;
 		}
 
-		task<void> insertChannel(Channel channel) {
+		task<void> insertChannelAsync(Channel channel) {
 			ChannelManagerAgent channelManagerAgent(this->agentResources, this->threads, this, this->threads->at(2).scheduler);
 			channelManagerAgent.start();
 			ChannelManagerAgent::channelsToInsert.push(channel);
@@ -263,7 +256,7 @@ namespace DiscordCoreAPI {
 	};
 
 	overwrite_buffer<map<string, Channel>> ChannelManagerAgent::cache;
-	unbounded_buffer<DiscordCoreInternal::GetChannelData>* ChannelManagerAgent::requestFetchBuffer;
+	unbounded_buffer<DiscordCoreInternal::FetchChannelData>* ChannelManagerAgent::requestFetchBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetChannelData>* ChannelManagerAgent::requestGetBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetDMChannelData>* ChannelManagerAgent::requestDMChannelBuffer;
 	unbounded_buffer<Channel>* ChannelManagerAgent::outBuffer;

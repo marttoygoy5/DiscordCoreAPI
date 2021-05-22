@@ -20,8 +20,7 @@ namespace DiscordCoreInternal {
 		unbounded_buffer<json> workReturnBuffer;
 		unbounded_buffer<HttpWorkload> workSubmissionBuffer;
 		HttpRequestAgent(HttpAgentResources agentResources, Scheduler* pScheduler = nullptr) 
-			:
-			agent(*pScheduler)
+			: agent(*pScheduler)
 		{
 			try {
 				this->baseURL = agentResources.baseURL;
@@ -57,8 +56,7 @@ namespace DiscordCoreInternal {
 			}
 		}
 
-		bool get_error(exception& e)
-		{
+		bool get_error(exception& e){
 			return try_receive(_error, e);
 		}
 
@@ -438,7 +436,7 @@ namespace DiscordCoreInternal {
 			co_return deleteData;
 		}
 
-		Uri baseURI = Uri{ nullptr };
+		Uri baseURI{ nullptr };
 		hstring baseURL;
 		hstring botToken;
 		hstring initialConnectionPath;

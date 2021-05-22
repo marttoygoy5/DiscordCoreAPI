@@ -42,7 +42,6 @@ namespace DiscordCoreAPI {
 		GuildMemberManager* guildMembers{ nullptr };
 		ReactionManager* reactions{ nullptr };
 		shared_ptr<EventMachine> EventMachine{ nullptr };
-		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
@@ -81,6 +80,7 @@ namespace DiscordCoreAPI {
 		ITarget<DiscordCoreInternal::WebSocketWorkload>& webSocketWorkloadTarget;
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
+		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		
 		task<void> initialize(hstring botTokenNew) {
 			_set_purecall_handler(myPurecallHandler);
@@ -112,7 +112,7 @@ namespace DiscordCoreAPI {
 			this->guildMembers = new GuildMemberManager(agentResources, this->pSystemThreads->threads);
 			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads);
 			this->guilds = new GuildManager(agentResources, this->pSystemThreads->threads, this->guildMembers, this->roles, this->channels, this->users);
-			User user = this->users->fetchCurrentUser().get();
+			User user = this->users->fetchCurrentUserAsync().get();
 			this->currentUser = &user;
 			co_await mainThread;
 		}

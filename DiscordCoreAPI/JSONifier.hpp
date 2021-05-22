@@ -215,10 +215,10 @@ namespace DiscordCoreInternal {
 	}
 
 	string getModifyRolePayload(ModifyRoleData modifyRoleData) {
-		modifyRoleData.color = modifyRoleData.actualColor();
+		int color = modifyRoleData.actualColor();
 
 		json data = {
-			{"color", modifyRoleData.color},
+			{"color", color},
 			{"hoist", modifyRoleData.hoist},
 			{"mendtionable", modifyRoleData.mentionable},
 			{"name", modifyRoleData.name},

@@ -34,6 +34,11 @@ namespace DiscordCoreAPI {
 
 	};
 
+	struct FetchGuildMemberData {
+		string guildId;
+		string guildMemberId;
+	};
+
 	struct GetGuildMemberData {
 		string guildId;
 		string guildMemberId;
@@ -129,7 +134,7 @@ namespace DiscordCoreAPI {
 	class GuildMemberManager {
 	public:
 
-		task<GuildMember> fetchAsync(GetGuildMemberData getGuildMemberData) {
+		task<GuildMember> fetchAsync(FetchGuildMemberData getGuildMemberData) {
 			DiscordCoreInternal::GetGuildMemberData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -162,7 +167,7 @@ namespace DiscordCoreAPI {
 			co_return guildMember;
 		}
 
-		task<void> insertGuildMember(GuildMember guildMember) {
+		task<void> insertGuildMemberAsync(GuildMember guildMember) {
 			GuildMemberManagerAgent guildMemberManagerAgent(this->threads, this->threads->at(2).scheduler, this->agentResources, this);
 			guildMemberManagerAgent.start();
 			GuildMemberManagerAgent::guildMembersToInsert.push(guildMember);

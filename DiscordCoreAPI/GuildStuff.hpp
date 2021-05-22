@@ -60,26 +60,26 @@ namespace DiscordCoreAPI
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
 					Channel channel(channelData, this->channels);
-					this->channels->insertChannel(channel).get();
+					this->channels->insertChannelAsync(channel).get();
 				}
 				cout << "Caching guild members for guild: " << this->data.name << endl;
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
 					guildMemberData.guildId = this->data.id;
 					GuildMember guildMember(guildMemberData, this->guildMembers);
-					this->guildMembers->insertGuildMember(guildMember).get();
+					this->guildMembers->insertGuildMemberAsync(guildMember).get();
 				}
 				cout << "Caching roles for guild: " << this->data.name << endl;
 				for (auto const& [key, value] : data.roles) {
 					DiscordCoreInternal::RoleData roleData = value;
 					Role role(this->agentResources, roleData, this->roles);
-					this->roles->insertRole(role).get();
+					this->roles->insertRoleAsync(role).get();
 				}
 				cout << "Caching users for guild: " << this->data.name << endl << endl;
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::UserData userData = data.members.at(x).user;
 					User user(userData, this->users);
-					this->users->insertUser(user).get();
+					this->users->insertUserAsync(user).get();
 				}
 			}
 			catch (exception error) {
@@ -94,11 +94,15 @@ namespace DiscordCoreAPI
 		string guildId;
 	};
 
+	struct FetchGuildData {
+		string guildId;
+	};
+
 	class GuildManagerAgent : public agent {
 	protected:
 		friend class DiscordCoreClient;
 		friend class GuildManager;
-		static unbounded_buffer<DiscordCoreInternal::GetGuildData>* requestFetchBuffer;
+		static unbounded_buffer<DiscordCoreInternal::FetchGuildData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetGuildData>* requestGetBuffer;
 		static unbounded_buffer<Guild>* outBuffer;
 		static concurrent_queue<Guild> guildsToInsert;
@@ -125,13 +129,13 @@ namespace DiscordCoreAPI
 		}
 
 		static task<void> initialize() {
-			GuildManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::GetGuildData>;
+			GuildManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::FetchGuildData>;
 			GuildManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetGuildData>;
 			GuildManagerAgent::outBuffer = new unbounded_buffer<Guild>;
 			co_return;
 		}
 
-		task<Guild> getObjectAsync(DiscordCoreInternal::GetGuildData dataPackage) {
+		task<Guild> getObjectAsync(DiscordCoreInternal::FetchGuildData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_GUILD;
@@ -157,30 +161,20 @@ namespace DiscordCoreAPI
 						Guild guild = cacheTemp.at(dataPackage.guildId);
 						send(GuildManagerAgent::outBuffer, guild);
 					}
-					else {
-						Guild guild = getObjectAsync(dataPackage).get();
-						cacheTemp.insert(make_pair(dataPackage.guildId, guild));
-						send(GuildManagerAgent::outBuffer, guild);
-						asend(cache, cacheTemp);
-					}
-				}
-				else {
-					Guild guild = getObjectAsync(dataPackage).get();
-					cacheTemp.insert(make_pair(dataPackage.guildId, guild));
-					send(GuildManagerAgent::outBuffer, guild);
-					asend(cache, cacheTemp);
 				}
 			}
-			if (try_receive(GuildManagerAgent::requestFetchBuffer, dataPackage)) {
+			DiscordCoreInternal::FetchGuildData fetchData;
+			if (try_receive(GuildManagerAgent::requestFetchBuffer, fetchData)) {
 				map<string, Guild> cacheTemp;
 				if (try_receive(GuildManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(dataPackage.guildId)) {
-						dataPackage.oldGuildData = cacheTemp.at(dataPackage.guildId).data;
-						cacheTemp.erase(dataPackage.guildId);
+					if (cacheTemp.contains(fetchData.guildId)) {
+						dataPackage.oldGuildData = cacheTemp.at(fetchData.guildId).data;
+						cacheTemp.erase(fetchData.guildId);
 					}
 				}
-				Guild guild = getObjectAsync(dataPackage).get();
-				cacheTemp.insert(make_pair(dataPackage.guildId, guild));
+				fetchData.oldGuildData = dataPackage.oldGuildData;
+				Guild guild = getObjectAsync(fetchData).get();
+				cacheTemp.insert(make_pair(fetchData.guildId, guild));
 				send(GuildManagerAgent::outBuffer, guild);
 				asend(cache, cacheTemp);
 			}
@@ -204,8 +198,8 @@ namespace DiscordCoreAPI
 	class GuildManager {
 	public:
 
-		task<Guild> fetchAsync(GetGuildData getGuildData) {
-			DiscordCoreInternal::GetGuildData dataPackage;
+		task<Guild> fetchAsync(FetchGuildData getGuildData) {
+			DiscordCoreInternal::FetchGuildData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getGuildData.guildId;
@@ -234,7 +228,7 @@ namespace DiscordCoreAPI
 			co_return guild;
 		}
 
-		task<void> insertGuild(Guild guild) {
+		task<void> insertGuildAsync(Guild guild) {
 			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this, this->guildMembers, this->roles, this->channels, this->users, this->threads->at(2).scheduler);
 			guildManagerAgent.start();
 			GuildManagerAgent::guildsToInsert.push(guild);
@@ -266,7 +260,7 @@ namespace DiscordCoreAPI
 
 	};
 	overwrite_buffer<map<string, Guild>> GuildManagerAgent::cache;
-	unbounded_buffer<DiscordCoreInternal::GetGuildData>* GuildManagerAgent::requestFetchBuffer;
+	unbounded_buffer<DiscordCoreInternal::FetchGuildData>* GuildManagerAgent::requestFetchBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetGuildData>* GuildManagerAgent::requestGetBuffer;
 	unbounded_buffer<Guild>* GuildManagerAgent::outBuffer;
 	concurrent_queue<Guild> GuildManagerAgent::guildsToInsert;

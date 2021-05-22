@@ -46,11 +46,15 @@ namespace DiscordCoreAPI {
 		string userId;
 	};
 
+	struct FetchUserData {
+		string userId;
+	};
+
 	class UserManagerAgent : public agent {
 	protected:
 		friend class DiscordCoreClient;
 		friend class UserManager;
-		static unbounded_buffer<DiscordCoreInternal::GetUserData>* requestFetchBuffer;
+		static unbounded_buffer<DiscordCoreInternal::FetchUserData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetUserData>* requestGetBuffer;
 		static unbounded_buffer<User>* outBuffer;
 		static concurrent_queue<User> usersToInsert;
@@ -69,13 +73,13 @@ namespace DiscordCoreAPI {
 		}
 
 		static task<void> initialize() {
-			UserManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::GetUserData>;
+			UserManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::FetchUserData>;
 			UserManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetUserData>;
 			UserManagerAgent::outBuffer = new unbounded_buffer<User>;
 			co_return;
 		}
 
-		task<User> getObjectAsync(DiscordCoreInternal::GetUserData dataPackage) {
+		task<User> getObjectAsync(DiscordCoreInternal::FetchUserData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_GUILD;
@@ -106,29 +110,18 @@ namespace DiscordCoreAPI {
 						User user = cacheTemp.at(getData.userId);
 						send(UserManagerAgent::outBuffer, user);
 					}
-					else {
-						User user = getObjectAsync(getData).get();
-						cacheTemp.insert(make_pair(getData.userId, user));
-						send(UserManagerAgent::outBuffer, user);
-						asend(UserManagerAgent::cache, cacheTemp);
-					}
-				}
-				else {
-					User user = getObjectAsync(getData).get();
-					cacheTemp.insert(make_pair(getData.userId, user));
-					send(UserManagerAgent::outBuffer, user);
-					asend(UserManagerAgent::cache, cacheTemp);
 				}
 			}
-			if (try_receive(UserManagerAgent::requestFetchBuffer, getData)) {
+			DiscordCoreInternal::FetchUserData fetchData;
+			if (try_receive(UserManagerAgent::requestFetchBuffer, fetchData)) {
 				map<string, User> cacheTemp;
 				if (try_receive(UserManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(getData.userId)) {
-						cacheTemp.erase(getData.userId);
+					if (cacheTemp.contains(fetchData.userId)) {
+						cacheTemp.erase(fetchData.userId);
 					}
 				}
-				User user = getObjectAsync(getData).get();
-				cacheTemp.insert(make_pair(getData.userId, user));
+				User user = getObjectAsync(fetchData).get();
+				cacheTemp.insert(make_pair(fetchData.userId, user));
 				send(UserManagerAgent::outBuffer, user);
 				asend(UserManagerAgent::cache, cacheTemp);
 			}
@@ -151,8 +144,8 @@ namespace DiscordCoreAPI {
 	class UserManager {
 	public:
 
-		task<User> fetchAsync(GetUserData getUserData) {
-			DiscordCoreInternal::GetUserData dataPackage;
+		task<User> fetchAsync(FetchUserData getUserData) {
+			DiscordCoreInternal::FetchUserData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userId = getUserData.userId;
@@ -182,8 +175,8 @@ namespace DiscordCoreAPI {
 			co_return user;
 		}
 
-		task<User> fetchCurrentUser() {
-			DiscordCoreInternal::GetUserData dataPackage;
+		task<User> fetchCurrentUserAsync() {
+			DiscordCoreInternal::FetchUserData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userType = DiscordCoreInternal::GetUserDataType::SELF;
@@ -197,7 +190,7 @@ namespace DiscordCoreAPI {
 			co_return user;
 		}
 
-		task<void> insertUser(User user) {
+		task<void> insertUserAsync(User user) {
 			UserManagerAgent userManagerAgent(this->agentResources, this->threads, this, this->threads->at(2).scheduler);
 			userManagerAgent.start();
 			UserManagerAgent::usersToInsert.push(user);
@@ -220,7 +213,7 @@ namespace DiscordCoreAPI {
 
 	};
 	overwrite_buffer<map<string, User>> UserManagerAgent::cache;
-	unbounded_buffer<DiscordCoreInternal::GetUserData>* UserManagerAgent::requestFetchBuffer;
+	unbounded_buffer<DiscordCoreInternal::FetchUserData>* UserManagerAgent::requestFetchBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetUserData>* UserManagerAgent::requestGetBuffer;
 	unbounded_buffer<User>* UserManagerAgent::outBuffer;
 	concurrent_queue<User> UserManagerAgent::usersToInsert;
