@@ -124,11 +124,10 @@ namespace DiscordCoreAPI {
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_MESSAGE;
 			workload.relativePath = "/channels/" + getObjectData.channelId + "/messages/" + getObjectData.id;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(getObjectData.agentResources, getObjectData.threadContext.scheduler);
-			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
+			send(requestAgent.workSubmissionBuffer, workload);
+			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
-			json jsonValue;
-			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
 			Message messageNew(messageData, this->messages, this->reactions);
@@ -142,11 +141,10 @@ namespace DiscordCoreAPI {
 			workload.relativePath = "/channels/" + getObjectData.channelId + "/messages/" + getObjectData.messageId;
 			workload.content = getObjectData.content;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(getObjectData.agentResources, getObjectData.threadContext.scheduler);
-			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
+			send(requestAgent.workSubmissionBuffer, workload);
+			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
-			json jsonValue;
-			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
 			Message messageNew(messageData, this->messages, this->reactions);

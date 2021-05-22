@@ -137,6 +137,7 @@ namespace DiscordCoreAPI {
 			}
 			Role newRole(this->agentResources, roleData, this->roles);
 			co_return newRole;
+			
 		}
 
 		task<Role> patchRoleAsync(DiscordCoreInternal::ModifyRoleDataInternal dataPackage) {
@@ -265,9 +266,9 @@ namespace DiscordCoreAPI {
 			modifyRoleDataNew.name = modifyRoleData.name;
 			modifyRoleDataNew.permissions = modifyRoleData.permissions;
 			DiscordCoreInternal::ModifyRoleDataInternal dataPackage;
-			dataPackage.content = DiscordCoreInternal::getModifyRolePayload(modifyRoleDataNew);
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(5);
+			dataPackage.content = DiscordCoreInternal::getModifyRolePayload(modifyRoleDataNew);
 			dataPackage.guildId = modifyRoleData.guildId;
 			dataPackage.roleId = modifyRoleData.roleId;
 			RoleManagerAgent roleManagerAgent(this->agentResources, this->threads, this, this->threads->at(4).scheduler);

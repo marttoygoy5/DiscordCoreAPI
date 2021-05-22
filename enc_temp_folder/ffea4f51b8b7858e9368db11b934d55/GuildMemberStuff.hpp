@@ -77,9 +77,8 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(getData.agentResources, getData.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
+			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
-			json jsonValue;
-			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::GuildMemberData guildMemberData = getData.oldGuildMemberData;
 			DiscordCoreInternal::parseObject(jsonValue, &guildMemberData);
 			GuildMember guildMemberNew(guildMemberData, this->guildMembers);

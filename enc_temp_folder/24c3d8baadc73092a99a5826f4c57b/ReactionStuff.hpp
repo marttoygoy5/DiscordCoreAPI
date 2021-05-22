@@ -153,14 +153,14 @@ namespace DiscordCoreAPI {
 		}
 
 		void run() {
-			DiscordCoreInternal::PutReactionData putData;
-			if (try_receive(ReactionManagerAgent::requestPutBuffer, putData)) {
-				Reaction reaction = this->putObjectAsync(putData).get();
+			DiscordCoreInternal::PutReactionData dataPackage;
+			if (try_receive(ReactionManagerAgent::requestPutBuffer, dataPackage)) {
+				Reaction reaction = this->putObjectAsync(dataPackage).get();
 				send(ReactionManagerAgent::outBuffer, reaction);
 			}
-			DiscordCoreInternal::DeleteReactionDataAll deleteData;
-			if (try_receive(ReactionManagerAgent::requestDeleteBuffer, deleteData)) {
-				this->deleteObjectAsync(deleteData).get();
+			DiscordCoreInternal::DeleteReactionDataAll dataPackageDelete;
+			if (try_receive(ReactionManagerAgent::requestDeleteBuffer, dataPackageDelete)) {
+				this->deleteObjectAsync(dataPackageDelete).get();
 			}
 			done();
 		}

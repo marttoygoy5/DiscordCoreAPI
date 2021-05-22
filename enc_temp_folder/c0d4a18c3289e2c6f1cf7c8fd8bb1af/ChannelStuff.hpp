@@ -89,9 +89,8 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
+			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
-			json jsonValue;
-			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::ChannelData channelData;
 			DiscordCoreInternal::parseObject(jsonValue, &channelData);
 			Channel channelNew(channelData, this->channels);
@@ -108,9 +107,8 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
+			json jsonValue = receive(requestAgent.workReturnBuffer);
 			agent::wait(&requestAgent);
-			json jsonValue;
-			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::ChannelData channelData;
 			DiscordCoreInternal::parseObject(jsonValue, &channelData);
 			Channel channelNew(channelData, this->channels);
