@@ -21,7 +21,7 @@ namespace DiscordCoreAPI
 {
 	class GuildManager;
 
-	class DiscordCoreClient {
+	class DiscordCoreClientBase {
 	public:
 		ChannelManager* channels{ nullptr };
 		GuildMemberManager* guildMembers{ nullptr };
@@ -33,18 +33,18 @@ namespace DiscordCoreAPI
 	public:
 
 		DiscordCoreInternal::GuildData data;
-		DiscordCoreClient* clientCore{ nullptr };
-		DiscordCoreClientExt* clientCoreExt{ nullptr };
+		DiscordCoreClient* clientCoreExt{ nullptr };
+		DiscordCoreClientBase* clientCore{ nullptr };
 		Guild() {};
 
 	protected:
 		friend class GuildManagerAgent;
-		friend class DiscordCoreClientExt;
+		friend class DiscordCoreClient;
 		friend class GuildManager;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 
-		Guild(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::GuildData dataNew,  DiscordCoreClient* clientCoreNew, DiscordCoreClientExt* clientCoreExtNew) {
+		Guild(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::GuildData dataNew,  DiscordCoreClientBase* clientCoreNew, DiscordCoreClient* clientCoreExtNew) {
 			this->threads = threadsNew;
 			this->agentResources = agentResourcesNew;
 			this->clientCore = clientCoreNew;
@@ -99,7 +99,7 @@ namespace DiscordCoreAPI
 
 	class GuildManagerAgent : public agent {
 	protected:
-		friend class DiscordCoreClientExt;
+		friend class DiscordCoreClient;
 		friend class GuildManager;
 		static unbounded_buffer<DiscordCoreInternal::FetchGuildData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetGuildData>* requestGetBuffer;
@@ -109,12 +109,11 @@ namespace DiscordCoreAPI
 		
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreClient* clientCore{ nullptr };
-		DiscordCoreClientExt* clientCoreExt{ nullptr };
+		DiscordCoreClientBase* clientCore{ nullptr };
+		DiscordCoreClient* clientCoreExt{ nullptr };
 
-		GuildManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew,  DiscordCoreClient* clientCoreNew, DiscordCoreClientExt* clientCoreExtNew, Scheduler* pScheduler)
-			:agent(*pScheduler)
-		{
+		GuildManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew,  DiscordCoreClientBase* clientCoreNew, DiscordCoreClient* clientCoreExtNew, Scheduler* pScheduler)
+			:agent(*pScheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
 			this->clientCore = clientCoreNew;
@@ -231,13 +230,13 @@ namespace DiscordCoreAPI
 
 	protected:
 
-		friend class DiscordCoreClientExt;
+		friend class DiscordCoreClient;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		DiscordCoreClient* clientCore{ nullptr };
-		DiscordCoreClientExt* clientCoreExt{ nullptr };
+		DiscordCoreClientBase* clientCore{ nullptr };
+		DiscordCoreClient* clientCoreExt{ nullptr };
 
-		GuildManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* clientCoreNew, DiscordCoreClientExt* clientCoreExtNew) {
+		GuildManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClientBase* clientCoreNew, DiscordCoreClient* clientCoreExtNew) {
 			this->threads = threadsNew;
 			this->agentResources = agentResourcesNew;
 			this->clientCore = clientCoreNew;

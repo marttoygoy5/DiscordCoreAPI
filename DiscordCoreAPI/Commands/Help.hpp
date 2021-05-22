@@ -18,10 +18,9 @@ namespace DiscordCoreAPI {
 	class HelpCommand : public  BaseFunction {
 	public:
 		virtual  void execute(DiscordCoreAPI::DiscordCoreFunctionBaseArguments args) {
-			Guild guild = args.pClient.get()->guilds->fetchAsync({ args.message.data.guildId }).get();
-			Channel channel = args.pClient.get()->channels->fetchAsync({ args.message.data.channelId }).get();
-
-			Role role = args.pClient.get()->roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
+			Guild guild = args.clientCore->guilds->fetchAsync({ args.message.data.guildId }).get();
+			Channel channel = args.clientCore->channels->fetchAsync({ args.message.data.channelId }).get();
+			Role role = args.clientCore->roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 			DiscordCoreInternal::Permissions permsArray[1] = { DiscordCoreInternal::Permissions::MANAGE_GUILD };
 			string newPerms = DiscordCoreInternal::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
 			role.clientCore->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" });

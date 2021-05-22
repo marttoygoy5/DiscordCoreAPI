@@ -15,28 +15,28 @@ namespace DiscordCoreAPI {
 	
 	class UserManager;
 
-	class DiscordCoreClientExt;
+	class DiscordCoreClient;
 
 	class User {
 	public:
 
 		DiscordCoreInternal::UserData data;
-		DiscordCoreClientExt* clientCore{ nullptr };
+		DiscordCoreClient* clientCore{ nullptr };
 
 		User() {};
 
 	protected:
-		friend class DiscordCoreClientExt;
+		friend class DiscordCoreClient;
 		friend class UserManagerAgent;
 		friend class UserManager;
 		friend class Guild;
 		friend class GuildManager;
 
-		User(DiscordCoreInternal::UserData dataNew,   DiscordCoreClientExt* clientCoreNew) {
+		User(DiscordCoreInternal::UserData dataNew,   DiscordCoreClient* clientCoreNew) {
 			this->initialize(dataNew, clientCoreNew).get();
 		}
 
-		task<void> initialize(DiscordCoreInternal::UserData dataNew, DiscordCoreClientExt* clientCoreNew) {
+		task<void> initialize(DiscordCoreInternal::UserData dataNew, DiscordCoreClient* clientCoreNew) {
 			this->data = dataNew;
 			this->clientCore = clientCoreNew;
 			co_return;
@@ -54,7 +54,7 @@ namespace DiscordCoreAPI {
 
 	class UserManagerAgent : public agent {
 	protected:
-		friend class DiscordCoreClientExt;
+		friend class DiscordCoreClient;
 		friend class UserManager;
 		static unbounded_buffer<DiscordCoreInternal::FetchUserData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetUserData>* requestGetBuffer;
@@ -64,9 +64,9 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreClientExt* clientCore{ nullptr };
+		DiscordCoreClient* clientCore{ nullptr };
 
-		UserManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClientExt* clientCoreNew,  Scheduler* pScheduler)
+		UserManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* clientCoreNew,  Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
@@ -202,12 +202,12 @@ namespace DiscordCoreAPI {
 
 	protected:
 
-		friend class DiscordCoreClientExt;
+		friend class DiscordCoreClient;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreClientExt* clientCore{ nullptr };
+		DiscordCoreClient* clientCore{ nullptr };
 
-		UserManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClientExt* clientCoreNew) {
+		UserManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* clientCoreNew) {
 			this->threads = threadsNew;
 			this->agentResources = agentResourcesNew;
 			this->clientCore = clientCoreNew;

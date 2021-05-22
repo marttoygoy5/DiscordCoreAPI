@@ -23,21 +23,21 @@ void myPurecallHandler(void) {
 
 namespace DiscordCoreAPI {
 
-	class DiscordCoreClientExt;
+	class DiscordCoreClient;
 
 	struct CommandData {
 		Message message;
-		shared_ptr<DiscordCoreClientExt> pClient;
+		DiscordCoreClient* clientCore;
 	};
 
-	class DiscordCoreClientExt :public DiscordCoreClient,  public agent {
+	class DiscordCoreClient :public DiscordCoreClientBase,  protected agent {
 	public:
 		User* currentUser{ nullptr };
 		GuildManager* guilds{ nullptr };
 		MessageManager* messages{ nullptr };
 		ReactionManager* reactions{ nullptr };
 		shared_ptr<EventMachine> EventMachine{ nullptr };
-		DiscordCoreClientExt(hstring botTokenNew)
+		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
 			this->botToken = botTokenNew;

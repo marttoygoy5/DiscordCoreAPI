@@ -17,25 +17,25 @@ namespace DiscordCoreAPI {
 
 	class MessageManager;
 
-	class DiscordCoreClientExt;
+	class DiscordCoreClient;
 
 	class Message {
 	public:
 		DiscordCoreInternal::MessageData data;
-		DiscordCoreClientExt* clientCore{ nullptr };
+		DiscordCoreClient* clientCore{ nullptr };
 
 		Message() {};
 
 	protected:
-		friend class DiscordCoreClientExt;
+		friend class DiscordCoreClient;
 		friend class MessageManager;
 		friend class MessageManagerAgent;
 
-		Message(DiscordCoreInternal::MessageData dataNew, DiscordCoreClientExt* clientCoreNew) {
+		Message(DiscordCoreInternal::MessageData dataNew, DiscordCoreClient* clientCoreNew) {
 			this->initialize(dataNew, clientCoreNew).get();
 		}
 
-		task<void> initialize(DiscordCoreInternal::MessageData dataNew, DiscordCoreClientExt* clientCoreNew) {
+		task<void> initialize(DiscordCoreInternal::MessageData dataNew, DiscordCoreClient* clientCoreNew) {
 			this->data = dataNew;
 			this->clientCore = clientCoreNew;
 			co_return;
@@ -79,7 +79,7 @@ namespace DiscordCoreAPI {
 
 	class MessageManagerAgent : public agent {
 	protected:
-		friend class DiscordCoreClientExt;
+		friend class DiscordCoreClient;
 		friend class MessageManager;
 		friend class Message;
 
@@ -95,9 +95,9 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreClientExt* clientCore{ nullptr };
+		DiscordCoreClient* clientCore{ nullptr };
 
-		MessageManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClientExt* clientCoreNew, Scheduler* pScheduler)
+		MessageManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* clientCoreNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
@@ -421,13 +421,13 @@ namespace DiscordCoreAPI {
 	protected:
 		friend class Channel;
 		friend class Guild;
-		friend class DiscordCoreClientExt;
+		friend class DiscordCoreClient;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreClientExt* clientCore{ nullptr };
+		DiscordCoreClient* clientCore{ nullptr };
 
-		MessageManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClientExt* clientCoreNew) {
+		MessageManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* clientCoreNew) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
 			this->clientCore = clientCoreNew;
