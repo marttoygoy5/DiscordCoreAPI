@@ -82,7 +82,7 @@ namespace DiscordCoreInternal {
 						float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						float tryAgainElapsedTime = currentTime - rateLimitData.timeStartedAtTryAgain;
 						if (tryAgainElapsedTime < rateLimitData.msRemainTryAgain) {
-							cout << "Waiting on rate-limit!" << endl;
+							cout << "Waiting on rate-limit, - Time Remainiing: " << rateLimitData.msRemainTryAgain - tryAgainElapsedTime << "ms." << endl;
 							done();
 							HttpData data;
 							return data.data;
