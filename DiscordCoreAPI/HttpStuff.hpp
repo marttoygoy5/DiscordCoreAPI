@@ -69,11 +69,11 @@ namespace DiscordCoreInternal {
 			try {
 				transformer<HttpWorkload, json> completeHttpRequest([this](HttpWorkload workload) -> json {
 					RateLimitData rateLimitData;
-					try {
+					auto bucketIterator = HttpRequestAgent::rateLimitDataBucketValues.find(workload.workloadType);
+					if (bucketIterator != end(HttpRequestAgent::rateLimitDataBucketValues)) {
 						string bucket = HttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
 						rateLimitData = HttpRequestAgent::rateLimitData.at(bucket);
 					}
-					catch (exception error) {}
 					if (rateLimitData.getsRemaining == 0) {
 						float loopStartTime = rateLimitData.timeStartedAt;
 						float targetTime = loopStartTime + static_cast<float> (rateLimitData.msRemain);
@@ -106,22 +106,16 @@ namespace DiscordCoreInternal {
 					else if (workload.workloadClass == HttpWorkloadClass::DELETED) {
 						returnData = httpDELETEObjectDataAsync(workload.relativePath, &rateLimitData).get();
 					}
-					try {
-						HttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
+					auto bucketValueIterator = HttpRequestAgent::rateLimitDataBucketValues.find(workload.workloadType);
+					if (bucketValueIterator != end(HttpRequestAgent::rateLimitDataBucketValues)) {
 						HttpRequestAgent::rateLimitDataBucketValues.unsafe_erase(workload.workloadType);
-						HttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
 					}
-					catch (exception error) {
-						HttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
-					}
-					try {
-						HttpRequestAgent::rateLimitData.at(rateLimitData.bucket);
+					HttpRequestAgent::rateLimitDataBucketValues.insert(make_pair(workload.workloadType, rateLimitData.bucket));
+					auto rateLimitIterator = HttpRequestAgent::rateLimitData.find(rateLimitData.bucket);
+					if (rateLimitIterator != end(HttpRequestAgent::rateLimitData)) {
 						HttpRequestAgent::rateLimitData.unsafe_erase(rateLimitData.bucket);
-						HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
 					}
-					catch (exception error) {
-						HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
-					}
+					HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
 					return returnData.data;
 					});
 				completeHttpRequest.link_target(&this->workReturnBuffer);
