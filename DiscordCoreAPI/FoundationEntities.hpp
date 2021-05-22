@@ -845,6 +845,8 @@ namespace  DiscordCoreInternal {
         float timeStartedAt = 0;
         int getsRemaining = 1;
         float msRemain = 0;
+        float msRemainTryAgain = 0;
+        float timeStartedAtTryAgain = 0;
         string bucket;
     };
 
