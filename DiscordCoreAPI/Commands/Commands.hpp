@@ -15,10 +15,12 @@ namespace DiscordCoreAPI {
 
 	string commandPrefix{ "!" };
 
+	class DiscordCoreClientExt;
+
 	struct DiscordCoreFunctionBaseArguments {
 		Message message;
 		vector<string> argumentsArray;
-		shared_ptr<DiscordCoreAPI::DiscordCoreClient> pClient;
+		shared_ptr<DiscordCoreAPI::DiscordCoreClientExt> pClient;
 	};
 
 	class BaseFunction {
@@ -43,8 +45,8 @@ namespace DiscordCoreAPI {
 			}
 
 			DiscordCoreFunctionBaseArguments args(commandData.message);;
-			args.pClient = commandData.pClient;
 			args.argumentsArray = parseArguments(commandData.message.data.content);
+			args.pClient = commandData.pClient;
 			args.message = commandData.message;
 
 			functionPointer->execute(args);

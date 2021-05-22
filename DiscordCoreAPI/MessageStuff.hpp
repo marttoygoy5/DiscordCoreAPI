@@ -17,27 +17,27 @@ namespace DiscordCoreAPI {
 
 	class MessageManager;
 
+	class DiscordCoreClientExt;
+
 	class Message {
 	public:
 		DiscordCoreInternal::MessageData data;
-		MessageManager* messages;
-		ReactionManager* reactions;
+		DiscordCoreClientExt* clientCore{ nullptr };
 
 		Message() {};
 
 	protected:
-		friend class DiscordCoreClient;
+		friend class DiscordCoreClientExt;
 		friend class MessageManager;
 		friend class MessageManagerAgent;
 
-		Message(DiscordCoreInternal::MessageData dataNew,  MessageManager* messagesNew, ReactionManager* reactionsNew) {
-			this->initialize(dataNew, messagesNew, reactionsNew).get();
+		Message(DiscordCoreInternal::MessageData dataNew, DiscordCoreClientExt* clientCoreNew) {
+			this->initialize(dataNew, clientCoreNew).get();
 		}
 
-		task<void> initialize(DiscordCoreInternal::MessageData dataNew,  MessageManager* messagesNew, ReactionManager* reactionsNew) {
+		task<void> initialize(DiscordCoreInternal::MessageData dataNew, DiscordCoreClientExt* clientCoreNew) {
 			this->data = dataNew;
-			this->messages = messagesNew;
-			this->reactions = reactionsNew;
+			this->clientCore = clientCoreNew;
 			co_return;
 		}
 
@@ -79,7 +79,7 @@ namespace DiscordCoreAPI {
 
 	class MessageManagerAgent : public agent {
 	protected:
-		friend class DiscordCoreClient;
+		friend class DiscordCoreClientExt;
 		friend class MessageManager;
 		friend class Message;
 
@@ -95,16 +95,14 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreAPI::MessageManager* messages{ nullptr };
-		ReactionManager* reactions{ nullptr };
+		DiscordCoreClientExt* clientCore{ nullptr };
 
-		MessageManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreAPI::MessageManager* messagesNew, ReactionManager* reactionsNew, Scheduler* pScheduler)
+		MessageManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClientExt* clientCoreNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->messages = messagesNew;
-			this->reactions = reactionsNew;
+			this->clientCore = clientCoreNew;
 		}
 
 		static task<void> initialize() {
@@ -131,7 +129,7 @@ namespace DiscordCoreAPI {
 			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
-			Message messageNew(messageData, this->messages, this->reactions);
+			Message messageNew(messageData,  this->clientCore);
 			co_return messageNew;
 		}
 
@@ -149,7 +147,7 @@ namespace DiscordCoreAPI {
 			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
-			Message messageNew(messageData, this->messages, this->reactions);
+			Message messageNew(messageData, this->clientCore);
 			co_return messageNew;
 		}
 
@@ -167,7 +165,7 @@ namespace DiscordCoreAPI {
 			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
-			Message messageNew(messageData, this->messages, this->reactions);
+			Message messageNew(messageData, this->clientCore);
 			co_return messageNew;
 		}
 
@@ -185,7 +183,7 @@ namespace DiscordCoreAPI {
 			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(jsonValue, &messageData);
-			Message messageNew(messageData, this->messages, this->reactions);
+			Message messageNew(messageData, this->clientCore);
 			co_return messageNew;
 		}
 
@@ -283,7 +281,7 @@ namespace DiscordCoreAPI {
 				asend(MessageManagerAgent::cache, cacheTemp);
 			}
 			DiscordCoreInternal::MessageData messageData;
-			Message message(messageData, this->messages, this->reactions);
+			Message message(messageData, this->clientCore);
 			while (MessageManagerAgent::messagesToInsert.try_pop(message)) {
 				map<string, Message> cacheTemp;
 				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
@@ -315,14 +313,14 @@ namespace DiscordCoreAPI {
 			createMessageDataNew.nonce = sendDMData.messageData.nonce;
 			createMessageDataNew.tts = sendDMData.messageData.tts;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this, this->reactions, this->threads->at(2).scheduler);
+			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestPostDMBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			DiscordCoreInternal::MessageData messageData;
-			Message message(messageData, this, this->reactions);
-			try_receive(MessageManagerAgent::outBuffer, message);
-			co_return message;
+			Message messageNew(messageData, this->clientCore);
+			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			co_return messageNew;
 		}
 
 		task<Message> createMessageAsync(CreateMessageData createMessageData, string channelId) {
@@ -338,14 +336,14 @@ namespace DiscordCoreAPI {
 			createMessageDataNew.nonce = createMessageData.nonce;
 			createMessageDataNew.tts = createMessageData.tts;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this, this->reactions, this->threads->at(2).scheduler);
+			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestPostBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			DiscordCoreInternal::MessageData messageData;
-			Message message(messageData, this, this->reactions);
-			try_receive(MessageManagerAgent::outBuffer, message);
-			co_return message;
+			Message messageNew(messageData, this->clientCore);
+			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			co_return messageNew;
 		}
 
 		task<Message> editMessageAsync(EditMessageData editMessageData, string channelId, string messageId) {
@@ -361,14 +359,14 @@ namespace DiscordCoreAPI {
 			editMessageDataNew.embed = editMessageData.embed;
 			editMessageDataNew.flags = editMessageData.flags;
 			dataPackage.content = DiscordCoreInternal::getEditMessagePayload(editMessageDataNew);
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this, this->reactions, this->threads->at(6).scheduler);
+			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(6).scheduler);
 			send(MessageManagerAgent::requestPatchBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			DiscordCoreInternal::MessageData messageData;
-			Message message(messageData, this, this->reactions);
-			try_receive(MessageManagerAgent::outBuffer, message);
-			co_return message;
+			Message messageNew(messageData, this->clientCore);
+			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			co_return messageNew;
 		}
 
 		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
@@ -378,13 +376,13 @@ namespace DiscordCoreAPI {
 			dataPackage.channelId = deleteMessageData.channelId;
 			dataPackage.messageId = deleteMessageData.messageId;
 			dataPackage.timeDelay = deleteMessageData.timeDelay;
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this, this->reactions, this->threads->at(8).scheduler);
+			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(8).scheduler);
 			send(MessageManagerAgent::requestDeleteBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			DiscordCoreInternal::MessageData messageData;
-			Message message(messageData, this, this->reactions);
-			try_receive(MessageManagerAgent::outBuffer, message);
+			Message messageNew(messageData, this->clientCore);
+			try_receive(MessageManagerAgent::outBuffer, messageNew);
 			co_return;
 		}
 
@@ -394,14 +392,14 @@ namespace DiscordCoreAPI {
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getMessageData.channelId;
 			dataPackage.id = getMessageData.id;
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this, this->reactions, this->threads->at(2).scheduler);
+			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestGetBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			DiscordCoreInternal::MessageData messageData;
-			Message message(messageData, this, this->reactions);
-			try_receive(MessageManagerAgent::outBuffer, message);
-			co_return message;
+			Message messageNew(messageData, this->clientCore);
+			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			co_return messageNew;
 		}
 
 		task<Message> fetchAsync(GetMessageData getMessageData) {
@@ -410,29 +408,29 @@ namespace DiscordCoreAPI {
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getMessageData.channelId;
 			dataPackage.id = getMessageData.id;
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this, this->reactions, this->threads->at(2).scheduler);
+			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestFetchBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			DiscordCoreInternal::MessageData messageData;
-			Message message(messageData, this, this->reactions);
-			try_receive(MessageManagerAgent::outBuffer, message);
-			co_return message;
+			Message messageNew(messageData, this->clientCore);
+			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			co_return messageNew;
 		}
 
 	protected:
 		friend class Channel;
 		friend class Guild;
-		friend class DiscordCoreClient;
+		friend class DiscordCoreClientExt;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
-		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
-		ReactionManager* reactions{ nullptr };
+		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
+		DiscordCoreClientExt* clientCore{ nullptr };
 
-		MessageManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, ReactionManager*reactionsNew ) {
+		MessageManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClientExt* clientCoreNew) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->reactions = reactionsNew;
+			this->clientCore = clientCoreNew;
 		}
 	};
 	overwrite_buffer<map<string, Message>> MessageManagerAgent::cache;

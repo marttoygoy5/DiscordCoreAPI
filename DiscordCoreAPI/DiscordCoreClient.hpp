@@ -14,7 +14,6 @@
 #include "WebSocketStuff.hpp"
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
-//#include "DMChannelStuff.hpp"
 #include "EventMachine.hpp"
 
 void myPurecallHandler(void) {
@@ -24,25 +23,21 @@ void myPurecallHandler(void) {
 
 namespace DiscordCoreAPI {
 
-	class DiscordCoreClient;
+	class DiscordCoreClientExt;
 
 	struct CommandData {
 		Message message;
-		shared_ptr<DiscordCoreClient> pClient;
+		shared_ptr<DiscordCoreClientExt> pClient;
 	};
 
-	class DiscordCoreClient : public agent {
+	class DiscordCoreClientExt :public DiscordCoreClient,  public agent {
 	public:
 		User* currentUser{ nullptr };
-		UserManager* users{ nullptr };
 		GuildManager* guilds{ nullptr };
-		ChannelManager* channels{ nullptr };
 		MessageManager* messages{ nullptr };
-		RoleManager* roles{ nullptr };
-		GuildMemberManager* guildMembers{ nullptr };
 		ReactionManager* reactions{ nullptr };
 		shared_ptr<EventMachine> EventMachine{ nullptr };
-		DiscordCoreClient(hstring botTokenNew)
+		DiscordCoreClientExt(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
 			this->botToken = botTokenNew;
@@ -97,21 +92,20 @@ namespace DiscordCoreAPI {
 			agentResources.pSocketPath = pWebSocketConnectionAgent->returnSocketPathPointer();
 			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->getThreads().get()->at(3).scheduler);
 			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(1));
-			GuildManagerAgent::initialize().get();
-			GuildMemberManagerAgent::initialize();
-			ChannelManagerAgent::initialize().get();
-			MessageManagerAgent::initialize().get();
 			ReactionManagerAgent::initialize().get();
-			RoleManagerAgent::initialize().get();
 			UserManagerAgent::initialize().get();
-
-			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->threads);
-			this->users = new UserManager(agentResources, this->pSystemThreads->threads);
-			this->messages = new MessageManager(agentResources, this->pSystemThreads->threads, this->reactions);
-			this->roles = new RoleManager(agentResources, this->pSystemThreads->threads);
-			this->guildMembers = new GuildMemberManager(agentResources, this->pSystemThreads->threads);
-			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads);
-			this->guilds = new GuildManager(agentResources, this->pSystemThreads->threads, this->guildMembers, this->roles, this->channels, this->users);
+			MessageManagerAgent::initialize().get();
+			RoleManagerAgent::initialize().get();
+			GuildMemberManagerAgent::initialize().get();
+			ChannelManagerAgent::initialize().get();
+			GuildManagerAgent::initialize().get();
+			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->threads, this);
+			this->users = new UserManager(agentResources, this->pSystemThreads->threads, this);
+			this->messages = new MessageManager(agentResources, this->pSystemThreads->threads, this);
+			this->roles = new RoleManager(agentResources, this->pSystemThreads->threads, this);
+			this->guildMembers = new GuildMemberManager(agentResources, this->pSystemThreads->threads, this);
+			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads, this);
+			this->guilds = new GuildManager(agentResources, this->pSystemThreads->threads, (DiscordCoreClient*)this, this);
 			User user = this->users->fetchCurrentUserAsync().get();
 			this->currentUser = &user;
 			co_await mainThread;
@@ -123,8 +117,9 @@ namespace DiscordCoreAPI {
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, this->guilds, this->users, this->guildMembers, this->roles, this->channels);
+				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, (DiscordCoreClient*)this, this);
 				GuildCreationData guildCreationData(guild);
+				guildCreationData.guild = guild;
 				co_return guildCreationData;
 			}
 			catch (exception error) {
@@ -138,8 +133,7 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				agentResources.baseURL = this->baseURL;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
-				MessageManager* msgManager = this->messages;
-				Message message(messageData, msgManager, this->reactions);
+				Message message(messageData, this);
 				MessageCreationData messageCreationData(message);
 				co_return messageCreationData;
 			}
@@ -150,7 +144,7 @@ namespace DiscordCoreAPI {
 
 		task<DiscordCoreAPI::ReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
 			try {
-				Reaction reaction(reactionData, this->reactions);
+				Reaction reaction(reactionData, this);
 				ReactionAddData reactionAddData(reaction);
 				co_return reactionAddData;
 			}

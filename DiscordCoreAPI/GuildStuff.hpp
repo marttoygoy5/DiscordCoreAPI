@@ -21,36 +21,35 @@ namespace DiscordCoreAPI
 {
 	class GuildManager;
 
+	class DiscordCoreClient {
+	public:
+		ChannelManager* channels{ nullptr };
+		GuildMemberManager* guildMembers{ nullptr };
+		RoleManager* roles{ nullptr };
+		UserManager* users{ nullptr };
+	};
+
 	class Guild {
 	public:
 
 		DiscordCoreInternal::GuildData data;
-
-		ChannelManager* channels{ nullptr };
-		GuildMemberManager* guildMembers{ nullptr };
-		RoleManager* roles{ nullptr };
-		GuildManager* guilds{ nullptr };
-		UserManager* users{ nullptr };
-
+		DiscordCoreClient* clientCore{ nullptr };
+		DiscordCoreClientExt* clientCoreExt{ nullptr };
 		Guild() {};
 
 	protected:
 		friend class GuildManagerAgent;
-		friend class DiscordCoreClient;
+		friend class DiscordCoreClientExt;
 		friend class GuildManager;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 
-		Guild(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::GuildData dataNew,  GuildManager* guildsNew, UserManager* usersNew, GuildMemberManager* guildMembersNew,
-			RoleManager* rolesNew, ChannelManager* channelsNew) {
+		Guild(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::GuildData dataNew,  DiscordCoreClient* clientCoreNew, DiscordCoreClientExt* clientCoreExtNew) {
 			this->threads = threadsNew;
-			this->data = dataNew;
 			this->agentResources = agentResourcesNew;
-			this->channels = channelsNew;
-			this->guildMembers = guildMembersNew;
-			this->roles = rolesNew;
-			this->guilds = guildsNew;
-			this->users = usersNew;
+			this->clientCore = clientCoreNew;
+			this->clientCoreExt = clientCoreExtNew;
+			this->data = dataNew;
 		}
 
 		task<void> initialize() {
@@ -59,27 +58,27 @@ namespace DiscordCoreAPI
 				cout << "Caching channels for guild: " << this->data.name << endl;
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
-					Channel channel(channelData, this->channels);
-					this->channels->insertChannelAsync(channel).get();
+					Channel channel(channelData, this->clientCoreExt);
+					this->clientCore->channels->insertChannelAsync(channel).get();
 				}
 				cout << "Caching guild members for guild: " << this->data.name << endl;
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
 					guildMemberData.guildId = this->data.id;
-					GuildMember guildMember(guildMemberData, this->guildMembers);
-					this->guildMembers->insertGuildMemberAsync(guildMember).get();
+					GuildMember guildMember(guildMemberData, this->clientCoreExt);
+					this->clientCore->guildMembers->insertGuildMemberAsync(guildMember).get();
 				}
 				cout << "Caching roles for guild: " << this->data.name << endl;
 				for (auto const& [key, value] : data.roles) {
 					DiscordCoreInternal::RoleData roleData = value;
-					Role role(this->agentResources, roleData, this->roles);
-					this->roles->insertRoleAsync(role).get();
+					Role role(this->agentResources, roleData, this->clientCoreExt);
+					this->clientCore->roles->insertRoleAsync(role).get();
 				}
 				cout << "Caching users for guild: " << this->data.name << endl << endl;
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::UserData userData = data.members.at(x).user;
-					User user(userData, this->users);
-					this->users->insertUserAsync(user).get();
+					User user(userData, this->clientCoreExt);
+					this->clientCore->users->insertUserAsync(user).get();
 				}
 			}
 			catch (exception error) {
@@ -100,7 +99,7 @@ namespace DiscordCoreAPI
 
 	class GuildManagerAgent : public agent {
 	protected:
-		friend class DiscordCoreClient;
+		friend class DiscordCoreClientExt;
 		friend class GuildManager;
 		static unbounded_buffer<DiscordCoreInternal::FetchGuildData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetGuildData>* requestGetBuffer;
@@ -110,22 +109,16 @@ namespace DiscordCoreAPI
 		
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		UserManager* users{ nullptr };
-		GuildManager* guilds{ nullptr };
-		GuildMemberManager* guildMembers{ nullptr };
-		RoleManager* roles{ nullptr };
-		ChannelManager* channels{ nullptr };
+		DiscordCoreClient* clientCore{ nullptr };
+		DiscordCoreClientExt* clientCoreExt{ nullptr };
 
-		GuildManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, GuildManager* guildsNew, GuildMemberManager* guildMembersNew, RoleManager* rolesNew, ChannelManager* channelsNew, UserManager* usersNew, Scheduler* pScheduler)
+		GuildManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew,  DiscordCoreClient* clientCoreNew, DiscordCoreClientExt* clientCoreExtNew, Scheduler* pScheduler)
 			:agent(*pScheduler)
 		{
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->guilds = guildsNew;
-			this->users = usersNew;
-			this->channels = channelsNew;
-			this->guildMembers = guildMembersNew;
-			this->roles = rolesNew;
+			this->clientCore = clientCoreNew;
+			this->clientCoreExt = clientCoreExtNew;
 		}
 
 		static task<void> initialize() {
@@ -148,7 +141,7 @@ namespace DiscordCoreAPI
 			try_receive(requestAgent.workReturnBuffer, jsonValue);
 			DiscordCoreInternal::GuildData guildData = dataPackage.oldGuildData;
 			DiscordCoreInternal::parseObject(jsonValue, &guildData);
-			Guild guildNew(this->agentResources, this->threads, guildData, this->guilds, this->users, this->guildMembers, this->roles, this->channels);
+			Guild guildNew(this->agentResources, this->threads, guildData, this->clientCore, this->clientCoreExt);
 			co_return guildNew;
 		}
 
@@ -179,7 +172,7 @@ namespace DiscordCoreAPI
 				asend(cache, cacheTemp);
 			}
 			DiscordCoreInternal::GuildData guildData;
-			Guild guildNew(this->agentResources, this->threads, guildData, this->guilds, this->users, this->guildMembers, this->roles, this->channels);
+			Guild guildNew(this->agentResources, this->threads, guildData, this->clientCore, this->clientCoreExt);
 			while (GuildManagerAgent::guildsToInsert.try_pop(guildNew)) {
 				map<string, Guild> cacheTemp;
 				if (try_receive(GuildManagerAgent::cache, cacheTemp)) {
@@ -187,7 +180,7 @@ namespace DiscordCoreAPI
 						cacheTemp.erase(guildNew.data.id);
 					}
 				}				
-				guildNew.initialize();
+				guildNew.initialize().get();
 				cacheTemp.insert(make_pair(guildNew.data.id, guildNew));
 				asend(cache, cacheTemp);
 			}
@@ -203,12 +196,12 @@ namespace DiscordCoreAPI
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getGuildData.guildId;
-			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this, this->guildMembers, this->roles, this->channels, this->users, this->threads->at(2).scheduler);
+			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->clientCore, this->clientCoreExt, this->threads->at(2).scheduler);
 			send(GuildManagerAgent::requestFetchBuffer, dataPackage);
 			guildManagerAgent.start();
 			agent::wait(&guildManagerAgent);
 			DiscordCoreInternal::GuildData guildData;
-			Guild guild(this->agentResources, this->threads, guildData, this, this->users, this->guildMembers, this->roles, this->channels);
+			Guild guild(this->agentResources, this->threads, guildData, this->clientCore, this->clientCoreExt);
 			try_receive(GuildManagerAgent::outBuffer, guild);
 			co_return guild;
 		}
@@ -218,44 +211,37 @@ namespace DiscordCoreAPI
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getGuildData.guildId;
-			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this,  this->guildMembers, this->roles, this->channels, this->users, this->threads->at(2).scheduler);
+			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->clientCore, this->clientCoreExt, this->threads->at(2).scheduler);
 			send(GuildManagerAgent::requestGetBuffer, dataPackage);
 			guildManagerAgent.start();
 			agent::wait(&guildManagerAgent);
 			DiscordCoreInternal::GuildData guildData;
-			Guild guild(this->agentResources, this->threads, guildData, this,  this->users, this->guildMembers, this->roles, this->channels);
+			Guild guild(this->agentResources, this->threads, guildData, this->clientCore, this->clientCoreExt);
 			try_receive(GuildManagerAgent::outBuffer, guild);
 			co_return guild;
 		}
 
 		task<void> insertGuildAsync(Guild guild) {
-			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this, this->guildMembers, this->roles, this->channels, this->users, this->threads->at(2).scheduler);
-			guildManagerAgent.start();
+			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->clientCore, this->clientCoreExt, this->threads->at(2).scheduler);
 			GuildManagerAgent::guildsToInsert.push(guild);
+			guildManagerAgent.start();
 			guildManagerAgent.wait(&guildManagerAgent);
 			co_return;
 		}
 
 	protected:
 
-		friend class DiscordCoreClient;
-
+		friend class DiscordCoreClientExt;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-
 		DiscordCoreInternal::HttpAgentResources agentResources;
+		DiscordCoreClient* clientCore{ nullptr };
+		DiscordCoreClientExt* clientCoreExt{ nullptr };
 
-		UserManager* users{ nullptr };
-		GuildMemberManager* guildMembers{ nullptr };
-		RoleManager* roles{ nullptr };
-		ChannelManager* channels{ nullptr };
-
-		GuildManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, GuildMemberManager* guildMembersNew, RoleManager* rolesNew, ChannelManager* channelsNew,  UserManager* usersNew) {
+		GuildManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* clientCoreNew, DiscordCoreClientExt* clientCoreExtNew) {
 			this->threads = threadsNew;
 			this->agentResources = agentResourcesNew;
-			this->users = usersNew;
-			this->channels = channelsNew;
-			this->guildMembers = guildMembersNew;
-			this->roles = rolesNew;
+			this->clientCore = clientCoreNew;
+			this->clientCoreExt = clientCoreExtNew;
 		}
 
 	};

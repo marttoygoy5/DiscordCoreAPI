@@ -79,7 +79,7 @@ namespace DiscordCoreAPI {
 
 	protected:
 
-		friend class DiscordCoreClient;
+		friend class DiscordCoreClientExt;
 
 		winrt::event<winrt::delegate<GuildCreationData>> onGuildCreationEvent;
 

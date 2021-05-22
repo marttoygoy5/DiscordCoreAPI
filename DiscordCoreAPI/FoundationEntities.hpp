@@ -653,7 +653,7 @@ namespace  DiscordCoreInternal {
                 originalPermissionString = "0";
             }
             __int64 permissionsInteger = stoll(originalPermissionString);
-            for (unsigned int x = 0; x < quantityOfPermsToAdd; x += 1) {
+            for (unsigned int x = 0; x < (unsigned int)quantityOfPermsToAdd; x += 1) {
                 permissionsInteger = permissionsInteger | (__int64)permissionsToAdd[x];
             }
             stringstream sstream;
@@ -666,7 +666,7 @@ namespace  DiscordCoreInternal {
                 originalPermissionString = "0";
             }
             __int64 permissionsInteger = stoll(originalPermissionString);
-            for (unsigned int x = 0; x < quantityOfPermsToRemove; x += 1) {
+            for (unsigned int x = 0; x < (unsigned int)quantityOfPermsToRemove; x += 1) {
                 permissionsInteger = permissionsInteger & ~(__int64)permissionsToRemove[x];
             }
             stringstream sstream;
