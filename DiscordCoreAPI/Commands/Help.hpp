@@ -30,9 +30,9 @@ namespace DiscordCoreAPI {
 			cout << "FATCH ROLE: " << role.data.name << endl;
 			DiscordCoreAPI::UpdateRoleData updateRoleData;
 			updateRoleData.guildId = guild.data.id;
-			updateRoleData.colorFirst[0] = 0;
-			updateRoleData.colorFirst[1] = 255;
-			updateRoleData.colorFirst[2] = 255;
+			updateRoleData.colorFirst[0] = (int)(((float)rand() / (float)RAND_MAX) * 255.0f);
+			updateRoleData.colorFirst[1] = (int)(((float)rand() / (float)RAND_MAX) * 255.0f);
+			updateRoleData.colorFirst[2] = (int)(((float)rand() / (float)RAND_MAX) * 255.0f);
 			updateRoleData.hoist = true;
 			updateRoleData.mentionable = true;
 			updateRoleData.name = "TESTING ROLE THREE";
