@@ -120,22 +120,24 @@ namespace DiscordCoreAPI {
 			map<string, Role> cacheTemp = receive(RoleManagerAgent::cache, 1U);
 			for (unsigned int x = 0; x < jsonValue.size(); x += 1) {
 				DiscordCoreInternal::RoleData roleData;
-				if (cacheTemp.contains(dataPackage.roleId)) {
-					roleData = cacheTemp.at(dataPackage.roleId).data;
-					cacheTemp.erase(dataPackage.roleId);
-					DiscordCoreInternal::parseObject(jsonValue, &roleData);
-					Role newRole(this->agentResources, roleData, this->roles);
-					cacheTemp.insert(make_pair(newRole.data.id, newRole));
-					asend(RoleManagerAgent::cache, cacheTemp);
-					co_return newRole;
+				if (cacheTemp.contains(jsonValue.at(x).at("id"))) {
+					roleData = cacheTemp.at(jsonValue.at(x).at("id")).data;
+					cout << roleData.id << endl;
+					cacheTemp.erase(jsonValue.at(x).at("id"));
 				}
-				else {
-					DiscordCoreInternal::parseObject(jsonValue, &roleData);
-					Role newRole(this->agentResources, roleData, this->roles);
-					cacheTemp.insert(make_pair(newRole.data.id, newRole));
-				}
+				DiscordCoreInternal::parseObject(jsonValue.at(x), &roleData);
+				Role newRole(this->agentResources, roleData, this->roles);
+				cacheTemp.insert(make_pair(newRole.data.id, newRole));
 			}
 			asend(RoleManagerAgent::cache, cacheTemp);
+			DiscordCoreInternal::RoleData roleData;
+			if (cacheTemp.contains(dataPackage.roleId)) {
+				roleData = cacheTemp.at(dataPackage.roleId).data;
+				cacheTemp.erase(dataPackage.roleId);
+			}
+			Role newRole(this->agentResources, roleData, this->roles);
+			co_return newRole;
+			
 		}
 
 		task<Role> patchRoleAsync(DiscordCoreInternal::ModifyRoleDataInternal dataPackage) {
