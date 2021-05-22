@@ -167,7 +167,7 @@ namespace  DiscordCoreInternal {
         int actualColorVal;
     };
 
-    enum class Permissions {
+    enum class Permissions :__int64 {
         CREATE_INSTANT_INVITE = (1 << 0),
         KICK_MEMBERS = (1 << 1),
         BAN_MEMBERS = (1 << 2),
@@ -199,11 +199,11 @@ namespace  DiscordCoreInternal {
         MANAGE_ROLES = (1 << 28),
         MANAGE_WEBHOOKS = (1 << 29),
         MANAGE_EMOJIS = (1 << 30),
-        USE_SLASH_COMMANDS = (1 << 31),
-        REQUEST_TO_SPEAK = (1 << 32),
-        MANAGE_THREADS = (1 << 34),
-        USE_PUBLIC_THREADS = (1 << 35),
-        USE_PRIVATE_THREADS = (1 << 36)
+        USE_SLASH_COMMANDS = (1ull << 31),
+        REQUEST_TO_SPEAK = (1ull << 32),
+        MANAGE_THREADS = (1ull << 33),
+        USE_PUBLIC_THREADS = (1ull << 34),
+        USE_PRIVATE_THREADS = (1ull << 35)
     };
 
     enum class UserFlags {
@@ -635,6 +635,7 @@ namespace  DiscordCoreInternal {
 
     class PermissionsConverter {
     public:
+
         static bool checkForPresence(Permissions permission, string permissionString) {
             if (permissionString == "") {
                 return false;
@@ -776,16 +777,16 @@ namespace  DiscordCoreInternal {
             if (permissionsInteger & (1 << 31)) {
                 sstream << "USE_SLASH_COMMANDS" << endl;
             }
-            if (permissionsInteger & (1l << 32)) {
+            if (permissionsInteger & (1ull << 32)) {
                 sstream << "REQUEST_TO_SPEAK" << endl;
             }
-            if (permissionsInteger & (1l << 34)) {
+            if (permissionsInteger & (1ull << 34)) {
                 sstream << "MANAGE_THREADS" << endl;
             }
-            if (permissionsInteger & (1l << 35)) {
+            if (permissionsInteger & (1ull << 35)) {
                 sstream << "USE_PUBLIC_THREADS" << endl;
             }
-            if (permissionsInteger & (1l << 36)) {
+            if (permissionsInteger & (1ull << 36)) {
                 sstream << "USE_PRIVATE_THREADS" << endl;
             }
             cout << "PERMISSIONS: " << endl << sstream.str() << endl;
@@ -939,7 +940,7 @@ namespace  DiscordCoreInternal {
         string userId;
         GetUserDataType userType;
     };
-
+    
     struct FetchUserData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;

@@ -129,12 +129,9 @@ namespace DiscordCoreAPI {
 
 		task<DiscordCoreAPI::MessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
 			try {
-				DiscordCoreInternal::HttpAgentResources agentResources;
-				agentResources.botToken = this->botToken;
-				agentResources.baseURL = this->baseURL;
-				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 				Message message(messageData, this);
 				MessageCreationData messageCreationData(message);
+				messageCreationData.message = message;
 				co_return messageCreationData;
 			}
 			catch (exception error) {
@@ -146,6 +143,7 @@ namespace DiscordCoreAPI {
 			try {
 				Reaction reaction(reactionData, this);
 				ReactionAddData reactionAddData(reaction);
+				reactionAddData.reaction = reaction;
 				co_return reactionAddData;
 			}
 			catch (exception error) {

@@ -280,7 +280,7 @@ namespace DiscordCoreInternal {
 			}
 		}
 
-		task<void> onMessageReceived(MessageWebSocket const&, MessageWebSocketMessageReceivedEventArgs const& args) {
+		void onMessageReceived(MessageWebSocket const&, MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
 				DataReader dataReader{ args.GetDataReader() };
 				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
@@ -294,11 +294,11 @@ namespace DiscordCoreInternal {
 				}
 
 				if (payload.at("t") == "PRESENCE_UPDATE") {
-					co_return;
+					return;
 				}
 
 				if (payload.at("t") == "GUILD_CREATE") {
-					co_return;
+					return;
 				}
 
 				if (payload.at("op") == 6) {

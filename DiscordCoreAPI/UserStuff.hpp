@@ -162,13 +162,13 @@ namespace DiscordCoreAPI {
 			co_return user;
 		}
 
-		task<User> getUserAsync(GetUserData getUserData) {
-			DiscordCoreInternal::GetUserData dataPackage;
+		task<User> fetchCurrentUserAsync() {
+			DiscordCoreInternal::FetchUserData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.userId = getUserData.userId;
+			dataPackage.userType = DiscordCoreInternal::GetUserDataType::SELF;
 			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
-			send(UserManagerAgent::requestGetBuffer, dataPackage);
+			send(UserManagerAgent::requestFetchBuffer, dataPackage);
 			userManagerAgent.start();
 			agent::wait(&userManagerAgent);
 			DiscordCoreInternal::UserData userData;
@@ -177,13 +177,13 @@ namespace DiscordCoreAPI {
 			co_return user;
 		}
 
-		task<User> fetchCurrentUserAsync() {
-			DiscordCoreInternal::FetchUserData dataPackage;
+		task<User> getUserAsync(GetUserData getUserData) {
+			DiscordCoreInternal::GetUserData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.userType = DiscordCoreInternal::GetUserDataType::SELF;
+			dataPackage.userId = getUserData.userId;
 			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
-			send(UserManagerAgent::requestFetchBuffer, dataPackage);
+			send(UserManagerAgent::requestGetBuffer, dataPackage);
 			userManagerAgent.start();
 			agent::wait(&userManagerAgent);
 			DiscordCoreInternal::UserData userData;

@@ -169,21 +169,21 @@ namespace DiscordCoreAPI {
 			if (try_receive(RoleManagerAgent::requestGetBuffer, getData)) {
 				map<string, Role> cacheTemp;
 				if (try_receive(RoleManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(getData.guildId)) {
-						Role role = cacheTemp.at(getData.guildId);
+					if (cacheTemp.contains(getData.roleId)) {
+						Role role = cacheTemp.at(getData.roleId);
 						send(RoleManagerAgent::outBuffer, role);
 					}
 				}
 			}
 			DiscordCoreInternal::FetchRoleData fetchData;
 			if (try_receive(RoleManagerAgent::requestFetchBuffer, fetchData)) {
+				Role role = getRoleAsync(fetchData).get();
 				map<string, Role> cacheTemp;
 				if (try_receive(RoleManagerAgent::cache, cacheTemp)) {
 					if (cacheTemp.contains(fetchData.roleId)) {
-						cacheTemp.erase(fetchData.guildId);
+						cacheTemp.erase(fetchData.roleId);
 					}
 				}
-				Role role = getRoleAsync(fetchData).get();
 				cacheTemp.insert(make_pair(fetchData.roleId, role));
 				send(RoleManagerAgent::outBuffer, role);
 				asend(cache, cacheTemp);

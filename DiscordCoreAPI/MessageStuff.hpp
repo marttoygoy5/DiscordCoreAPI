@@ -98,8 +98,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreClient* clientCore{ nullptr };
 
 		MessageManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* clientCoreNew, Scheduler* pScheduler)
-			:agent(*pScheduler)
-		{
+			:agent(*pScheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
 			this->clientCore = clientCoreNew;
@@ -116,12 +115,12 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 
-		task<Message> getObjectAsync(DiscordCoreInternal::GetMessageData getObjectData) {
+		task<Message> getObjectAsync(DiscordCoreInternal::GetMessageData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_MESSAGE;
-			workload.relativePath = "/channels/" + getObjectData.channelId + "/messages/" + getObjectData.id;
-			DiscordCoreInternal::HttpRequestAgent requestAgent(getObjectData.agentResources, getObjectData.threadContext.scheduler);
+			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.id;
+			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
 			agent::wait(&requestAgent);
@@ -133,13 +132,13 @@ namespace DiscordCoreAPI {
 			co_return messageNew;
 		}
 
-		task<Message> patchObjectAsync(DiscordCoreInternal::PatchMessageData getObjectData) {
+		task<Message> patchObjectAsync(DiscordCoreInternal::PatchMessageData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_MESSAGE;
-			workload.relativePath = "/channels/" + getObjectData.channelId + "/messages/" + getObjectData.messageId;
-			workload.content = getObjectData.content;
-			DiscordCoreInternal::HttpRequestAgent requestAgent(getObjectData.agentResources, getObjectData.threadContext.scheduler);
+			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.messageId;
+			workload.content = dataPackage.content;
+			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
 			agent::wait(&requestAgent);
