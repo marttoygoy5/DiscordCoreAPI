@@ -25,9 +25,12 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::Permissions permsArray[1] = { DiscordCoreInternal::Permissions::MANAGE_GUILD };
 			string newPerms = DiscordCoreInternal::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
 			role.roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" });
-			role = role.roles->updateRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592", .name = "TESTING ROLE",.permissions = newPerms,  .colorFirst = {253, 53, 13}, .hoist = true, .mentionable = true, }).get();
+			cout << "GET ROLE: " << role.data.name << endl;
+			role.roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" });
+			cout << "FATCH ROLE: " << role.data.name << endl;
+			role = role.roles->updateRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592", .name = "TESTING ROLE",.permissions = newPerms,  .colorFirst = {253, 0, 0}, .hoist = true, .mentionable = true, }).get();
 			
-			cout << role.data.name << endl;
+			
 
 			for (unsigned int x = 0; x < args.argumentsArray.size(); x += 1) {
 				cout << args.argumentsArray.at(x) << endl;

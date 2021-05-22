@@ -82,7 +82,7 @@ namespace DiscordCoreInternal {
 						float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						float tryAgainElapsedTime = currentTime - rateLimitData.timeStartedAtTryAgain;
 						if (tryAgainElapsedTime < rateLimitData.msRemainTryAgain) {
-							cout << "Waiting on rate-limit, - Time Remainiing: " << rateLimitData.msRemainTryAgain - tryAgainElapsedTime << "ms." << endl;
+							cout << "Waiting on rate-limit, Time Remainiing: " << rateLimitData.msRemainTryAgain - tryAgainElapsedTime << "ms." << endl;
 							done();
 							HttpData data;
 							return data.data;
@@ -161,6 +161,12 @@ namespace DiscordCoreInternal {
 			}
 			else {
 				msRemainLocal = 250;
+			}
+			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
+				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
+			}
+			else {
+				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
 				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"retry-after").value().c_str()) * 1000);

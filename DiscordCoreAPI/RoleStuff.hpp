@@ -69,6 +69,11 @@ namespace DiscordCoreAPI {
 		};
 	};
 
+	struct FetchRoleData {
+		string guildId;
+		string roleId;
+	};
+
 	struct GetRoleData {
 		string guildId;
 		string roleId;
@@ -225,7 +230,7 @@ namespace DiscordCoreAPI {
 	class RoleManager {
 	public:
 
-		task<Role> fetchAsync(GetRoleData getRoleData) {
+		task<Role> fetchAsync(FetchRoleData getRoleData) {
 			DiscordCoreInternal::GetRoleData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);

@@ -908,6 +908,13 @@ namespace  DiscordCoreInternal {
         string roleId;
     };
 
+    struct FetchRoleData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string guildId;
+        string roleId;
+    };
+
     enum class GetUserDataType {
         SELF = 0,
         USER = 1
