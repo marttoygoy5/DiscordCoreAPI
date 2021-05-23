@@ -332,7 +332,6 @@ namespace DiscordCoreAPI {
 			createMessageDataNew.messageReference.guildId = replyMessageData.guildId;
 			createMessageDataNew.allowedMentions.repliedUser = true;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
-			cout << "THE PAYLOAD" << endl<<dataPackage.content << endl;
 			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestPostBuffer, dataPackage);
 			messageManagerAgent.start();

@@ -57,13 +57,13 @@ namespace DiscordCoreInternal {
 		}
 
 		bool get_error(exception& e){
-			return try_receive(_error, e);
+			return try_receive(errorBuffer, e);
 		}
 
 	protected:
 		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
 		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
-		single_assignment<exception> _error;
+		single_assignment<exception> errorBuffer;
 
 		void run() {
 			try {
@@ -124,7 +124,7 @@ namespace DiscordCoreInternal {
 				done();
 			}
 			catch (exception error) {
-				send(_error, error);
+				send(errorBuffer, error);
 			}
 		}
 
@@ -142,26 +142,26 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
+				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
 			else {
 				getsRemainingLocal = 0;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
+				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainLocal = 250;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-bucket")) {
+				bucket = to_string(httpResponse.Headers().TryLookup(L"x-ratelimit-bucket").value().c_str());
 			}
 			else {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"retry-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainTryAgainLocal = 0;
@@ -205,26 +205,26 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
+				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
 			else {
 				getsRemainingLocal = 0;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
+				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainLocal = 250;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-bucket")) {
+				bucket = to_string(httpResponse.Headers().TryLookup(L"x-ratelimit-bucket").value().c_str());
 			}
 			else {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"retry-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainTryAgainLocal = 0;
@@ -268,26 +268,26 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
+				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
 			else {
 				getsRemainingLocal = 0;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
+				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainLocal = 250;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-bucket")) {
+				bucket = to_string(httpResponse.Headers().TryLookup(L"x-ratelimit-bucket").value().c_str());
 			}
 			else {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"retry-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainTryAgainLocal = 0;
@@ -334,26 +334,26 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
+				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
 			else {
 				getsRemainingLocal = 0;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
+				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainLocal = 250;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-bucket")) {
+				bucket = to_string(httpResponse.Headers().TryLookup(L"x-ratelimit-bucket").value().c_str());
 			}
 			else {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"retry-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainTryAgainLocal = 0;
@@ -389,26 +389,26 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Remaining")) {
-				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"X-RateLimit-Remaining").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
+				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
 			else {
 				getsRemainingLocal = 0;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Reset-After")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"X-RateLimit-Reset-After").value().c_str()) * 1000);
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
+				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainLocal = 250;
 			}
-			if (httpResponse.Headers().HasKey(L"X-RateLimit-Bucket")) {
-				bucket = to_string(httpResponse.Headers().TryLookup(L"X-RateLimit-Bucket").value().c_str());
+			if (httpResponse.Headers().HasKey(L"x-ratelimit-bucket")) {
+				bucket = to_string(httpResponse.Headers().TryLookup(L"x-ratelimit-bucket").value().c_str());
 			}
 			else {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"retry-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
 			}
 			else {
 				msRemainTryAgainLocal = 0;
