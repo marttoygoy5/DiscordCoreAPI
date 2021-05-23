@@ -20,7 +20,6 @@ bool executeByRateLimitData(DiscordCoreInternal::RateLimitData* rateLimitData) {
 		if (rateLimitData->msRemainTryAgain <= 5000.0f && rateLimitData->msRemain == 0.0f) {
 			targetTime = rateLimitData->timeStartedAtTryAgain + rateLimitData->msRemainTryAgain;
 			rateLimitData->msRemain = rateLimitData->msRemainTryAgain;
-			cout << "MS REMAIN TRY AGAIN: " << rateLimitData->msRemainTryAgain << endl;
 		}
 		else if (tryAgainElapsedTime < rateLimitData->msRemainTryAgain) {
 			cout << "Waiting on rate-limit, Time Remainiing: " << rateLimitData->msRemainTryAgain - tryAgainElapsedTime << "ms." << endl;
@@ -37,8 +36,6 @@ bool executeByRateLimitData(DiscordCoreInternal::RateLimitData* rateLimitData) {
 
 namespace DiscordCoreInternal {
 
-	class HttpRequestAgent;
-
 	class HttpRequestAgent :public agent {
 	public:
 		unbounded_buffer<json> workReturnBuffer;
@@ -51,21 +48,15 @@ namespace DiscordCoreInternal {
 				this->botToken = agentResources.botToken;
 				this->initialConnectionPath = this->baseURL + L"/gateway/bot";
 				this->getHttpClient = HttpClient();
-				this->getHeaders = this->getHttpClient.DefaultRequestHeaders();
 				this->putHttpClient = HttpClient();
-				this->putHeaders = this->putHttpClient.DefaultRequestHeaders();
 				this->postHttpClient = HttpClient();
-				this->postHeaders = this->postHttpClient.DefaultRequestHeaders();
+				this->patchHttpClient = HttpClient();
 				this->deleteHttpClient = HttpClient();
-				this->deleteHeaders = this->deleteHttpClient.DefaultRequestHeaders();
+				//this->deleteHeaders = this->deleteHttpClient.DefaultRequestHeaders();
 				hstring headerString = L"Bot ";
 				hstring headerString2 = headerString + this->botToken;
 				HttpCredentialsHeaderValue credentialValue(nullptr);
 				credentialValue = credentialValue.Parse(headerString2.c_str());
-				this->getHeaders.Authorization(credentialValue);
-				this->putHeaders.Authorization(credentialValue);
-				this->postHeaders.Authorization(credentialValue);
-				this->deleteHeaders.Authorization(credentialValue);
 				this->baseURI = Uri(this->initialConnectionPath.c_str());
 				HttpResponseMessage httpResponse;
 				httpResponse = getHttpClient.GetAsync(this->baseURI).get();
@@ -98,9 +89,6 @@ namespace DiscordCoreInternal {
 					if (bucketIterator != end(HttpRequestAgent::rateLimitDataBucketValues)) {
 						string bucket = HttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
 						rateLimitData = HttpRequestAgent::rateLimitData.at(bucket);
-						if (rateLimitData.workloadType == HttpWorkloadType::DELETE_MESSAGE) {
-							cout << rateLimitData.getsRemaining << " GETS REMAIN, FOR BUCKET " << rateLimitData.bucket << "ms REMAIN " << (float)rateLimitData.msRemain << endl;
-						}
 					}
 					if (executeByRateLimitData(&rateLimitData)) {
 						HttpData returnData;
@@ -194,7 +182,7 @@ namespace DiscordCoreInternal {
 			}
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
-				getData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
+				getData = httpGETObjectDataAsync(relativeURL, pRateLimitData).get();
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -262,7 +250,7 @@ namespace DiscordCoreInternal {
 			}
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
-				putData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
+				putData = httpPUTObjectDataAsync(relativeURL, content, pRateLimitData).get();
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -330,7 +318,7 @@ namespace DiscordCoreInternal {
 			}
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
-				postData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
+				postData = httpPOSTObjectDataAsync(relativeURL, content, pRateLimitData).get();
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -356,7 +344,7 @@ namespace DiscordCoreInternal {
 			httpRequest.RequestUri(requestUri);
 			HttpResponseMessage httpResponse;
 			HttpCompletionOption completionOption;
-			httpResponse = postHttpClient.SendRequestAsync(httpRequest, completionOption).get();
+			httpResponse = patchHttpClient.SendRequestAsync(httpRequest, completionOption).get();
 			unsigned int getsRemainingLocal;
 			float currentMSTimeLocal;
 			float msRemainLocal;
@@ -401,7 +389,7 @@ namespace DiscordCoreInternal {
 			}
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
-				patchData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
+				patchData = httpPATCHObjectDataAsync(relativeURL, content, pRateLimitData).get();
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -467,8 +455,6 @@ namespace DiscordCoreInternal {
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 			}
-			wcout << "DELETE PACKAGE DATA: " << httpResponse.Headers().ToString().c_str() << endl;
-			wcout << "DELET TYPE: " << (int)pRateLimitData->workloadType << endl;
 			deleteData.data = jsonValue;
 			co_return deleteData;
 		}
@@ -477,13 +463,10 @@ namespace DiscordCoreInternal {
 		hstring baseURL;
 		hstring botToken;
 		hstring initialConnectionPath;
-		HttpRequestHeaderCollection putHeaders{ nullptr };
-		HttpRequestHeaderCollection getHeaders{ nullptr };
-		HttpRequestHeaderCollection postHeaders{ nullptr };
-		HttpRequestHeaderCollection deleteHeaders{ nullptr };
+		HttpClient getHttpClient;
 		HttpClient postHttpClient;
 		HttpClient putHttpClient;
-		HttpClient getHttpClient;
+		HttpClient patchHttpClient;
 		HttpClient deleteHttpClient;
 	};
 	concurrent_unordered_map<HttpWorkloadType, string> HttpRequestAgent::rateLimitDataBucketValues;
