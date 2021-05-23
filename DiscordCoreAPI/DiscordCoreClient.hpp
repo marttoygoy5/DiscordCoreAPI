@@ -34,9 +34,9 @@ namespace DiscordCoreAPI {
 	public:
 		User* currentUser{ nullptr };
 		GuildManager* guilds{ nullptr };
-		MessageManager* messages{ nullptr };
 		ReactionManager* reactions{ nullptr };
-		shared_ptr<EventMachine> EventMachine{ nullptr };
+		MessageManager* messages{ nullptr };
+		shared_ptr<DiscordCoreAPI::EventMachine> EventMachine{ nullptr };
 		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
@@ -111,14 +111,14 @@ namespace DiscordCoreAPI {
 			co_await mainThread;
 		}
 
-		task<DiscordCoreAPI::GuildCreationData> createGuild(DiscordCoreInternal::GuildData guildData) {
+		task<DiscordCoreAPI::OnGuildCreationData> createGuild(DiscordCoreInternal::GuildData guildData) {
 			try {
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
 				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, (DiscordCoreClient*)this, this);
-				GuildCreationData guildCreationData(guild);
+				OnGuildCreationData guildCreationData(guild);
 				guildCreationData.guild = guild;
 				co_return guildCreationData;
 			}
@@ -127,10 +127,10 @@ namespace DiscordCoreAPI {
 			}
 		}
 
-		task<DiscordCoreAPI::MessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
+		task<DiscordCoreAPI::OnMessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
 			try {
 				Message message(messageData, this);
-				MessageCreationData messageCreationData(message);
+				OnMessageCreationData messageCreationData(message);
 				messageCreationData.message = message;
 				co_return messageCreationData;
 			}
@@ -139,10 +139,10 @@ namespace DiscordCoreAPI {
 			}
 		}
 
-		task<DiscordCoreAPI::ReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
+		task<DiscordCoreAPI::OnReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
 			try {
 				Reaction reaction(reactionData, this);
-				ReactionAddData reactionAddData(reaction);
+				OnReactionAddData reactionAddData(reaction);
 				reactionAddData.reaction = reaction;
 				co_return reactionAddData;
 			}
@@ -158,19 +158,19 @@ namespace DiscordCoreAPI {
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
 						DiscordCoreInternal::GuildData guildData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &guildData);
-						GuildCreationData guildCreationData = createGuild(guildData).get();
+						OnGuildCreationData guildCreationData = createGuild(guildData).get();
 						this->EventMachine->onGuildCreationEvent(guildCreationData);
 					}
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
 						DiscordCoreInternal::MessageData messageData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
-						MessageCreationData messageCreationData = createMessage(messageData).get();
+						OnMessageCreationData messageCreationData = createMessage(messageData).get();
 						this->EventMachine->onMessageCreationEvent(messageCreationData);
 					}
 					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::REACTION_ADD) {
 						DiscordCoreInternal::ReactionData reactionData;
 						DiscordCoreInternal::parseObject(workload.payLoad, &reactionData);
-						ReactionAddData reactionAddData = createReaction(reactionData).get();
+						OnReactionAddData reactionAddData = createReaction(reactionData).get();
 						this->EventMachine->onReactionAddEvent(reactionAddData);
 					}
 				}

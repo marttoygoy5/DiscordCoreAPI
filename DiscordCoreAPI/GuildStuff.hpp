@@ -13,12 +13,13 @@
 #include "DataParsingFunctions.hpp"
 #include "HttpStuff.hpp"
 #include "ChannelStuff.hpp"
+#include "MessageStuff.hpp"
 #include "GuildMemberStuff.hpp"
 #include "RoleStuff.hpp"
 #include "UserStuff.hpp"
 
-namespace DiscordCoreAPI
-{
+namespace DiscordCoreAPI {
+
 	class GuildManager;
 
 	class DiscordCoreClient;

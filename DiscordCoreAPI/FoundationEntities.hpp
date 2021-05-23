@@ -912,7 +912,7 @@ namespace  DiscordCoreInternal {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         string channelId;
-        string id;
+        string messageId;
     };
 
     struct GetRoleData {
@@ -986,6 +986,16 @@ namespace  DiscordCoreInternal {
         DiscordCoreInternal::EmbedData embed;
         DiscordCoreInternal::AllowedMentionsData allowedMentions;
         DiscordCoreInternal::MessageReferenceData messageReference;
+    };
+
+    struct ReplyMessageData {
+        DiscordCoreInternal::AllowedMentionsData allowedMentions;
+        DiscordCoreInternal::MessageReferenceData messageReference;
+        string content;
+        string channelId;
+        DiscordCoreInternal::EmbedData embed;
+        int nonce;
+        bool tts = false;
     };
 
     struct SendDMData {

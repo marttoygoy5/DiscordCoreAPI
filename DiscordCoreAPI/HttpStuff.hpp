@@ -434,13 +434,13 @@ namespace DiscordCoreInternal {
 		hstring baseURL;
 		hstring botToken;
 		hstring initialConnectionPath;
-		HttpRequestHeaderCollection getHeaders{ nullptr };
 		HttpRequestHeaderCollection putHeaders{ nullptr };
+		HttpRequestHeaderCollection getHeaders{ nullptr };
 		HttpRequestHeaderCollection postHeaders{ nullptr };
 		HttpRequestHeaderCollection deleteHeaders{ nullptr };
 		HttpClient postHttpClient;
-		HttpClient getHttpClient;
 		HttpClient putHttpClient;
+		HttpClient getHttpClient;
 		HttpClient deleteHttpClient;
 	};
 	concurrent_unordered_map<HttpWorkloadType, string> HttpRequestAgent::rateLimitDataBucketValues;

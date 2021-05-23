@@ -146,11 +146,11 @@ namespace DiscordCoreAPI {
 	class UserManager {
 	public:
 
-		task<User> fetchAsync(FetchUserData getUserData) {
+		task<User> fetchAsync(FetchUserData fetchUserData) {
 			DiscordCoreInternal::FetchUserData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.userId = getUserData.userId;
+			dataPackage.userId = fetchUserData.userId;
 			dataPackage.userType = DiscordCoreInternal::GetUserDataType::USER;
 			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestFetchBuffer, dataPackage);

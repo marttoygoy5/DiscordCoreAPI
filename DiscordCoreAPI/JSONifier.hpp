@@ -86,28 +86,34 @@ namespace DiscordCoreInternal {
 		}
 
 		int colorValue = createMessageData.embed.actualColor();
-
-		json data = {
-			{"allowed_mentions", {
-				{"parse", createMessageData.allowedMentions.parse},
-				{"replied_user", createMessageData.allowedMentions.repliedUser},
-				{"roles", createMessageData.allowedMentions.roles},
-				{"users", createMessageData.allowedMentions.users}
+		if (createMessageData.embed.description != "" || createMessageData.embed.fields.size() != 0){
+			if (createMessageData.messageReference.guildId != "") {
+				json data = {
+		{"allowed_mentions", {
+			{"parse", createMessageData.allowedMentions.parse},
+			{"replied_user", createMessageData.allowedMentions.repliedUser},
+			{"roles", createMessageData.allowedMentions.roles},
+			{"users", createMessageData.allowedMentions.users}
+			}},
+			{"message_reference",{{"message_id", createMessageData.messageReference.messageId},
+			{"channel_id", createMessageData.messageReference.channelId},
+			{"guild_id", createMessageData.messageReference.guildId},
+			{"fail_if_not_exists", createMessageData.messageReference.failIfNotExists}
 				}},
-			{"content", createMessageData.content},
-			{"tts" , createMessageData.tts},
-			{"embed" ,
-						{{"author", {
-						{"icon_url", createMessageData.embed.author.iconUrl},
-						{"name", createMessageData.embed.author.name},
-						{"url", createMessageData.embed.author.url },
-						{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
-				}},
-				{"image", {
-					{"height", createMessageData.embed.image.height},
-					{"width", createMessageData.embed.image.width},
-					{"url", createMessageData.embed.image.url},
-					{"proxy_url",createMessageData.embed.image.proxyUrl}
+		{"content", createMessageData.content},
+		{"tts" , createMessageData.tts},
+		{"embed" ,
+					{{"author", {
+					{"icon_url", createMessageData.embed.author.iconUrl},
+					{"name", createMessageData.embed.author.name},
+					{"url", createMessageData.embed.author.url },
+					{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
+			}},
+			{"image", {
+				{"height", createMessageData.embed.image.height},
+				{"width", createMessageData.embed.image.width},
+				{"url", createMessageData.embed.image.url},
+				{"proxy_url",createMessageData.embed.image.proxyUrl}
 		}},
 			{ "provider" , {
 				{"name", createMessageData.embed.provider.name},
@@ -132,9 +138,96 @@ namespace DiscordCoreInternal {
 				{"fields", fields},
 				{"color",colorValue}
 		}}
-		};
+					};
+					return data.dump();
+			}
+				else {
+					json data = {
+		{"allowed_mentions", {
+			{"parse", createMessageData.allowedMentions.parse},
+			{"replied_user", createMessageData.allowedMentions.repliedUser},
+			{"roles", createMessageData.allowedMentions.roles},
+			{"users", createMessageData.allowedMentions.users}
+			}},
+		{"content", createMessageData.content},
+		{"tts" , createMessageData.tts},
+		{"embed" ,
+					{{"author", {
+					{"icon_url", createMessageData.embed.author.iconUrl},
+					{"name", createMessageData.embed.author.name},
+					{"url", createMessageData.embed.author.url },
+					{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
+			}},
+			{"image", {
+				{"height", createMessageData.embed.image.height},
+				{"width", createMessageData.embed.image.width},
+				{"url", createMessageData.embed.image.url},
+				{"proxy_url",createMessageData.embed.image.proxyUrl}
+		}},
+			{ "provider" , {
+				{"name", createMessageData.embed.provider.name},
+				{"url", createMessageData.embed.provider.url}
 
-		return data.dump();
+		}},
+			{"thumbnail", {
+				{"height", createMessageData.embed.thumbnail.height},
+				{"width", createMessageData.embed.thumbnail.width},
+				{"url", createMessageData.embed.thumbnail.url},
+				{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
+			}},
+
+
+				{"footer", {
+					{"icon_url", createMessageData.embed.footer.iconUrl},
+					{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
+					{"text", createMessageData.embed.footer.text}
+		}},
+				{"title", createMessageData.embed.title},
+				{"description" , createMessageData.embed.description},
+				{"fields", fields},
+				{"color",colorValue}
+		}}
+				};
+				return data.dump();
+			}
+		}
+		else {
+			if (createMessageData.messageReference.guildId != "") {
+				json data = {
+			{"allowed_mentions", {
+				{"parse", createMessageData.allowedMentions.parse},
+				{"replied_user", createMessageData.allowedMentions.repliedUser},
+				{"roles", createMessageData.allowedMentions.roles},
+				{"users", createMessageData.allowedMentions.users}
+				}},
+				{"message_reference",{{"message_id", createMessageData.messageReference.messageId},
+				{"channel_id", createMessageData.messageReference.channelId},
+				{"guild_id", createMessageData.messageReference.guildId},
+				{"fail_if_not_exists", createMessageData.messageReference.failIfNotExists}
+					}},
+			{"content", createMessageData.content},
+			{"tts" , createMessageData.tts}
+				};
+
+				return data.dump();
+			}
+			else {
+				json data = {
+			{"allowed_mentions", {
+				{"parse", createMessageData.allowedMentions.parse},
+				{"replied_user", createMessageData.allowedMentions.repliedUser},
+				{"roles", createMessageData.allowedMentions.roles},
+				{"users", createMessageData.allowedMentions.users}
+				}},
+			{"content", createMessageData.content},
+			{"tts" , createMessageData.tts}
+				};
+
+				return data.dump();
+			}
+			
+		}
+		
 	}
 
 	string getEditMessagePayload(EditMessageData editMessageData) {

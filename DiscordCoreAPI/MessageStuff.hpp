@@ -52,12 +52,25 @@ namespace DiscordCoreAPI {
 	};
 
 	struct CreateMessageData {
+		DiscordCoreInternal::AllowedMentionsData allowedMentions;
 		string content;
+		string channelId;
+		DiscordCoreInternal::EmbedData embed;
+		DiscordCoreInternal::MessageReferenceData messageReference;
 		int nonce;
+		bool tts = false;
+	};
+
+	struct ReplyMessageData {
+		string guildId;
+		string channelId;
+		string messageId;
+		string content;
 		bool tts = false;
 		DiscordCoreInternal::EmbedData embed;
 		DiscordCoreInternal::AllowedMentionsData allowedMentions;
 		DiscordCoreInternal::MessageReferenceData messageReference;
+		int nonce;
 	};
 
 	struct SendDMData {
@@ -67,6 +80,11 @@ namespace DiscordCoreAPI {
 	};
 
 	struct GetMessageData {
+		string channelId;
+		string id;
+	};
+
+	struct FetchMessageData {
 		string channelId;
 		string id;
 	};
@@ -119,7 +137,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_MESSAGE;
-			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.id;
+			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.messageId;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
@@ -198,7 +216,6 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			json jsonValue;
 			try_receive(requestAgent.workReturnBuffer, jsonValue);
-			agent::wait(&requestAgent);
 		}
 
 		task<void> deleteObjectAsync(DiscordCoreInternal::DeleteMessageData dataPackage) {
@@ -209,7 +226,6 @@ namespace DiscordCoreAPI {
 				timer.Stop();
 				});
 			timer.Start();
-
 			co_return;
 		}
 
@@ -227,8 +243,8 @@ namespace DiscordCoreAPI {
 			if (try_receive(MessageManagerAgent::requestGetBuffer, dataPackageNew)) {
 				map<string, Message> cacheTemp;
 				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(dataPackageNew.channelId + dataPackageNew.id)) {
-						Message message = cacheTemp.at(dataPackageNew.channelId + dataPackageNew.id);
+					if (cacheTemp.contains(dataPackageNew.channelId + dataPackageNew.messageId)) {
+						Message message = cacheTemp.at(dataPackageNew.channelId + dataPackageNew.messageId);
 						send(MessageManagerAgent::outBuffer, message);
 					}
 				}
@@ -246,12 +262,12 @@ namespace DiscordCoreAPI {
 			if (try_receive(MessageManagerAgent::requestFetchBuffer, dataPackageGet)) {
 				map<string, Message> cacheTemp;
 				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.id)) {
-						cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.id);
+					if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.messageId)) {
+						cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.messageId);
 					}
 				}
 				Message message = getObjectAsync(dataPackageGet).get();
-				cacheTemp.insert(make_pair(dataPackageGet.channelId + dataPackageGet.id, message));
+				cacheTemp.insert(make_pair(dataPackageGet.channelId + dataPackageGet.messageId, message));
 				send(MessageManagerAgent::outBuffer, message);
 				asend(MessageManagerAgent::cache, cacheTemp);
 			}
@@ -259,12 +275,12 @@ namespace DiscordCoreAPI {
 			if (try_receive(MessageManagerAgent::requestPatchBuffer, dataPackageGetNew)) {
 				map<string, Message> cacheTemp;
 				if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.id)) {
-						cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.id);
+					if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.messageId)) {
+						cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.messageId);
 					}
 				}
 				Message message = patchObjectAsync(dataPackageGetNew).get();
-				cacheTemp.insert(make_pair(dataPackageGet.channelId + dataPackageGet.id, message));
+				cacheTemp.insert(make_pair(dataPackageGet.channelId + dataPackageGet.messageId, message));
 				send(MessageManagerAgent::outBuffer, message);
 				asend(MessageManagerAgent::cache, cacheTemp);
 			}
@@ -298,6 +314,35 @@ namespace DiscordCoreAPI {
 	class MessageManager {
 	public:
 
+		task<Message> replyAsync(ReplyMessageData replyMessageData) {
+			DiscordCoreInternal::PostMessageData dataPackage;
+			dataPackage.agentResources = this->agentResources;
+			dataPackage.threadContext = this->threads->at(3);
+			dataPackage.channelId = replyMessageData.channelId;
+			DiscordCoreInternal::CreateMessageData createMessageDataNew;
+			createMessageDataNew.allowedMentions = replyMessageData.allowedMentions;
+			createMessageDataNew.content = replyMessageData.content;
+			createMessageDataNew.embed = replyMessageData.embed;
+			createMessageDataNew.messageReference = replyMessageData.messageReference;
+			createMessageDataNew.nonce = replyMessageData.nonce;
+			createMessageDataNew.tts = replyMessageData.tts;
+			createMessageDataNew.messageReference.channelId = replyMessageData.channelId;
+			createMessageDataNew.messageReference.failIfNotExists = true;
+			createMessageDataNew.messageReference.messageId = replyMessageData.messageId;
+			createMessageDataNew.messageReference.guildId = replyMessageData.guildId;
+			createMessageDataNew.allowedMentions.repliedUser = true;
+			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
+			cout << "THE PAYLOAD" << endl<<dataPackage.content << endl;
+			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
+			send(MessageManagerAgent::requestPostBuffer, dataPackage);
+			messageManagerAgent.start();
+			agent::wait(&messageManagerAgent);
+			DiscordCoreInternal::MessageData messageData;
+			Message messageNew(messageData, this->clientCore);
+			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			co_return messageNew;
+		}
+
 		task<Message> sendDMAsync(SendDMData sendDMData) {
 			DiscordCoreInternal::SendDMData dataPackage;
 			dataPackage.agentResources = this->agentResources;
@@ -322,11 +367,11 @@ namespace DiscordCoreAPI {
 			co_return messageNew;
 		}
 
-		task<Message> createMessageAsync(CreateMessageData createMessageData, string channelId) {
+		task<Message> createMessageAsync(CreateMessageData createMessageData) {
 			DiscordCoreInternal::PostMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.channelId = channelId;
+			dataPackage.channelId = createMessageData.channelId;
 			DiscordCoreInternal::CreateMessageData createMessageDataNew;
 			createMessageDataNew.allowedMentions = createMessageData.allowedMentions;
 			createMessageDataNew.content = createMessageData.content;
@@ -390,7 +435,7 @@ namespace DiscordCoreAPI {
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.channelId = getMessageData.channelId;
-			dataPackage.id = getMessageData.id;
+			dataPackage.messageId = getMessageData.id;
 			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestGetBuffer, dataPackage);
 			messageManagerAgent.start();
@@ -401,12 +446,12 @@ namespace DiscordCoreAPI {
 			co_return messageNew;
 		}
 
-		task<Message> fetchAsync(GetMessageData getMessageData) {
+		task<Message> fetchAsync(FetchMessageData fetchMessageData) {
 			DiscordCoreInternal::GetMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.channelId = getMessageData.channelId;
-			dataPackage.id = getMessageData.id;
+			dataPackage.channelId = fetchMessageData.channelId;
+			dataPackage.messageId = fetchMessageData.id;
 			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->clientCore, this->threads->at(2).scheduler);
 			send(MessageManagerAgent::requestFetchBuffer, dataPackage);
 			messageManagerAgent.start();
