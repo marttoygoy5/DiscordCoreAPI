@@ -9,7 +9,9 @@
 #define _SLASH_COMMAND_STUFF_
 
 #include "pch.h"
+#include "JSONifier.hpp"
 #include "HttpStuff.hpp"
+#include "UserStuff.hpp"
 
 namespace DiscordCoreAPI {
 
@@ -25,22 +27,31 @@ namespace DiscordCoreAPI {
 		MENTIONABLE = 9
 	};
 
+	struct ApplicationCommandOptionChoiceData {
+		string name;
+		int	valueInt;
+		int valueString;
+	};
+
+	struct ApplicationCommandOptionData {
+		ApplicationCommandOptionType type;
+		string name;
+		string description;
+		bool required;
+		vector<ApplicationCommandOptionChoiceData>	choices;
+		vector<ApplicationCommandOptionData> options;
+	};
+
 	struct SubCommandData {
 
 	};
 
-	struct SubCommandGroupData {
-		SubCommandData* subCommands{ nullptr };
-		unsigned int subCommandCount{ 0u };
-		void addSubCommand(SubCommandData subCommandData) {
-			this->subCommands = new SubCommandData[this->subCommandCount + 1];
-			this->subCommands[subCommandCount] = subCommandData;
-			this->subCommandCount += 1;
-		}
-	};
-
 	struct CreateSlashCommandData {
-
+		string applicationId;
+		string name;
+		string description;
+		vector<ApplicationCommandOptionData> options;
+		bool defaultPermission;
 	};
 
 	class SlashCommandManager {
@@ -48,6 +59,10 @@ namespace DiscordCoreAPI {
 		SlashCommandManager(DiscordCoreInternal::HttpAgentResources agentResources, Scheduler* pScheduler = nullptr)
 			:httpPostAgent(agentResources, pScheduler)
 		{
+
+		}
+
+		void createSlashCommand(CreateSlashCommandData createSlashCommandData) {
 
 		}
 

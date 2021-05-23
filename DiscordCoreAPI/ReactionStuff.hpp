@@ -166,6 +166,18 @@ namespace DiscordCoreAPI {
 			if (try_receive(ReactionManagerAgent::requestDeleteBuffer, deleteData)) {
 				this->deleteObjectAsync(deleteData).get();
 			}
+			DiscordCoreInternal::ReactionData reactionData;
+			Reaction reaction(reactionData, this->coreClient);
+			while (ReactionManagerAgent::reactionsToInsert.try_pop(reaction)) {
+				map<string, Reaction> cacheTemp;
+				if (try_receive(ReactionManagerAgent::cache, cacheTemp)) {
+					if (cacheTemp.contains(reaction.data.userId+ reaction.data.emoji.name)) {
+						cacheTemp.erase(reaction.data.userId + reaction.data.emoji.name);
+					}
+				}
+				cacheTemp.insert(make_pair(reaction.data.userId + reaction.data.emoji.name, reaction));
+				asend(ReactionManagerAgent::cache, cacheTemp);
+			}
 			done();
 		}
 	};
@@ -287,15 +299,23 @@ namespace DiscordCoreAPI {
 
 		task<void> deleteAllReactionsAsync(DeleteAllReactionsData deleteReactionDataOld) {
 			DiscordCoreInternal::DeleteReactionDataAll deleteReactionData;
+			deleteReactionData.agentResources = this->agentResources;
+			deleteReactionData.threadContext = this->threads->at(9);
 			deleteReactionData.channelId = deleteReactionDataOld.channelId;
 			deleteReactionData.messageId = deleteReactionDataOld.messageId;
 			deleteReactionData.deletionType = DiscordCoreInternal::ReactionDeletionType::ALL_DELETE;
-			deleteReactionData.agentResources = this->agentResources;
-			deleteReactionData.threadContext = this->threads->at(9);
 			ReactionManagerAgent reactionManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteBuffer, deleteReactionData);
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
+			co_return;
+		}
+
+		task<void> insertReactionAsync(Reaction reaction) {
+			ReactionManagerAgent reactionManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
+			reactionManagerAgent.start();
+			ReactionManagerAgent::reactionsToInsert.push(reaction);
+			reactionManagerAgent.wait(&reactionManagerAgent);
 			co_return;
 		}
 

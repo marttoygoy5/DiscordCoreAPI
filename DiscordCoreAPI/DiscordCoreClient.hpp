@@ -44,18 +44,18 @@ namespace DiscordCoreAPI {
 			this->botToken = botTokenNew;
 		}
 
-		void terminate() {
-			this->doWeQuit = true;
-			this->pWebSocketReceiverAgent->terminate();
-			this->pWebSocketConnectionAgent->terminate();
-		}
-
 		void login() {
 			this->initialize(this->botToken).get();
 			this->pWebSocketReceiverAgent->start();
 			this->pWebSocketConnectionAgent->start();
 			this->start();
 			return;
+		}
+
+		void terminate() {
+			this->doWeQuit = true;
+			this->pWebSocketReceiverAgent->terminate();
+			this->pWebSocketConnectionAgent->terminate();
 		}
 
 	protected:
@@ -100,8 +100,7 @@ namespace DiscordCoreAPI {
 			this->guildMembers = new GuildMemberManager(agentResources, this->pSystemThreads->threads, this);
 			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads, this);
 			this->guilds = new GuildManager(agentResources, this->pSystemThreads->threads, (DiscordCoreClient*)this, this);
-			User user = this->users->fetchCurrentUserAsync().get();
-			this->currentUser = &user;
+			this->currentUser = new User(this->users->fetchCurrentUserAsync().get().data, this);
 			co_await mainThread;
 		}
 

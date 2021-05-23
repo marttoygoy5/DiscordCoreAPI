@@ -1297,6 +1297,8 @@ namespace DiscordCoreInternal {
         *pDataStructure = footerData;
     }
 
+    
+
     void parseObject(json jsonObjectData, EmbedImageData* pDataStructure) {
         EmbedImageData imageData = *pDataStructure;
 

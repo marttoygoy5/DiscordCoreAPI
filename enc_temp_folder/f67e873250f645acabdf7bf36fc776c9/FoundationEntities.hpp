@@ -1035,7 +1035,7 @@ namespace  DiscordCoreInternal {
         string roleId;
     };
 
-    struct UpdateRoleData {
+    struct ModifyRoleData {
         string name;
         string permissions;
         int colorFirst[3];

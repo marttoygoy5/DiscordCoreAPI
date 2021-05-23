@@ -21,9 +21,8 @@ bool executeByRateLimitData(DiscordCoreInternal::RateLimitData* rateLimitData) {
 			targetTime = rateLimitData->timeStartedAtTryAgain + rateLimitData->msRemainTryAgain;
 			rateLimitData->msRemain = rateLimitData->msRemainTryAgain;
 		}
-		else if (tryAgainElapsedTime < rateLimitData->msRemainTryAgain) {
-			cout << "Waiting on rate-limit, Time Remainiing: " << rateLimitData->msRemainTryAgain - tryAgainElapsedTime << "ms." << endl;
-			return true;
+		if (tryAgainElapsedTime < rateLimitData->msRemainTryAgain) {
+			cout << "Waiting on rate-limit, Time Remainiing: " << rateLimitData->msRemainTryAgain - tryAgainElapsedTime << "ms." << endl << endl;
 		}
 		while (rateLimitData->msRemain > 0.0f) {
 			currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());

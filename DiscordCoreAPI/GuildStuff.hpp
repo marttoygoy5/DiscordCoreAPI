@@ -15,6 +15,7 @@
 #include "ChannelStuff.hpp"
 #include "MessageStuff.hpp"
 #include "GuildMemberStuff.hpp"
+#include "UserStuff.hpp"
 #include "RoleStuff.hpp"
 
 namespace DiscordCoreAPI {

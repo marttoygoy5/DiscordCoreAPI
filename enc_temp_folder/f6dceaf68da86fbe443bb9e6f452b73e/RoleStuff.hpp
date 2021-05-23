@@ -93,7 +93,7 @@ namespace DiscordCoreAPI {
 
 		static unbounded_buffer<DiscordCoreInternal::FetchRoleData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetRoleData>* requestGetBuffer;
-		static unbounded_buffer<DiscordCoreInternal::UpdateRoleDataInternal>* requestModifyBuffer;
+		static unbounded_buffer<DiscordCoreInternal::ModifyRoleDataInternal>* requestModifyBuffer;
 		static unbounded_buffer<Role>* outBuffer;
 		static concurrent_queue<Role> rolesToInsert;
 		static overwrite_buffer<map<string, Role>> cache;
@@ -111,7 +111,7 @@ namespace DiscordCoreAPI {
 
 		static void initialize() {
 			RoleManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetRoleData>;
-			RoleManagerAgent::requestModifyBuffer = new unbounded_buffer<DiscordCoreInternal::UpdateRoleDataInternal>;
+			RoleManagerAgent::requestModifyBuffer = new unbounded_buffer<DiscordCoreInternal::ModifyRoleDataInternal>;
 			RoleManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::FetchRoleData>;
 			RoleManagerAgent::outBuffer = new unbounded_buffer<Role>;
 			return;
@@ -152,7 +152,7 @@ namespace DiscordCoreAPI {
 			co_return newRole;
 		}
 
-		task<Role> patchObjectAsync(DiscordCoreInternal::UpdateRoleDataInternal dataPackage) {
+		task<Role> patchObjectAsync(DiscordCoreInternal::ModifyRoleDataInternal dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_ROLE;
@@ -198,7 +198,7 @@ namespace DiscordCoreAPI {
 				send(RoleManagerAgent::outBuffer, role);
 				asend(cache, cacheTemp);
 			}
-			DiscordCoreInternal::UpdateRoleDataInternal modifyData;
+			DiscordCoreInternal::ModifyRoleDataInternal modifyData;
 			if (try_receive(RoleManagerAgent::requestModifyBuffer, modifyData)) {
 				Role role = patchObjectAsync(modifyData).get();
 				map<string, Role> cacheTemp;
@@ -263,7 +263,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<Role> updateRoleAsync(UpdateRoleData modifyRoleData) {
-			DiscordCoreInternal::UpdateRoleData modifyRoleDataNew;
+			DiscordCoreInternal::ModifyRoleData modifyRoleDataNew;
 			modifyRoleDataNew.colorFirst[0] = modifyRoleData.colorFirst[0];
 			modifyRoleDataNew.colorFirst[1] = modifyRoleData.colorFirst[1];
 			modifyRoleDataNew.colorFirst[2] = modifyRoleData.colorFirst[2];
@@ -272,7 +272,7 @@ namespace DiscordCoreAPI {
 			modifyRoleDataNew.mentionable = modifyRoleData.mentionable;
 			modifyRoleDataNew.name = modifyRoleData.name;
 			modifyRoleDataNew.permissions = modifyRoleData.permissions;
-			DiscordCoreInternal::UpdateRoleDataInternal dataPackage;
+			DiscordCoreInternal::ModifyRoleDataInternal dataPackage;
 			dataPackage.content = DiscordCoreInternal::getModifyRolePayload(modifyRoleDataNew);
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(5);
@@ -321,7 +321,7 @@ namespace DiscordCoreAPI {
 	};
 	unbounded_buffer<DiscordCoreInternal::FetchRoleData>* RoleManagerAgent::requestFetchBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetRoleData>* RoleManagerAgent::requestGetBuffer;
-	unbounded_buffer<DiscordCoreInternal::UpdateRoleDataInternal>* RoleManagerAgent::requestModifyBuffer;
+	unbounded_buffer<DiscordCoreInternal::ModifyRoleDataInternal>* RoleManagerAgent::requestModifyBuffer;
 	unbounded_buffer<Role>* RoleManagerAgent::outBuffer;
 	concurrent_queue<Role> RoleManagerAgent::rolesToInsert;
 	overwrite_buffer<map<string, Role>> RoleManagerAgent::cache;

@@ -13,6 +13,7 @@
 #include "Commands.hpp"
 
 namespace DiscordCoreAPI {
+	extern shared_ptr<DiscordCoreClient> pDiscordCoreAPI;
 
 	class HelpCommand : public  BaseFunction {
 	public:
@@ -24,7 +25,7 @@ namespace DiscordCoreAPI {
 			cout << "ROLE NAME: " << role.data.name << endl;
 			string newPerms = DiscordCoreInternal::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
 			GuildMember guildMember = args.coreClient->guildMembers->fetchAsync({ .guildId = args.message.data.guildId, .guildMemberId = args.message.data.author.id }).get();
-			vector<Role> roles = args.coreClient->roles->getGuildMemberRoles({ .guildId = args.message.data.guildId, .guildMember = guildMember }).get();
+			vector<Role> roles = args.coreClient->roles->getGuildMemberRoles({ .guildId = args.message.data.guildId, .guildMember = guildMember}).get();
 			for (unsigned int x = 0; x < roles.size(); x += 1) {
 				cout << "ROLE NAME: " << roles.at(x).data.name << endl;
 			}
