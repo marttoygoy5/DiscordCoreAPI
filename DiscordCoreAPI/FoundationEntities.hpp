@@ -831,6 +831,7 @@ namespace  DiscordCoreInternal {
     };
 
     struct HttpData {
+        unsigned int returnCode;
         json data;
     };
 
@@ -1012,6 +1013,12 @@ namespace  DiscordCoreInternal {
         GuildMemberData oldGuildMemberData;
         string guildId;
         string guildMemberId;
+    };
+
+    struct GetGuildMemberRolesData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        vector<string> roleIds;
     };
 
     struct ModifyRoleDataInternal {

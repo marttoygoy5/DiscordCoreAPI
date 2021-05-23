@@ -18,14 +18,21 @@ namespace DiscordCoreAPI {
 	class HelpCommand : public  BaseFunction {
 	public:
 		virtual  void execute(DiscordCoreAPI::DiscordCoreFunctionBaseArguments args) {
-			Guild guild = args.clientCore->guilds->fetchAsync({ args.message.data.guildId }).get();
-			Channel channel = args.clientCore->channels->fetchAsync({ args.message.data.channelId }).get();
-			Role role = args.clientCore->roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
+			Guild guild = args.coreClient->guilds->fetchAsync({ args.message.data.guildId }).get();
+			Channel channel = args.coreClient->channels->fetchAsync({ args.message.data.channelId }).get();
+			Role role = args.coreClient->roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 			DiscordCoreInternal::Permissions permsArray[1] = { DiscordCoreInternal::Permissions::MANAGE_GUILD };
+			cout << "ROLE NAME: " << role.data.name << endl;
 			string newPerms = DiscordCoreInternal::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
-			role.clientCore->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" });
+			GuildMember guildMember = args.coreClient->guildMembers->fetchAsync({ args.message.data.guildId, "773112821478850570" }).get();
+			vector<Role> roles = args.coreClient->guildMembers->getGuildMemberRoles({ .guildId = args.message.data.guildId, .guildMemberId = "773112821478850570" }).get();
+			for (unsigned int x = 0; x < roles.size(); x += 1) {
+				cout << "ROLE NAME: " << roles.at(x).data.name << endl;
+			}
+			
+			Role newRole = args.coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 			cout << "GET ROLE: " << role.data.name << endl;
-			role.clientCore->roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" });
+			newRole = role.coreClient->roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 			cout << "FATCH ROLE: " << role.data.name << endl;
 			DiscordCoreAPI::UpdateRoleData updateRoleData;
 			updateRoleData.guildId = guild.data.id;
@@ -37,7 +44,7 @@ namespace DiscordCoreAPI {
 			updateRoleData.name = "TESTING ROLE THREE";
 			updateRoleData.permissions = newPerms;
 			updateRoleData.roleId = "790460906450583592";
-			role = role.clientCore->roles->updateRoleAsync(updateRoleData).get();
+			role = role.coreClient->roles->updateRoleAsync(updateRoleData).get();
 
 			for (unsigned int x = 0; x < args.argumentsArray.size(); x += 1) {
 				cout << args.argumentsArray.at(x) << endl;

@@ -137,14 +137,11 @@ namespace DiscordCoreInternal {
 	class WebSocketConnectionAgent :public agent {
 	public:
 
-		WebSocketConnectionAgent(ITarget<json>& target, ThreadContext threadContextNew = {nullptr ,nullptr, nullptr})
+		WebSocketConnectionAgent(ITarget<json>& target,  hstring botTokenNew, ThreadContext threadContextNew = {nullptr ,nullptr, nullptr})
 			:
 			agent(*threadContextNew.scheduler),
 			webSocketMessageTarget(target) {
 			this->threadContext = threadContextNew;
-		}
-
-		void initialize(hstring botTokenNew) {
 			this->botToken = botTokenNew;
 		}
 
@@ -226,18 +223,18 @@ namespace DiscordCoreInternal {
 			catch (hresult result) {
 				cout << result.value << endl;
 			}
-		}		
+		}
 
 		void onClosed(IWebSocket const&, WebSocketClosedEventArgs const& args) {
 			wcout << L"WebSocket_Closed; Code: " << args.Code() << ", Reason: " << args.Reason().c_str() << endl;
 		}
 
-		task<void> sendAsync(string& text) {
+		void send(string& text) {
 
 			string message = text;
 			if (message.empty()) {
 				cout << "Please specify text to send" << endl;
-				co_return;
+				return;
 			}
 
 			cout << "Sending Message: ";
@@ -253,26 +250,26 @@ namespace DiscordCoreInternal {
 			}
 			catch (hresult_error const& ex) {
 				wcout << ex.message().c_str() << endl;
-				co_return;
+				return;
 			}
 
 			cout << "Send Complete" << endl;
 		}
 
 		void OnHeartbeat(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
-			this->sendHeartBeat().get();
+			this->sendHeartBeat();
 		}
 
-		task<void> sendHeartBeat() {
+		void sendHeartBeat() {
 			try {
 				if (this->didWeReceiveHeartbeatAck == false) {
 					this->cleanup();
 					this->connect();
 					this->didWeReceiveHeartbeatAck = true;
-					co_return;
+					return;
 				}
 				string heartbeat = getHeartbeatPayload(this->lastNumberReceived);
-				this->sendAsync(heartbeat).get();
+				this->send(heartbeat);
 				this->didWeReceiveHeartbeatAck = false;
 			}
 			catch (hresult_error error) {
@@ -303,19 +300,19 @@ namespace DiscordCoreInternal {
 
 				if (payload.at("op") == 6) {
 					string resume = getResumePayload(to_string(this->botToken), to_string(this->sessionID), this->lastNumberReceived);
-					this->sendAsync(resume);
+					this->send(resume);
 				}
 
 				if (payload.at("op") == 7) {
 					this->cleanup();
 					string resume = getResumePayload(to_string(this->botToken), to_string(this->sessionID), this->lastNumberReceived);
-					this->sendAsync(resume);
+					this->send(resume);
 					this->connect();
 				}
 
 				if (payload.at("op") == 9) {
 					string resume = getResumePayload(to_string(this->botToken), to_string(this->sessionID), this->lastNumberReceived);
-					this->sendAsync(resume);
+					this->send(resume);
 					this->connect();
 				}
 
@@ -339,7 +336,7 @@ namespace DiscordCoreInternal {
 					this->heartbeatTimer.Tick({ this, &WebSocketConnectionAgent::OnHeartbeat });
 					this->heartbeatTimer.Start();
 					std::string identity = getIdentifyPayload(to_string(this->botToken), this->intentsValue);
-					this->sendAsync(identity);
+					this->send(identity);
 				}
 				cout << "Message received from MessageWebSocket: " << to_string(message) << endl << endl;
 			}

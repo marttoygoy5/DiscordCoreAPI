@@ -11,6 +11,7 @@
 #include "pch.h"
 #include "SystemThreads.hpp"
 #include "HttpStuff.hpp"
+#include "SlashCommandStuff.hpp"
 #include "WebSocketStuff.hpp"
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
@@ -27,7 +28,7 @@ namespace DiscordCoreAPI {
 
 	struct CommandData {
 		Message message;
-		DiscordCoreClient* clientCore;
+		DiscordCoreClient* coreClient;
 	};
 
 	class DiscordCoreClient :public DiscordCoreClientBase,  protected agent {
@@ -49,23 +50,16 @@ namespace DiscordCoreAPI {
 			this->pWebSocketConnectionAgent->terminate();
 		}
 
-		task<void> login() {
+		void login() {
 			this->initialize(this->botToken).get();
-			this->pWebSocketConnectionAgent->initialize(this->botToken);
 			this->pWebSocketReceiverAgent->start();
 			this->pWebSocketConnectionAgent->start();
 			this->start();
-			co_return;
+			return;
 		}
 
 	protected:
 
-		friend class GuildManager;
-		friend class Guild;
-		friend class GuildMemberManager;
-		friend class GuildMember;
-		friend class ChannelManager;
-		friend class Channel;
 		bool doWeQuit = false;
 		hstring botToken;
 		hstring baseURL = L"https://discord.com/api/v9";
@@ -85,20 +79,21 @@ namespace DiscordCoreAPI {
 			co_await resume_foreground(*this->pSystemThreads->mainThreadContext.threadQueue.get());
 			this->EventMachine = make_shared<DiscordCoreAPI::EventMachine>();
 			this->botToken = botTokenNew;
-			this->pWebSocketConnectionAgent = new DiscordCoreInternal::WebSocketConnectionAgent(this->webSocketIncWorkloadBuffer, this->pSystemThreads->getThreads().get()->at(0));
+			this->pWebSocketConnectionAgent = new DiscordCoreInternal::WebSocketConnectionAgent(this->webSocketIncWorkloadBuffer, this->botToken, this->pSystemThreads->getThreads().get()->at(0));
 			DiscordCoreInternal::HttpAgentResources agentResources;
 			agentResources.baseURL = this->baseURL;
 			agentResources.botToken = this->botToken;
+			this->initializeBase(agentResources, this->pSystemThreads->threads, this);
 			agentResources.pSocketPath = pWebSocketConnectionAgent->returnSocketPathPointer();
 			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->getThreads().get()->at(3).scheduler);
 			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(1));
-			ReactionManagerAgent::initialize().get();
-			UserManagerAgent::initialize().get();
-			MessageManagerAgent::initialize().get();
-			RoleManagerAgent::initialize().get();
-			GuildMemberManagerAgent::initialize().get();
-			ChannelManagerAgent::initialize().get();
-			GuildManagerAgent::initialize().get();
+			ReactionManagerAgent::initialize();
+			UserManagerAgent::initialize();
+			MessageManagerAgent::initialize();
+			RoleManagerAgent::initialize();
+			GuildMemberManagerAgent::initialize();
+			ChannelManagerAgent::initialize();
+			GuildManagerAgent::initialize();
 			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->threads, this);
 			this->users = new UserManager(agentResources, this->pSystemThreads->threads, this);
 			this->messages = new MessageManager(agentResources, this->pSystemThreads->threads, this);

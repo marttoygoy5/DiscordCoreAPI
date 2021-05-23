@@ -20,7 +20,7 @@ namespace DiscordCoreAPI {
 	struct DiscordCoreFunctionBaseArguments {
 		Message message;
 		vector<string> argumentsArray;
-		DiscordCoreAPI::DiscordCoreClient* clientCore;
+		DiscordCoreAPI::DiscordCoreClient* coreClient;
 	};
 
 	class BaseFunction {
@@ -46,7 +46,7 @@ namespace DiscordCoreAPI {
 
 			DiscordCoreFunctionBaseArguments args(commandData.message);
 			args.argumentsArray = parseArguments(commandData.message.data.content);
-			args.clientCore = commandData.clientCore;
+			args.coreClient = commandData.coreClient;
 			args.message = commandData.message;
 
 			functionPointer->execute(args);

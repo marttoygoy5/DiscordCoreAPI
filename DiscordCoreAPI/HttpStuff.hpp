@@ -17,7 +17,7 @@ bool executeByRateLimitData(DiscordCoreInternal::RateLimitData* rateLimitData) {
 		float targetTime = loopStartTime + rateLimitData->msRemain;
 		float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 		float tryAgainElapsedTime = currentTime - rateLimitData->timeStartedAtTryAgain;
-		if (rateLimitData->msRemainTryAgain <= 5000.0f && rateLimitData->msRemain == 0.0f) {
+		if (rateLimitData->msRemainTryAgain <= 15000.0f && rateLimitData->msRemain == 0.0f) {
 			targetTime = rateLimitData->timeStartedAtTryAgain + rateLimitData->msRemainTryAgain;
 			rateLimitData->msRemain = rateLimitData->msRemainTryAgain;
 		}
@@ -38,7 +38,7 @@ namespace DiscordCoreInternal {
 
 	class HttpRequestAgent :public agent {
 	public:
-		unbounded_buffer<json> workReturnBuffer;
+		unbounded_buffer<HttpData> workReturnBuffer;
 		unbounded_buffer<HttpWorkload> workSubmissionBuffer;
 		HttpRequestAgent(HttpAgentResources agentResources, Scheduler* pScheduler = nullptr) 
 			: agent(*pScheduler)
@@ -48,15 +48,24 @@ namespace DiscordCoreInternal {
 				this->botToken = agentResources.botToken;
 				this->initialConnectionPath = this->baseURL + L"/gateway/bot";
 				this->getHttpClient = HttpClient();
+				this->getHeaders = this->getHttpClient.DefaultRequestHeaders();
 				this->putHttpClient = HttpClient();
+				this->putHeaders = this->putHttpClient.DefaultRequestHeaders();
 				this->postHttpClient = HttpClient();
+				this->postHeaders = this->postHttpClient.DefaultRequestHeaders();
 				this->patchHttpClient = HttpClient();
+				this->patchHeaders = this->patchHttpClient.DefaultRequestHeaders();
 				this->deleteHttpClient = HttpClient();
-				//this->deleteHeaders = this->deleteHttpClient.DefaultRequestHeaders();
+				this->deleteHeaders = this->deleteHttpClient.DefaultRequestHeaders();
 				hstring headerString = L"Bot ";
 				hstring headerString2 = headerString + this->botToken;
 				HttpCredentialsHeaderValue credentialValue(nullptr);
 				credentialValue = credentialValue.Parse(headerString2.c_str());
+				this->getHeaders.Authorization(credentialValue);
+				this->putHeaders.Authorization(credentialValue);
+				this->postHeaders.Authorization(credentialValue);
+				this->patchHeaders.Authorization(credentialValue);
+				this->deleteHeaders.Authorization(credentialValue);
 				this->baseURI = Uri(this->initialConnectionPath.c_str());
 				HttpResponseMessage httpResponse;
 				httpResponse = getHttpClient.GetAsync(this->baseURI).get();
@@ -76,13 +85,13 @@ namespace DiscordCoreInternal {
 		}
 
 	protected:
-		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
 		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
+		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
 		single_assignment<exception> errorBuffer;
 
 		void run() {
 			try {
-				transformer<HttpWorkload, json> completeHttpRequest([this](HttpWorkload workload) -> json {
+				transformer<HttpWorkload, HttpData> completeHttpRequest([this](HttpWorkload workload) -> HttpData{
 					RateLimitData rateLimitData;
 					rateLimitData.workloadType = workload.workloadType;
 					auto bucketIterator = HttpRequestAgent::rateLimitDataBucketValues.find(workload.workloadType);
@@ -92,7 +101,7 @@ namespace DiscordCoreInternal {
 					}
 					if (executeByRateLimitData(&rateLimitData)) {
 						HttpData returnData;
-						return returnData.data;
+						return returnData;
 					}
 					HttpData returnData;
 					if (workload.workloadClass == HttpWorkloadClass::GET) {
@@ -120,7 +129,7 @@ namespace DiscordCoreInternal {
 						HttpRequestAgent::rateLimitData.unsafe_erase(rateLimitData.bucket);
 					}
 					HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
-					return returnData.data;
+					return returnData;
 					});
 				completeHttpRequest.link_target(&this->workReturnBuffer);
 				HttpWorkload workload = receive(&this->workSubmissionBuffer);
@@ -146,6 +155,7 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			getData.returnCode = (unsigned int)httpResponse.StatusCode();
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -177,9 +187,6 @@ namespace DiscordCoreInternal {
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
 			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
-			if (!httpResponse.IsSuccessStatusCode()){
-				wcout << httpResponse.ToString().c_str() << endl;
-			}
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
 				getData = httpGETObjectDataAsync(relativeURL, pRateLimitData).get();
@@ -214,6 +221,7 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			putData.returnCode = (unsigned int)httpResponse.StatusCode();
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -245,9 +253,6 @@ namespace DiscordCoreInternal {
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
 			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
-			if (!httpResponse.IsSuccessStatusCode()) {
-				wcout << httpResponse.ToString().c_str() << endl;
-			}
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
 				putData = httpPUTObjectDataAsync(relativeURL, content, pRateLimitData).get();
@@ -282,6 +287,7 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			postData.returnCode = (unsigned int)httpResponse.StatusCode();
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -313,9 +319,6 @@ namespace DiscordCoreInternal {
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
 			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
-			if (!httpResponse.IsSuccessStatusCode()) {
-				wcout << httpResponse.ToString().c_str() << endl;
-			}
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
 				postData = httpPOSTObjectDataAsync(relativeURL, content, pRateLimitData).get();
@@ -353,6 +356,7 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			patchData.returnCode = (unsigned int)httpResponse.StatusCode();
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -384,9 +388,6 @@ namespace DiscordCoreInternal {
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
 			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
-			if (!httpResponse.IsSuccessStatusCode()) {
-				wcout << httpResponse.ToString().c_str() << endl;
-			}
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
 				patchData = httpPATCHObjectDataAsync(relativeURL, content, pRateLimitData).get();
@@ -413,6 +414,7 @@ namespace DiscordCoreInternal {
 			string bucket;
 			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			deleteData.returnCode = (unsigned int)httpResponse.StatusCode();
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -444,9 +446,6 @@ namespace DiscordCoreInternal {
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
 			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
-			if (!httpResponse.IsSuccessStatusCode()) {
-				wcout << httpResponse.ToString().c_str() << endl;
-			}
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
 				deleteData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
@@ -463,9 +462,14 @@ namespace DiscordCoreInternal {
 		hstring baseURL;
 		hstring botToken;
 		hstring initialConnectionPath;
+		HttpRequestHeaderCollection getHeaders{ nullptr };
+		HttpRequestHeaderCollection putHeaders{ nullptr };
+		HttpRequestHeaderCollection postHeaders{ nullptr };
+		HttpRequestHeaderCollection patchHeaders{ nullptr };
+		HttpRequestHeaderCollection deleteHeaders{ nullptr };
 		HttpClient getHttpClient;
-		HttpClient postHttpClient;
 		HttpClient putHttpClient;
+		HttpClient postHttpClient;
 		HttpClient patchHttpClient;
 		HttpClient deleteHttpClient;
 	};
