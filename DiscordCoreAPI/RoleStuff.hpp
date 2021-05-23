@@ -79,6 +79,11 @@ namespace DiscordCoreAPI {
 		string roleId;
 	};
 
+	struct GetGuildMemberRolesData {
+		string guildId;
+		vector<string> roleIds;
+	};
+
 	class RoleManagerAgent :agent {
 	protected:
 		friend class DiscordCoreClient;
@@ -104,9 +109,9 @@ namespace DiscordCoreAPI {
 		}
 
 		static void initialize() {
-			RoleManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::FetchRoleData>;
 			RoleManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetRoleData>;
 			RoleManagerAgent::requestModifyBuffer = new unbounded_buffer<DiscordCoreInternal::ModifyRoleDataInternal>;
+			RoleManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::FetchRoleData>;
 			RoleManagerAgent::outBuffer = new unbounded_buffer<Role>;
 			return;
 		}
@@ -280,6 +285,15 @@ namespace DiscordCoreAPI {
 			Role newRole(roleData, this->coreClient);
 			try_receive(RoleManagerAgent::outBuffer, newRole);
 			co_return newRole;
+		}
+
+		task<vector<Role>> getGuildMemberRoles(GetGuildMemberRolesData getGuildMemberRolesData) {
+			vector<Role> rolesVector;
+			for (unsigned int x = 0; x < getGuildMemberRolesData.roleIds.size(); x += 1) {
+				Role newRole = getRoleAsync({ .guildId = getGuildMemberRolesData.guildId, .roleId = getGuildMemberRolesData.roleIds.at(x) }).get();
+				rolesVector.push_back(newRole);
+			}
+			co_return rolesVector;
 		}
 
 		task<void> insertRoleAsync(Role role) {

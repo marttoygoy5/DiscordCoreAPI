@@ -19,12 +19,6 @@ namespace DiscordCoreAPI {
 
 	class DiscordCoreClientBase {
 	public:
-		DiscordCoreClientBase() {};
-		void initializeBase(DiscordCoreInternal::HttpAgentResources agentResources, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* coreClientNew){
-			channels = new ChannelManager(agentResources, threadsNew, coreClientNew);
-			roles = new RoleManager(agentResources, threadsNew, coreClientNew);
-			users = new UserManager(agentResources, threadsNew, coreClientNew);
-		}
 		ChannelManager* channels{ nullptr };
 		GuildMemberManager* guildMembers{ nullptr };
 		RoleManager* roles{ nullptr };
@@ -56,11 +50,6 @@ namespace DiscordCoreAPI {
 	};
 
 	struct GetGuildMemberData {
-		string guildId;
-		string guildMemberId;
-	};
-
-	struct GetGuildMemberRolesData {
 		string guildId;
 		string guildMemberId;
 	};
@@ -191,24 +180,6 @@ namespace DiscordCoreAPI {
 			GuildMember guildMember(guildMemberData, this->coreClient);
 			try_receive(GuildMemberManagerAgent::outBuffer, guildMember);
 			co_return guildMember;
-		}
-
-		task<vector<Role>> getGuildMemberRoles(GetGuildMemberRolesData getGuildMemberRolesData) {
-			FetchGuildMemberData getGuildMemberData;
-			getGuildMemberData.guildId = getGuildMemberRolesData.guildId;
-			getGuildMemberData.guildMemberId = getGuildMemberRolesData.guildMemberId;
-			GuildMember guildMember = fetchAsync(getGuildMemberData).get();
-			vector<Role> rolesVector;
-			DiscordCoreClientBase* coreClientPtr = (DiscordCoreClientBase*)this->coreClient;
-			if (coreClientPtr->roles == nullptr) {
-				cout << "WE'VE FAILED WE'VE FAILED!:" << endl;
-				co_return rolesVector;
-			}
-			for (unsigned int x = 0; x < guildMember.data.roles.size(); x += 1) {
-				Role newRole = coreClientPtr->roles->getRoleAsync({ .guildId = getGuildMemberRolesData.guildId, .roleId = guildMember.data.roles.at(x) }).get();
-				rolesVector.push_back(newRole);
-			}
-			co_return rolesVector;
 		}
 
 		task<void> insertGuildMemberAsync(GuildMember guildMember) {

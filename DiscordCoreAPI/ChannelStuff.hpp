@@ -96,7 +96,7 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
-			if (returnData.returnCode != 204) {
+			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
 				cout << "ChannelManagerAgent::getObjectAsync() Error: " << returnData.returnCode << endl;
 			}
 			DiscordCoreInternal::ChannelData channelData;

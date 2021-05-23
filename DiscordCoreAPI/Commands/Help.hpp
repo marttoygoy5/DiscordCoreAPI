@@ -25,7 +25,7 @@ namespace DiscordCoreAPI {
 			cout << "ROLE NAME: " << role.data.name << endl;
 			string newPerms = DiscordCoreInternal::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
 			GuildMember guildMember = args.coreClient->guildMembers->fetchAsync({ args.message.data.guildId, "773112821478850570" }).get();
-			vector<Role> roles = args.coreClient->guildMembers->getGuildMemberRoles({ .guildId = args.message.data.guildId, .guildMemberId = "773112821478850570" }).get();
+			vector<Role> roles = args.coreClient->roles->getGuildMemberRoles({ .guildId = args.message.data.guildId,.roleIds = guildMember.data.roles, }).get();
 			for (unsigned int x = 0; x < roles.size(); x += 1) {
 				cout << "ROLE NAME: " << roles.at(x).data.name << endl;
 			}
