@@ -11,6 +11,30 @@
 #include "pch.h"
 #include "JSONifier.hpp"
 
+bool executeByRateLimitData(DiscordCoreInternal::RateLimitData* rateLimitData) {
+	if (rateLimitData->getsRemaining == 0) {
+		float loopStartTime = rateLimitData->timeStartedAt;
+		float targetTime = loopStartTime + rateLimitData->msRemain;
+		float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+		float tryAgainElapsedTime = currentTime - rateLimitData->timeStartedAtTryAgain;
+		if (rateLimitData->msRemainTryAgain <= 5000.0f && rateLimitData->msRemain == 0.0f) {
+			targetTime = rateLimitData->timeStartedAtTryAgain + rateLimitData->msRemainTryAgain;
+			rateLimitData->msRemain = rateLimitData->msRemainTryAgain;
+			cout << "MS REMAIN TRY AGAIN: " << rateLimitData->msRemainTryAgain << endl;
+		}
+		else if (tryAgainElapsedTime < rateLimitData->msRemainTryAgain) {
+			cout << "Waiting on rate-limit, Time Remainiing: " << rateLimitData->msRemainTryAgain - tryAgainElapsedTime << "ms." << endl;
+			return true;
+		}
+		while (rateLimitData->msRemain > 0.0f) {
+			currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			rateLimitData->msRemain = targetTime - currentTime;
+		}
+		return false;
+	}
+	return false;
+}
+
 namespace DiscordCoreInternal {
 
 	class HttpRequestAgent;
@@ -69,26 +93,18 @@ namespace DiscordCoreInternal {
 			try {
 				transformer<HttpWorkload, json> completeHttpRequest([this](HttpWorkload workload) -> json {
 					RateLimitData rateLimitData;
+					rateLimitData.workloadType = workload.workloadType;
 					auto bucketIterator = HttpRequestAgent::rateLimitDataBucketValues.find(workload.workloadType);
 					if (bucketIterator != end(HttpRequestAgent::rateLimitDataBucketValues)) {
 						string bucket = HttpRequestAgent::rateLimitDataBucketValues.at(workload.workloadType);
 						rateLimitData = HttpRequestAgent::rateLimitData.at(bucket);
+						if (rateLimitData.workloadType == HttpWorkloadType::DELETE_MESSAGE) {
+							cout << rateLimitData.getsRemaining << " GETS REMAIN, FOR BUCKET " << rateLimitData.bucket << "ms REMAIN " << (float)rateLimitData.msRemain << endl;
+						}
 					}
-					if (rateLimitData.getsRemaining == 0) {
-						float loopStartTime = rateLimitData.timeStartedAt;
-						float targetTime = loopStartTime + static_cast<float> (rateLimitData.msRemain);
-						float currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-						float tryAgainElapsedTime = currentTime - rateLimitData.timeStartedAtTryAgain;
-						if (tryAgainElapsedTime < rateLimitData.msRemainTryAgain) {
-							cout << "Waiting on rate-limit, Time Remainiing: " << rateLimitData.msRemainTryAgain - tryAgainElapsedTime << "ms." << endl;
-							done();
-							HttpData data;
-							return data.data;
-						}
-						while (rateLimitData.msRemain > 0.0f) {
-							currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-							rateLimitData.msRemain = targetTime - currentTime;
-						}
+					if (executeByRateLimitData(&rateLimitData)) {
+						HttpData returnData;
+						return returnData.data;
 					}
 					HttpData returnData;
 					if (workload.workloadClass == HttpWorkloadClass::GET) {
@@ -134,14 +150,14 @@ namespace DiscordCoreInternal {
 			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 			HttpResponseMessage httpResponse;
 			httpResponse = getHttpClient.GetAsync(requestUri).get();
-			int currentMSTimeLocal;
 			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			int currentMSTimeTryAgainLocal;
-			int msRemainTryAgainLocal;
+			float currentMSTimeLocal;
+			float msRemainLocal;
+			float currentMSTimeTryAgainLocal;
+			float msRemainTryAgainLocal;
 			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -149,7 +165,7 @@ namespace DiscordCoreInternal {
 				getsRemainingLocal = 0;
 			}
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
 			}
 			else {
 				msRemainLocal = 250;
@@ -161,19 +177,24 @@ namespace DiscordCoreInternal {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
+				msRemainLocal = 0.0f;
 			}
 			else {
 				msRemainTryAgainLocal = 0;
 			}
 			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
+			pRateLimitData->msRemain = msRemainLocal;
+			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
-			pRateLimitData->msRemainTryAgain = (float)msRemainTryAgainLocal;
-			pRateLimitData->timeStartedAtTryAgain = (float)currentMSTimeTryAgainLocal;
+			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
+			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
 			if (!httpResponse.IsSuccessStatusCode()){
 				wcout << httpResponse.ToString().c_str() << endl;
+			}
+			if ((int)httpResponse.StatusCode() == 429) {
+				executeByRateLimitData(pRateLimitData);
+				getData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -197,14 +218,14 @@ namespace DiscordCoreInternal {
 			contents.Headers().ContentType(typeHeaderValue);
 			HttpResponseMessage httpResponse;
 			httpResponse = putHttpClient.PutAsync(requestUri, contents).get();
-			int currentMSTimeLocal;
 			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			int currentMSTimeTryAgainLocal;
-			int msRemainTryAgainLocal;
+			float currentMSTimeLocal;
+			float msRemainLocal;
+			float currentMSTimeTryAgainLocal;
+			float msRemainTryAgainLocal;
 			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -212,7 +233,7 @@ namespace DiscordCoreInternal {
 				getsRemainingLocal = 0;
 			}
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
 			}
 			else {
 				msRemainLocal = 250;
@@ -224,19 +245,24 @@ namespace DiscordCoreInternal {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
+				msRemainLocal = 0.0f;
 			}
 			else {
 				msRemainTryAgainLocal = 0;
 			}
 			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
+			pRateLimitData->msRemain = msRemainLocal;
+			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
-			pRateLimitData->msRemainTryAgain = (float)msRemainTryAgainLocal;
-			pRateLimitData->timeStartedAtTryAgain = (float)currentMSTimeTryAgainLocal;
+			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
+			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
 			if (!httpResponse.IsSuccessStatusCode()) {
 				wcout << httpResponse.ToString().c_str() << endl;
+			}
+			if ((int)httpResponse.StatusCode() == 429) {
+				executeByRateLimitData(pRateLimitData);
+				putData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -260,14 +286,14 @@ namespace DiscordCoreInternal {
 			contents.Headers().ContentType(typeHeaderValue);
 			HttpResponseMessage httpResponse;
 			httpResponse = postHttpClient.PostAsync(requestUri, contents).get();
-			int currentMSTimeLocal;
 			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			int currentMSTimeTryAgainLocal;
-			int msRemainTryAgainLocal;
+			float currentMSTimeLocal;
+			float msRemainLocal;
+			float currentMSTimeTryAgainLocal;
+			float msRemainTryAgainLocal;
 			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -275,7 +301,7 @@ namespace DiscordCoreInternal {
 				getsRemainingLocal = 0;
 			}
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
 			}
 			else {
 				msRemainLocal = 250;
@@ -287,19 +313,24 @@ namespace DiscordCoreInternal {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
+				msRemainLocal = 0.0f;
 			}
 			else {
 				msRemainTryAgainLocal = 0;
 			}
 			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
+			pRateLimitData->msRemain = msRemainLocal;
+			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
-			pRateLimitData->msRemainTryAgain = (float)msRemainTryAgainLocal;
-			pRateLimitData->timeStartedAtTryAgain = (float)currentMSTimeTryAgainLocal;
+			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
+			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
 			if (!httpResponse.IsSuccessStatusCode()) {
 				wcout << httpResponse.ToString().c_str() << endl;
+			}
+			if ((int)httpResponse.StatusCode() == 429) {
+				executeByRateLimitData(pRateLimitData);
+				postData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -326,14 +357,14 @@ namespace DiscordCoreInternal {
 			HttpResponseMessage httpResponse;
 			HttpCompletionOption completionOption;
 			httpResponse = postHttpClient.SendRequestAsync(httpRequest, completionOption).get();
-			int currentMSTimeLocal;
 			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			int currentMSTimeTryAgainLocal;
-			int msRemainTryAgainLocal;
+			float currentMSTimeLocal;
+			float msRemainLocal;
+			float currentMSTimeTryAgainLocal;
+			float msRemainTryAgainLocal;
 			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -341,7 +372,7 @@ namespace DiscordCoreInternal {
 				getsRemainingLocal = 0;
 			}
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
 			}
 			else {
 				msRemainLocal = 250;
@@ -353,19 +384,24 @@ namespace DiscordCoreInternal {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
+				msRemainLocal = 0.0f;
 			}
 			else {
 				msRemainTryAgainLocal = 0;
 			}
 			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
+			pRateLimitData->msRemain = msRemainLocal;
+			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
-			pRateLimitData->msRemainTryAgain = (float)msRemainTryAgainLocal;
-			pRateLimitData->timeStartedAtTryAgain = (float)currentMSTimeTryAgainLocal;
+			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
+			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
 			if (!httpResponse.IsSuccessStatusCode()) {
 				wcout << httpResponse.ToString().c_str() << endl;
+			}
+			if ((int)httpResponse.StatusCode() == 429) {
+				executeByRateLimitData(pRateLimitData);
+				patchData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -381,14 +417,14 @@ namespace DiscordCoreInternal {
 			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 			HttpResponseMessage httpResponse;
 			httpResponse = deleteHttpClient.DeleteAsync(requestUri).get();
-			int currentMSTimeLocal;
 			unsigned int getsRemainingLocal;
-			int msRemainLocal;
-			int currentMSTimeTryAgainLocal;
-			int msRemainTryAgainLocal;
+			float currentMSTimeLocal;
+			float msRemainLocal;
+			float currentMSTimeTryAgainLocal;
+			float msRemainTryAgainLocal;
 			string bucket;
-			currentMSTimeLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
-			currentMSTimeTryAgainLocal = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+			currentMSTimeTryAgainLocal = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-remaining")) {
 				getsRemainingLocal = stoi(httpResponse.Headers().TryLookup(L"x-ratelimit-remaining").value().c_str());
 			}
@@ -396,7 +432,7 @@ namespace DiscordCoreInternal {
 				getsRemainingLocal = 0;
 			}
 			if (httpResponse.Headers().HasKey(L"x-ratelimit-reset-after")) {
-				msRemainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
 			}
 			else {
 				msRemainLocal = 250;
@@ -408,24 +444,31 @@ namespace DiscordCoreInternal {
 				bucket = "";
 			}
 			if (httpResponse.Headers().HasKey(L"retry-after")) {
-				msRemainTryAgainLocal = static_cast<int>(stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000);
+				msRemainTryAgainLocal = stof(httpResponse.Headers().TryLookup(L"x-ratelimit-reset-after").value().c_str()) * 1000;
+				msRemainLocal = 0.0f;
 			}
 			else {
 				msRemainTryAgainLocal = 0;
 			}
 			pRateLimitData->bucket = bucket;
-			pRateLimitData->msRemain = (float)msRemainLocal;
-			pRateLimitData->timeStartedAt = (float)currentMSTimeLocal;
+			pRateLimitData->msRemain = msRemainLocal;
+			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
-			pRateLimitData->msRemainTryAgain = (float)msRemainTryAgainLocal;
-			pRateLimitData->timeStartedAtTryAgain = (float)currentMSTimeTryAgainLocal;
+			pRateLimitData->msRemainTryAgain = msRemainTryAgainLocal;
+			pRateLimitData->timeStartedAtTryAgain = currentMSTimeTryAgainLocal;
 			if (!httpResponse.IsSuccessStatusCode()) {
 				wcout << httpResponse.ToString().c_str() << endl;
+			}
+			if ((int)httpResponse.StatusCode() == 429) {
+				executeByRateLimitData(pRateLimitData);
+				deleteData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
 			}
+			wcout << "DELETE PACKAGE DATA: " << httpResponse.Headers().ToString().c_str() << endl;
+			wcout << "DELET TYPE: " << (int)pRateLimitData->workloadType << endl;
 			deleteData.data = jsonValue;
 			co_return deleteData;
 		}

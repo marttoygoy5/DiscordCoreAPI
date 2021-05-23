@@ -843,11 +843,11 @@ namespace  DiscordCoreInternal {
 
     struct RateLimitData {
         HttpWorkloadType workloadType;
-        float timeStartedAt = 0;
         int getsRemaining = 1;
-        float msRemain = 0;
-        float msRemainTryAgain = 0;
-        float timeStartedAtTryAgain = 0;
+        float msRemain = 0.0f;
+        float timeStartedAt = 0.0f;
+        float msRemainTryAgain = 0.0f;
+        float timeStartedAtTryAgain = 0.0f;
         string bucket;
     };
 
