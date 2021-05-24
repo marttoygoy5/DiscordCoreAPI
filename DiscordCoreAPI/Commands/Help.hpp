@@ -25,8 +25,8 @@ namespace DiscordCoreAPI {
 				string newPerms = DiscordCoreInternal::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
 				GuildMember guildMember = args->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->message.data.author.id }).get();
 				vector<Role> roles = args->coreClient->roles->getGuildMemberRoles({ .guildId = args->message.data.guildId, .guildMember = guildMember }).get();
-				args->coreClient->slashCommands->deleteApplicationCommand({ .applicationId = args->coreClient->currentUser->data.id, .name = "testname" }).get();
-				args->coreClient->slashCommands->displayApplicationCommandsAsync({ .applicationId = args->coreClient->currentUser->data.id }).get();
+				args->coreClient->slashCommands->deleteGlobalApplicationCommand({ .applicationId = args->coreClient->currentUser->data.id, .name = "testname" }).get();
+				args->coreClient->slashCommands->displayGlobalApplicationCommandsAsync({ .applicationId = args->coreClient->currentUser->data.id }).get();
 				Role newRole = args->coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 				newRole = role.coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 				vector<ApplicationCommandOptionData> appCommandOptionDataVector;
@@ -59,7 +59,7 @@ namespace DiscordCoreAPI {
 				editAppCommandData.name = createSlashCommandData.name;
 				editAppCommandData.options = createSlashCommandData.options;
 				editAppCommandData.applicationId = args->coreClient->currentUser->data.id;
-				ApplicationCommand appCommandEdit = args->coreClient->slashCommands->editApplicationCommandAsync(editAppCommandData).get();
+				ApplicationCommand appCommandEdit = args->coreClient->slashCommands->editGlobalApplicationCommandAsync(editAppCommandData).get();
 				
 				DiscordCoreAPI::UpdateRoleData updateRoleData;
 				updateRoleData.guildId = guild.data.id;
