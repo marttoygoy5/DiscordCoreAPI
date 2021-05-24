@@ -25,7 +25,7 @@ namespace DiscordCoreAPI {
 
 	class BaseFunction {
 	public:
-		virtual void execute(DiscordCoreFunctionBaseArguments args) = 0;
+		virtual void execute(DiscordCoreFunctionBaseArguments* args) = 0;
 		string commandName;
 	};
 
@@ -49,7 +49,7 @@ namespace DiscordCoreAPI {
 			args.coreClient = commandData.coreClient;
 			args.message = commandData.message;
 
-			functionPointer->execute(args);
+			functionPointer->execute(&args);
 		}
 		
 	protected:

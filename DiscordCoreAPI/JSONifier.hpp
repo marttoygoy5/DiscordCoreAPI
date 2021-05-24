@@ -352,23 +352,44 @@ namespace DiscordCoreInternal {
 		pJSONData->emplace_back(newOption);
 	}
 
-	string getCreateSlashCommandPayload(CreateSlashCommandData createSlashCommandData) {
+	string getCreateApplicationCommandPayload(CreateApplicationCommandData createApplicationCommandData) {
 		json data = {
-			{"name",createSlashCommandData.name },
-			{"description", createSlashCommandData.description},
-			{"default_permission", createSlashCommandData.defaultPermission}
+			{"name",createApplicationCommandData.name },
+			{"description", createApplicationCommandData.description},
+			{"default_permission", createApplicationCommandData.defaultPermission}
 		};
 
 		json arrayValue;
 
 		data.emplace(make_pair("options", arrayValue));
 
-		if (createSlashCommandData.options.size() > 0) {
-			for (unsigned int x = 0; x < createSlashCommandData.options.size(); x += 1) {
-				addOptionsData(createSlashCommandData.options.at(x), &data.at("options"));
+		if (createApplicationCommandData.options.size() > 0) {
+			for (unsigned int x = 0; x < createApplicationCommandData.options.size(); x += 1) {
+				addOptionsData(createApplicationCommandData.options.at(x), &data.at("options"));
 			}
 		}
 		
+
+		return data.dump();
+	}
+
+	string getEditApplicationCommandPayload(EditApplicationCommandData editApplicationCommandData) {
+		json data = {
+			{"name",editApplicationCommandData.name },
+			{"description", editApplicationCommandData.description},
+			{"default_permission", editApplicationCommandData.defaultPermission}
+		};
+
+		json arrayValue;
+
+		data.emplace(make_pair("options", arrayValue));
+
+		if (editApplicationCommandData.options.size() > 0) {
+			for (unsigned int x = 0; x < editApplicationCommandData.options.size(); x += 1) {
+				addOptionsData(editApplicationCommandData.options.at(x), &data.at("options"));
+			}
+		}
+
 
 		return data.dump();
 	}

@@ -93,10 +93,15 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			agent::wait(&requestAgent);
+			try {
+				agent::wait(&requestAgent);
+			}
+			catch (const exception& e) {
+				cout << "ChannelManagerAgent::getObjectAsync() Error: " << e.what() << endl << endl;
+			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
-			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
+			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
 				cout << "ChannelManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::ChannelData channelData;
@@ -115,10 +120,15 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			agent::wait(&requestAgent);
+			try {
+				agent::wait(&requestAgent);
+			}
+			catch (const exception& e) {
+				cout << "ChannelManagerAgent::postObjectAsync() Error: " << e.what() << endl << endl;
+			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
-			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
+			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
 				cout << "ChannelManagerAgent::postObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::ChannelData channelData;
@@ -203,7 +213,12 @@ namespace DiscordCoreAPI {
 			ChannelManagerAgent channelManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestFetchBuffer, dataPackage);
 			channelManagerAgent.start();
-			agent::wait(&channelManagerAgent);
+			try {
+				agent::wait(&channelManagerAgent);
+			}
+			catch (const exception& e) {
+				cout << "ChannelManager::fetchAsync() Error: " << e.what() << endl << endl;
+			}
 			DiscordCoreInternal::ChannelData channelData;
 			Channel channel(channelData, this->coreClient);
 			try_receive(ChannelManagerAgent::outBuffer, channel);
@@ -221,7 +236,12 @@ namespace DiscordCoreAPI {
 			ChannelManagerAgent channelManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestGetBuffer, dataPackage);
 			channelManagerAgent.start();
-			agent::wait(&channelManagerAgent);
+			try {
+				agent::wait(&channelManagerAgent);
+			}
+			catch (const exception& e) {
+				cout << "ChannelManager::getAsync() Error: " << e.what() << endl << endl;
+			}
 			DiscordCoreInternal::ChannelData channelData;
 			Channel channel(channelData, this->coreClient);
 			try_receive(ChannelManagerAgent::outBuffer, channel);
@@ -239,7 +259,12 @@ namespace DiscordCoreAPI {
 			ChannelManagerAgent channelManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 			send(ChannelManagerAgent::requestDMChannelBuffer, dataPackage);
 			channelManagerAgent.start();
-			agent::wait(&channelManagerAgent);
+			try {
+				agent::wait(&channelManagerAgent);
+			}
+			catch (const exception& e) {
+				cout << "ChannelManager::getDMChanneAsync() Error: " << e.what() << endl << endl;
+			}
 			DiscordCoreInternal::ChannelData channelData;
 			Channel channel(channelData, this->coreClient);
 			try_receive(ChannelManagerAgent::outBuffer, channel);

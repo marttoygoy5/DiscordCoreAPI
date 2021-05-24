@@ -91,7 +91,12 @@ namespace DiscordCoreAPI {
 			workload.relativePath = "/gateway/bot";
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			agent::wait(&requestAgent);
+			try {
+				agent::wait(&requestAgent);
+			}
+			catch (const exception& e) {
+				cout << "DiscordCoreClient::initialize() Error: " << e.what() << endl << endl;
+			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			this->pWebSocketConnectionAgent->setSocketPath(returnData.data.dump());

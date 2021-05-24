@@ -826,7 +826,8 @@ namespace  DiscordCoreInternal {
         POST_APPLICATION_COMMAND = 21,
         GET_SLASH_COMMANDS = 22,
         GET_SOCKET_PATH = 23,
-        DELETE_SLASH_COMMAND = 24
+        DELETE_SLASH_COMMAND = 24,
+        PATCH_SLASH_COMMAND
     };
 
     struct HttpAgentResources {
@@ -897,6 +898,13 @@ namespace  DiscordCoreInternal {
         string encodedEmoji;
         string userId;
         ReactionDeletionType deletionType;
+    };
+
+    struct GetReactionData {
+        string channelId;
+        string messageId;
+        string userId;
+        string emojiName;
     };
 
     struct GetChannelData {
@@ -1104,7 +1112,14 @@ namespace  DiscordCoreInternal {
         bool defaultPermission;
     };
 
-    struct CreateSlashCommandData {
+    struct EditApplicationCommandData {
+        string name;
+        string description;
+        vector<ApplicationCommandOptionData> options;
+        bool defaultPermission;
+    };
+
+    struct CreateApplicationCommandData {
         string applicationId;
         string name;
         string description;
