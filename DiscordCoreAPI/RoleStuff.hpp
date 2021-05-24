@@ -97,7 +97,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<Role>* outBuffer;
 		static concurrent_queue<Role> rolesToInsert;
 		static overwrite_buffer<map<string, Role>> cache;
-		single_assignment<exception> errorBuffer;
+		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
@@ -135,7 +135,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "RoleManagerAgent::getObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -178,7 +178,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "RoleManagerAgent::paatchObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -274,7 +274,7 @@ namespace DiscordCoreAPI {
 			roleManagerAgent.start();
 			agent::wait(&roleManagerAgent);
 			exception error;
-			if (roleManagerAgent.getError(error)) {
+			while (roleManagerAgent.getError(error)) {
 				cout << "RoleManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::RoleData roleData;
@@ -301,7 +301,7 @@ namespace DiscordCoreAPI {
 			roleManagerAgent.start();
 			agent::wait(&roleManagerAgent);
 			exception error;
-			if (roleManagerAgent.getError(error)) {
+			while (roleManagerAgent.getError(error)) {
 				cout << "RoleManager::getRoleAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::RoleData roleData;
@@ -334,7 +334,7 @@ namespace DiscordCoreAPI {
 			roleManagerAgent.start();
 			agent::wait(&roleManagerAgent);
 			exception error;
-			if (roleManagerAgent.getError(error)) {
+			while (roleManagerAgent.getError(error)) {
 				cout << "RoleManager::updateRoleAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::RoleData roleData;
@@ -362,7 +362,7 @@ namespace DiscordCoreAPI {
 			roleManagerAgent.start();
 			agent::wait(&roleManagerAgent);
 			exception error;
-			if (roleManagerAgent.getError(error)) {
+			while (roleManagerAgent.getError(error)) {
 				cout << "RoleManager::inserRoleAsync() Error: " << error.what() << endl << endl;
 			}
 			co_return;

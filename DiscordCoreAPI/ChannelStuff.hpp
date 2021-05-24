@@ -65,7 +65,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<Channel>* outBuffer;
 		static concurrent_queue<Channel> channelsToInsert;
 		static overwrite_buffer<map<string, Channel>> cache;
-		single_assignment<exception> errorBuffer;
+		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
@@ -103,7 +103,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)){
+			while (requestAgent.getError(error)){
 				cout << "ChannelManagerAgent::getObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -132,7 +132,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "ChannelManagerAgent::postObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -175,6 +175,7 @@ namespace DiscordCoreAPI {
 					asend(cache, cacheTemp);
 				}
 				DiscordCoreInternal::GetDMChannelData getDataNewest;
+				throw exception("ERROR ERROR");
 				if (try_receive(ChannelManagerAgent::requestDMChannelBuffer, getDataNewest)) {
 					Channel channel = postObjectAsync(getDataNewest).get();
 					map<string, Channel> cacheTemp;
@@ -197,6 +198,7 @@ namespace DiscordCoreAPI {
 						asend(cache, cacheTemp);
 					}
 				}
+				throw exception("ERROR ERROR222222");
 				DiscordCoreInternal::ChannelData channelData;
 				Channel channelNew(channelData, this->coreClient);
 				while (ChannelManagerAgent::channelsToInsert.try_pop(channelNew)) {
@@ -232,7 +234,7 @@ namespace DiscordCoreAPI {
 			channelManagerAgent.start();
 			agent::wait(&channelManagerAgent);
 			exception error;
-			if (channelManagerAgent.getError(error)) {
+			while (channelManagerAgent.getError(error)) {
 				cout << "ChannelManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::ChannelData channelData;
@@ -254,7 +256,7 @@ namespace DiscordCoreAPI {
 			channelManagerAgent.start();
 			agent::wait(&channelManagerAgent);
 			exception error;
-			if (channelManagerAgent.getError(error)) {
+			while (channelManagerAgent.getError(error)) {
 				cout << "ChannelManager::getChannelAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::ChannelData channelData;
@@ -276,7 +278,7 @@ namespace DiscordCoreAPI {
 			channelManagerAgent.start();
 			agent::wait(&channelManagerAgent);
 			exception error;
-			if (channelManagerAgent.getError(error)) {
+			while (channelManagerAgent.getError(error)) {
 				cout << "ChannelManager::getDMChannelAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::ChannelData channelData;
@@ -292,7 +294,7 @@ namespace DiscordCoreAPI {
 			channelManagerAgent.start();
 			channelManagerAgent.wait(&channelManagerAgent);
 			exception error;
-			if (channelManagerAgent.getError(error)) {
+			while (channelManagerAgent.getError(error)) {
 				cout << "ChannelManager::insertChannelAsync() Error: " << error.what() << endl << endl;
 			}
 			co_return;

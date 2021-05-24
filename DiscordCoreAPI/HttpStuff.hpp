@@ -43,8 +43,11 @@ namespace DiscordCoreInternal {
 				this->patchHeaders.Authorization(credentialValue);
 				this->deleteHeaders.Authorization(credentialValue);
 			}
-			catch (winrt::hresult_error ex) {
-				std::wcout << "Error: " << ex.message().c_str() << std::endl;
+			catch (hresult_error ex) {
+				wcout << "Error: " << ex.message().c_str() << endl << endl;
+			}
+			catch (const exception& e) {
+				cout << "HttpRequestAgent() Error: " << e.what() << endl << endl;
 			}
 		}
 
@@ -58,7 +61,7 @@ namespace DiscordCoreInternal {
 	protected:
 		static concurrent_unordered_map<string, RateLimitData> rateLimitData;
 		static concurrent_unordered_map<HttpWorkloadType, string> rateLimitDataBucketValues;
-		single_assignment<exception> errorBuffer;
+		unbounded_buffer<exception> errorBuffer;
 
 		bool executeByRateLimitData(DiscordCoreInternal::RateLimitData* rateLimitDataNew) {
 			if (rateLimitDataNew->getsRemaining == 0) {

@@ -109,7 +109,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<Message>* outBuffer;
 		static concurrent_queue<Message> messagesToInsert;
 		static overwrite_buffer<map<string, Message>> cache;
-		single_assignment<exception> errorBuffer;
+		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
@@ -150,7 +150,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManagerAgent::getObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -178,7 +178,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManagerAgent::patchObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -206,7 +206,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManagerAgent::postObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -234,7 +234,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManagerAgent::postObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -262,7 +262,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManagerAgent::onDeleteAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -408,7 +408,7 @@ namespace DiscordCoreAPI {
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
-			if (messageManagerAgent.getError(error)) {
+			while (messageManagerAgent.getError(error)) {
 				cout << "MessageManager::replyAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
@@ -439,7 +439,7 @@ namespace DiscordCoreAPI {
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
-			if (messageManagerAgent.getError(error)) {
+			while (messageManagerAgent.getError(error)) {
 				cout << "MessageManager::sendDMAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
@@ -469,7 +469,7 @@ namespace DiscordCoreAPI {
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
-			if (messageManagerAgent.getError(error)) {
+			while (messageManagerAgent.getError(error)) {
 				cout << "MessageManager::createMessageAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
@@ -499,7 +499,7 @@ namespace DiscordCoreAPI {
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
-			if (messageManagerAgent.getError(error)) {
+			while (messageManagerAgent.getError(error)) {
 				cout << "MessageManager::editMessageAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
@@ -523,7 +523,7 @@ namespace DiscordCoreAPI {
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
-			if (messageManagerAgent.getError(error)) {
+			while (messageManagerAgent.getError(error)) {
 				cout << "MessageManager::deleteMessageAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
@@ -546,7 +546,7 @@ namespace DiscordCoreAPI {
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
-			if (messageManagerAgent.getError(error)) {
+			while (messageManagerAgent.getError(error)) {
 				cout << "MessageManager::getMessageAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
@@ -569,7 +569,7 @@ namespace DiscordCoreAPI {
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
-			if (messageManagerAgent.getError(error)) {
+			while (messageManagerAgent.getError(error)) {
 				cout << "MessageManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;

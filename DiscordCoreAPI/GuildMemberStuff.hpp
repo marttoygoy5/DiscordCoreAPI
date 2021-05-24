@@ -71,7 +71,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<GuildMember>* outBuffer;
 		static concurrent_queue<GuildMember> guildMembersToInsert;
 		static overwrite_buffer<map<string, GuildMember>> cache;
-		single_assignment<exception> errorBuffer;
+		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
@@ -109,7 +109,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "GuildMemberManagerAgent::getObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -188,7 +188,7 @@ namespace DiscordCoreAPI {
 			managerAgent.start();
 			agent::wait(&managerAgent);
 			exception error;
-			if (managerAgent.getError(error)) {
+			while (managerAgent.getError(error)) {
 				cout << "GuildMemberManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::GuildMemberData guildMemberData;
@@ -211,7 +211,7 @@ namespace DiscordCoreAPI {
 			managerAgent.start();
 			agent::wait(&managerAgent);
 			exception error;
-			if (managerAgent.getError(error)) {
+			while (managerAgent.getError(error)) {
 				cout << "GuildMemberManager::getGuildMemberAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::GuildMemberData guildMemberData;
@@ -227,7 +227,7 @@ namespace DiscordCoreAPI {
 			guildMemberManagerAgent.start();
 			agent::wait(&guildMemberManagerAgent);
 			exception error;
-			if (guildMemberManagerAgent.getError(error)) {
+			while (guildMemberManagerAgent.getError(error)) {
 				cout << "GuildMemberManager::getGuildMemberAsync() Error: " << error.what() << endl << endl;
 			}
 			co_return;

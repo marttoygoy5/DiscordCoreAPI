@@ -25,6 +25,7 @@ namespace DiscordCoreAPI {
 				string newPerms = DiscordCoreInternal::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
 				GuildMember guildMember = args->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->message.data.author.id }).get();
 				vector<Role> roles = args->coreClient->roles->getGuildMemberRoles({ .guildId = args->message.data.guildId, .guildMember = guildMember }).get();
+				/*
 				args->coreClient->slashCommands->deleteGlobalApplicationCommand({ .applicationId = args->coreClient->currentUser->data.id, .name = "testname" }).get();
 				args->coreClient->slashCommands->displayGlobalApplicationCommandsAsync({ .applicationId = args->coreClient->currentUser->data.id }).get();
 				Role newRole = args->coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
@@ -72,6 +73,7 @@ namespace DiscordCoreAPI {
 				updateRoleData.permissions = newPerms;
 				updateRoleData.roleId = "790460906450583592";
 				role = role.coreClient->roles->updateRoleAsync(updateRoleData).get();
+				*/
 			}
 			catch (exception error) {
 				cout << "HelpCommand::execute() Error: " << error.what() << endl << endl;

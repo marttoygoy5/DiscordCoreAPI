@@ -118,7 +118,7 @@ namespace DiscordCoreAPI {
             httpRequestAgent.start();
             agent::wait(&httpRequestAgent);
             exception error;
-            if (httpRequestAgent.getError(error)) {
+            while (httpRequestAgent.getError(error)) {
                 cout << "SlashCommandManager::createGlobalApplicationCommandAsync() Error: " << error.what() << endl << endl;
             }
             DiscordCoreInternal::HttpData returnData;
@@ -145,7 +145,7 @@ namespace DiscordCoreAPI {
             httpRequestAgent.start();
             agent::wait(&httpRequestAgent);
             exception error;
-            if (httpRequestAgent.getError(error)) {
+            while (httpRequestAgent.getError(error)) {
                 cout << "SlashCommandManager::getGlobalApplicationCommandAsync() Error: " << error.what() << endl << endl;
             }
             DiscordCoreInternal::HttpData returnData;
@@ -197,7 +197,7 @@ namespace DiscordCoreAPI {
             httpRequestAgent.start();
             agent::wait(&httpRequestAgent);
             exception error;
-            if (httpRequestAgent.getError(error)) {
+            while (httpRequestAgent.getError(error)) {
                 cout << "SlashCommandManager::editGlobalApplicationCommandAsync() Error: " << error.what() << endl << endl;
             }
             DiscordCoreInternal::HttpData returnData;
@@ -237,7 +237,7 @@ namespace DiscordCoreAPI {
             httpRequestAgent.start();
             agent::wait(&httpRequestAgent);
             exception error;
-            if (httpRequestAgent.getError(error)) {
+            while (httpRequestAgent.getError(error)) {
                 cout << "SlashCommandManager::deleteGlobalApplicationCommandAsync() Error: " << error.what() << endl << endl;
             }
             DiscordCoreInternal::HttpData returnData;

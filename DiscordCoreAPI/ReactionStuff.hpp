@@ -89,7 +89,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<Reaction>* outBuffer;
 		static concurrent_queue<Reaction> reactionsToInsert;
 		static overwrite_buffer<map<string, Reaction>> cache;
-		single_assignment<exception> errorBuffer;
+		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
@@ -127,7 +127,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "ReactionManagerAgent::putObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -165,7 +165,7 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "ReactionManagerAgent::deleteObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
@@ -249,7 +249,7 @@ namespace DiscordCoreAPI {
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			exception error;
-			if (reactionManagerAgent.getError(error)) {
+			while (reactionManagerAgent.getError(error)) {
 				cout << "ReactionManager::createReactionAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::ReactionData reactionData;
@@ -272,7 +272,7 @@ namespace DiscordCoreAPI {
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			exception error;
-			if (reactionManagerAgent.getError(error)) {
+			while (reactionManagerAgent.getError(error)) {
 				cout << "ReactionManager::getReactionAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::ReactionData reactionData;
@@ -311,7 +311,7 @@ namespace DiscordCoreAPI {
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			exception error;
-			if (reactionManagerAgent.getError(error)) {
+			while (reactionManagerAgent.getError(error)) {
 				cout << "ReactionManager::deleteUserReactionAsync() Error: " << error.what() << endl << endl;
 			}
 			co_await mainThread;
@@ -345,7 +345,7 @@ namespace DiscordCoreAPI {
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			exception error;
-			if (reactionManagerAgent.getError(error)) {
+			while (reactionManagerAgent.getError(error)) {
 				cout << "ReactionManager::deleteOwnReactionAsync() Error: " << error.what() << endl << endl;
 			}
 			co_await mainThread;
@@ -379,7 +379,7 @@ namespace DiscordCoreAPI {
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			exception error;
-			if (reactionManagerAgent.getError(error)) {
+			while (reactionManagerAgent.getError(error)) {
 				cout << "ReactionManager::deleteReactionsByEmojiAsync() Error: " << error.what() << endl << endl;
 			}
 			co_await mainThread;
@@ -400,7 +400,7 @@ namespace DiscordCoreAPI {
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			exception error;
-			if (reactionManagerAgent.getError(error)) {
+			while (reactionManagerAgent.getError(error)) {
 				cout << "ReactionManager::deleteAllReactionsAsync() Error: " << error.what() << endl << endl;
 			}
 			co_await mainThread;
@@ -413,7 +413,7 @@ namespace DiscordCoreAPI {
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
 			exception error;
-			if (reactionManagerAgent.getError(error)) {
+			while (reactionManagerAgent.getError(error)) {
 				cout << "ReactionManager::insertReactionAsync() Error: " << error.what() << endl << endl;
 			}
 			co_return;
