@@ -37,7 +37,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreAPI::CommandController::commands.insert(make_pair(newFunction->commandName, newFunction));
 		}
 
-		static void checkForAndRunCommand(CommandData commandData) {
+		static void checkForAndRunCommands(CommandData commandData) {
 			BaseFunction* functionPointer = getCommand(commandData.message.data.content);
 
 			if (functionPointer == nullptr) {

@@ -61,7 +61,7 @@ namespace DiscordCoreAPI {
 				editAppCommandData.options = createSlashCommandData.options;
 				editAppCommandData.applicationId = args->coreClient->currentUser->data.id;
 				ApplicationCommand appCommandEdit = args->coreClient->slashCommands->editGlobalApplicationCommandAsync(editAppCommandData).get();
-				
+
 				DiscordCoreAPI::UpdateRoleData updateRoleData;
 				updateRoleData.guildId = guild.data.id;
 				updateRoleData.colorFirst[0] = (int)(((float)rand() / (float)RAND_MAX) * 255.0f);
@@ -83,4 +83,4 @@ namespace DiscordCoreAPI {
 	};
 	HelpCommand helpCommand{};
 }
-#endif.
+#endif

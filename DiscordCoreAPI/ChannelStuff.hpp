@@ -175,7 +175,6 @@ namespace DiscordCoreAPI {
 					asend(cache, cacheTemp);
 				}
 				DiscordCoreInternal::GetDMChannelData getDataNewest;
-				throw exception("ERROR ERROR");
 				if (try_receive(ChannelManagerAgent::requestDMChannelBuffer, getDataNewest)) {
 					Channel channel = postObjectAsync(getDataNewest).get();
 					map<string, Channel> cacheTemp;
