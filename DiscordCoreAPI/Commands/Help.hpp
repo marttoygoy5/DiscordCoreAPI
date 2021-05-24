@@ -19,13 +19,13 @@ namespace DiscordCoreAPI {
 	public:
 		virtual  void execute(DiscordCoreAPI::DiscordCoreFunctionBaseArguments args) {
 			try {
-				Guild guild = args.coreClient->guilds->fetchAsync({ args.message.data.guildId }).get();
-				Channel channel = args.coreClient->channels->fetchAsync({ args.message.data.channelId }).get();
-				Role role = args.coreClient->roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
+				Guild guild = args.coreClient->guilds->getGuildAsync({ args.message.data.guildId }).get();
+				Channel channel = args.coreClient->channels->getChannelAsync({ args.message.data.channelId }).get();
+				Role role = args.coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 				DiscordCoreInternal::Permissions permsArray[1] = { DiscordCoreInternal::Permissions::MANAGE_GUILD };
 				cout << "ROLE NAME: " << role.data.name << endl;
 				string newPerms = DiscordCoreInternal::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
-				GuildMember guildMember = args.coreClient->guildMembers->fetchAsync({ .guildId = args.message.data.guildId, .guildMemberId = args.message.data.author.id }).get();
+				GuildMember guildMember = args.coreClient->guildMembers->getGuildMemberAsync({ .guildId = args.message.data.guildId, .guildMemberId = args.message.data.author.id }).get();
 				vector<Role> roles = args.coreClient->roles->getGuildMemberRoles({ .guildId = args.message.data.guildId, .guildMember = guildMember }).get();
 				for (unsigned int x = 0; x < roles.size(); x += 1) {
 					cout << "ROLE NAME: " << roles.at(x).data.name << endl;
@@ -33,7 +33,7 @@ namespace DiscordCoreAPI {
 				cout << "CURRENT USER ID: " << args.coreClient->currentUser->data.id << endl;
 				Role newRole = args.coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 				cout << "GET ROLE: " << role.data.name << endl;
-				newRole = role.coreClient->roles->fetchAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
+				newRole = role.coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 				cout << "FATCH ROLE: " << role.data.name << endl;
 				vector<ApplicationCommandOptionData> appCommandOptionDataVector;
 				ApplicationCommandOptionChoiceData appCommandOptionChoiceData;
