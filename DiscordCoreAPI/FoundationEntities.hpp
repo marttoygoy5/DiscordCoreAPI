@@ -830,7 +830,7 @@ namespace  DiscordCoreInternal {
     struct HttpAgentResources {
         hstring botToken;
         hstring baseURL;
-        shared_ptr<hstring> pSocketPath;
+        hstring* pSocketPath;
     };
 
     struct GetApplicationData {

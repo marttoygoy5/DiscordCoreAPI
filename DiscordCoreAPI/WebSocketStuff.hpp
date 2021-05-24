@@ -145,8 +145,8 @@ namespace DiscordCoreInternal {
 			this->botToken = botTokenNew;
 		}
 
-		shared_ptr<hstring> returnSocketPathPointer(){
-			return this->pSocketPath;
+		hstring* returnSocketPathPointer(){
+			return &this->socketPath;
 		}
 
 		void terminate() {
@@ -164,7 +164,6 @@ namespace DiscordCoreInternal {
 		MessageWebSocket webSocket;
 		DataWriter messageWriter;
 		hstring socketPath = L"";
-		shared_ptr<hstring> pSocketPath = make_shared<hstring>(this->socketPath);
 		hstring botToken = L"";
 		hstring sessionID = L"";
 		int heartbeatInterval = 0;
