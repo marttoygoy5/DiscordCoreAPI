@@ -75,7 +75,6 @@ namespace DiscordCoreInternal {
 					while (timeRemaining <= 0.0f) {
 						currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 						timeRemaining = currentTime - targetTime;
-						cout << "TIME REMAINING UPPER: " << timeRemaining << endl;
 					}
 					rateLimitDataNew->msRemain = 0.0f;
 					rateLimitDataNew->timeStartedAt = 0.0f;
@@ -199,7 +198,7 @@ namespace DiscordCoreInternal {
 			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			if ((int)httpResponse.StatusCode() == 429) {
-				cout << "httpGETObjectDataAsync() We've hit rate limit!" << endl << endl;
+				cout << "httpGETObjectDataAsync(), We've hit rate limit! Time Remaining: " << msRemainLocal << endl << endl;
 				if (executeByRateLimitData(pRateLimitData)) {
 					HttpData returnData;
 					co_return returnData;
@@ -267,7 +266,7 @@ namespace DiscordCoreInternal {
 			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			if ((int)httpResponse.StatusCode() == 429) {
-				cout << "httpPUTObjectDataAsync() We've hit rate limit!" << endl << endl;
+				cout << "httpPUTObjectDataAsync(), We've hit rate limit! Time Remaining: " << msRemainLocal << endl << endl;
 				if (executeByRateLimitData(pRateLimitData)) {
 					HttpData returnData;
 					co_return returnData;
@@ -335,7 +334,7 @@ namespace DiscordCoreInternal {
 			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			if ((int)httpResponse.StatusCode() == 429) {
-				cout << "httpPOSTObjectDataAsync() We've hit rate limit!" << endl << endl;
+				cout << "httpPOSTObjectDataAsync(), We've hit rate limit! Time Remaining: " << msRemainLocal << endl << endl;
 				if (executeByRateLimitData(pRateLimitData)) {
 					HttpData returnData;
 					co_return returnData;
@@ -406,7 +405,7 @@ namespace DiscordCoreInternal {
 			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			if ((int)httpResponse.StatusCode() == 429) {
-				cout << "httpPATCHObjectDataAsync() We've hit rate limit!" << endl << endl;
+				cout << "httpPATCHObjectDataAsync(), We've hit rate limit! Time Remaining: " << msRemainLocal << endl << endl;
 				if (executeByRateLimitData(pRateLimitData)) {
 					HttpData returnData;
 					co_return returnData;
@@ -466,7 +465,7 @@ namespace DiscordCoreInternal {
 			pRateLimitData->timeStartedAt = currentMSTimeLocal;
 			pRateLimitData->getsRemaining = getsRemainingLocal;
 			if ((int)httpResponse.StatusCode() == 429) {
-				cout << "httpDELETEObjectDataAsync() We've hit rate limit!" << endl << endl;
+				cout << "httpDELETEObjectDataAsync(), We've hit rate limit! Time Remaining: " << msRemainLocal << endl << endl;
 				if (executeByRateLimitData(pRateLimitData)) {
 					HttpData returnData;
 					co_return returnData;
