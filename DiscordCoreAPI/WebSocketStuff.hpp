@@ -143,7 +143,6 @@ namespace DiscordCoreInternal {
 			webSocketMessageTarget(target) {
 			this->threadContext = threadContextNew;
 			this->botToken = botTokenNew;
-			DiscordCoreAPI::DiscordCoreClient::
 		}
 
 		shared_ptr<hstring> returnSocketPathPointer(){
@@ -220,7 +219,7 @@ namespace DiscordCoreInternal {
 				this->messageWriter.UnicodeEncoding(UnicodeEncoding::Utf8);
 				this->closedToken = this->webSocket.Closed({ this, &WebSocketConnectionAgent::onClosed });
 				this->messageReceivedToken = this->webSocket.MessageReceived({ this, &WebSocketConnectionAgent::onMessageReceived });
-				this->webSocket.ConnectAsync(Uri(*this->pSocketPath)).get();
+				this->webSocket.ConnectAsync(Uri(this->socketPath)).get();
 			}
 			catch (hresult result) {
 				cout << result.value << endl;

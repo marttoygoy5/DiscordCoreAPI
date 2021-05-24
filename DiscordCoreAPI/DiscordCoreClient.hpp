@@ -60,8 +60,7 @@ namespace DiscordCoreAPI {
 		}
 
 	protected:
-		friend class WebSocketConnectionAgent;
-		friend class HttpRequestAgent;
+
 		bool doWeQuit = false;
 		hstring botToken;
 		hstring baseURL = L"https://discord.com/api/v9";
@@ -71,7 +70,6 @@ namespace DiscordCoreAPI {
 		ITarget<DiscordCoreInternal::WebSocketWorkload>& webSocketWorkloadTarget;
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
-		static overwrite_buffer<shared_ptr<hstring>> socketPathBuffer;
 		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		
 		task<void> initialize(hstring botTokenNew) {
