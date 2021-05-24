@@ -118,9 +118,11 @@ namespace DiscordCoreAPI {
 			return;
 		}
 
-		exception getError() {
-			exception error = receive(errorBuffer);
-			return error;
+		bool getError(exception& error) {
+			if (try_receive(errorBuffer, error)) {
+				return true;
+			}
+			return false;
 		}
 
 		task<Role> getObjectAsync(DiscordCoreInternal::FetchRoleData dataPackage) {
@@ -131,16 +133,18 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			try {
-				agent::wait(&requestAgent);
-			}
-			catch (const exception& e) {
-				cout << "RoleManagerAgent::getObjectAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&requestAgent);
+			exception error;
+			if (requestAgent.getError(error)) {
+				cout << "RoleManagerAgent::getObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-				cout << "RoleManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+				cout << "RoleManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			else {
+				cout << "RoleManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			map<string, Role> cacheTemp = receive(RoleManagerAgent::cache, 1U);
 			for (unsigned int x = 0; x < returnData.data.size(); x += 1) {
@@ -172,16 +176,18 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			try {
-				agent::wait(&requestAgent);
-			}
-			catch (const exception& e) {
-				cout << "RoleManagerAgent::patchObjectAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&requestAgent);
+			exception error;
+			if (requestAgent.getError(error)) {
+				cout << "RoleManagerAgent::paatchObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-				cout << "RoleManagerAgent::patchObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+				cout << "RoleManagerAgent::patchObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			else {
+				cout << "RoleManagerAgent::patchObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::RoleData roleData;
 			DiscordCoreInternal::parseObject(returnData.data, &roleData);
@@ -267,7 +273,10 @@ namespace DiscordCoreAPI {
 			send(RoleManagerAgent::requestFetchBuffer, dataPackage);
 			roleManagerAgent.start();
 			agent::wait(&roleManagerAgent);
-			cout << "RoleManager::fetchAsync() Error: " << roleManagerAgent.getError().what() << endl << endl;
+			exception error;
+			if (roleManagerAgent.getError(error)) {
+				cout << "RoleManager::fetchAsync() Error: " << error.what() << endl << endl;
+			}
 			DiscordCoreInternal::RoleData roleData;
 			Role newRole(roleData, this->coreClient);
 			try_receive(RoleManagerAgent::outBuffer, newRole);
@@ -291,7 +300,10 @@ namespace DiscordCoreAPI {
 			send(RoleManagerAgent::requestGetBuffer, dataPackage);
 			roleManagerAgent.start();
 			agent::wait(&roleManagerAgent);
-			cout << "RoleManager::getRoleAsync() Error: " << roleManagerAgent.getError().what() << endl << endl;
+			exception error;
+			if (roleManagerAgent.getError(error)) {
+				cout << "RoleManager::getRoleAsync() Error: " << error.what() << endl << endl;
+			}
 			DiscordCoreInternal::RoleData roleData;
 			Role newRole(roleData, this->coreClient);
 			try_receive(RoleManagerAgent::outBuffer, newRole);
@@ -321,7 +333,10 @@ namespace DiscordCoreAPI {
 			send(RoleManagerAgent::requestModifyBuffer, dataPackage);
 			roleManagerAgent.start();
 			agent::wait(&roleManagerAgent);
-			cout << "RoleManager::updateRoleAsync() Error: " << roleManagerAgent.getError().what() << endl << endl;
+			exception error;
+			if (roleManagerAgent.getError(error)) {
+				cout << "RoleManager::updateRoleAsync() Error: " << error.what() << endl << endl;
+			}
 			DiscordCoreInternal::RoleData roleData;
 			Role newRole(roleData, this->coreClient);
 			try_receive(RoleManagerAgent::outBuffer, newRole);
@@ -343,10 +358,13 @@ namespace DiscordCoreAPI {
 
 		task<void> insertRoleAsync(Role role) {
 			RoleManagerAgent roleManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			roleManagerAgent.start();
 			RoleManagerAgent::rolesToInsert.push(role);
+			roleManagerAgent.start();
 			agent::wait(&roleManagerAgent);
-			cout << "RoleManager::insertRoleAsync() Error: " << roleManagerAgent.getError().what() << endl << endl;
+			exception error;
+			if (roleManagerAgent.getError(error)) {
+				cout << "RoleManager::inserRoleAsync() Error: " << error.what() << endl << endl;
+			}
 			co_return;
 		}
 

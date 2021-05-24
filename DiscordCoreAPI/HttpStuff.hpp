@@ -48,8 +48,11 @@ namespace DiscordCoreInternal {
 			}
 		}
 
-		bool get_error(exception& e){
-			return try_receive(errorBuffer, e);
+		bool getError(exception& error){
+			if (try_receive(errorBuffer, error)) {
+				return true;
+			}
+			return false;
 		}
 
 	protected:
@@ -142,14 +145,15 @@ namespace DiscordCoreInternal {
 					HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
 					return returnData;
 					});
+				throw exception("WHOA WHOA WHOA");
 				completeHttpRequest.link_target(&this->workReturnBuffer);
 				HttpWorkload workload = receive(&this->workSubmissionBuffer);
 				send(&completeHttpRequest, workload);
-				done();
 			}
-			catch (exception error) {
-				send(errorBuffer, error);
+			catch (const exception& e) {
+				send(errorBuffer, e);
 			}
+			done();
 		}
 
 		task<HttpData> httpGETObjectDataAsync(string relativeURL, RateLimitData* pRateLimitData) {

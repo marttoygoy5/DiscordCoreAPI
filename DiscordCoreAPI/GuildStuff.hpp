@@ -126,9 +126,11 @@ namespace DiscordCoreAPI {
 			return;
 		}
 
-		exception getError() {
-			exception error = receive(errorBuffer);
-			return error;
+		bool getError(exception& error) {
+			if (try_receive(errorBuffer, error)) {
+				return true;
+			}
+			return false;
 		}
 
 		task<Guild> getObjectAsync(DiscordCoreInternal::FetchGuildData dataPackage) {
@@ -139,16 +141,18 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			try {
-				agent::wait(&requestAgent);
-			}
-			catch (const exception& e) {
-				cout << "GuildManagerAgent::getObjectAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&requestAgent);
+			exception error;
+			if (requestAgent.getError(error)) {
+				cout << "GuildManagerAgent::getObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-				cout << "GuildManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+				cout << "GuildManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			else {
+				cout << "GuildManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::GuildData guildData = dataPackage.oldGuildData;
 			DiscordCoreInternal::parseObject(returnData.data, &guildData);
@@ -183,7 +187,6 @@ namespace DiscordCoreAPI {
 					send(GuildManagerAgent::outBuffer, guild);
 					asend(cache, cacheTemp);
 				}
-				throw "TESTING TESTING";
 				DiscordCoreInternal::GuildData guildData;
 				Guild guildNew(this->agentResources, this->threads, guildData, this->coreClient, this->coreClientBase);
 				while (GuildManagerAgent::guildsToInsert.try_pop(guildNew)) {
@@ -218,11 +221,10 @@ namespace DiscordCoreAPI {
 			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->coreClient, this->coreClientBase, this->threads->at(2).scheduler);
 			send(GuildManagerAgent::requestFetchBuffer, dataPackage);
 			guildManagerAgent.start();
-			try {
-				agent::wait(&guildManagerAgent);
-			}
-			catch (const exception& e) {
-				cout << "GuildManager::fetchAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&guildManagerAgent);
+			exception error;
+			if (guildManagerAgent.getError(error)) {
+				cout << "GuildManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::GuildData guildData;
 			Guild guild(this->agentResources, this->threads, guildData, this->coreClient, this->coreClientBase);
@@ -241,11 +243,10 @@ namespace DiscordCoreAPI {
 			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->coreClient, this->coreClientBase, this->threads->at(2).scheduler);
 			send(GuildManagerAgent::requestGetBuffer, dataPackage);
 			guildManagerAgent.start();
-			try {
-				agent::wait(&guildManagerAgent);
-			}
-			catch (const exception& e) {
-				cout << "GuildManager::getGuildAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&guildManagerAgent);
+			exception error;
+			if (guildManagerAgent.getError(error)) {
+				cout << "GuildManager::guildGuildAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::GuildData guildData;
 			Guild guild(this->agentResources, this->threads, guildData, this->coreClient, this->coreClientBase);
@@ -258,11 +259,10 @@ namespace DiscordCoreAPI {
 			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->coreClient, this->coreClientBase, this->threads->at(2).scheduler);
 			GuildManagerAgent::guildsToInsert.push(guild);
 			guildManagerAgent.start();
-			try {
-				agent::wait(&guildManagerAgent);
-			}
-			catch (const exception& e) {
-				cout << "GuildManager::insertGuildAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&guildManagerAgent);
+			exception error;
+			if (guildManagerAgent.getError(error)) {
+				cout << "GuildManager::inserGuildAsync() Error: " << error.what() << endl << endl;
 			}
 			co_return;
 		}

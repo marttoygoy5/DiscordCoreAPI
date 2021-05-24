@@ -79,6 +79,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<Application>* outApplicationBuffer;
 		static concurrent_queue<User> usersToInsert;
 		static overwrite_buffer<map<string, User>> cache;
+		single_assignment<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
@@ -101,6 +102,13 @@ namespace DiscordCoreAPI {
 			return;
 		}
 
+		bool getError(exception& error) {
+			if (try_receive(errorBuffer, error)) {
+				return true;
+			}
+			return false;
+		}
+
 		task<User> getObjectAsync(DiscordCoreInternal::FetchUserData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
@@ -110,20 +118,22 @@ namespace DiscordCoreAPI {
 			}
 			else if (dataPackage.userType == DiscordCoreInternal::GetUserDataType::SELF) {
 				workload.relativePath = "/users/@me";
-			}			
+			}
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			try {
-				agent::wait(&requestAgent);
-			}
-			catch (const exception& e) {
-				cout << "UserManagerAgent::getObjectAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&requestAgent);
+			exception error;
+			if (requestAgent.getError(error)) {
+				cout << "UserManagerAgent::getObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			else {
+				cout << "UserManagerAgent::getObjectAsyncc() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::UserData userData;
 			DiscordCoreInternal::parseObject(returnData.data, &userData);
@@ -139,16 +149,18 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			try {
-				agent::wait(&requestAgent);
-			}
-			catch (const exception& e) {
-				cout << "UserManagerAgent::getObjectAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&requestAgent);
+			exception error;
+			if (requestAgent.getError(error)) {
+				cout << "UserManagerAgent::getObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			else {
+				cout << "UserManagerAgent::getObjectAsyncc() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::ApplicationData applicationData;
 			DiscordCoreInternal::parseObject(returnData.data, &applicationData);
@@ -157,45 +169,50 @@ namespace DiscordCoreAPI {
 		}
 
 		void run() {
-			DiscordCoreInternal::GetUserData getData;
-			if (try_receive(UserManagerAgent::requestGetBuffer, getData)) {
-				map<string, User> cacheTemp;
-				if (try_receive(UserManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(getData.userId)) {
-						User user = cacheTemp.at(getData.userId);
-						send(UserManagerAgent::outBuffer, user);
+			try {
+				DiscordCoreInternal::GetUserData getData;
+				if (try_receive(UserManagerAgent::requestGetBuffer, getData)) {
+					map<string, User> cacheTemp;
+					if (try_receive(UserManagerAgent::cache, cacheTemp)) {
+						if (cacheTemp.contains(getData.userId)) {
+							User user = cacheTemp.at(getData.userId);
+							send(UserManagerAgent::outBuffer, user);
+						}
 					}
 				}
-			}
-			DiscordCoreInternal::FetchUserData fetchData;
-			if (try_receive(UserManagerAgent::requestFetchBuffer, fetchData)) {
-				map<string, User> cacheTemp;
-				if (try_receive(UserManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(fetchData.userId)) {
-						cacheTemp.erase(fetchData.userId);
+				DiscordCoreInternal::FetchUserData fetchData;
+				if (try_receive(UserManagerAgent::requestFetchBuffer, fetchData)) {
+					map<string, User> cacheTemp;
+					if (try_receive(UserManagerAgent::cache, cacheTemp)) {
+						if (cacheTemp.contains(fetchData.userId)) {
+							cacheTemp.erase(fetchData.userId);
+						}
 					}
+					User user = getObjectAsync(fetchData).get();
+					cacheTemp.insert(make_pair(fetchData.userId, user));
+					send(UserManagerAgent::outBuffer, user);
+					asend(UserManagerAgent::cache, cacheTemp);
 				}
-				User user = getObjectAsync(fetchData).get();
-				cacheTemp.insert(make_pair(fetchData.userId, user));
-				send(UserManagerAgent::outBuffer, user);
-				asend(UserManagerAgent::cache, cacheTemp);
-			}
-			DiscordCoreInternal::GetApplicationData getAppData;
-			if (try_receive(UserManagerAgent::requestGetApplicationBuffer, getAppData)) {
-				Application application = getObjectAsync(getAppData).get();
-				send(UserManagerAgent::outApplicationBuffer, application);
-			}
-			DiscordCoreInternal::UserData userData;
-			User user(userData, this->coreClient);
-			while (UserManagerAgent::usersToInsert.try_pop(user)) {
-				map<string, User> cacheTemp;
-				if (try_receive(UserManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(user.data.id)) {
-						cacheTemp.erase(user.data.id);
+				DiscordCoreInternal::GetApplicationData getAppData;
+				if (try_receive(UserManagerAgent::requestGetApplicationBuffer, getAppData)) {
+					Application application = getObjectAsync(getAppData).get();
+					send(UserManagerAgent::outApplicationBuffer, application);
+				}
+				DiscordCoreInternal::UserData userData;
+				User user(userData, this->coreClient);
+				while (UserManagerAgent::usersToInsert.try_pop(user)) {
+					map<string, User> cacheTemp;
+					if (try_receive(UserManagerAgent::cache, cacheTemp)) {
+						if (cacheTemp.contains(user.data.id)) {
+							cacheTemp.erase(user.data.id);
+						}
 					}
+					cacheTemp.insert(make_pair(user.data.id, user));
+					asend(UserManagerAgent::cache, cacheTemp);
 				}
-				cacheTemp.insert(make_pair(user.data.id, user));
-				asend(UserManagerAgent::cache, cacheTemp);
+			}
+			catch (const exception& e) {
+				send(errorBuffer, e);
 			}
 			done();
 		}
@@ -215,11 +232,10 @@ namespace DiscordCoreAPI {
 			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestFetchBuffer, dataPackage);
 			userManagerAgent.start();
-			try {
-				agent::wait(&userManagerAgent);
-			}
-			catch (const exception& e) {
-				cout << "UserManager::fetchAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&userManagerAgent);
+			exception error;
+			if (userManagerAgent.getError(error)) {
+				cout << "UserManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::UserData userData;
 			User user(userData, this->coreClient);
@@ -236,11 +252,10 @@ namespace DiscordCoreAPI {
 			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestFetchBuffer, dataPackage);
 			userManagerAgent.start();
-			try {
-				agent::wait(&userManagerAgent);
-			}
-			catch (const exception& e) {
-				cout << "UserManager::fetchCurrentUserAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&userManagerAgent);
+			exception error;
+			if (userManagerAgent.getError(error)) {
+				cout << "UserManager::fetchCurrentUserAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::UserData userData;
 			User user(userData, this->coreClient);
@@ -258,11 +273,10 @@ namespace DiscordCoreAPI {
 			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestGetBuffer, dataPackage);
 			userManagerAgent.start();
-			try {
-				agent::wait(&userManagerAgent);
-			}
-			catch (const exception& e) {
-				cout << "UserManager::getUserAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&userManagerAgent);
+			exception error;
+			if (userManagerAgent.getError(error)) {
+				cout << "UserManager::getUserAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::UserData userData;
 			User user(userData, this->coreClient);
@@ -280,11 +294,10 @@ namespace DiscordCoreAPI {
 			UserManagerAgent userManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 			send(UserManagerAgent::requestGetApplicationBuffer, dataPackage);
 			userManagerAgent.start();
-			try {
-				agent::wait(&userManagerAgent);
-			}
-			catch (const exception& e) {
-				cout << "UserManager::getApplicationDataAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&userManagerAgent);
+			exception error;
+			if (userManagerAgent.getError(error)) {
+				cout << "UserManager::getApplicationDataAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::ApplicationData applicationData;
 			Application application(applicationData);
@@ -295,13 +308,12 @@ namespace DiscordCoreAPI {
 
 		task<void> insertUserAsync(User user) {
 			UserManagerAgent userManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			userManagerAgent.start();
 			UserManagerAgent::usersToInsert.push(user);
-			try {
-				agent::wait(&userManagerAgent);
-			}
-			catch (const exception& e) {
-				cout << "UserManager::insertUserAsync() Error: " << e.what() << endl << endl;
+			userManagerAgent.start();
+			agent::wait(&userManagerAgent);
+			exception error;
+			if (userManagerAgent.getError(error)) {
+				cout << "UserManager::inserUserAsync() Error: " << error.what() << endl << endl;
 			}
 			co_return;
 		}
