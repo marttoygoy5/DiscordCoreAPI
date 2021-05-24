@@ -39,6 +39,14 @@ namespace DiscordCoreInternal {
 			this->threadContext = threadContextNew;
 		}
 
+		void checkForErrors() {
+			exception error;
+			if (try_receive(errorBuffer, error)) {
+				cout << "DiscordCoreClient::run() Error: " << error.what() << endl << endl;
+			}
+			return;
+		}
+
 		void terminate() {
 			this->doWeQuit = true;
 		}
@@ -52,13 +60,20 @@ namespace DiscordCoreInternal {
 		ThreadContext threadContext;
 		ISource<json>& workloadSource;
 		ITarget<WebSocketWorkload>& workloadTarget;
+		single_assignment<exception> errorBuffer;
 
 		void run() {
-			while (doWeQuit == false) {
-				json payload;
-				if (try_receive(this->workloadSource, payload)) {
-					this->onMessageReceived(payload);
+			try {
+				while (doWeQuit == false) {
+					json payload;
+					if (try_receive(this->workloadSource, payload)) {
+						this->onMessageReceived(payload);
+					}
 				}
+			}
+			catch (const exception& e) {
+				send(errorBuffer, e);
+				run();
 			}
 			done();
 		}
@@ -152,6 +167,14 @@ namespace DiscordCoreInternal {
 			this->socketPath = stream.str();
 		}
 
+		void checkForErrors() {
+			exception error;
+			if (try_receive(errorBuffer, error)) {
+				cout << "DiscordCoreClient::run() Error: " << error.what() << endl << endl;
+			}
+			return;
+		}
+
 		void terminate() {
 			done();
 		}
@@ -177,9 +200,16 @@ namespace DiscordCoreInternal {
 		DispatcherQueue dispatchQueueForHB{ nullptr };
 		DispatcherQueueTimer heartbeatTimer{ nullptr };
 		ITarget<json>& webSocketMessageTarget;
+		single_assignment<exception> errorBuffer;
 
 		void run() {
-			this->connect();
+			try {
+				this->connect();
+			}
+			catch (const exception& e) {
+				concurrency::send(errorBuffer, e);
+			}
+			
 		}
 
 		void cleanup() {

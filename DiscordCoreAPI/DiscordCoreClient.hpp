@@ -53,6 +53,14 @@ namespace DiscordCoreAPI {
 			return;
 		}
 
+		void checkForErrors() {
+			exception error;
+			if (try_receive(errorBuffer, error)) {
+				cout << "DiscordCoreClient::run() Error: " << error.what() << endl << endl;
+			}
+			return;
+		}
+
 		void terminate() {
 			this->doWeQuit = true;
 			this->pWebSocketReceiverAgent->terminate();
@@ -71,6 +79,7 @@ namespace DiscordCoreAPI {
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
 		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
+		single_assignment<exception> errorBuffer;
 		
 		task<void> initialize(hstring botTokenNew) {
 			_set_purecall_handler(myPurecallHandler);
@@ -159,28 +168,33 @@ namespace DiscordCoreAPI {
 		}
 
 		void run() {
-			while (doWeQuit == false) {
-				DiscordCoreInternal::WebSocketWorkload workload;
-				if (try_receive(this->webSocketWorkloadSource, workload)) {
-					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
-						DiscordCoreInternal::GuildData guildData;
-						DiscordCoreInternal::parseObject(workload.payLoad, &guildData);
-						OnGuildCreationData guildCreationData = createGuild(guildData).get();
-						this->EventMachine->onGuildCreationEvent(guildCreationData);
-					}
-					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
-						DiscordCoreInternal::MessageData messageData;
-						DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
-						OnMessageCreationData messageCreationData = createMessage(messageData).get();
-						this->EventMachine->onMessageCreationEvent(messageCreationData);
-					}
-					if (workload.eventType == DiscordCoreInternal::WebSocketEventType::REACTION_ADD) {
-						DiscordCoreInternal::ReactionData reactionData;
-						DiscordCoreInternal::parseObject(workload.payLoad, &reactionData);
-						OnReactionAddData reactionAddData = createReaction(reactionData).get();
-						this->EventMachine->onReactionAddEvent(reactionAddData);
+			try {
+				while (doWeQuit == false) {
+					DiscordCoreInternal::WebSocketWorkload workload;
+					if (try_receive(this->webSocketWorkloadSource, workload)) {
+						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
+							DiscordCoreInternal::GuildData guildData;
+							DiscordCoreInternal::parseObject(workload.payLoad, &guildData);
+							OnGuildCreationData guildCreationData = createGuild(guildData).get();
+							this->EventMachine->onGuildCreationEvent(guildCreationData);
+						}
+						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
+							DiscordCoreInternal::MessageData messageData;
+							DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
+							OnMessageCreationData messageCreationData = createMessage(messageData).get();
+							this->EventMachine->onMessageCreationEvent(messageCreationData);
+						}
+						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::REACTION_ADD) {
+							DiscordCoreInternal::ReactionData reactionData;
+							DiscordCoreInternal::parseObject(workload.payLoad, &reactionData);
+							OnReactionAddData reactionAddData = createReaction(reactionData).get();
+							this->EventMachine->onReactionAddEvent(reactionAddData);
+						}
 					}
 				}
+			}
+			catch (const exception& e) {
+				send(errorBuffer, e);
 			}
 			done();
 		}

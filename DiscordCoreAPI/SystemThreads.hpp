@@ -26,10 +26,18 @@ namespace DiscordCoreInternal {
         unbounded_buffer<bool> requestBuffer;
         unbounded_buffer<concurrent_vector<ThreadContext>*> submitBuffer;
         unbounded_buffer<concurrent_vector<ThreadContext>*> responseBuffer;
+        single_assignment<exception> errorBuffer;
         
         SystemThreadsAgent(concurrent_vector<ThreadContext>* threads)
             : agent(*threads->at(0).scheduler)
         {}
+
+        bool getError(exception& error) {
+            if (try_receive(errorBuffer, error)) {
+                return true;
+            }
+            return false;
+        }
 
         task<void> submitThreads(concurrent_vector<ThreadContext>* threads) {
             send(submitBuffer, threads);
@@ -37,9 +45,15 @@ namespace DiscordCoreInternal {
         }
 
         void run() {
-            receive(requestBuffer, 1U);
-            concurrent_vector<ThreadContext>* threads = receive(submitBuffer);
-            send(responseBuffer, threads);
+            try {
+                receive(requestBuffer, 1U);
+                concurrent_vector<ThreadContext>* threads = receive(submitBuffer);
+                send(responseBuffer, threads);
+                throw exception("TESTING TESTING");
+            }
+            catch (const exception& e) {
+                send(errorBuffer, e);
+            }
             done();
         }
     };
@@ -57,6 +71,10 @@ namespace DiscordCoreInternal {
             send(systemThreadsAgent.requestBuffer, true);
             concurrent_vector<ThreadContext>* threadsNew = receive(systemThreadsAgent.responseBuffer);
             agent::wait(&systemThreadsAgent);
+            exception error;
+            if (systemThreadsAgent.getError(error)) {
+                cout << "SystemThreads::getThreads() Error: " << error.what() << endl << endl;
+            }
             co_return threadsNew;
         }
 

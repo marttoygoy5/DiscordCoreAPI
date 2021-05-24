@@ -152,7 +152,6 @@ namespace DiscordCoreAPI {
 					asend(GuildMemberManagerAgent::cache, cacheTemp);
 				}
 				DiscordCoreInternal::GuildMemberData guildMemberData;
-				throw exception("TESTING TESTING TESTING");
 				GuildMember guildMember(guildMemberData, this->coreClient);
 				while (GuildMemberManagerAgent::guildMembersToInsert.try_pop(guildMember)) {
 					map<string, GuildMember> cacheTemp;
