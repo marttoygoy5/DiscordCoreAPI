@@ -118,7 +118,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::UserData userData;
 			DiscordCoreInternal::parseObject(returnData.data, &userData);
@@ -138,7 +138,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::ApplicationData applicationData;
 			DiscordCoreInternal::parseObject(returnData.data, &applicationData);
@@ -195,6 +195,8 @@ namespace DiscordCoreAPI {
 	public:
 
 		task<User> fetchAsync(FetchUserData fetchUserData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			DiscordCoreInternal::FetchUserData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -207,6 +209,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::UserData userData;
 			User user(userData, this->coreClient);
 			try_receive(UserManagerAgent::outBuffer, user);
+			co_await mainThread;
 			co_return user;
 		}
 
@@ -226,6 +229,8 @@ namespace DiscordCoreAPI {
 		}
 
 		task<User> getUserAsync(GetUserData getUserData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			DiscordCoreInternal::GetUserData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -237,10 +242,13 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::UserData userData;
 			User user(userData, this->coreClient);
 			try_receive(UserManagerAgent::outBuffer, user);
+			co_await mainThread;
 			co_return user;
 		}
 
 		task<Application> getApplicationDataAsync() {
+			apartment_context mainThread;
+			co_await resume_background();
 			DiscordCoreInternal::GetApplicationData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -251,6 +259,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::ApplicationData applicationData;
 			Application application(applicationData);
 			try_receive(UserManagerAgent::outApplicationBuffer, application);
+			co_await mainThread;
 			co_return application;
 		}
 

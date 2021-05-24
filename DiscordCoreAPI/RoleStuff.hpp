@@ -129,7 +129,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "RoleManagerAgent::getObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "RoleManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			map<string, Role> cacheTemp = receive(RoleManagerAgent::cache, 1U);
 			for (unsigned int x = 0; x < returnData.data.size(); x += 1) {
@@ -165,7 +165,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "RoleManagerAgent::patchObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "RoleManagerAgent::patchObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::RoleData roleData;
 			DiscordCoreInternal::parseObject(returnData.data, &roleData);
@@ -231,6 +231,8 @@ namespace DiscordCoreAPI {
 	public:
 
 		task<Role> fetchAsync(FetchRoleData getRoleData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			if (getRoleData.guildId == "") {
 				exception failError("RoleManager::fetchAsync() Error: Sorry, but you forgot to set the guildId!");
 				throw failError;
@@ -247,10 +249,13 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::RoleData roleData;
 			Role newRole(roleData, this->coreClient);
 			try_receive(RoleManagerAgent::outBuffer, newRole);
+			co_await mainThread;
 			co_return newRole;
 		}
 
 		task<Role> getRoleAsync(GetRoleData getRoleData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			if (getRoleData.guildId == "") {
 				exception failError("RoleManager::getRoleAsync() Error: Sorry, but you forgot to set the guildId!");
 				throw failError;
@@ -267,10 +272,13 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::RoleData roleData;
 			Role newRole(roleData, this->coreClient);
 			try_receive(RoleManagerAgent::outBuffer, newRole);
+			co_await mainThread;
 			co_return newRole;
 		}
 
 		task<Role> updateRoleAsync(UpdateRoleData modifyRoleData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			DiscordCoreInternal::UpdateRoleData modifyRoleDataNew;
 			modifyRoleDataNew.colorFirst[0] = modifyRoleData.colorFirst[0];
 			modifyRoleDataNew.colorFirst[1] = modifyRoleData.colorFirst[1];
@@ -293,15 +301,19 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::RoleData roleData;
 			Role newRole(roleData, this->coreClient);
 			try_receive(RoleManagerAgent::outBuffer, newRole);
+			co_await mainThread;
 			co_return newRole;
 		}
 
 		task<vector<Role>> getGuildMemberRoles(GetGuildMemberRolesData getGuildMemberRolesData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			vector<Role> rolesVector;
 			for (unsigned int x = 0; x < getGuildMemberRolesData.guildMember.data.roles.size(); x += 1) {
 				Role newRole = getRoleAsync({ .guildId = getGuildMemberRolesData.guildId, .roleId = getGuildMemberRolesData.guildMember.data.roles.at(x) }).get();
 				rolesVector.push_back(newRole);
 			}
+			co_await mainThread;
 			co_return rolesVector;
 		}
 

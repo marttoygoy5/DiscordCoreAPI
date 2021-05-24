@@ -166,7 +166,7 @@ namespace DiscordCoreInternal {
 		event_token closedToken;
 		MessageWebSocket webSocket;
 		DataWriter messageWriter;
-		wstring socketPath = L"";
+		hstring socketPath = L"";
 		hstring botToken = L"";
 		hstring sessionID = L"";
 		int heartbeatInterval = 0;

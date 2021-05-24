@@ -103,7 +103,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "GuildMemberManagerAgent::getObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "GuildMemberManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::GuildMemberData guildMemberData = getData.oldGuildMemberData;
 			DiscordCoreInternal::parseObject(returnData.data, &guildMemberData);
@@ -155,6 +155,8 @@ namespace DiscordCoreAPI {
 	public:
 
 		task<GuildMember> fetchAsync(FetchGuildMemberData getGuildMemberData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			DiscordCoreInternal::GetGuildMemberData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -168,10 +170,13 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::GuildMemberData guildMemberData;
 			GuildMember guildMember(guildMemberData, this->coreClient);
 			try_receive(GuildMemberManagerAgent::outBuffer, guildMember);
+			co_await mainThread;
 			co_return guildMember;
 		}
 
 		task<GuildMember> getGuildMemberAsync(GetGuildMemberData getGuildMemberData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			DiscordCoreInternal::GetGuildMemberData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -184,6 +189,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::GuildMemberData guildMemberData;
 			GuildMember guildMember(guildMemberData, this->coreClient);
 			try_receive(GuildMemberManagerAgent::outBuffer, guildMember);
+			co_await mainThread;
 			co_return guildMember;
 		}
 

@@ -76,8 +76,13 @@ namespace DiscordCoreInternal {
             this->mainThreadContext.threadQueue = make_shared<DispatcherQueue>(queueController.DispatcherQueue());
             SchedulerPolicy policy;
             policy.SetConcurrencyLimits(1, 1);
-            policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
-            policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
+            policy.SetPolicyValue(PolicyElementKey::ContextPriority, THREAD_PRIORITY_HIGHEST);
+            policy.SetPolicyValue(PolicyElementKey::DynamicProgressFeedback, ProgressFeedbackEnabled);
+            policy.SetPolicyValue(PolicyElementKey::LocalContextCacheSize, 1);
+            policy.SetPolicyValue(PolicyElementKey::SchedulerKind, ThreadScheduler);
+            policy.SetPolicyValue(PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
+            policy.SetPolicyValue(PolicyElementKey::TargetOversubscriptionFactor, 1);
+            policy.SetPolicyValue(PolicyElementKey::WinRTInitialization, InitializeWinRTAsMTA);
             CurrentScheduler::Create(policy);
             this->mainThreadContext.scheduler = CurrentScheduler::Get();
             shared_ptr<task_group> newTaskGroup = make_shared<task_group>();
@@ -91,8 +96,6 @@ namespace DiscordCoreInternal {
                 ThreadContext threadContext;
                 DispatcherQueue threadQueue = queueController2.DispatcherQueue();
                 policy.SetConcurrencyLimits(1, 1);
-                policy.SetPolicyValue(concurrency::PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
-                policy.SetPolicyValue(concurrency::PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
                 apartment_context mainThread;
                 co_await resume_foreground(threadQueue);
                 Scheduler* newScheduler = Scheduler::Create(policy);

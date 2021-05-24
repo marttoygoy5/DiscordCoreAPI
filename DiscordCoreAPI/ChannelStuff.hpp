@@ -97,7 +97,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "ChannelManagerAgent::getObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "ChannelManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::ChannelData channelData;
 			DiscordCoreInternal::parseObject(returnData.data, &channelData);
@@ -119,7 +119,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "ChannelManagerAgent::postObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "ChannelManagerAgent::postObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::ChannelData channelData;
 			DiscordCoreInternal::parseObject(returnData.data, &channelData);
@@ -194,6 +194,8 @@ namespace DiscordCoreAPI {
 	public:
 
 		task<Channel> fetchAsync(FetchChannelData getChannelData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			DiscordCoreInternal::FetchChannelData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -205,10 +207,13 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::ChannelData channelData;
 			Channel channel(channelData, this->coreClient);
 			try_receive(ChannelManagerAgent::outBuffer, channel);
+			co_await mainThread;
 			co_return channel;
 		}
 
 		task<Channel> getChannelAsync(GetChannelData getChannelData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			DiscordCoreInternal::GetChannelData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -220,10 +225,13 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::ChannelData channelData;
 			Channel channel(channelData, this->coreClient);
 			try_receive(ChannelManagerAgent::outBuffer, channel);
+			co_await mainThread;
 			co_return channel;
 		}
 
 		task<Channel> getDMChannelAsync(GetDMChannelData getDMChannelData) {
+			apartment_context mainThread;
+			co_await resume_background();
 			DiscordCoreInternal::GetDMChannelData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -235,6 +243,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::ChannelData channelData;
 			Channel channel(channelData, this->coreClient);
 			try_receive(ChannelManagerAgent::outBuffer, channel);
+			co_await mainThread;
 			co_return channel;
 		}
 

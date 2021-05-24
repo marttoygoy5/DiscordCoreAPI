@@ -63,6 +63,11 @@ namespace DiscordCoreAPI {
         string applicationId;
     };
 
+    struct DeleteSlashCommandData {
+        string applicationId;
+        string name;
+    };
+
     struct GetSlashCommandsData {
         string applicationId;
     };
@@ -110,6 +115,9 @@ namespace DiscordCoreAPI {
             if (returnData.returnCode != 204 && returnData.returnCode != 200) {
                 cout << "SlashCommandManager::createSlashCommandAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
             }
+            if (returnData.returnCode == 201) {
+                cout << "SlashCommandManager::createSlashCommandAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+            }
             DiscordCoreInternal::ApplicationCommandData appCommandData;
             DiscordCoreInternal::parseObject(returnData.data, &appCommandData);
             ApplicationCommand appCommand(appCommandData);
@@ -130,6 +138,9 @@ namespace DiscordCoreAPI {
             if (returnData.returnCode != 204 && returnData.returnCode != 200) {
                 cout << "SlashCommandManager::getSlashCommandsAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
             }
+            if (returnData.returnCode == 201) {
+                cout << "SlashCommandManager::getSlashCommandsAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+            }
             vector<ApplicationCommand> appCommands;
             for (unsigned int x = 0; x < returnData.data.size(); x += 1) {
                 DiscordCoreInternal::ApplicationCommandData appCommandData;
@@ -138,6 +149,38 @@ namespace DiscordCoreAPI {
                 appCommands.push_back(appCommand);
             }
             co_return appCommands;
+        }
+
+        task<void> deleteSlashCommand(DeleteSlashCommandData deleteSlashCommandData) {
+            vector<ApplicationCommand> appCommands = getSlashCommandsAsync({ .applicationId = deleteSlashCommandData.applicationId }).get();
+            string commandId;
+            bool isItFound = false;
+            for (auto const& [value] : appCommands) {
+                if (value.name == deleteSlashCommandData.name) {
+                    commandId = value.id;
+                    isItFound = true;
+                }
+            }
+            if (isItFound == false) {
+                cout << "deleteSlashCommand() Error: Sorry, it could not be found!" << endl;
+                co_return;
+            }
+            DiscordCoreInternal::HttpWorkload workload;
+            workload.relativePath = "/applications/" + deleteSlashCommandData.applicationId + "/commands/" + commandId;
+            workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
+            workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_SLASH_COMMAND;
+            DiscordCoreInternal::HttpRequestAgent httpRequestAgent(this->agentResources, this->threads->at(8).scheduler);
+            send(httpRequestAgent.workSubmissionBuffer, workload);
+            httpRequestAgent.start();
+            agent::wait(&httpRequestAgent);
+            DiscordCoreInternal::HttpData returnData;
+            try_receive(httpRequestAgent.workReturnBuffer, returnData);
+            if (returnData.returnCode != 204 && returnData.returnCode != 200) {
+                cout << "SlashCommandManager::deleteSlashCommandAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+            }
+            if (returnData.returnCode == 201) {
+                cout << "SlashCommandManager::deleteSlashCommandAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+            }
         }
 
         task<void> displaySlashCommandsAsync(DisplaySlashCommandData displaySlashCommandData) {

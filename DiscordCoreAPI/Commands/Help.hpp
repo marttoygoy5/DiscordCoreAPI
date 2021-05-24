@@ -12,7 +12,6 @@
 #include "../DiscordCoreClient.hpp"
 #include "Commands.hpp"
 
-
 namespace DiscordCoreAPI {
 
 	class HelpCommand : public  BaseFunction {
@@ -30,6 +29,8 @@ namespace DiscordCoreAPI {
 				for (unsigned int x = 0; x < roles.size(); x += 1) {
 					cout << "ROLE NAME: " << roles.at(x).data.name << endl;
 				}
+				args.coreClient->slashCommands->deleteSlashCommand({ .applicationId = args.coreClient->currentUser->data.id, .name = "testname" }).get();
+				args.coreClient->slashCommands->displaySlashCommandsAsync({ .applicationId = args.coreClient->currentUser->data.id }).get();
 				cout << "CURRENT USER ID: " << args.coreClient->currentUser->data.id << endl;
 				Role newRole = args.coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 				cout << "GET ROLE: " << role.data.name << endl;
@@ -57,8 +58,8 @@ namespace DiscordCoreAPI {
 				createSlashCommandData.defaultPermission = true;
 				createSlashCommandData.options = appCommandOptionDataVector;
 				createSlashCommandData.applicationId = args.coreClient->currentUser->data.id;
-				args.coreClient->slashCommands->createSlashCommandAsync(createSlashCommandData);
-				args.coreClient->slashCommands->displaySlashCommandsAsync({ .applicationId = args.coreClient->currentUser->data.id });
+				ApplicationCommand appCommand = args.coreClient->slashCommands->createSlashCommandAsync(createSlashCommandData).get();
+				cout << "NAME: " << appCommand.data.name << " Id: " << appCommand.data.id << endl;
 				DiscordCoreAPI::UpdateRoleData updateRoleData;
 				updateRoleData.guildId = guild.data.id;
 				updateRoleData.colorFirst[0] = (int)(((float)rand() / (float)RAND_MAX) * 255.0f);
@@ -78,10 +79,9 @@ namespace DiscordCoreAPI {
 			catch (exception error) {
 				cout << "HelpCommand::execute() Error: " << error.what() << endl << endl;
 			}
-			
+
 		}
 	};
-
 	HelpCommand helpCommand{};
 }
 #endif.
