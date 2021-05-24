@@ -2254,7 +2254,112 @@ namespace DiscordCoreInternal {
         }
 
         *pDataStructure = messageData;
+    }  
+
+    void parseObject(json jsonObjectData, ApplicationCommandOptionChoiceData* pDataStructure) {
+        ApplicationCommandOptionChoiceData appCommandOptionChoiceData = *pDataStructure;
+
+        if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
+            string theValue = jsonObjectData.at("name");
+            appCommandOptionChoiceData.name = theValue;
+        }
+
+        if (jsonObjectData.contains("value") && !jsonObjectData.at("value").is_null() && jsonObjectData.at("value").is_string()) {
+            string theValue = jsonObjectData.at("value");
+            appCommandOptionChoiceData.valueString = theValue;
+        }
+
+        if (jsonObjectData.contains("value") && !jsonObjectData.at("value").is_null() && jsonObjectData.at("value").is_number_integer()) {
+            int theValue = jsonObjectData.at("value");
+            appCommandOptionChoiceData.valueInt = theValue;
+        }
+
+        *pDataStructure = appCommandOptionChoiceData;
     }
-    
+
+    void parseObject(json jsonObjectData, ApplicationCommandOptionData* pDataStructure) {
+        ApplicationCommandOptionData appCommandOptionData = *pDataStructure;
+
+        if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
+            string theValue = jsonObjectData.at("name");
+            appCommandOptionData.name = theValue;
+        }
+
+        if (jsonObjectData.contains("description") && !jsonObjectData.at("description").is_null()) {
+            string theValue = jsonObjectData.at("description");
+            appCommandOptionData.description = theValue;
+        }
+
+        if (jsonObjectData.contains("required") && !jsonObjectData.at("required").is_null()) {
+            bool theValue = jsonObjectData.at("required");
+            appCommandOptionData.required = theValue;
+        }
+
+        if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
+            ApplicationCommandOptionType theValue = (ApplicationCommandOptionType)jsonObjectData.at("type");
+            appCommandOptionData.type = theValue;
+        }
+
+        if (appCommandOptionData.type == ApplicationCommandOptionType::SUB_COMMAND_GROUP || appCommandOptionData.type == ApplicationCommandOptionType::SUB_COMMAND) {
+            if (jsonObjectData.contains("options") && !jsonObjectData.at("options").is_null()) {
+                for (unsigned int x = 0; x < jsonObjectData.at("options").size(); x += 1) {
+                    ApplicationCommandOptionData appCommandOptionDataNew;
+                    parseObject(jsonObjectData.at("options").at(x), &appCommandOptionDataNew);
+                    appCommandOptionData.options.push_back(appCommandOptionDataNew);
+                }
+            }
+        }
+        else {
+            if (jsonObjectData.contains("choices") && !jsonObjectData.at("choices").is_null()) {
+                for (unsigned int x = 0; x < jsonObjectData.at("choices").size(); x += 1) {
+                    ApplicationCommandOptionChoiceData appCommandChoiceData;
+                    parseObject(jsonObjectData.at("choices").at(x), &appCommandChoiceData);
+                    appCommandOptionData.choices.push_back(appCommandChoiceData);
+                }
+            }
+        }
+
+        *pDataStructure = appCommandOptionData;
+    }
+
+    void parseObject(json jsonObjectData, ApplicationCommandData* pDataStructure) {
+        ApplicationCommandData appCommandData = *pDataStructure;
+
+        if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
+            string theValue = jsonObjectData.at("id");
+            appCommandData.id = theValue;
+        }
+
+        if (jsonObjectData.contains("application_id") && !jsonObjectData.at("application_id").is_null()) {
+            string theValue = jsonObjectData.at("application_id");
+            appCommandData.applicationId = theValue;
+        }
+
+        if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
+            string theValue = jsonObjectData.at("name");
+            appCommandData.name = theValue;
+        }
+
+        if (jsonObjectData.contains("description") && !jsonObjectData.at("description").is_null()) {
+            string theValue = jsonObjectData.at("description");
+            appCommandData.description = theValue;
+        }
+
+        if (jsonObjectData.contains("default_permission") && !jsonObjectData.at("default_permission").is_null()) {
+            bool theValue = jsonObjectData.at("default_permission");
+            appCommandData.defaultPermission = theValue;
+        }
+
+        if (jsonObjectData.contains("options") && !jsonObjectData.at("options").is_null()) {
+            json theValue = jsonObjectData.at("options");
+            for (unsigned int x = 0; x < theValue.size(); x += 1) {
+                ApplicationCommandOptionData appCommandOptionData;
+                parseObject(theValue.at(x), &appCommandOptionData);
+                appCommandData.options.push_back(appCommandOptionData);
+            }
+        }
+
+        *pDataStructure = appCommandData;
+    }
 };
 #endif

@@ -25,6 +25,9 @@ namespace DiscordCoreAPI {
 		GuildMemberManager* guildMembers{ nullptr };
 		RoleManager* roles{ nullptr };
 		UserManager* users{ nullptr };
+	protected:
+		friend class WebSocketConnectionAgent;
+		friend class HttpRequestAgent;
 	};
 
 	class GuildMember {

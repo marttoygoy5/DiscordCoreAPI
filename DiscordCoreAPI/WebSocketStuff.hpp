@@ -143,10 +143,11 @@ namespace DiscordCoreInternal {
 			webSocketMessageTarget(target) {
 			this->threadContext = threadContextNew;
 			this->botToken = botTokenNew;
+			DiscordCoreAPI::DiscordCoreClient::
 		}
 
-		hstring* returnSocketPathPointer(){
-			return &this->socketPath;
+		shared_ptr<hstring> returnSocketPathPointer(){
+			return this->pSocketPath;
 		}
 
 		void terminate() {
@@ -164,6 +165,7 @@ namespace DiscordCoreInternal {
 		MessageWebSocket webSocket;
 		DataWriter messageWriter;
 		hstring socketPath = L"";
+		shared_ptr<hstring> pSocketPath = make_shared<hstring>(this->socketPath);
 		hstring botToken = L"";
 		hstring sessionID = L"";
 		int heartbeatInterval = 0;
@@ -218,7 +220,7 @@ namespace DiscordCoreInternal {
 				this->messageWriter.UnicodeEncoding(UnicodeEncoding::Utf8);
 				this->closedToken = this->webSocket.Closed({ this, &WebSocketConnectionAgent::onClosed });
 				this->messageReceivedToken = this->webSocket.MessageReceived({ this, &WebSocketConnectionAgent::onMessageReceived });
-				this->webSocket.ConnectAsync(Uri(this->socketPath)).get();
+				this->webSocket.ConnectAsync(Uri(*this->pSocketPath)).get();
 			}
 			catch (hresult result) {
 				cout << result.value << endl;

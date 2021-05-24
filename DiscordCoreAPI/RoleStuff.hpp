@@ -231,6 +231,10 @@ namespace DiscordCoreAPI {
 	public:
 
 		task<Role> fetchAsync(FetchRoleData getRoleData) {
+			if (getRoleData.guildId == "") {
+				exception failError("RoleManager::fetchAsync() Error: Sorry, but you forgot to set the guildId!");
+				throw failError;
+			}
 			DiscordCoreInternal::FetchRoleData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
@@ -247,6 +251,10 @@ namespace DiscordCoreAPI {
 		}
 
 		task<Role> getRoleAsync(GetRoleData getRoleData) {
+			if (getRoleData.guildId == "") {
+				exception failError("RoleManager::getRoleAsync() Error: Sorry, but you forgot to set the guildId!");
+				throw failError;
+			}
 			DiscordCoreInternal::GetRoleData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);

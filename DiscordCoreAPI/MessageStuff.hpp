@@ -144,7 +144,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "MessageManagerAgent::getObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "MessageManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
@@ -165,7 +165,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "MessageManagerAgent::patchObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "MessageManagerAgent::patchObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
@@ -186,7 +186,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "MessageManagerAgent::postObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "MessageManagerAgent::postObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
@@ -207,7 +207,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "MessageManagerAgent::postChannelAsync() Error: " << returnData.returnCode << endl;
+				cout << "MessageManagerAgent::postObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
@@ -228,7 +228,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "MessageManagerAgent::onDelete() Error: " << returnData.returnCode << endl;
+				cout << "MessageManagerAgent::onDelete() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);

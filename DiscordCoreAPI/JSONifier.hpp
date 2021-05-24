@@ -307,7 +307,7 @@ namespace DiscordCoreInternal {
 		return data.dump();
 	}
 
-	string getModifyRolePayload(ModifyRoleData modifyRoleData) {
+	string getModifyRolePayload(UpdateRoleData modifyRoleData) {
 		modifyRoleData.actualColor();
 
 		json data = {
@@ -320,5 +320,58 @@ namespace DiscordCoreInternal {
 
 		return data.dump();
 	}
+
+	void addOptionsData(ApplicationCommandOptionData appCommandOptionData, json* pJSONData) {
+		json newOption;
+		newOption.emplace(make_pair("description", appCommandOptionData.description));
+		newOption.emplace(make_pair("name", appCommandOptionData.name));
+		newOption.emplace(make_pair("required", appCommandOptionData.required));
+		newOption.emplace(make_pair("type", appCommandOptionData.type));
+		json dataArray;
+		newOption.emplace(make_pair("options", dataArray));
+		newOption.emplace(make_pair("choices", dataArray));
+		if (appCommandOptionData.choices.size() > 0) {
+			for (unsigned int y = 0; y < appCommandOptionData.choices.size(); y += 1) {
+				ApplicationCommandOptionChoiceData choiceData;
+				choiceData.name = appCommandOptionData.choices.at(y).name;
+				if (appCommandOptionData.choices.at(y).valueString != "") {
+					choiceData.valueString = appCommandOptionData.choices.at(y).valueString;
+					json jsonValue = { {"name", choiceData.name},{"value", choiceData.valueString} };
+					newOption.at("choices").emplace_back(jsonValue);
+				}
+				if (appCommandOptionData.choices.at(y).valueInt != 0) {
+					choiceData.valueInt = appCommandOptionData.choices.at(y).valueInt;
+					json jsonValue = { {"name", choiceData.name},{"value", choiceData.valueInt} };
+					newOption.at("choices").emplace_back(jsonValue);
+				}
+			}
+		}
+		if (appCommandOptionData.options.size() > 0) {
+			addOptionsData(appCommandOptionData.options.at(0), &newOption.at("options"));
+		}
+		pJSONData->emplace_back(newOption);
+	}
+
+	string getCreateSlashCommandPayload(CreateSlashCommandData createSlashCommandData) {
+		json data = {
+			{"name",createSlashCommandData.name },
+			{"description", createSlashCommandData.description},
+			{"default_permission", createSlashCommandData.defaultPermission}
+		};
+
+		json arrayValue;
+
+		data.emplace(make_pair("options", arrayValue));
+
+		if (createSlashCommandData.options.size() > 0) {
+			for (unsigned int x = 0; x < createSlashCommandData.options.size(); x += 1) {
+				addOptionsData(createSlashCommandData.options.at(x), &data.at("options"));
+			}
+		}
+		
+
+		return data.dump();
+	}
+
 }
 #endif

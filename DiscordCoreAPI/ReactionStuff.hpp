@@ -112,7 +112,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "ReactionManagerAgent::putObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "ReactionManagerAgent::putObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			exception error;
 			if (requestAgent.get_error(error)) {
@@ -147,7 +147,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 200) {
-				cout << "ReactionManagerAgent::deleteObjectAsync() Error: " << returnData.returnCode << endl;
+				cout << "ReactionManagerAgent::deleteObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
 			}
 			exception error;
 			if (requestAgent.get_error(error)) {

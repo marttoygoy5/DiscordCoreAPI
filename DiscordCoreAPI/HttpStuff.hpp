@@ -190,6 +190,9 @@ namespace DiscordCoreInternal {
 				executeByRateLimitData(pRateLimitData);
 				getData = httpGETObjectDataAsync(relativeURL, pRateLimitData).get();
 			}
+			if (!httpResponse.IsSuccessStatusCode()) {
+				getData.returnMessage = to_string(httpResponse.Content().ReadAsStringAsync().get());
+			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -256,6 +259,9 @@ namespace DiscordCoreInternal {
 				executeByRateLimitData(pRateLimitData);
 				putData = httpPUTObjectDataAsync(relativeURL, content, pRateLimitData).get();
 			}
+			if (!httpResponse.IsSuccessStatusCode()) {
+				putData.returnMessage = to_string(httpResponse.Content().ReadAsStringAsync().get());
+			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
 				jsonValue = jsonValue.parse(to_string(httpResponse.Content().ReadAsStringAsync().get().c_str()));
@@ -321,6 +327,9 @@ namespace DiscordCoreInternal {
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
 				postData = httpPOSTObjectDataAsync(relativeURL, content, pRateLimitData).get();
+			}
+			if (!httpResponse.IsSuccessStatusCode()) {
+				postData.returnMessage = to_string(httpResponse.Content().ReadAsStringAsync().get());
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -390,6 +399,8 @@ namespace DiscordCoreInternal {
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
 				patchData = httpPATCHObjectDataAsync(relativeURL, content, pRateLimitData).get();
+			}if (!httpResponse.IsSuccessStatusCode()) {
+				patchData.returnMessage = to_string(httpResponse.Content().ReadAsStringAsync().get());
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {
@@ -448,6 +459,9 @@ namespace DiscordCoreInternal {
 			if ((int)httpResponse.StatusCode() == 429) {
 				executeByRateLimitData(pRateLimitData);
 				deleteData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
+			}
+			if (!httpResponse.IsSuccessStatusCode()) {
+				deleteData.returnMessage = to_string(httpResponse.Content().ReadAsStringAsync().get());
 			}
 			json jsonValue;
 			if (httpResponse.Content().ReadAsStringAsync().get() != L"") {

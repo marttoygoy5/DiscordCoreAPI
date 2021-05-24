@@ -822,13 +822,15 @@ namespace  DiscordCoreInternal {
         POST_USER_DM = 17,
         GET_DM_CHANNEL = 18,
         PATCH_ROLE = 19,
-        GET_APPLICATION = 20
+        GET_APPLICATION = 20,
+        POST_APPLICATION_COMMAND = 21,
+        GET_SLASH_COMMANDS = 22
     };
 
     struct HttpAgentResources {
         hstring botToken;
         hstring baseURL;
-        hstring* pSocketPath;
+        shared_ptr<hstring> pSocketPath;
     };
 
     struct GetApplicationData {
@@ -838,6 +840,7 @@ namespace  DiscordCoreInternal {
 
     struct HttpData {
         unsigned int returnCode = 0;
+        string returnMessage = "";
         json data;
     };
 
@@ -1027,7 +1030,7 @@ namespace  DiscordCoreInternal {
         vector<string> roleIds;
     };
 
-    struct ModifyRoleDataInternal {
+    struct UpdateRoleDataInternal {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         string content;
@@ -1065,5 +1068,50 @@ namespace  DiscordCoreInternal {
             this->color = colorValue;
         };
     };
+
+    enum class ApplicationCommandOptionType {
+        SUB_COMMAND = 1,
+        SUB_COMMAND_GROUP = 2,
+        STRING = 3,
+        INTEGER = 4,
+        BOOLEAN = 5,
+        USER = 6,
+        CHANNEL = 7,
+        ROLE = 8,
+        MENTIONABLE = 9
+    };
+
+    struct ApplicationCommandOptionChoiceData {
+        string name = "";
+        int	valueInt = 0;
+        string valueString = "";
+    };
+
+    struct ApplicationCommandOptionData {
+        ApplicationCommandOptionType type = ApplicationCommandOptionType::SUB_COMMAND_GROUP;
+        string name = "";
+        string description = "";
+        bool required = false;
+        vector<ApplicationCommandOptionChoiceData>	choices;
+        vector<ApplicationCommandOptionData> options;
+    };
+
+    struct ApplicationCommandData {
+        string id;
+        string applicationId;
+        string name;
+        string description;
+        vector<ApplicationCommandOptionData> options;
+        bool defaultPermission;
+    };
+
+    struct CreateSlashCommandData {
+        string applicationId;
+        string name;
+        string description;
+        vector<ApplicationCommandOptionData> options;
+        bool defaultPermission;
+    };
+
 }
 #endif

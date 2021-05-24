@@ -37,6 +37,7 @@ namespace DiscordCoreAPI {
 		GuildManager* guilds{ nullptr };
 		ReactionManager* reactions{ nullptr };
 		MessageManager* messages{ nullptr };
+		SlashCommandManager* slashCommands{ nullptr };
 		shared_ptr<DiscordCoreAPI::EventMachine> EventMachine{ nullptr };
 		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
@@ -59,7 +60,8 @@ namespace DiscordCoreAPI {
 		}
 
 	protected:
-
+		friend class WebSocketConnectionAgent;
+		friend class HttpRequestAgent;
 		bool doWeQuit = false;
 		hstring botToken;
 		hstring baseURL = L"https://discord.com/api/v9";
@@ -69,6 +71,7 @@ namespace DiscordCoreAPI {
 		ITarget<DiscordCoreInternal::WebSocketWorkload>& webSocketWorkloadTarget;
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
+		static overwrite_buffer<shared_ptr<hstring>> socketPathBuffer;
 		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		
 		task<void> initialize(hstring botTokenNew) {
@@ -101,6 +104,7 @@ namespace DiscordCoreAPI {
 			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads, this);
 			this->guilds = new GuildManager(agentResources, this->pSystemThreads->threads, (DiscordCoreClient*)this, this);
 			this->currentUser = new User(this->users->fetchCurrentUserAsync().get().data, this);
+			this->slashCommands = new SlashCommandManager(agentResources, this->pSystemThreads->threads);
 			co_await mainThread;
 		}
 
