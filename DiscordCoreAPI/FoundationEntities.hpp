@@ -435,7 +435,7 @@ namespace  DiscordCoreInternal {
 
     struct ChannelData {
         string id;
-        ChannelType type;
+        ChannelType type = ChannelType::DM;
         string guildId;
         int position;
         map<string, OverWriteData> permissionOverwrites;
@@ -856,8 +856,6 @@ namespace  DiscordCoreInternal {
         int getsRemaining = 1;
         float msRemain = 0.0f;
         float timeStartedAt = 0.0f;
-        float msRemainTryAgain = 0.0f;
-        float timeStartedAtTryAgain = 0.0f;
         string bucket;
     };
 

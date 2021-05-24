@@ -235,13 +235,18 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteObjectAsync(DiscordCoreInternal::DeleteMessageData dataPackage) {
-			DispatcherQueueTimer timer = this->threads->at(10).threadQueue.get()->CreateTimer();
-			timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
-			timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
+			if (dataPackage.timeDelay > 0) {
+				DispatcherQueueTimer timer = this->threads->at(10).threadQueue.get()->CreateTimer();
+				timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
+				timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
+					onDelete(dataPackage).get();
+					timer.Stop();
+					});
+				timer.Start();
+			}
+			else {
 				onDelete(dataPackage).get();
-				timer.Stop();
-				});
-			timer.Start();
+			}
 			co_return;
 		}
 
