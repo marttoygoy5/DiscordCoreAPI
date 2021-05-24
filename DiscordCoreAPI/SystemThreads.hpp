@@ -49,7 +49,6 @@ namespace DiscordCoreInternal {
                 receive(requestBuffer, 1U);
                 concurrent_vector<ThreadContext>* threads = receive(submitBuffer);
                 send(responseBuffer, threads);
-                throw exception("TESTING TESTING");
             }
             catch (const exception& e) {
                 send(errorBuffer, e);
