@@ -71,6 +71,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<GuildMember>* outBuffer;
 		static concurrent_queue<GuildMember> guildMembersToInsert;
 		static overwrite_buffer<map<string, GuildMember>> cache;
+		single_assignment<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
@@ -91,6 +92,13 @@ namespace DiscordCoreAPI {
 			return;
 		}
 
+		bool getError(exception& error) {
+			if (try_receive(errorBuffer, error)) {
+				return true;
+			}
+			return false;
+		}
+
 		task<GuildMember> getObjectAsync(DiscordCoreInternal::GetGuildMemberData getData){
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
@@ -99,16 +107,18 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpRequestAgent requestAgent(getData.agentResources, getData.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
-			try {
-				agent::wait(&requestAgent);
-			}
-			catch (const exception& e) {
-				cout << "GuildMemberManagerAgent::getObjectAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&requestAgent);
+			exception error;
+			if (requestAgent.getError(error)) {
+				cout << "GuildMemberManagerAgent::getObjectAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-				cout << "GuildMemberManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl;
+				cout << "GuildMemberManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			else {
+				cout << "GuildMemberManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::GuildMemberData guildMemberData = getData.oldGuildMemberData;
 			DiscordCoreInternal::parseObject(returnData.data, &guildMemberData);
@@ -117,40 +127,46 @@ namespace DiscordCoreAPI {
 		}
 
 		void run() {
-			DiscordCoreInternal::GetGuildMemberData getData;
-			if (try_receive(GuildMemberManagerAgent::requestGetBuffer, getData)) {
-				map<string, GuildMember> cacheTemp;
-				if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(getData.guildId + getData.guildMemberId)) {
-						GuildMember GuildMember = cacheTemp.at(getData.guildId + getData.guildMemberId);
-						send(GuildMemberManagerAgent::outBuffer, GuildMember);
+			try {
+				DiscordCoreInternal::GetGuildMemberData getData;
+				if (try_receive(GuildMemberManagerAgent::requestGetBuffer, getData)) {
+					map<string, GuildMember> cacheTemp;
+					if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
+						if (cacheTemp.contains(getData.guildId + getData.guildMemberId)) {
+							GuildMember GuildMember = cacheTemp.at(getData.guildId + getData.guildMemberId);
+							send(GuildMemberManagerAgent::outBuffer, GuildMember);
+						}
 					}
 				}
-			}
-			if (try_receive(GuildMemberManagerAgent::requestFetchBuffer, getData)) {
-				map<string, GuildMember> cacheTemp;
-				if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(getData.guildId + getData.guildMemberId)) {
-						getData.oldGuildMemberData = cacheTemp.at(getData.guildId + getData.guildMemberId).data;
-						cacheTemp.erase(getData.guildId + getData.guildMemberId);
+				if (try_receive(GuildMemberManagerAgent::requestFetchBuffer, getData)) {
+					map<string, GuildMember> cacheTemp;
+					if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
+						if (cacheTemp.contains(getData.guildId + getData.guildMemberId)) {
+							getData.oldGuildMemberData = cacheTemp.at(getData.guildId + getData.guildMemberId).data;
+							cacheTemp.erase(getData.guildId + getData.guildMemberId);
+						}
 					}
-				}				
-				GuildMember GuildMember = getObjectAsync(getData).get();
-				cacheTemp.insert(make_pair(getData.guildId + getData.guildMemberId, GuildMember));
-				send(GuildMemberManagerAgent::outBuffer, GuildMember);
-				asend(GuildMemberManagerAgent::cache, cacheTemp);
-			}
-			DiscordCoreInternal::GuildMemberData guildMemberData;
-			GuildMember guildMember(guildMemberData, this->coreClient);
-			while (GuildMemberManagerAgent::guildMembersToInsert.try_pop(guildMember)) {
-				map<string, GuildMember> cacheTemp;
-				if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
-					if (cacheTemp.contains(guildMember.data.guildId + guildMember.data.user.id)) {
-						cacheTemp.erase(guildMember.data.guildId + guildMember.data.user.id);
-					}
+					GuildMember GuildMember = getObjectAsync(getData).get();
+					cacheTemp.insert(make_pair(getData.guildId + getData.guildMemberId, GuildMember));
+					send(GuildMemberManagerAgent::outBuffer, GuildMember);
+					asend(GuildMemberManagerAgent::cache, cacheTemp);
 				}
-				cacheTemp.insert(make_pair(guildMember.data.guildId + guildMember.data.user.id, guildMember));
-				asend(GuildMemberManagerAgent::cache, cacheTemp);
+				DiscordCoreInternal::GuildMemberData guildMemberData;
+				throw exception("TESTING TESTING TESTING");
+				GuildMember guildMember(guildMemberData, this->coreClient);
+				while (GuildMemberManagerAgent::guildMembersToInsert.try_pop(guildMember)) {
+					map<string, GuildMember> cacheTemp;
+					if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
+						if (cacheTemp.contains(guildMember.data.guildId + guildMember.data.user.id)) {
+							cacheTemp.erase(guildMember.data.guildId + guildMember.data.user.id);
+						}
+					}
+					cacheTemp.insert(make_pair(guildMember.data.guildId + guildMember.data.user.id, guildMember));
+					asend(GuildMemberManagerAgent::cache, cacheTemp);
+				}
+			}
+			catch (const exception& e) {
+				send(errorBuffer, e);
 			}
 			done();
 		}
@@ -171,11 +187,10 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::GuildMemberData guildMemberDat;
 			send(GuildMemberManagerAgent::requestFetchBuffer, dataPackage);
 			managerAgent.start();
-			try {
-				agent::wait(&managerAgent);
-			}
-			catch (const exception& e) {
-				cout << "GuildMemberManager::fetchAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&managerAgent);
+			exception error;
+			if (managerAgent.getError(error)) {
+				cout << "GuildMemberManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::GuildMemberData guildMemberData;
 			GuildMember guildMember(guildMemberData, this->coreClient);
@@ -195,11 +210,10 @@ namespace DiscordCoreAPI {
 			GuildMemberManagerAgent managerAgent(this->threads, this->threads->at(2).scheduler, dataPackage.agentResources, this->coreClient);
 			send(GuildMemberManagerAgent::requestGetBuffer, dataPackage);
 			managerAgent.start();
-			try {
-				agent::wait(&managerAgent);
-			}
-			catch (const exception& e) {
-				cout << "GuildMemberManager::getGuildMemberAsync() Error: " << e.what() << endl << endl;
+			agent::wait(&managerAgent);
+			exception error;
+			if (managerAgent.getError(error)) {
+				cout << "GuildMemberManager::getGuildMemberAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::GuildMemberData guildMemberData;
 			GuildMember guildMember(guildMemberData, this->coreClient);
@@ -210,13 +224,12 @@ namespace DiscordCoreAPI {
 
 		task<void> insertGuildMemberAsync(GuildMember guildMember) {
 			GuildMemberManagerAgent guildMemberManagerAgent(this->threads, this->threads->at(2).scheduler, this->agentResources, this->coreClient);
-			guildMemberManagerAgent.start();
 			GuildMemberManagerAgent::guildMembersToInsert.push(guildMember);
-			try {
-				agent::wait(&guildMemberManagerAgent);
-			}
-			catch (const exception& e) {
-				cout << "GuildMemberManager::insertGuildMemberAsync() Error: " << e.what() << endl << endl;
+			guildMemberManagerAgent.start();
+			agent::wait(&guildMemberManagerAgent);
+			exception error;
+			if (guildMemberManagerAgent.getError(error)) {
+				cout << "GuildMemberManager::getGuildMemberAsync() Error: " << error.what() << endl << endl;
 			}
 			co_return;
 		}

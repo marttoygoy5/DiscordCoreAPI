@@ -315,7 +315,6 @@ namespace DiscordCoreAPI {
 					}
 				};
 				DiscordCoreInternal::SendDMData dataPackageNewer;
-				throw exception("TESINT GTHER RHIERERN");
 				if (try_receive(MessageManagerAgent::requestPostDMBuffer, dataPackageNewer)) {
 					Message message = this->postObjectAsync(dataPackageNewer).get();
 					map<string, Message> cacheTemp;

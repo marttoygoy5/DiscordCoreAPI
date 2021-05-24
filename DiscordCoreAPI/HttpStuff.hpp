@@ -87,7 +87,7 @@ namespace DiscordCoreInternal {
 
 		void run() {
 			try {
-				transformer<HttpWorkload, HttpData> completeHttpRequest([this](HttpWorkload workload) -> HttpData{
+				transformer<HttpWorkload, HttpData> completeHttpRequest([this](HttpWorkload workload) -> HttpData {
 					RateLimitData rateLimitData;
 					rateLimitData.workloadType = workload.workloadType;
 					auto bucketIterator = HttpRequestAgent::rateLimitDataBucketValues.find(workload.workloadType);
@@ -111,7 +111,6 @@ namespace DiscordCoreInternal {
 							while (timeRemaining <= 0.0f) {
 								currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 								timeRemaining = currentTime - targetTime;
-								cout << "TIME REMAINING LOWER: " << timeRemaining << endl;
 							}
 							rateLimitData.msRemain = 0.0f;
 							rateLimitData.timeStartedAt = 0.0f;
@@ -145,7 +144,6 @@ namespace DiscordCoreInternal {
 					HttpRequestAgent::rateLimitData.insert(make_pair(rateLimitData.bucket, rateLimitData));
 					return returnData;
 					});
-				throw exception("WHOA WHOA WHOA");
 				completeHttpRequest.link_target(&this->workReturnBuffer);
 				HttpWorkload workload = receive(&this->workSubmissionBuffer);
 				send(&completeHttpRequest, workload);
