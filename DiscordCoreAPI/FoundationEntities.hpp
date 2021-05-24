@@ -824,13 +824,13 @@ namespace  DiscordCoreInternal {
         PATCH_ROLE = 19,
         GET_APPLICATION = 20,
         POST_APPLICATION_COMMAND = 21,
-        GET_SLASH_COMMANDS = 22
+        GET_SLASH_COMMANDS = 22,
+        GET_SOCKET_PATH = 23
     };
 
     struct HttpAgentResources {
         hstring botToken;
         hstring baseURL;
-        hstring* pSocketPath;
     };
 
     struct GetApplicationData {

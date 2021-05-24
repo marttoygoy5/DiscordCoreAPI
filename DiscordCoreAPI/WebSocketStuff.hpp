@@ -145,8 +145,11 @@ namespace DiscordCoreInternal {
 			this->botToken = botTokenNew;
 		}
 
-		hstring* returnSocketPathPointer(){
-			return &this->socketPath;
+		void setSocketPath(string socketPathBase){
+			std::wstringstream stream;
+			stream << DiscordCoreInternal::parseSocketPath(to_hstring(socketPathBase)).c_str();
+			stream << L"/?v=9&encoding=json";
+			this->socketPath = stream.str();
 		}
 
 		void terminate() {
@@ -163,7 +166,7 @@ namespace DiscordCoreInternal {
 		event_token closedToken;
 		MessageWebSocket webSocket;
 		DataWriter messageWriter;
-		hstring socketPath = L"";
+		wstring socketPath = L"";
 		hstring botToken = L"";
 		hstring sessionID = L"";
 		int heartbeatInterval = 0;

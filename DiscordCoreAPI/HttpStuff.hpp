@@ -45,7 +45,6 @@ namespace DiscordCoreInternal {
 			try {
 				this->baseURL = agentResources.baseURL;
 				this->botToken = agentResources.botToken;
-				this->initialConnectionPath = this->baseURL + L"/gateway/bot";
 				this->getHttpClient = HttpClient();
 				this->getHeaders = this->getHttpClient.DefaultRequestHeaders();
 				this->putHttpClient = HttpClient();
@@ -65,14 +64,6 @@ namespace DiscordCoreInternal {
 				this->postHeaders.Authorization(credentialValue);
 				this->patchHeaders.Authorization(credentialValue);
 				this->deleteHeaders.Authorization(credentialValue);
-				this->baseURI = Uri(this->initialConnectionPath.c_str());
-				HttpResponseMessage httpResponse;
-				httpResponse = getHttpClient.GetAsync(this->baseURI).get();
-				hstring httpResponseBody = httpResponse.Content().ReadAsStringAsync().get().c_str();
-				std::wstringstream stream;
-				stream << DiscordCoreInternal::parseSocketPath(httpResponseBody.c_str()).c_str();
-				stream << L"/?v=9&encoding=json";
-				*agentResources.pSocketPath = stream.str();
 			}
 			catch (winrt::hresult_error ex) {
 				std::wcout << "Error: " << ex.message().c_str() << std::endl;
@@ -474,7 +465,6 @@ namespace DiscordCoreInternal {
 		Uri baseURI{ nullptr };
 		hstring baseURL;
 		hstring botToken;
-		hstring initialConnectionPath;
 		HttpRequestHeaderCollection getHeaders{ nullptr };
 		HttpRequestHeaderCollection putHeaders{ nullptr };
 		HttpRequestHeaderCollection postHeaders{ nullptr };

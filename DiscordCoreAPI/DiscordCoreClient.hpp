@@ -84,8 +84,18 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpAgentResources agentResources;
 			agentResources.baseURL = this->baseURL;
 			agentResources.botToken = this->botToken;
-			agentResources.pSocketPath = pWebSocketConnectionAgent->returnSocketPathPointer();
 			DiscordCoreInternal::HttpRequestAgent requestAgent(agentResources, this->pSystemThreads->getThreads().get()->at(3).scheduler);
+			DiscordCoreInternal::HttpWorkload workload;
+			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
+			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_SOCKET_PATH;
+			workload.relativePath = "/gateway/bot";
+			send(requestAgent.workSubmissionBuffer, workload);
+			requestAgent.start();
+			agent::wait(&requestAgent);
+			DiscordCoreInternal::HttpData returnData;
+			try_receive(requestAgent.workReturnBuffer, returnData);
+			cout << returnData.data << endl;
+			this->pWebSocketConnectionAgent->setSocketPath(returnData.data.dump());
 			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(1));
 			ReactionManagerAgent::initialize();
 			UserManagerAgent::initialize();
@@ -106,12 +116,11 @@ namespace DiscordCoreAPI {
 			co_await mainThread;
 		}
 
-		task<DiscordCoreAPI::OnGuildCreationData> createGuild(DiscordCoreInternal::GuildData guildData) {
+		task<OnGuildCreationData> createGuild(DiscordCoreInternal::GuildData guildData) {
 			try {
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
-				agentResources.pSocketPath = this->pWebSocketConnectionAgent->returnSocketPathPointer();
 				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, (DiscordCoreClient*)this, this);
 				OnGuildCreationData guildCreationData(guild);
 				guildCreationData.guild = guild;
@@ -122,7 +131,7 @@ namespace DiscordCoreAPI {
 			}
 		}
 
-		task<DiscordCoreAPI::OnMessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
+		task<OnMessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
 			try {
 				Message message(messageData, this);
 				OnMessageCreationData messageCreationData(message);
@@ -134,7 +143,7 @@ namespace DiscordCoreAPI {
 			}
 		}
 
-		task<DiscordCoreAPI::OnReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
+		task<OnReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
 			try {
 				Reaction reaction(reactionData, this);
 				OnReactionAddData reactionAddData(reaction);
