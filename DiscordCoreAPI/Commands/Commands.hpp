@@ -6,7 +6,7 @@
 #pragma once
 
 #ifndef _COMMANDS_
-#define _COMMANDS
+#define _COMMANDS_
 
 #include "../pch.h"
 #include "../DiscordCoreClient.hpp"
@@ -17,7 +17,7 @@ namespace DiscordCoreAPI {
 
 	class DiscordCoreClient;
 
-	struct DiscordCoreFunctionBaseArguments {
+	struct BaseFunctionArguments {
 		Message message;
 		vector<string> argumentsArray;
 		DiscordCoreAPI::DiscordCoreClient* coreClient;
@@ -25,7 +25,7 @@ namespace DiscordCoreAPI {
 
 	class BaseFunction {
 	public:
-		virtual void execute(DiscordCoreFunctionBaseArguments* args) = 0;
+		virtual void execute(BaseFunctionArguments* args) = 0;
 		string commandName;
 	};
 
@@ -44,7 +44,7 @@ namespace DiscordCoreAPI {
 				return;
 			}
 
-			DiscordCoreFunctionBaseArguments args(commandData.message);
+			BaseFunctionArguments args(commandData.message);
 			args.argumentsArray = parseArguments(commandData.message.data.content);
 			args.coreClient = commandData.coreClient;
 			args.message = commandData.message;

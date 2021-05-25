@@ -208,6 +208,7 @@ namespace DiscordCoreInternal {
 			}
 			catch (const exception& e) {
 				concurrency::send(errorBuffer, e);
+				this->connect();
 			}
 			
 		}

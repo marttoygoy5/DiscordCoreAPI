@@ -105,11 +105,11 @@ namespace DiscordCoreInternal {
 						if (timeRemaining <= -15000.0f) {
 							HttpData returnData;
 							returnData.returnCode = 187;
-							returnData.returnMessage = "Waiting on rate-limit, Time Remainiing: " + to_string(timeRemaining * -1.0f) + "ms.";
+							returnData.returnMessage = "Waiting on rate-limit, Time Remainiing: " + to_string(timeRemaining * -1.0f) + "ms";
 							return returnData;
 						}
 						if (timeRemaining <= 0.0f) {
-							cout << "Waiting on ratelimit, Time Remainiing: " << timeRemaining * -1.0f << "ms." << endl << endl;
+							cout << "Waiting on ratelimit, Time Remainiing: " << timeRemaining * -1.0f << "ms" << endl << endl;
 							while (timeRemaining <= 0.0f) {
 								currentTime = static_cast<float>(chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
 								timeRemaining = currentTime - targetTime;

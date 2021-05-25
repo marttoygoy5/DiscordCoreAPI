@@ -44,7 +44,6 @@ namespace DiscordCoreAPI {
 
     struct ApplicationCommandData {
         string id;
-        string applicationId;
         string name;
         string description;
         vector<ApplicationCommandOptionData> options;
@@ -52,7 +51,6 @@ namespace DiscordCoreAPI {
     };
 
     struct EditApplicationCommandData {
-        string applicationId;
         string name;
         string description;
         vector<ApplicationCommandOptionData> options;
@@ -60,24 +58,14 @@ namespace DiscordCoreAPI {
     };
 
     struct CreateApplicationCommandData {
-        string applicationId;
         string name;
         string description;
         vector<ApplicationCommandOptionData> options;
         bool defaultPermission = true;
     };
 
-    struct DisplayApplicationCommandData {
-        string applicationId;
-    };
-
     struct DeleteApplicationCommandData {
-        string applicationId;
         string name;
-    };
-
-    struct GetApplicationCommandsData {
-        string applicationId;
     };
 
     class ApplicationCommand {
@@ -96,21 +84,22 @@ namespace DiscordCoreAPI {
 
 	class SlashCommandManager {
 	public:
-		SlashCommandManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
+		SlashCommandManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, string applicationIdNew) {
             this->agentResources = agentResourcesNew;
             this->threads = threadsNew;
+            this->applicationId = applicationIdNew;
 		}
 
 		task<ApplicationCommand> createGlobalApplicationCommandAsync(CreateApplicationCommandData createApplicationCommandData) {
             DiscordCoreInternal::CreateApplicationCommandData createApplicationCommandDataNew;
-            createApplicationCommandDataNew.applicationId = createApplicationCommandData.applicationId;
+            createApplicationCommandDataNew.applicationId = this->applicationId;
             createApplicationCommandDataNew.defaultPermission = createApplicationCommandData.defaultPermission;
             createApplicationCommandDataNew.description = createApplicationCommandData.description;
             createApplicationCommandDataNew.name = createApplicationCommandData.name;
             copyOptionsData(&createApplicationCommandDataNew.options, createApplicationCommandData.options);
             DiscordCoreInternal::HttpWorkload workload;
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
-            workload.relativePath = "/applications/" + createApplicationCommandData.applicationId + "/commands";
+            workload.relativePath = "/applications/" + this->applicationId + "/commands";
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_APPLICATION_COMMAND;
             workload.content = DiscordCoreInternal::getCreateApplicationCommandPayload(createApplicationCommandDataNew);
             DiscordCoreInternal::HttpRequestAgent httpRequestAgent(this->agentResources, this->threads->at(4).scheduler);
@@ -135,10 +124,10 @@ namespace DiscordCoreAPI {
             co_return appCommandData;
 		}
 
-        task<vector<ApplicationCommand>> getGlobalApplicationCommandsAsync(GetApplicationCommandsData getApplicationCommandsData) {
+        task<vector<ApplicationCommand>> getGlobalApplicationCommandsAsync() {
             DiscordCoreInternal::HttpWorkload workload;
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
-            workload.relativePath = "/applications/" + getApplicationCommandsData.applicationId + "/commands";
+            workload.relativePath = "/applications/" + this->applicationId + "/commands";
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_SLASH_COMMANDS;
             DiscordCoreInternal::HttpRequestAgent httpRequestAgent(this->agentResources, this->threads->at(2).scheduler);
             send(httpRequestAgent.workSubmissionBuffer, workload);
@@ -167,7 +156,7 @@ namespace DiscordCoreAPI {
         }
 
         task<ApplicationCommand> editGlobalApplicationCommandAsync(EditApplicationCommandData editApplicationCommandData) {
-            vector<ApplicationCommand> appCommands = getGlobalApplicationCommandsAsync({ .applicationId = editApplicationCommandData.applicationId }).get();
+            vector<ApplicationCommand> appCommands = getGlobalApplicationCommandsAsync().get();
             bool isItFound = false;
             string appCommandId;
             for (auto const& [value] : appCommands) {
@@ -189,7 +178,7 @@ namespace DiscordCoreAPI {
             copyOptionsData(&editAppCommandData.options, editApplicationCommandData.options);
             DiscordCoreInternal::HttpWorkload workload;
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
-            workload.relativePath = "/applications/" + editApplicationCommandData.applicationId + "/commands/" + appCommandId;
+            workload.relativePath = "/applications/" + this->applicationId + "/commands/" + appCommandId;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_SLASH_COMMAND;
             workload.content = DiscordCoreInternal::getEditApplicationCommandPayload(editAppCommandData);
             DiscordCoreInternal::HttpRequestAgent httpRequestAgent(this->agentResources, this->threads->at(4).scheduler);
@@ -215,7 +204,7 @@ namespace DiscordCoreAPI {
         }
 
         task<void> deleteGlobalApplicationCommand(DeleteApplicationCommandData deleteApplicationCommandData) {
-            vector<ApplicationCommand> appCommands = getGlobalApplicationCommandsAsync({ .applicationId = deleteApplicationCommandData.applicationId }).get();
+            vector<ApplicationCommand> appCommands = getGlobalApplicationCommandsAsync().get();
             string commandId;
             bool isItFound = false;
             for (auto const& [value] : appCommands) {
@@ -229,7 +218,7 @@ namespace DiscordCoreAPI {
                 co_return;
             }
             DiscordCoreInternal::HttpWorkload workload;
-            workload.relativePath = "/applications/" + deleteApplicationCommandData.applicationId + "/commands/" + commandId;
+            workload.relativePath = "/applications/" + this->applicationId + "/commands/" + commandId;
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_SLASH_COMMAND;
             DiscordCoreInternal::HttpRequestAgent httpRequestAgent(this->agentResources, this->threads->at(8).scheduler);
@@ -250,8 +239,8 @@ namespace DiscordCoreAPI {
             }
         }
 
-        task<void> displayGlobalApplicationCommandsAsync(DisplayApplicationCommandData displayApplicationCommandData) {
-            vector<ApplicationCommand> applicationCommands = getGlobalApplicationCommandsAsync({ displayApplicationCommandData.applicationId }).get();
+        task<void> displayGlobalApplicationCommandsAsync() {
+            vector<ApplicationCommand> applicationCommands = getGlobalApplicationCommandsAsync().get();
             for (unsigned int x=0; x< applicationCommands.size(); x+=1){
                 cout << "Command Name: " << applicationCommands.at(x).data.name << endl;
                 cout << "Command Description: " << applicationCommands.at(x).data.description << endl;
@@ -263,19 +252,27 @@ namespace DiscordCoreAPI {
 	protected:
         DiscordCoreInternal::HttpAgentResources agentResources;
         concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
+        string applicationId;
 
         void displayOptions(vector<DiscordCoreInternal::ApplicationCommandOptionData> applicationCommandOptionData) {
             for (unsigned int x = 0; x < applicationCommandOptionData.size(); x += 1) {
-                cout << "Command Option Name: " << applicationCommandOptionData.at(x).name << endl;
-                cout << "Command Option Description: " << applicationCommandOptionData.at(x).description << endl;
+                string indentAmount;
+                if (applicationCommandOptionData.at(x).type == DiscordCoreInternal::ApplicationCommandOptionType::SUB_COMMAND_GROUP) {
+                    indentAmount += "   ";
+                }
+                if (applicationCommandOptionData.at(x).type == DiscordCoreInternal::ApplicationCommandOptionType::SUB_COMMAND) {
+                    indentAmount += "      ";
+                }
+                cout << indentAmount + "Command Option Name: " << applicationCommandOptionData.at(x).name << endl;
+                cout << indentAmount + "Command Option Description: " << applicationCommandOptionData.at(x).description << endl;
                 if (applicationCommandOptionData.at(x).choices.size() > 0) {
                     for (unsigned int y = 0; y < applicationCommandOptionData.at(x).choices.size(); y += 1) {
                         cout << "Command Option Choice #" << y << " Name: " << applicationCommandOptionData.at(x).choices.at(y).name << endl;
                         if (applicationCommandOptionData.at(x).choices.at(y).valueString != "") {
-                            cout << "Command Option Choice #" << y << " Value: " << applicationCommandOptionData.at(x).choices.at(y).valueString << endl;
+                            cout << "         " << "Command Option Choice #" << y << " Value: " << applicationCommandOptionData.at(x).choices.at(y).valueString << endl;
                         }
                         else {
-                            cout << "Command Option Choice #" << y << " Value: " << applicationCommandOptionData.at(x).choices.at(y).valueInt << endl;
+                            cout << "         " << "Command Option Choice #" << y << " Value: " << applicationCommandOptionData.at(x).choices.at(y).valueInt << endl;
                         }                        
                     }
                 }

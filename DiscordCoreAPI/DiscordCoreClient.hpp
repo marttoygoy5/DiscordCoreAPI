@@ -16,6 +16,7 @@
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
 #include "EventMachine.hpp"
+#include "DatabaseStuff.hpp"
 
 void myPurecallHandler(void) {
 	cout << "CURRENT THREAD: " << this_thread::get_id() << endl;
@@ -39,6 +40,7 @@ namespace DiscordCoreAPI {
 		MessageManager* messages{ nullptr };
 		SlashCommandManager* slashCommands{ nullptr };
 		shared_ptr<DiscordCoreAPI::EventMachine> EventMachine{ nullptr };
+		DatabaseManager* databaseManager{ nullptr };
 		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
@@ -124,7 +126,8 @@ namespace DiscordCoreAPI {
 			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads, this);
 			this->guilds = new GuildManager(agentResources, this->pSystemThreads->threads, (DiscordCoreClient*)this, this);
 			this->currentUser = new User(this->users->fetchCurrentUserAsync().get().data, this);
-			this->slashCommands = new SlashCommandManager(agentResources, this->pSystemThreads->threads);
+			this->slashCommands = new SlashCommandManager(agentResources, this->pSystemThreads->threads, this->currentUser->data.id);
+			this->databaseManager = new DatabaseManager(this->currentUser->data.id);
 			co_await mainThread;
 		}
 
