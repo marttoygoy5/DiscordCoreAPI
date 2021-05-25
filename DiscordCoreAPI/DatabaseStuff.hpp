@@ -101,6 +101,8 @@ namespace DiscordCoreAPI {
                 buildDoc.append(kvp("hoursOfDepositCooldown", bsoncxx::types::b_int32(discordUserData.hoursOfDepositCooldown)));
                 buildDoc.append(kvp("hoursOfDrugSaleCooldown", bsoncxx::types::b_int32(discordUserData.hoursOfDrugSaleCooldown)));
                 buildDoc.append(kvp("hoursOfRobberyCooldown", bsoncxx::types::b_double(discordUserData.hoursOfRobberyCooldown)));
+                buildDoc.append(kvp("userId", discordUserData.userId));
+                buildDoc.append(kvp("userName", discordUserData.userName));
                 buildDoc.append(kvp("prefix", discordUserData.prefix));
                 bsoncxx::builder::basic::array newArray;
                 for (unsigned int x = 0; x < discordUserData.botCommanders.size(); x += 1) {
@@ -161,7 +163,7 @@ namespace DiscordCoreAPI {
                             auto result = this->collection.find_one(bsoncxx::builder::stream::document{} << "userId" << workload.userData.userId << finalize);
                             DiscordUserData userData = DatabaseManager::parseUserData(result.get());
                             send(this->discordUserOutputBuffer, userData);
-                            cout << "GetDataFromDB: " << bsoncxx::to_json(result.get().view()) << endl;
+                            //cout << "GetDataFromDB: " << bsoncxx::to_json(result.get().view()) << endl;
                         }
                         catch (bsoncxx::v_noabi::exception& e) {
                             cout << "DatabaseManager::run() Error 02: " << e.what() << endl << endl;
