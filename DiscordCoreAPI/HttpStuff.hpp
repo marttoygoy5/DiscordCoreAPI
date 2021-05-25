@@ -132,7 +132,6 @@ namespace DiscordCoreInternal {
 						returnData = httpPATCHObjectDataAsync(workload.relativePath, workload.content, &rateLimitData).get();
 					}
 					else if (workload.workloadClass == HttpWorkloadClass::DELETED) {
-						throw exception("TESTING TESTING TESTING");
 						returnData = httpDELETEObjectDataAsync(workload.relativePath, &rateLimitData).get();
 					}
 					auto bucketValueIterator = HttpRequestAgent::rateLimitDataBucketValues.find(workload.workloadType);

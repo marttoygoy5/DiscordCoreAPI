@@ -185,7 +185,7 @@ namespace DiscordCoreAPI {
 							send(ChannelManagerAgent::outBuffer, channel);
 							asend(cache, cacheTemp);
 						}
-						else {
+	 					else {
 							cacheTemp.insert(make_pair(channel.data.id, channel));
 							send(ChannelManagerAgent::outBuffer, channel);
 							asend(cache, cacheTemp);
@@ -197,7 +197,6 @@ namespace DiscordCoreAPI {
 						asend(cache, cacheTemp);
 					}
 				}
-				throw exception("ERROR ERROR222222");
 				DiscordCoreInternal::ChannelData channelData;
 				Channel channelNew(channelData, this->coreClient);
 				while (ChannelManagerAgent::channelsToInsert.try_pop(channelNew)) {
