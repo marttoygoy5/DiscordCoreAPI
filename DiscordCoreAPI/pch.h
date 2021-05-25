@@ -19,6 +19,7 @@
 
 #include <bsoncxx/json.hpp>
 #include <bsoncxx/exception/exception.hpp>
+#include <mongocxx/exception/logic_error.hpp>
 #include <mongocxx/client.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/client.hpp>

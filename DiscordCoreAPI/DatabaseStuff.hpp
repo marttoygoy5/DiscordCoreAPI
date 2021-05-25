@@ -27,25 +27,31 @@ namespace DiscordCoreAPI {
     };
     
     struct DiscordGuildData {
-
+        string guildId;
     };
 
     struct DiscordGuildMemberData {
+        string guildMemberId;
+    };    
 
-    };
-    
     enum class DatabaseWorkloadType {
-        DISCORD_USER = 0,
-        DISCORD_GUILD = 1,
-        DISCORD_GUILD_MEMBER = 2
+        DISCORD_USER_WRITE = 0,
+        DISCORD_USER_READ = 1,
+        DISCORD_GUILD_WRITE = 2,
+        DISCORD_GUILD_READ = 3,
+        DISCORD_GUILD_MEMBER_WRITE = 4,
+        DISCORD_GUILD_MEMBER_READ = 5
     };
 
     struct DatabaseWorkload {
+        DiscordGuildData guildData;
+        DiscordUserData userData;
+        DiscordGuildMemberData guildMemberData;
         string guildId = "";
         string guildMemberId = "";
         DatabaseWorkloadType workloadType;
-    };
-    
+    };    
+
     class DatabaseManager : public mongocxx::client, public agent {        
     protected:
         friend class DiscordCoreClient;
@@ -54,17 +60,14 @@ namespace DiscordCoreAPI {
         friend class DiscordGuildMember;
         static string botUserId;
         static Scheduler* pScheduler;
-        mongocxx::instance instance{};
+        static mongocxx::instance* instance;
         mongocxx::database dataBase;
         mongocxx::collection collection;
         unbounded_buffer<DatabaseWorkload> requestBuffer;
-        unbounded_buffer<DiscordUser>discordUserSubmissionBuffer;
-        unbounded_buffer<DiscordGuild>discordGuildSubmissionBuffer;
-        unbounded_buffer<DiscordGuildMember>discordGuildMemberSubmissionBuffer;
-        unbounded_buffer<DiscordUser>discordUserOutputBuffer;
-        unbounded_buffer<DiscordGuild>discordGuildOutputBuffer;
-        unbounded_buffer<DiscordGuildMember>discordGuildMemberOutputBuffer;
-
+        unbounded_buffer<DiscordUserData>discordUserOutputBuffer;
+        unbounded_buffer<DiscordGuildData>discordGuildOutputBuffer;
+        unbounded_buffer<DiscordGuildMemberData>discordGuildMemberOutputBuffer;
+        unbounded_buffer<exception>errorBuffer;
 
         DatabaseManager()
             :client(mongocxx::uri{}),
@@ -78,6 +81,14 @@ namespace DiscordCoreAPI {
         static void initialize(string botUserIdNew, Scheduler* pSchedulerNew) {
             DatabaseManager::botUserId = botUserIdNew;
             DatabaseManager::pScheduler = pSchedulerNew;
+            DatabaseManager::instance = new mongocxx::instance();
+        }
+
+        bool getError(exception& error) {
+            if (try_receive(errorBuffer, error)) {
+                return true;
+            }
+            return false;
         }
 
         static bsoncxx::builder::basic::document convertUserDataToDBDoc(DiscordUserData discordUserData) {
@@ -110,7 +121,7 @@ namespace DiscordCoreAPI {
             userData.guildCount = docValue.view()["guildCount"].get_int32();
             userData.hoursOfDepositCooldown = docValue.view()["hoursOfDepositCooldown"].get_int32();
             userData.hoursOfDrugSaleCooldown = docValue.view()["hoursOfDrugSaleCooldown "].get_int32();
-            userData.hoursOfRobberyCooldown = docValue.view()["hoursOfRobberyCooldown"].get_double();
+            userData.hoursOfRobberyCooldown = (float)docValue.view()["hoursOfRobberyCooldown"].get_double();
             userData.prefix = (string)docValue.view()["prefix"].get_utf8().value;
             userData.userId = (string)docValue.view()["userId"].get_utf8().value;
             userData.userName = (string)docValue.view()["userName"].get_utf8().value;
@@ -129,12 +140,39 @@ namespace DiscordCoreAPI {
 
         }
 
-
         void run() {
-            DatabaseWorkload workload;
-            if (try_receive(this->requestBuffer, workload)) {
-
+            try {
+                DatabaseWorkload workload;
+                if (try_receive(this->requestBuffer, workload)) {
+                    if (workload.workloadType == DatabaseWorkloadType::DISCORD_USER_WRITE) {
+                        bsoncxx::builder::basic::document doc = DatabaseManager::convertUserDataToDBDoc(workload.userData);
+                        cout << "WriteDataToDB: " << bsoncxx::to_json(doc.view()) << endl;
+                        boost::optional<bsoncxx::document::value> result;
+                        try {
+                            result = this->collection.find_one_and_update(bsoncxx::builder::stream::document{} << "userId" << workload.userData.userId << finalize, doc.view());
+                        }
+                        catch (const mongocxx::write_exception& e) {
+                            this->collection.insert_one(doc.view());
+                            cout << "DatabaseManager::run() Error 01: " << e.what() << endl << endl;
+                        }
+                    }
+                    if (workload.workloadType == DatabaseWorkloadType::DISCORD_USER_READ) {
+                        try {
+                            auto result = this->collection.find_one(bsoncxx::builder::stream::document{} << "userId" << workload.userData.userId << finalize);
+                            DiscordUserData userData = DatabaseManager::parseUserData(result.get());
+                            send(this->discordUserOutputBuffer, userData);
+                            cout << "GetDataFromDB: " << bsoncxx::to_json(result.get().view()) << endl;
+                        }
+                        catch (bsoncxx::v_noabi::exception& e) {
+                            cout << "DatabaseManager::run() Error 02: " << e.what() << endl << endl;
+                        }
+                    }
+                }
             }
+            catch (const exception& e) {
+                send(errorBuffer, e);
+            }
+            done();
         }
 
     };
@@ -152,33 +190,51 @@ namespace DiscordCoreAPI {
         }
 
         task<void> writeDataToDB() {
-            DatabaseManager databaseManager();
-            bsoncxx::builder::basic::document doc = DatabaseManager::convertUserDataToDBDoc(this->data);
-            cout << "WriteDataToDB: " << bsoncxx::to_json(doc.view()) << endl;
-            boost::optional<bsoncxx::document::value> result;
             try {
-                result = this->pCollection->find_one_and_update(bsoncxx::builder::stream::document{} << "userId" << this->data.userId << finalize, doc.view());
+                DatabaseManager databaseManager;
+                DatabaseWorkload workload;
+                workload.workloadType = DatabaseWorkloadType::DISCORD_USER_WRITE;
+                workload.userData = this->data;
+                send(databaseManager.requestBuffer, workload);
+                databaseManager.start();
+                agent::wait(&databaseManager);
+                exception error;
+                while (databaseManager.getError(error)) {
+                    cout << "DiscordUser::writeDataToDB() Error: " << error.what() << endl << endl;
+                }
+                co_return;
             }
-            catch (const mongocxx::write_exception& e) {
-                cout << "DiscordUser::writeDataToDB() Error: " << e.what() << endl << endl;
-                this->pCollection->insert_one(doc.view());
+            catch (mongocxx::v_noabi::logic_error& e) {
+                cout << "DiscordUser::writeDataToDB() Error: " << e.what() << endl;
             }
-            co_return;
         }
 
         task<void> getDataFromDB() {
             try {
-                auto result = this->pCollection->find_one(bsoncxx::builder::stream::document{} << "_id" << this->data.userId << finalize).get();
-                cout << "GetDataFromDB: " << bsoncxx::to_json(result.view()) << endl;
+                DatabaseManager databaseManager;
+                DatabaseWorkload workload;
+                workload.workloadType = DatabaseWorkloadType::DISCORD_USER_READ;
+                workload.userData = this->data;
+                send(databaseManager.requestBuffer, workload);
+                databaseManager.start();
+                agent::wait(&databaseManager);
+                exception error;
+                while (databaseManager.getError(error)) {
+                    cout << "DiscordUser::getDataFromDB() Error 01: " << error.what() << endl << endl;
+                }
+                DiscordUserData userData;
+                try_receive(databaseManager.discordUserOutputBuffer, userData);
+                if (userData.userId != "") {
+                    this->data = userData;
+                }
+                co_return;
             }
-            catch (bsoncxx::v_noabi::exception& e) {
-                cout << "DiscordUser::getDataFromDB() Error: " << e.what() << endl << endl;
+            catch (mongocxx::v_noabi::logic_error& e) {
+                cout << "DiscordUser::getDataFromDB() Error 02: " << e.what() << endl;
             }
-            co_return;
+            
         }
 
-    protected:
-        mongocxx::collection* pCollection{ nullptr };
     };
 
     class DiscordGuild {
@@ -224,6 +280,7 @@ namespace DiscordCoreAPI {
     };
     Scheduler* DatabaseManager::pScheduler;
     string DatabaseManager::botUserId;
+    mongocxx::instance* DatabaseManager::instance;
 };
 #endif
 
