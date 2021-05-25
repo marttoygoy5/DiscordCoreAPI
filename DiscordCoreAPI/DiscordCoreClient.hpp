@@ -15,8 +15,8 @@
 #include "WebSocketStuff.hpp"
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
-#include "EventMachine.hpp"
 #include "DatabaseStuff.hpp"
+#include "EventMachine.hpp"
 
 void myPurecallHandler(void) {
 	cout << "CURRENT THREAD: " << this_thread::get_id() << endl;
@@ -40,7 +40,9 @@ namespace DiscordCoreAPI {
 		MessageManager* messages{ nullptr };
 		SlashCommandManager* slashCommands{ nullptr };
 		shared_ptr<DiscordCoreAPI::EventMachine> EventMachine{ nullptr };
-		DatabaseManager* databaseManager{ nullptr };
+		DiscordUser* discordUser{ nullptr };
+		static map<string, DiscordGuild> guildMap;
+		static map<string, DiscordGuildMember> guildMemberMap;
 		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
@@ -118,16 +120,17 @@ namespace DiscordCoreAPI {
 			GuildMemberManagerAgent::initialize();
 			ChannelManagerAgent::initialize();
 			GuildManagerAgent::initialize();
-			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->threads, this);
-			this->users = new UserManager(agentResources, this->pSystemThreads->threads, this);
-			this->messages = new MessageManager(agentResources, this->pSystemThreads->threads, this);
-			this->roles = new RoleManager(agentResources, this->pSystemThreads->threads, this);
-			this->guildMembers = new GuildMemberManager(agentResources, this->pSystemThreads->threads, this);
-			this->channels = new ChannelManager(agentResources, this->pSystemThreads->threads, this);
-			this->guilds = new GuildManager(agentResources, this->pSystemThreads->threads, (DiscordCoreClient*)this, this);
+			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->getThreads().get(), this);
+			this->users = new UserManager(agentResources, this->pSystemThreads->getThreads().get(), this);
+			this->messages = new MessageManager(agentResources, this->pSystemThreads->getThreads().get(), this);
+			this->roles = new RoleManager(agentResources, this->pSystemThreads->getThreads().get(), this);
+			this->guildMembers = new GuildMemberManager(agentResources, this->pSystemThreads->getThreads().get(), this);
+			this->channels = new ChannelManager(agentResources, this->pSystemThreads->getThreads().get(), this);
+			this->guilds = new GuildManager(agentResources, this->pSystemThreads->getThreads().get(), (DiscordCoreClient*)this, this);
 			this->currentUser = new User(this->users->fetchCurrentUserAsync().get().data, this);
-			this->slashCommands = new SlashCommandManager(agentResources, this->pSystemThreads->threads, this->currentUser->data.id);
-			this->databaseManager = new DatabaseManager(this->currentUser->data.id);
+			this->slashCommands = new SlashCommandManager(agentResources, this->pSystemThreads->getThreads().get(), this->currentUser->data.id);
+			DatabaseManager::initialize(this->currentUser->data.id, this->pSystemThreads->getThreads().get()->at(10).scheduler);
+			this->discordUser = new DiscordUser(this->currentUser->data.username, this->currentUser->data.id, this->guilds->guildCount);
 			co_await mainThread;
 		}
 

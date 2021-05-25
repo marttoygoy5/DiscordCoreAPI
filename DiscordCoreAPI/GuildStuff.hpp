@@ -264,6 +264,7 @@ namespace DiscordCoreAPI {
 			while (guildManagerAgent.getError(error)) {
 				cout << "GuildManager::inserGuildAsync() Error: " << error.what() << endl << endl;
 			}
+			this->guildCount += 1;
 			co_return;
 		}
 
@@ -271,6 +272,7 @@ namespace DiscordCoreAPI {
 
 		friend class DiscordCoreClientExt;
 		friend class DiscordCoreClient;
+		unsigned int guildCount;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		DiscordCoreClient* coreClient{ nullptr };

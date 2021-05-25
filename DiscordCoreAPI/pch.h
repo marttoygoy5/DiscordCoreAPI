@@ -10,9 +10,6 @@
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
-#ifndef _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
-#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
-#endif
 #ifndef _AMD64_
 #define _AMD64_
 #endif
@@ -21,15 +18,19 @@
 #endif
 
 #include <bsoncxx/json.hpp>
+#include <bsoncxx/exception/exception.hpp>
 #include <mongocxx/client.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/client.hpp>
 #include <mongocxx/uri.hpp>
 #include <mongocxx/instance.hpp>
+#include <mongocxx/exception/exception.hpp>
+#include <mongocxx/exception/bulk_write_exception.hpp>
+#include <mongocxx/exception/write_exception.hpp>
+#include <mongocxx/exception/exception.hpp>
 #include <bsoncxx/builder/stream/helpers.hpp>
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/builder/stream/array.hpp>
-
 
 #include </json-develop/include/nlohmann/json.hpp>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -68,6 +69,7 @@ using namespace winrt::Windows::Web::Http;
 using namespace winrt::Windows::UI::Xaml;
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::System;
+using namespace bsoncxx::builder::stream;
 using namespace concurrency;
 using namespace nlohmann;
 using namespace winrt;
