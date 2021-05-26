@@ -18,20 +18,20 @@
 #endif
 
 #include <bsoncxx/json.hpp>
-#include <bsoncxx/exception/exception.hpp>
-#include <mongocxx/exception/logic_error.hpp>
-#include <mongocxx/client.hpp>
+#include <mongocxx/uri.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/client.hpp>
-#include <mongocxx/uri.hpp>
+#include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
+#include <bsoncxx/exception/exception.hpp>
 #include <mongocxx/exception/exception.hpp>
-#include <mongocxx/exception/bulk_write_exception.hpp>
-#include <mongocxx/exception/write_exception.hpp>
 #include <mongocxx/exception/exception.hpp>
-#include <bsoncxx/builder/stream/helpers.hpp>
-#include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/builder/stream/array.hpp>
+#include <bsoncxx/builder/stream/helpers.hpp>
+#include <mongocxx/exception/logic_error.hpp>
+#include <bsoncxx/builder/stream/document.hpp>
+#include <mongocxx/exception/write_exception.hpp>
+#include <mongocxx/exception/bulk_write_exception.hpp>
 
 #include </json-develop/include/nlohmann/json.hpp>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -41,7 +41,7 @@
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/windows.storage.streams.h>
 #include <winrt/Windows.Foundation.h>
-#include "concurrent_unordered_map.h"
+#include <concurrent_unordered_map.h>
 #include <winrt/windows.ui.xaml.h>
 #include <winrt/windows.system.h>
 #include <concurrent_vector.h>
@@ -68,9 +68,9 @@ using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Web::Http;
 using namespace winrt::Windows::UI::Xaml;
+using namespace bsoncxx::builder::stream;
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::System;
-using namespace bsoncxx::builder::stream;
 using namespace concurrency;
 using namespace nlohmann;
 using namespace winrt;

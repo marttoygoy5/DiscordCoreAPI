@@ -130,7 +130,7 @@ namespace DiscordCoreAPI {
 			this->currentUser = new User(this->users->fetchCurrentUserAsync().get().data, this);
 			this->slashCommands = new SlashCommandManager(agentResources, this->pSystemThreads->getThreads().get(), this->currentUser->data.id);
 			DatabaseManager::initialize(this->currentUser->data.id, this->pSystemThreads->getThreads().get()->at(10).scheduler);
-			this->discordUser = new DiscordUser(this->currentUser->data.username, this->currentUser->data.id, this->guilds->guildCount);
+			this->discordUser = new DiscordUser(this->currentUser->data.username, this->currentUser->data.id);
 			co_await mainThread;
 		}
 
@@ -142,6 +142,8 @@ namespace DiscordCoreAPI {
 				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, (DiscordCoreClient*)this, this);
 				OnGuildCreationData guildCreationData(guild);
 				guildCreationData.guild = guild;
+				this->discordUser->data.guildCount += 1;
+				this->discordUser->writeDataToDB();
 				co_return guildCreationData;
 			}
 			catch (exception error) {

@@ -15,24 +15,225 @@ namespace DiscordCoreAPI {
     class DatabaseManager;
 
     struct DiscordUserData {
-        vector<string> botCommanders;
+        vector<string> botCommanders = { "", "", "" };
         string currencyName = "MBux";
-        int32_t guildCount;
+        int32_t guildCount = 0;
         int32_t hoursOfDrugSaleCooldown = 3;
         int32_t hoursOfDepositCooldown = 24;
-        float hoursOfRobberyCooldown = 0.1f;
+        float hoursOfRobberyCooldown = 0.100f;
         string prefix = "!";
-        string userId;
-        string userName;
+        string userId = "";
+        string userName = "";
     };
     
+    struct Card {
+        string suit;
+        string type;
+        unsigned int value;
+    };
+
+    /**
+     * Class representing a standard 52-card Deck of cards.
+     */
+    class Deck {
+        vector<Card>cards;
+
+        Deck() {
+            this->cards.resize(52);
+
+            for (unsigned int x = 0; x < 52; x += 1) {
+                this->cards[x].suit = "";
+                this->cards[x].type = "";
+                this->cards[x].value = 0;
+
+                if (trunc(x / 13) == 0) {
+                    this->cards[x].suit = ":hearts:";
+                }
+                else if (trunc(x / 13) == 1) {
+                    this->cards[x].suit = ":diamonds:";
+                }
+                else if (trunc(x / 13) == 2) {
+                    this->cards[x].suit = ":clubs:";
+                }
+                else if (trunc(x / 13) == 3) {
+                    this->cards[x].suit = ":spades:";
+                }
+
+                if (x % 13 == 0) {
+                    this->cards[x].type = "Ace";
+                    this->cards[x].value = 0;
+                }
+                else if (x % 13 == 1) {
+                    this->cards[x].type = "2";
+                    this->cards[x].value = 2;
+                }
+                else if (x % 13 == 2) {
+                    this->cards[x].type = "3";
+                    this->cards[x].value = 3;
+                }
+                else if (x % 13 == 3) {
+                    this->cards[x].type = "4";
+                    this->cards[x].value = 4;
+                }
+                else if (x % 13 == 4) {
+                    this->cards[x].type = "5";
+                    this->cards[x].value = 5;
+                }
+                else if (x % 13 == 5) {
+                    this->cards[x].type = "6";
+                    this->cards[x].value = 6;
+                }
+                else if (x % 13 == 6) {
+                    this->cards[x].type = "7";
+                    this->cards[x].value = 7;
+                }
+                else if (x % 13 == 7) {
+                    this->cards[x].type = "8";
+                    this->cards[x].value = 8;
+                }
+                else if (x % 13 == 8) {
+                    this->cards[x].type = "9";
+                    this->cards[x].value = 9;
+                }
+                else if (x % 13 == 9) {
+                    this->cards[x].type = "10";
+                    this->cards[x].value = 10;
+                }
+                else if (x % 13 == 10) {
+                    this->cards[x].type = "Jack";
+                    this->cards[x].value = 10;
+                }
+                else if (x % 13 == 11) {
+                    this->cards[x].type = "Queen";
+                    this->cards[x].value = 10;
+                }
+                else if (x % 13 == 12) {
+                    this->cards[x].type = "King";
+                    this->cards[x].value = 10;
+                }
+            }
+        }
+        /**
+         * Draws a random card from the Deck.
+         */
+        Card drawRandomcard() {
+            if (this->cards.size() == 0) {
+                Card voidCard{ .suit = "",.type = "",.value = 0 };
+                voidCard.suit = ":black_large_square:";
+                voidCard.type = "null";
+                voidCard.value = 0;
+                return voidCard;
+            }
+
+            unsigned int cardIndex = (unsigned int)trunc(rand() * this->cards.size());
+            Card currentCard = this->cards.at(cardIndex);
+            this->cards.erase(this->cards.begin() + cardIndex);
+            return currentCard;
+        }
+    };
+
+    struct RouletteBet {
+        unsigned int betAmount = 0;
+        string betOptions = "";
+        string betType = "";
+        unsigned int payoutAmount = 0;
+        string userID = "";
+        vector<string> winningNumbers = { 0 };
+    };
+
+    /**
+     * Class representnig a roulette game.
+     */
+    struct Roulette {
+        map<string, RouletteBet> rouletteBets{};
+        bool currentlySpinning = false;
+    };
+
+    /**
+     * Class representing the "largest paid out" user.
+     */
+    struct LargestPayout {
+        unsigned int amount = 0;
+        string date = "";
+        string userID = "";
+        string username = "";
+    };
+
+    /**
+     * Class representing casino statistics.
+     */
+    struct CasinoStats {
+        LargestPayout largestBlackjackPayout{};
+        unsigned int totalBlackjackPayout = 0;
+        LargestPayout largestCoinFlipPayout{};
+        unsigned int totalCoinFlipPayout = 0;
+        LargestPayout largestRoulettePayout{};
+        unsigned int totalRoulettePayout = 0;
+        LargestPayout largestSlotsPayout{};
+        unsigned int totalSlotsPayout = 0;
+        unsigned int totalPayout = 0;
+    };
+
+    /**
+     * Class representing an inventory item, for the dueling/robbing system.
+     */
+    struct InventoryItem {
+        string emoji = "";
+        unsigned int itemCost = 0;
+        string itemName = "";
+        unsigned int oppMod = 0;
+        unsigned int selfMod = 0;
+    };
+
+    /**
+     * Class representing an inventory role for the dueling/robbing sytstem
+     */
+    struct InventoryRole {
+        unsigned int roleCost = 0;;
+        string roleID = "";
+        string roleName = "";
+    };
+
+    /**
+     * Class representing the "shop" that is hosted by the bot.
+     */
+    struct Shop {
+        map<string, InventoryItem> items{};
+        map<string, InventoryRole> roles{};
+    };
+
+    /**
+     * Class representing an individual"s currency.
+     */
+    struct Currency {
+        unsigned int bank = 10000;
+        unsigned int wallet = 10000;
+        unsigned int timeOfLastDeposit = 0;
+    };
+
     struct DiscordGuildData {
-        string guildId;
+        string guildId = "";
+        string guildName;
+        unsigned int memberCount;
+        vector<Card> blackjackStack;
+        unsigned int borderColor[3] = { 254, 254, 254 };
+        CasinoStats casinoStats;
+        vector<string> gameChannelIDs;
+        Shop guildShop;
+        Roulette rouletteGame;
     };
 
     struct DiscordGuildMemberData {
-        string guildMemberId;
-    };    
+        string guildMemberId = "";
+        string displayName = "";
+        string guildId = "";
+        string userName = "";
+        Currency currency{};
+        vector<InventoryItem> items;
+        vector<InventoryRole> roles;
+        unsigned int lastTimeRobbed;
+        unsigned int lastTimeWorked;
+    };
 
     enum class DatabaseWorkloadType {
         DISCORD_USER_WRITE = 0,
@@ -52,7 +253,7 @@ namespace DiscordCoreAPI {
         DatabaseWorkloadType workloadType;
     };    
 
-    class DatabaseManager : public mongocxx::client, public agent {        
+    class DatabaseManager : public agent {        
     protected:
         friend class DiscordCoreClient;
         friend class DiscordUser;
@@ -63,6 +264,7 @@ namespace DiscordCoreAPI {
         static mongocxx::instance* instance;
         mongocxx::database dataBase;
         mongocxx::collection collection;
+        mongocxx::client client;
         unbounded_buffer<DatabaseWorkload> requestBuffer;
         unbounded_buffer<DiscordUserData>discordUserOutputBuffer;
         unbounded_buffer<DiscordGuildData>discordGuildOutputBuffer;
@@ -70,11 +272,12 @@ namespace DiscordCoreAPI {
         unbounded_buffer<exception>errorBuffer;
 
         DatabaseManager()
-            :client(mongocxx::uri{}),
-            agent(*DatabaseManager::pScheduler)
+            : agent(*DatabaseManager::pScheduler)
         {
             this->botUserId = DatabaseManager::botUserId;
-            this->dataBase = (*this)[this->botUserId];
+            cout << "BOT USER ID: " << this->botUserId << endl;
+            this->client = mongocxx::client{ mongocxx::uri{} };
+            this->dataBase = this->client[this->botUserId];
             this->collection = this->dataBase[this->botUserId];
         }
 
@@ -122,7 +325,7 @@ namespace DiscordCoreAPI {
             userData.currencyName = (string)docValue.view()["currencyName"].get_utf8().value;
             userData.guildCount = docValue.view()["guildCount"].get_int32();
             userData.hoursOfDepositCooldown = docValue.view()["hoursOfDepositCooldown"].get_int32();
-            userData.hoursOfDrugSaleCooldown = docValue.view()["hoursOfDrugSaleCooldown "].get_int32();
+            userData.hoursOfDrugSaleCooldown = docValue.view()["hoursOfDrugSaleCooldown"].get_int32();
             userData.hoursOfRobberyCooldown = (float)docValue.view()["hoursOfRobberyCooldown"].get_double();
             userData.prefix = (string)docValue.view()["prefix"].get_utf8().value;
             userData.userId = (string)docValue.view()["userId"].get_utf8().value;
@@ -152,18 +355,26 @@ namespace DiscordCoreAPI {
                         boost::optional<bsoncxx::document::value> result;
                         try {
                             result = this->collection.find_one_and_update(bsoncxx::builder::stream::document{} << "userId" << workload.userData.userId << finalize, doc.view());
+                            if (!result) {
+                                this->collection.insert_one(doc.view());
+                            }
                         }
                         catch (const mongocxx::write_exception& e) {
-                            this->collection.insert_one(doc.view());
                             cout << "DatabaseManager::run() Error 01: " << e.what() << endl << endl;
                         }
                     }
                     if (workload.workloadType == DatabaseWorkloadType::DISCORD_USER_READ) {
                         try {
                             auto result = this->collection.find_one(bsoncxx::builder::stream::document{} << "userId" << workload.userData.userId << finalize);
-                            DiscordUserData userData = DatabaseManager::parseUserData(result.get());
-                            send(this->discordUserOutputBuffer, userData);
-                            //cout << "GetDataFromDB: " << bsoncxx::to_json(result.get().view()) << endl;
+                            if (result) {
+                                DiscordUserData userData = DatabaseManager::parseUserData(result.get());
+                                send(this->discordUserOutputBuffer, userData);
+                            }
+                            else {
+                                DiscordUserData userData;
+                                send(this->discordUserOutputBuffer, userData);
+                            }
+                            cout << "GetDataFromDB: " << bsoncxx::to_json(result.get().view()) << endl;
                         }
                         catch (bsoncxx::v_noabi::exception& e) {
                             cout << "DatabaseManager::run() Error 02: " << e.what() << endl << endl;
@@ -182,12 +393,10 @@ namespace DiscordCoreAPI {
     class DiscordUser {
     public:
         DiscordUserData data;
-
-        DiscordUser(string userNameNew, string userIdNew, unsigned int guildCountNew) {
+        DiscordUser() = delete;
+        DiscordUser(string userNameNew, string userIdNew) {
             this->data.userId = userIdNew;
             this->data.userName = userNameNew;
-            this->data.guildCount = guildCountNew;
-            this->writeDataToDB().get();
             this->getDataFromDB().get();
         }
 
