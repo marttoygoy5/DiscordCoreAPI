@@ -175,10 +175,6 @@ namespace DiscordCoreInternal {
 			return;
 		}
 
-		void terminate() {
-			done();
-		}
-
 		~WebSocketConnectionAgent() {
 			this->cleanup();
 		}
@@ -214,7 +210,7 @@ namespace DiscordCoreInternal {
 		}
 
 		void cleanup() {
-			this->terminate();
+			done();
 
 			if (this->messageWriter != nullptr) {
 				this->messageWriter.DetachStream();
@@ -252,7 +248,12 @@ namespace DiscordCoreInternal {
 				this->messageWriter.UnicodeEncoding(UnicodeEncoding::Utf8);
 				this->closedToken = this->webSocket.Closed({ this, &WebSocketConnectionAgent::onClosed });
 				this->messageReceivedToken = this->webSocket.MessageReceived({ this, &WebSocketConnectionAgent::onMessageReceived });
-				this->webSocket.ConnectAsync(Uri(this->socketPath)).get();
+				if (this->socketPath != L"") {
+					this->webSocket.ConnectAsync(Uri(this->socketPath)).get();
+				}
+				else {
+					throw "MISSING THE SOCKETPATH!";
+				}
 			}
 			catch (hresult result) {
 				cout << result.value << endl;

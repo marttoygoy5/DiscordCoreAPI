@@ -178,8 +178,8 @@ namespace DiscordCoreAPI {
     };
 
     struct Shop {
-        map<string, InventoryItem> items{};
-        map<string, InventoryRole> roles{};
+        vector<InventoryItem> items{};
+        vector<InventoryRole> roles{};
     };
 
     struct Currency {
@@ -326,34 +326,52 @@ namespace DiscordCoreAPI {
             try {
                 bsoncxx::builder::basic::document buildDoc;
                 using bsoncxx::builder::basic::kvp;
-                buildDoc.append(kvp("guildId", discordGuildData.guildId),
-                    kvp("_id", discordGuildData.guildId),
-                    kvp("guildName", discordGuildData.guildName),
-                    kvp("blackjackStack",
-                        [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
-                            for (auto& value : discordGuildData.blackjackStack) {
-                                subArray.append([value](bsoncxx::builder::basic::sub_document subDocument) {
-
-                                    subDocument.append(kvp("suit", value.suit),
-                                        kvp("type", value.type),
-                                        kvp("value", bsoncxx::types::b_int32(value.value)));
+                buildDoc.append(kvp("guildId", discordGuildData.guildId));
+                buildDoc.append(kvp("_id", discordGuildData.guildId));
+                buildDoc.append(kvp("guildName", discordGuildData.guildName));
+                buildDoc.append(kvp("blackjackStack",
+                    [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
+                        for (auto& value : discordGuildData.blackjackStack) {
+                            subArray.append([value](bsoncxx::builder::basic::sub_document subDocument) {
+                                subDocument.append(kvp("suit", value.suit),
+                                    kvp("type", value.type),
+                                    kvp("value", bsoncxx::types::b_int32(value.value)));
+                                });
+                        }
+                    }));
+                buildDoc.append(kvp("memberCount", bsoncxx::types::b_int32(discordGuildData.memberCount)));
+                buildDoc.append(kvp("borderColor", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
+                    for (auto& value : discordGuildData.borderColor) {
+                        subArray.append(bsoncxx::types::b_int32(value));
+                    }
+                    }));
+                buildDoc.append(kvp("gameChannelIds", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
+                    for (auto& value : discordGuildData.gameChannelIds) {
+                        subArray.append(value);
+                    }
+                    }));
+                buildDoc.append(kvp("guildShop", [discordGuildData](bsoncxx::builder::basic::sub_document subDocument) {
+                    subDocument.append(kvp("items", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
+                        for (const auto& value : discordGuildData.guildShop.items) {
+                            subArray.append([value](bsoncxx::builder::basic::sub_document subDocument2) {
+                                subDocument2.append(kvp("itemCost", bsoncxx::types::b_int32(value.itemCost)));
+                                subDocument2.append(kvp("itemName", value.itemName));
+                                subDocument2.append(kvp("emoji", value.emoji));
+                                subDocument2.append(kvp("selfMod", bsoncxx::types::b_int32(value.selfMod)));
+                                subDocument2.append(kvp("oppMod", bsoncxx::types::b_int32(value.oppMod)));
+                                });
+                        }
+                        })),
+                        subDocument.append(kvp("roles", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
+                            for (const auto& value : discordGuildData.guildShop.roles) {
+                                subArray.append([value](bsoncxx::builder::basic::sub_document subDocument2) {
+                                    subDocument2.append(kvp("roleId", value.roleId));
+                                    subDocument2.append(kvp("roleName", value.roleName));
+                                    subDocument2.append(kvp("roleCost", bsoncxx::types::b_int32(value.roleCost)));
                                     });
-
-                            };
-                        }),
-                    kvp("memberCount", bsoncxx::types::b_int32(discordGuildData.memberCount)),
-                            kvp("borderColor", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
-                            for (auto& value : discordGuildData.borderColor) {
-                                subArray.append(bsoncxx::types::b_int32(value));
                             }
-                                }),
-                            kvp("gameChannelIds", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
-                                    for (auto& value : discordGuildData.gameChannelIds) {
-                                        subArray.append(value);
-                                    }
-                                })
-                                    );
-
+                            }));
+                    }));
                 return buildDoc;
             }
             catch (bsoncxx::v_noabi::exception& e) {
@@ -387,6 +405,27 @@ namespace DiscordCoreAPI {
                 for (auto& value : docValue.view()["gameChannelIds"].get_array().value) {
                     guildData.gameChannelIds.push_back(value.get_utf8().value.to_string());
                 }
+                if  (docValue.view()["guildShop"].get_document().value["items"].get_array().value.find(0) != docValue.view()["guildShop"].get_document().value["items"].get_array().value.end()){
+                    for (auto& value : docValue.view()["guildShop"].get_document().value["items"].get_array().value) {
+                        InventoryItem item;
+                        item.emoji = value["emoji"].get_utf8().value.to_string();
+                        item.itemCost = value["itemCost"].get_int32().value;
+                        item.itemName = value["itemName"].get_utf8().value.to_string();
+                        item.oppMod = value["oppMod"].get_int32().value;
+                        item.selfMod = value["selfMod"].get_int32().value;
+                        guildData.guildShop.items.push_back(item);
+                    }
+                }
+                if (docValue.view()["guildShop"].get_document().value["roles"].get_array().value.find(0) != docValue.view()["guildShop"].get_document().value["items"].get_array().value.end()) {
+                    for (auto& value : docValue.view()["guildShop"].get_document().value["roles"].get_array().value) {
+                        InventoryRole role;
+                        role.roleCost = value["roleCost"].get_int32().value;
+                        role.roleId = value["roleId"].get_utf8().value.to_string();
+                        role.roleName = value["roleName"].get_utf8().value.to_string();
+                        guildData.guildShop.roles.push_back(role);
+                    }
+                }
+                
                 
                 return guildData;
             }
@@ -405,6 +444,8 @@ namespace DiscordCoreAPI {
                 buildDoc.append(kvp("displayName", discordGuildMemberData.displayName));
                 buildDoc.append(kvp("guildMemberId", discordGuildMemberData.guildMemberId));
                 buildDoc.append(kvp("userName", discordGuildMemberData.userName));
+                buildDoc.append(kvp("lastTimeRobbed", bsoncxx::types::b_int32(discordGuildMemberData.lastTimeRobbed)));
+                buildDoc.append(kvp("lastTimeWorked", bsoncxx::types::b_int32(discordGuildMemberData.lastTimeWorked)));
                 buildDoc.append(kvp("currency", [discordGuildMemberData](bsoncxx::builder::basic::sub_document subDocument) {
                     subDocument.append(kvp("bank", bsoncxx::types::b_int32(discordGuildMemberData.currency.bank)),
                         kvp("wallet", bsoncxx::types::b_int32(discordGuildMemberData.currency.wallet)),
@@ -450,15 +491,11 @@ namespace DiscordCoreAPI {
                 guildMemberData.globalId = docValue.view()["globalId"].get_utf8().value.to_string();
                 guildMemberData.guildMemberId = docValue.view()["guildMemberId"].get_utf8().value.to_string();
                 guildMemberData.userName = docValue.view()["userName"].get_utf8().value.to_string();
-                if (docValue.view()["currency"].get_document().value.find("bank")!= docValue.view()["currency"].get_document().view().end()) {
-                    guildMemberData.currency.bank = docValue.view()["currency"].get_document().value["bank"].get_int32().value;
-                }
-                if (docValue.view()["currency"].get_document().value.find("wallet") != docValue.view()["currency"].get_document().view().end()) {
-                    guildMemberData.currency.bank = docValue.view()["currency"].get_document().value["wallet"].get_int32().value;
-                }
-                if (docValue.view()["currency"].get_document().value.find("timeOfLastDeposit") != docValue.view()["currency"].get_document().view().end()) {
-                    guildMemberData.currency.bank = docValue.view()["currency"].get_document().value["timeOfLastDeposit"].get_int32().value;
-                }
+                guildMemberData.lastTimeWorked = docValue.view()["lastTimeWorked"].get_int32().value;
+                guildMemberData.lastTimeRobbed = docValue.view()["lastTimeRobbed"].get_int32().value;
+                guildMemberData.currency.bank = docValue.view()["currency"].get_document().value["bank"].get_int32().value;
+                guildMemberData.currency.wallet = docValue.view()["currency"].get_document().value["wallet"].get_int32().value;
+                guildMemberData.currency.timeOfLastDeposit = docValue.view()["currency"].get_document().value["timeOfLastDeposit"].get_int32().value;
                 if(docValue.view()["items"].get_array().value.find(0)!=docValue.view()["items"].get_array().value.end()){
                     for (auto& value : docValue.view()["items"].get_array().value) {
                         InventoryItem item;
@@ -468,9 +505,17 @@ namespace DiscordCoreAPI {
                         item.oppMod = value["oppMod"].get_int32().value;
                         item.selfMod = value["selfMod"].get_int32().value;
                         guildMemberData.items.insert(make_pair(item.itemName, item));
-                    }                    
+                    }
                 }
-
+                if (docValue.view()["roles"].get_array().value.find(0) != docValue.view()["roles"].get_array().value.end()) {
+                    for (auto& value : docValue.view()["roles"].get_array().value) {
+                        InventoryRole role;
+                        role.roleCost = value["roleCost"].get_int32().value;
+                        role.roleId = value["roleId"].get_utf8().value.to_string();
+                        role.roleName = value["roleName"].get_utf8().value.to_string();
+                        guildMemberData.roles.insert(make_pair(role.roleName, role));
+                    }
+                }
                 return guildMemberData;
             }
             catch (bsoncxx::v_noabi::exception& e) {
@@ -700,12 +745,12 @@ namespace DiscordCoreAPI {
                 agent::wait(&databaseManager);
                 exception error;
                 while (databaseManager.getError(error)) {
-                    cout << "DiscordGuildMember::writeDataToDB() Error: " << error.what() << endl << endl;
+                    cout << "DiscordGuildMember::writeDataToDB() Error 01: " << error.what() << endl << endl;
                 }
                 co_return;
             }
             catch (mongocxx::v_noabi::logic_error& e) {
-                cout << "DiscordGuildMember::writeDataToDB() Error: " << e.what() << endl << endl;
+                cout << "DiscordGuildMember::writeDataToDB() Error 02: " << e.what() << endl << endl;
             }
         }
 

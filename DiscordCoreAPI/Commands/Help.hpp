@@ -31,7 +31,9 @@ namespace DiscordCoreAPI {
 				GuildMember guildMember = newArgs->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->message.data.author.id }).get();
 				vector<Role> roles = newArgs->coreClient->roles->getGuildMemberRolesAsync({ .guildId = args->message.data.guildId, .guildMember = guildMember }).get();
 				DiscordGuildMember guildMemberNew(guildMember.data);
-				args->coreClient->slashCommands->displayGlobalApplicationCommandsAsync().get();
+				guildMemberNew.data.currency.wallet = 1111444;
+				guildMemberNew.writeDataToDB();
+				//args->coreClient->slashCommands->displayGlobalApplicationCommandsAsync().get();
 				/*
 				args->coreClient->slashCommands->deleteGlobalApplicationCommand({ .applicationId = args->coreClient->currentUser->data.id, .name = "testname" }).get();
 				

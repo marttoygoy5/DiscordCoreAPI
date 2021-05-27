@@ -89,7 +89,6 @@ namespace DiscordCoreAPI {
 		void terminate() {
 			this->doWeQuit = true;
 			this->pWebSocketReceiverAgent->terminate();
-			this->pWebSocketConnectionAgent->terminate();
 		}
 
 	protected:
@@ -163,10 +162,6 @@ namespace DiscordCoreAPI {
 				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, (DiscordCoreClient*)this, this);
 				DiscordGuild discordGuild(guild.data);
 				this->guildMap.insert(make_pair(guild.data.id, discordGuild));
-				Card card;
-				card.suit = "Diamonds";
-				card.value = 12;
-				//discordGuild.data.blackjackStack.push_back(card);
 				discordGuild.writeDataToDB();
 				OnGuildCreationData guildCreationData(guild);
 				guildCreationData.guild = guild;
