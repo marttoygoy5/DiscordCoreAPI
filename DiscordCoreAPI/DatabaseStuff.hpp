@@ -135,7 +135,7 @@ namespace DiscordCoreAPI {
         string betOptions = "";
         string betType = "";
         unsigned int payoutAmount = 0;
-        string userID = "";
+        string userId = "";
         vector<string> winningNumbers = { 0 };
     };
 
@@ -147,7 +147,7 @@ namespace DiscordCoreAPI {
     struct LargestPayout {
         unsigned int amount = 0;
         string date = "";
-        string userID = "";
+        string userId = "";
         string username = "";
     };
 
@@ -172,8 +172,8 @@ namespace DiscordCoreAPI {
     };
 
     struct InventoryRole {
-        unsigned int roleCost = 0;;
-        string roleID = "";
+        unsigned int roleCost = 0;
+        string roleId = "";
         string roleName = "";
     };
 
@@ -195,7 +195,7 @@ namespace DiscordCoreAPI {
         vector<Card> blackjackStack{};
         unsigned int borderColor[3] = { 254, 254, 254 };
         CasinoStats casinoStats{};
-        vector<string> gameChannelIDs{};
+        vector<string> gameChannelIds{};
         Shop guildShop{};
         Roulette rouletteGame{};
     };
@@ -347,8 +347,8 @@ namespace DiscordCoreAPI {
                                 subArray.append(bsoncxx::types::b_int32(value));
                             }
                                 }),
-                            kvp("gameChannelIDs", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
-                                    for (auto& value : discordGuildData.gameChannelIDs) {
+                            kvp("gameChannelIds", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
+                                    for (auto& value : discordGuildData.gameChannelIds) {
                                         subArray.append(value);
                                     }
                                 })
@@ -367,7 +367,6 @@ namespace DiscordCoreAPI {
                 guildData.guildId = docValue.view()["guildId"].get_utf8().value.to_string();
                 guildData.guildName = docValue.view()["guildName"].get_utf8().value.to_string();
                 guildData.memberCount = docValue.view()["memberCount"].get_int32().value;
-                
                 for (auto& value : docValue.view()["blackjackStack"].get_array().value) {
                     Card blackjackCard;
                     if (value.get_document().view().find("suit") != value.get_document().view().end()){
@@ -385,8 +384,8 @@ namespace DiscordCoreAPI {
                     guildData.borderColor[x] = docValue.view()["borderColor"].get_array().value[x].get_int32().value;
                 }
                 
-                for (auto& value : docValue.view()["gameChannelIDs"].get_array().value) {
-                    guildData.gameChannelIDs.push_back(value.get_utf8().value.to_string());
+                for (auto& value : docValue.view()["gameChannelIds"].get_array().value) {
+                    guildData.gameChannelIds.push_back(value.get_utf8().value.to_string());
                 }
                 
                 return guildData;
@@ -406,7 +405,36 @@ namespace DiscordCoreAPI {
                 buildDoc.append(kvp("displayName", discordGuildMemberData.displayName));
                 buildDoc.append(kvp("guildMemberId", discordGuildMemberData.guildMemberId));
                 buildDoc.append(kvp("userName", discordGuildMemberData.userName));
-                
+                buildDoc.append(kvp("currency", [discordGuildMemberData](bsoncxx::builder::basic::sub_document subDocument) {
+                    subDocument.append(kvp("bank", bsoncxx::types::b_int32(discordGuildMemberData.currency.bank)),
+                        kvp("wallet", bsoncxx::types::b_int32(discordGuildMemberData.currency.wallet)),
+                        kvp("timeOfLastDeposit", bsoncxx::types::b_int32(discordGuildMemberData.currency.timeOfLastDeposit)));
+                    }));
+                buildDoc.append(kvp("items", [discordGuildMemberData](bsoncxx::builder::basic::sub_array subArray) {
+                    for (auto& [key, value] : discordGuildMemberData.items) {
+                        subArray.append([value](bsoncxx::builder::basic::sub_document subDocument) {
+                            subDocument.append(kvp("itemCost", bsoncxx::types::b_int32(value.itemCost)),
+                                kvp("itemName", value.itemName),
+                                kvp("selfMod", bsoncxx::types::b_int32(value.selfMod)),
+                                kvp("oppMod", bsoncxx::types::b_int32(value.oppMod)),
+                                kvp("emoji", value.emoji));
+
+                            });
+                    }
+
+                    })),
+                    buildDoc.append(kvp("roles", [discordGuildMemberData](bsoncxx::builder::basic::sub_array subArray) {
+                        for (auto& [key, value] : discordGuildMemberData.roles) {
+                            subArray.append([value](bsoncxx::builder::basic::sub_document subDocument) {
+                                subDocument.append(kvp("roleCost", bsoncxx::types::b_int32(value.roleCost)),
+                                    kvp("roleName", value.roleName),
+                                    kvp("roleId", value.roleId));
+
+                                });
+                        }
+
+                        }));
+
                 return buildDoc;
             }
             catch (bsoncxx::v_noabi::exception& e) {
@@ -422,6 +450,26 @@ namespace DiscordCoreAPI {
                 guildMemberData.globalId = docValue.view()["globalId"].get_utf8().value.to_string();
                 guildMemberData.guildMemberId = docValue.view()["guildMemberId"].get_utf8().value.to_string();
                 guildMemberData.userName = docValue.view()["userName"].get_utf8().value.to_string();
+                if (docValue.view()["currency"].get_document().value.find("bank")!= docValue.view()["currency"].get_document().view().end()) {
+                    guildMemberData.currency.bank = docValue.view()["currency"].get_document().value["bank"].get_int32().value;
+                }
+                if (docValue.view()["currency"].get_document().value.find("wallet") != docValue.view()["currency"].get_document().view().end()) {
+                    guildMemberData.currency.bank = docValue.view()["currency"].get_document().value["wallet"].get_int32().value;
+                }
+                if (docValue.view()["currency"].get_document().value.find("timeOfLastDeposit") != docValue.view()["currency"].get_document().view().end()) {
+                    guildMemberData.currency.bank = docValue.view()["currency"].get_document().value["timeOfLastDeposit"].get_int32().value;
+                }
+                if(docValue.view()["items"].get_array().value.find(0)!=docValue.view()["items"].get_array().value.end()){
+                    for (auto& value : docValue.view()["items"].get_array().value) {
+                        InventoryItem item;
+                        item.emoji = value["emoji"].get_utf8().value.to_string();
+                        item.itemName = value["itemName"].get_utf8().value.to_string();
+                        item.itemCost = value["itemCost"].get_int32().value;
+                        item.oppMod = value["oppMod"].get_int32().value;
+                        item.selfMod = value["selfMod"].get_int32().value;
+                        guildMemberData.items.insert(make_pair(item.itemName, item));
+                    }                    
+                }
 
                 return guildMemberData;
             }
@@ -695,3 +743,4 @@ namespace DiscordCoreAPI {
     mongocxx::client DatabaseManager::client;
 };
 #endif
+

@@ -65,6 +65,16 @@ namespace DiscordCoreAPI {
 					cout << guildMemberData.user.id << endl;
 					DiscordGuildMember discordGuildMember(guildMemberData);
 					this->coreClientBase->guildMemberMap.insert(make_pair(guildMemberData.guildId + guildMemberData.user.id, discordGuildMember));
+					InventoryItem item;
+					item.emoji = ":rock:";
+					item.itemCost = 3233;
+					item.itemName = "TEST ITEM";
+					InventoryRole role;
+					role.roleCost = 233;
+					role.roleId = "344554646434545334";
+					role.roleName = "TEST ROLE";
+					discordGuildMember.data.roles.insert(make_pair(role.roleName, role));
+					discordGuildMember.data.items.insert(make_pair(item.itemName, item));
 					discordGuildMember.writeDataToDB();
 					GuildMember guildMember(guildMemberData, this->coreClient);
 					this->coreClientBase->guildMembers->insertGuildMemberAsync(guildMember).get();
