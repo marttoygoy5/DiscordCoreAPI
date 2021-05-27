@@ -275,12 +275,15 @@ namespace DiscordCoreInternal {
 			cout << message << endl;
 
 			// Buffer any data we want to send.
-			this->messageWriter.WriteString(to_hstring(message));
-
+			if (this->messageWriter != nullptr) {
+				this->messageWriter.WriteString(to_hstring(message));
+			}
+			
 			try {
 				// Send the data as one complete message.
-				this->messageWriter.StoreAsync().get();
-
+				if (this->messageWriter != nullptr) {
+					this->messageWriter.StoreAsync().get();
+				}
 			}
 			catch (hresult_error const& ex) {
 				wcout << ex.message().c_str() << endl;
@@ -332,6 +335,16 @@ namespace DiscordCoreInternal {
 					return;
 				}
 
+				if (payload.at("t") == "READY") {
+					string sessionIDTemp;
+					sessionIDTemp = payload.at("d").at("session_id");
+					this->sessionID = to_hstring(sessionIDTemp);
+				}
+
+				if (payload.at("op") == 1) {
+					this->sendHeartBeat();
+				}
+
 				if (payload.at("op") == 6) {
 					string resume = getResumePayload(to_string(this->botToken), to_string(this->sessionID), this->lastNumberReceived);
 					this->send(resume);
@@ -350,20 +363,6 @@ namespace DiscordCoreInternal {
 					this->connect();
 				}
 
-				if (payload.at("t") == "READY") {
-					string sessionIDTemp;
-					sessionIDTemp = payload.at("d").at("session_id");
-					this->sessionID = to_hstring(sessionIDTemp);
-				}
-
-				if (payload.at("op") == 1) {
-					this->sendHeartBeat();
-				}
-
-				if (payload.at("op") == 11) {
-					this->didWeReceiveHeartbeatAck = true;
-				}
-
 				if (payload.at("op") == 10) {
 					this->heartbeatInterval = payload.at("d").at("heartbeat_interval");
 					this->heartbeatTimer.Interval(chrono::milliseconds(this->heartbeatInterval));
@@ -372,6 +371,11 @@ namespace DiscordCoreInternal {
 					std::string identity = getIdentifyPayload(to_string(this->botToken), this->intentsValue);
 					this->send(identity);
 				}
+
+				if (payload.at("op") == 11) {
+					this->didWeReceiveHeartbeatAck = true;
+				}
+				
 				cout << "Message received from MessageWebSocket: " << to_string(message) << endl << endl;
 			}
 			catch (hresult_error const& ex) {

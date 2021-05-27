@@ -133,7 +133,7 @@ namespace DiscordCoreAPI {
 				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			else {
-				cout << "UserManagerAgent::getObjectAsyncc() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+				cout << "UserManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::UserData userData;
 			DiscordCoreInternal::parseObject(returnData.data, &userData);
@@ -160,7 +160,7 @@ namespace DiscordCoreAPI {
 				cout << "UserManagerAgent::getObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			else {
-				cout << "UserManagerAgent::getObjectAsyncc() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+				cout << "UserManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::ApplicationData applicationData;
 			DiscordCoreInternal::parseObject(returnData.data, &applicationData);

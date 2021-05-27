@@ -15,7 +15,6 @@
 #include "WebSocketStuff.hpp"
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
-#include "DatabaseStuff.hpp"
 #include "EventMachine.hpp"
 
 void myPurecallHandler(void) {
@@ -41,12 +40,34 @@ namespace DiscordCoreAPI {
 		SlashCommandManager* slashCommands{ nullptr };
 		shared_ptr<DiscordCoreAPI::EventMachine> EventMachine{ nullptr };
 		DiscordUser* discordUser{ nullptr };
-		static map<string, DiscordGuild> guildMap;
-		static map<string, DiscordGuildMember> guildMemberMap;
 		DiscordCoreClient(hstring botTokenNew)
 			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
 			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
 			this->botToken = botTokenNew;
+		}
+
+		DiscordGuild getDiscordGuild(DiscordCoreInternal::GuildData guildData) {
+			auto guildCursor = this->guildMap.find(guildData.id);
+			if (guildCursor == this->guildMap.end()) {
+				DiscordGuild discordGuild(guildData.name, guildData.id, guildData.memberCount);
+				this->guildMap.insert(make_pair(guildData.id, discordGuild));
+				return discordGuild;
+			}
+			else {
+				return (*guildCursor).second;
+			}
+		}
+
+		DiscordGuildMember getDiscordGuildMember(DiscordCoreInternal::GuildMemberData guildMemberData) {
+			auto guildMemberCursor = this->guildMemberMap.find(guildMemberData.guildId + guildMemberData.user.id);
+			if (guildMemberCursor == this->guildMemberMap.end()){
+				DiscordGuildMember discordGuildMember(guildMemberData.nick, guildMemberData.user.id, guildMemberData.user.username, guildMemberData.guildId);
+				this->guildMemberMap.insert(make_pair(guildMemberData.guildId + guildMemberData.user.id, discordGuildMember));
+				return discordGuildMember;
+			}
+			else {
+				return (*guildMemberCursor).second;
+			}
 		}
 
 		void login() {
@@ -140,6 +161,13 @@ namespace DiscordCoreAPI {
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
 				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, (DiscordCoreClient*)this, this);
+				DiscordGuild discordGuild(guild.data.name, guild.data.id, guild.data.memberCount);
+				this->guildMap.insert(make_pair(guild.data.id, discordGuild));
+				Card card;
+				card.suit = "Diamonds";
+				card.value = 12;
+				discordGuild.data.blackjackStack.push_back(card);
+				discordGuild.writeDataToDB();
 				OnGuildCreationData guildCreationData(guild);
 				guildCreationData.guild = guild;
 				this->discordUser->data.guildCount += 1;
@@ -207,5 +235,7 @@ namespace DiscordCoreAPI {
 			done();
 		}
 	};
+	map<string, DiscordGuild> DiscordCoreClient::guildMap;
+	map<string, DiscordGuildMember> DiscordCoreClient::guildMemberMap;
 }
 #endif

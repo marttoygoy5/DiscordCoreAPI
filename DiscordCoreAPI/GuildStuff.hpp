@@ -53,6 +53,7 @@ namespace DiscordCoreAPI {
 				cout << "Caching guild: " << this->data.name << endl;
 				cout << "Caching channels for guild: " << this->data.name << endl;
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
+					data.channels.at(x).guildId = this->data.id;
 					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
 					Channel channel(channelData, this->coreClient);
 					this->coreClientBase->channels->insertChannelAsync(channel).get();

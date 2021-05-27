@@ -9,6 +9,7 @@
 #define _GUILD_MEMBER_STUFF_
 
 #include "pch.h"
+#include "DatabaseStuff.hpp"
 #include "FoundationEntities.hpp"
 
 namespace DiscordCoreAPI {
@@ -25,6 +26,8 @@ namespace DiscordCoreAPI {
 		GuildMemberManager* guildMembers{ nullptr };
 		RoleManager* roles{ nullptr };
 		UserManager* users{ nullptr };
+		static map<string, DiscordGuild> guildMap;
+		static map<string, DiscordGuildMember> guildMemberMap;
 	protected:
 		friend class WebSocketConnectionAgent;
 		friend class HttpRequestAgent;
