@@ -49,7 +49,7 @@ namespace DiscordCoreAPI {
 		DiscordGuild getDiscordGuild(DiscordCoreInternal::GuildData guildData) {
 			auto guildCursor = this->guildMap.find(guildData.id);
 			if (guildCursor == this->guildMap.end()) {
-				DiscordGuild discordGuild(guildData.name, guildData.id, guildData.memberCount);
+				DiscordGuild discordGuild(guildData);
 				this->guildMap.insert(make_pair(guildData.id, discordGuild));
 				return discordGuild;
 			}
@@ -61,7 +61,7 @@ namespace DiscordCoreAPI {
 		DiscordGuildMember getDiscordGuildMember(DiscordCoreInternal::GuildMemberData guildMemberData) {
 			auto guildMemberCursor = this->guildMemberMap.find(guildMemberData.guildId + guildMemberData.user.id);
 			if (guildMemberCursor == this->guildMemberMap.end()){
-				DiscordGuildMember discordGuildMember(guildMemberData.nick, guildMemberData.user.id, guildMemberData.user.username, guildMemberData.guildId);
+				DiscordGuildMember discordGuildMember(guildMemberData);
 				this->guildMemberMap.insert(make_pair(guildMemberData.guildId + guildMemberData.user.id, discordGuildMember));
 				return discordGuildMember;
 			}
@@ -161,12 +161,12 @@ namespace DiscordCoreAPI {
 				agentResources.baseURL = this->baseURL;
 				agentResources.botToken = this->botToken;
 				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, (DiscordCoreClient*)this, this);
-				DiscordGuild discordGuild(guild.data.name, guild.data.id, guild.data.memberCount);
+				DiscordGuild discordGuild(guild.data);
 				this->guildMap.insert(make_pair(guild.data.id, discordGuild));
 				Card card;
 				card.suit = "Diamonds";
 				card.value = 12;
-				discordGuild.data.blackjackStack.push_back(card);
+				//discordGuild.data.blackjackStack.push_back(card);
 				discordGuild.writeDataToDB();
 				OnGuildCreationData guildCreationData(guild);
 				guildCreationData.guild = guild;

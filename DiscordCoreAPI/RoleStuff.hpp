@@ -344,7 +344,7 @@ namespace DiscordCoreAPI {
 			co_return newRole;
 		}
 
-		task<vector<Role>> getGuildMemberRoles(GetGuildMemberRolesData getGuildMemberRolesData) {
+		task<vector<Role>> getGuildMemberRolesAsync(GetGuildMemberRolesData getGuildMemberRolesData) {
 			apartment_context mainThread;
 			co_await resume_background();
 			vector<Role> rolesVector;

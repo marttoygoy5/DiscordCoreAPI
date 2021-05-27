@@ -62,6 +62,10 @@ namespace DiscordCoreAPI {
 				for (unsigned int x = 0; x < data.members.size(); x += 1) {
 					DiscordCoreInternal::GuildMemberData guildMemberData = data.members.at(x);
 					guildMemberData.guildId = this->data.id;
+					cout << guildMemberData.user.id << endl;
+					DiscordGuildMember discordGuildMember(guildMemberData);
+					this->coreClientBase->guildMemberMap.insert(make_pair(guildMemberData.guildId + guildMemberData.user.id, discordGuildMember));
+					discordGuildMember.writeDataToDB();
 					GuildMember guildMember(guildMemberData, this->coreClient);
 					this->coreClientBase->guildMembers->insertGuildMemberAsync(guildMember).get();
 				}
