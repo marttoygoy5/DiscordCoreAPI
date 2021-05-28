@@ -353,11 +353,11 @@ namespace DiscordCoreAPI {
 
         static bool checkForPermission(GuildMember guildMember, Channel channel, DiscordCoreInternal::Permissions permission) {
             string permissionsString = computePermissions(guildMember, channel);
-            if (stoll(permissionsString) & (__int64)permission == (__int64)permission) {
+            if ((stoll(permissionsString) & (__int64)permission) == (__int64)permission) {
                 return true;
             }
             else {
-                return false''
+                return false;
             }
         }
 
