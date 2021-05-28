@@ -235,7 +235,7 @@ namespace DiscordCoreAPI {
 							messageData.type = DiscordCoreInternal::MessageType::INTERACTION;
 							messageData.channelId = interactionIncData.channelId;
 							messageData.guildId = interactionIncData.guildId;
-							messageData.author.id = interactionIncData.userId;
+							messageData.author = this->users->getUserAsync({ .userId = interactionIncData.userId }).get().data;
 							messageData.applicationId = interactionIncData.applicationId;
 							messageData.interactionId = interactionIncData.interactionId;
 							messageData.interactionToken = interactionIncData.interactionToken;

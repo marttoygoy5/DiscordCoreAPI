@@ -136,7 +136,8 @@ namespace DiscordCoreInternal {
 				{"title", createMessageData.embed.title},
 				{"description" , createMessageData.embed.description},
 				{"fields", fields},
-				{"color",colorValue}
+				{"color",colorValue},
+					{"timestamp", createMessageData.embed.timestamp}
 		}}
 					};
 					return data.dump();
@@ -185,7 +186,8 @@ namespace DiscordCoreInternal {
 				{"title", createMessageData.embed.title},
 				{"description" , createMessageData.embed.description},
 				{"fields", fields},
-				{"color",colorValue}
+				{"color",colorValue},
+						{"timestamp", createMessageData.embed.timestamp}
 		}}
 				};
 				return data.dump();
@@ -300,7 +302,8 @@ namespace DiscordCoreInternal {
 				{"description" , editMessageData.embed.description},
 				{"title", editMessageData.embed.title},
 				{"fields", fields},
-				{"color",colorValue}
+				{"color",colorValue},
+			{"timestamp", editMessageData.embed.timestamp}
 		}}
 		};
 
@@ -456,7 +459,8 @@ namespace DiscordCoreInternal {
 			{ "description" , value.description },
 			{ "title", value.title },
 			{ "fields", fields },
-			{ "color",colorValue } } };
+			{ "color",colorValue },
+				{"timestamp", value.timestamp}} };
 
 			embedsArray.push_back(embed);
 
@@ -494,7 +498,7 @@ namespace DiscordCoreInternal {
 
 				int colorValue = value.actualColor();
 
-				json embed = { "embed",
+				json embed =
 				{ { "author", {
 			   {"icon_url", value.author.iconUrl},
 			   {"name", value.author.name},
@@ -525,7 +529,8 @@ namespace DiscordCoreInternal {
 				{ "description" , value.description },
 				{ "title", value.title },
 				{ "fields", fields },
-				{ "color",colorValue } } };
+				{ "color",colorValue },
+					{"timestamp", value.timestamp} };
 
 				embedsArray.push_back(embed);
 
@@ -546,14 +551,15 @@ namespace DiscordCoreInternal {
 				usersArray.push_back(value);
 			}
 			if (editInteractionResponseData.content == "") {
-				json data = { 
-				{"embeds", embedsArray},
-				{"allowed_mentions", {
+				json data = {
+				{ "embeds", embedsArray },
+				{ "allowed_mentions", {
 				{"parse", parseArray},
 			{"roles", rolesArray},
 			{"users", usersArray},
 			{"repliedUser", editInteractionResponseData.allowedMentions.repliedUser}
-		} } };
+		} }
+				};
 				return data.dump();
 			}
 			else {
@@ -567,9 +573,6 @@ namespace DiscordCoreInternal {
 		} } };
 				return data.dump();
 			}
-			
-
-			
 		}
 	
 

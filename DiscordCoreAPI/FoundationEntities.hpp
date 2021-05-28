@@ -116,9 +116,7 @@ namespace  DiscordCoreInternal {
             return *this;
         }
         EmbedData setTimeStamp(string timeStamp) {
-            time_t now = time(0);
-            char* dt = ctime(&now);
-            this->timestamp = dt;
+            this->timestamp = timeStamp;
             return *this;
         }
         EmbedData addField(string name, string value, bool Inline = true) {
@@ -1218,7 +1216,7 @@ namespace  DiscordCoreInternal {
     };
 
     struct EditInteractionResponseData {
-        string content;
+        string content = "";
         vector<EmbedData> embeds;
         AllowedMentionsData allowedMentions;
     };
@@ -1230,7 +1228,7 @@ namespace  DiscordCoreInternal {
         string interactionToken;
         HttpAgentResources agentResources;
         ThreadContext threadContext;
-        string content;
+        string content = "";
     };
 }
 #endif

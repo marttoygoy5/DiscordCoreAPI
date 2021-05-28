@@ -25,7 +25,7 @@ namespace DiscordCoreAPI {
 				Guild guild = args->coreClient->guilds->getGuildAsync({ args->message.data.guildId }).get();
 				DiscordGuild discordGuild = args->coreClient->getDiscordGuild(guild.data);
 
-				bool areWeInADm = areWeInADM(channel);
+				bool areWeInADm = areWeInADM(args->message, channel);
 
 				if (areWeInADm == true) {
 					return;
@@ -36,7 +36,7 @@ namespace DiscordCoreAPI {
 				if (areWeAllowed ==  false) {
 					return;
 				}
-
+				cout << getTimeAndDate() << endl;
 				unsigned long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>
 					(std::chrono::system_clock::now().time_since_epoch()).count();
 				unsigned int msPerWorkCycle = args->coreClient->discordUser->data.hoursOfDrugSaleCooldown * 60 * 60 * 1000;
@@ -49,36 +49,37 @@ namespace DiscordCoreAPI {
 
 				unsigned int lastTimeWorked = discordGuildMember.data.lastTimeWorked;
 
-				unsigned int timeDifference = currentTime - lastTimeWorked;
+				unsigned int timeDifference = (unsigned int)currentTime - lastTimeWorked;
 
 				if (timeDifference >= msPerWorkCycle) {
-					unsigned int amountEarned = trunc((rand() / RAND_MAX) * 5000);
+					unsigned int amountEarned = (unsigned int)trunc(((float)rand() / (float)RAND_MAX) * 5000.0f);
 
 					discordGuildMember.data.currency.wallet += amountEarned;
 					discordGuildMember.writeDataToDB().get();
 
 					string msgString = "";
-					msgString += "You've been busy dealing drugs... and you've earned " + amountEarned + args->coreClient->discordUser->data.currencyName + "\nNice job and watch out for cops!\nYour new wallet balance is: ";
+					msgString += "You've been busy dealing drugs... and you've earned " + to_string(amountEarned) + args->coreClient->discordUser->data.currencyName + "\nNice job and watch out for cops!\nYour new wallet balance is: ";
 					msgString += to_string(discordGuildMember.data.currency.wallet) + args->coreClient->discordUser->data.currencyName;
 					DiscordCoreInternal::EmbedData messageEmbed;
 					messageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					messageEmbed.setDescription(msgString);
 					messageEmbed.setTitle("__**Drug Dealing:**__");
-					messageEmbed.setColor(0, 254, 0);
+					messageEmbed.setColor(254, 254, 254);
+					messageEmbed.setTimeStamp(getTimeAndDate());
 					ReplyMessageData replyMessageData;
 					replyMessageData.embed = messageEmbed;
 					replyMessageData.replyingToMessageData = args->message.data;
 					args->coreClient->messages->replyAsync(replyMessageData).get();
 
-					discordGuildMember.data.lastTimeWorked = std::chrono::duration_cast<std::chrono::milliseconds>
+					discordGuildMember.data.lastTimeWorked = (unsigned int)std::chrono::duration_cast<std::chrono::milliseconds>
 						(std::chrono::system_clock::now().time_since_epoch()).count();
 					discordGuildMember.writeDataToDB().get();
 			}
 			 else {
 					unsigned int timeLeft = msPerWorkCycle - timeDifference;
-					unsigned int hoursLeft = trunc(timeLeft / msPerHour);
-					unsigned int minutesLeft = trunc((timeLeft % msPerHour) / msPerMinute);
-					unsigned int secondsLeft = trunc(((timeLeft % msPerHour) % msPerMinute) / msPerSecond);
+					unsigned int hoursLeft = (unsigned int)trunc(timeLeft / msPerHour);
+					unsigned int minutesLeft = (unsigned int)trunc((timeLeft % msPerHour) / msPerMinute);
+					unsigned int secondsLeft = (unsigned int)trunc(((timeLeft % msPerHour) % msPerMinute) / msPerSecond);
 
 					string msgString = "";
 			 if (hoursLeft > 0) {
@@ -90,23 +91,21 @@ namespace DiscordCoreAPI {
 			 else {
 				 msgString += "Sorry, but you need to wait " + to_string(secondsLeft) + " seconds before you can get paid again!";
 			 }
-			 cout << "WE;RE HERRE WE'RE HERE WE'RE HERE!" << endl;
 			 DiscordCoreInternal::EmbedData  messageEmbed;
 			 messageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 			 messageEmbed.setDescription(msgString);
 			 messageEmbed.setTitle("__**Drug Dealing:**__");
-			 messageEmbed.setColor(0, 0, 254);
+			 messageEmbed.setColor(254, 254, 254);
+			 messageEmbed.setTimeStamp(getTimeAndDate());
 			 ReplyMessageData replyMessageData;
 			 replyMessageData.embed = messageEmbed;
 			 replyMessageData.replyingToMessageData = args->message.data;
 			 args->coreClient->messages->replyAsync(replyMessageData).get();
-			 cout << "WE;RE HERRE WE'RE HERE WE'RE HERE!" << endl;
 			}
 			}
 			catch (exception& e) {
 				cout << "SellDrugs::execute() Error: " << e.what() << endl << endl;
 			}
-			
 		}
 	};
 	SellDrugs sellDrugs{};

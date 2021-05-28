@@ -44,7 +44,7 @@ namespace DiscordCoreAPI {
 	};
 
 	struct EditMessageData {
-		string content;
+		string content = "";
 		DiscordCoreInternal::EmbedData embed;
 		int flags = 0;
 		vector<DiscordCoreInternal::AttachmentData> attachments;
@@ -53,7 +53,7 @@ namespace DiscordCoreAPI {
 
 	struct CreateMessageData {
 		DiscordCoreInternal::AllowedMentionsData allowedMentions;
-		string content;
+		string content = "";
 		string channelId;
 		DiscordCoreInternal::EmbedData embed;
 		DiscordCoreInternal::MessageReferenceData messageReference;
@@ -62,7 +62,7 @@ namespace DiscordCoreAPI {
 	};
 
 	struct ReplyMessageData {
-		string content;
+		string content = "";
 		bool tts = false;
 		DiscordCoreInternal::MessageData replyingToMessageData;
 		DiscordCoreInternal::EmbedData embed;
@@ -430,8 +430,8 @@ namespace DiscordCoreAPI {
 			if (replyMessageData.replyingToMessageData.type == DiscordCoreInternal::MessageType::INTERACTION) {
 				DiscordCoreInternal::EditInteractionResponseData editInteractionResponseData;
 				editInteractionResponseData.content = replyMessageData.content;
-				if (editInteractionResponseData.embeds.size() > 0) {
-					editInteractionResponseData.embeds.at(0) = replyMessageData.embed;
+				if (replyMessageData.embed.description != ""|| replyMessageData.embed.fields.at(0).value != "") {
+					editInteractionResponseData.embeds.push_back(replyMessageData.embed);
 				}
 				editInteractionResponseData.allowedMentions = replyMessageData.allowedMentions;
 				DiscordCoreInternal::PatchInteractionResponseData dataPackage;

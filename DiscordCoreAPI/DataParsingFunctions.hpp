@@ -2370,9 +2370,19 @@ namespace DiscordCoreInternal {
             interactionIncData.interactionToken = theValue;
         }
 
-        if (jsonObjectData.at("member").at("user").contains("id") && !jsonObjectData.at("member").at("user").at("id").is_null()) {
-            string theValue = jsonObjectData.at("member").at("user").at("id");
-            interactionIncData.userId = theValue;
+        if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
+            if (jsonObjectData.at("member").contains("user")&&!jsonObjectData.at("member").at("user").is_null()) {
+                if (jsonObjectData.at("member").at("user").contains("id") && !jsonObjectData.at("member").at("user").at("id").is_null()) {
+                    string theValue = jsonObjectData.at("member").at("user").at("id");
+                    interactionIncData.userId = theValue;
+                }
+            }
+        }
+        else if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
+            if (jsonObjectData.at("user").contains("id") && !jsonObjectData.at("user").at("id").is_null()) {
+                string theValue = jsonObjectData.at("user").at("id");
+                interactionIncData.userId = theValue;
+            }
         }
 
         if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
@@ -2385,14 +2395,18 @@ namespace DiscordCoreInternal {
             interactionIncData.guildId = theValue;
         }
 
-        if (jsonObjectData.at("data").contains("name") && !jsonObjectData.at("data").at("name").is_null()) {
-            string theValue = jsonObjectData.at("data").at("name");
-            interactionIncData.commandName = theValue;
-        }
+        if (jsonObjectData.contains("data")) {
+            if (jsonObjectData.at("data").contains("name") && !jsonObjectData.at("data").at("name").is_null()) {
+                string theValue = jsonObjectData.at("data").at("name");
+                interactionIncData.commandName = theValue;
+            }
+        }        
 
-        if (jsonObjectData.at("data").contains("options") && !jsonObjectData.at("data").at("options").is_null()) {
-            json theValue = jsonObjectData.at("data").at("options");
-            interactionIncData.optionsArgs = theValue;
+        if (jsonObjectData.contains("data")) {
+            if (jsonObjectData.at("data").contains("options") && !jsonObjectData.at("data").at("options").is_null()) {
+                json theValue = jsonObjectData.at("data").at("options");
+                interactionIncData.optionsArgs = theValue;
+            }
         }
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
