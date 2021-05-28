@@ -14,7 +14,7 @@
 
 namespace DiscordCoreAPI {
     
-    class DatabaseManager;
+    class DatabaseManagerAgent;
 
     struct DiscordUserData {
         vector<string> botCommanders = { "", "", "" };
@@ -232,7 +232,7 @@ namespace DiscordCoreAPI {
         DatabaseWorkloadType workloadType;
     };    
 
-    class DatabaseManager : public agent {
+    class DatabaseManagerAgent : public agent {
     protected:
         friend class DiscordCoreClient;
         friend class DiscordUser;
@@ -250,19 +250,19 @@ namespace DiscordCoreAPI {
         unbounded_buffer<DiscordGuildMemberData>discordGuildMemberOutputBuffer;
         unbounded_buffer<exception>errorBuffer;
 
-        DatabaseManager()
-            : agent(*DatabaseManager::pScheduler)
+        DatabaseManagerAgent()
+            : agent(*DatabaseManagerAgent::pScheduler)
         {
-            this->botUserId = DatabaseManager::botUserId;
+            this->botUserId = DatabaseManagerAgent::botUserId;
         }
 
         static void initialize(string botUserIdNew, Scheduler* pSchedulerNew) {
-            DatabaseManager::botUserId = botUserIdNew;
-            DatabaseManager::pScheduler = pSchedulerNew;
-            DatabaseManager::instance = new mongocxx::instance();
-            DatabaseManager::client = mongocxx::client{ mongocxx::uri{} };
-            DatabaseManager::dataBase = DatabaseManager::client[DatabaseManager::botUserId];
-            DatabaseManager::collection = DatabaseManager::dataBase[DatabaseManager::botUserId];
+            DatabaseManagerAgent::botUserId = botUserIdNew;
+            DatabaseManagerAgent::pScheduler = pSchedulerNew;
+            DatabaseManagerAgent::instance = new mongocxx::instance();
+            DatabaseManagerAgent::client = mongocxx::client{ mongocxx::uri{} };
+            DatabaseManagerAgent::dataBase = DatabaseManagerAgent::client[DatabaseManagerAgent::botUserId];
+            DatabaseManagerAgent::collection = DatabaseManagerAgent::dataBase[DatabaseManagerAgent::botUserId];
         }
 
         bool getError(exception& error) {
@@ -277,23 +277,23 @@ namespace DiscordCoreAPI {
                 bsoncxx::builder::basic::document buildDoc;
                 using bsoncxx::builder::basic::kvp;
                 buildDoc.append(kvp("_id", discordUserData.userId));
-                buildDoc.append(kvp("currencyName", discordUserData.currencyName));
+                buildDoc.append(kvp("userId", discordUserData.userId));
+                buildDoc.append(kvp("userName", discordUserData.userName));
                 buildDoc.append(kvp("guildCount", bsoncxx::types::b_int32(discordUserData.guildCount)));
+                buildDoc.append(kvp("currencyName", discordUserData.currencyName));
+                buildDoc.append(kvp("prefix", discordUserData.prefix));
                 buildDoc.append(kvp("hoursOfDepositCooldown", bsoncxx::types::b_int32(discordUserData.hoursOfDepositCooldown)));
                 buildDoc.append(kvp("hoursOfDrugSaleCooldown", bsoncxx::types::b_int32(discordUserData.hoursOfDrugSaleCooldown)));
                 buildDoc.append(kvp("hoursOfRobberyCooldown", bsoncxx::types::b_double(discordUserData.hoursOfRobberyCooldown)));
-                buildDoc.append(kvp("userId", discordUserData.userId));
-                buildDoc.append(kvp("userName", discordUserData.userName));
-                buildDoc.append(kvp("prefix", discordUserData.prefix));
-                bsoncxx::builder::basic::array newArray;
-                for (unsigned int x = 0; x < discordUserData.botCommanders.size(); x += 1) {
-                    newArray.append(discordUserData.botCommanders.at(x));
-                }
-                buildDoc.append(kvp("botCommanders", newArray));
+                buildDoc.append(kvp("botCommanders", [discordUserData](bsoncxx::builder::basic::sub_array subArray) {
+                    for (auto& value : discordUserData.botCommanders) {
+                        subArray.append(value);
+                    }
+                    }));
                 return buildDoc;
             }
             catch (bsoncxx::v_noabi::exception& e) {
-                cout << "DatabaseManager::convertUserDataToDBDoc() Error: " << e.what() << endl;
+                cout << "DatabaseManagerAgent::convertUserDataToDBDoc() Error: " << e.what() << endl;
             }
 
         }
@@ -301,6 +301,7 @@ namespace DiscordCoreAPI {
         static DiscordUserData parseUserData(bsoncxx::document::value docValue) {
             try {
                 DiscordUserData userData;
+                userData.userName = docValue.view()["userName"].get_utf8().value.to_string();
                 userData.currencyName = docValue.view()["currencyName"].get_utf8().value.to_string();
                 userData.guildCount = docValue.view()["guildCount"].get_int32();
                 userData.hoursOfDepositCooldown = docValue.view()["hoursOfDepositCooldown"].get_int32();
@@ -308,7 +309,6 @@ namespace DiscordCoreAPI {
                 userData.hoursOfRobberyCooldown = (float)docValue.view()["hoursOfRobberyCooldown"].get_double();
                 userData.prefix = docValue.view()["prefix"].get_utf8().value.to_string();
                 userData.userId = docValue.view()["userId"].get_utf8().value.to_string();
-                userData.userName = docValue.view()["userName"].get_utf8().value.to_string();
                 auto botCommandersArray = docValue.view()["botCommanders"].get_array();
                 vector<string> newVector;
                 for (const auto& value : botCommandersArray.value) {
@@ -318,7 +318,7 @@ namespace DiscordCoreAPI {
                 return userData;
             }
             catch (bsoncxx::v_noabi::exception& e) {
-                cout << "DatabaseManager::parseUserData() Error: " << e.what() << endl;
+                cout << "DatabaseManagerAgent::parseUserData() Error: " << e.what() << endl;
             }
         }
 
@@ -326,9 +326,10 @@ namespace DiscordCoreAPI {
             try {
                 bsoncxx::builder::basic::document buildDoc;
                 using bsoncxx::builder::basic::kvp;
-                buildDoc.append(kvp("guildId", discordGuildData.guildId));
                 buildDoc.append(kvp("_id", discordGuildData.guildId));
+                buildDoc.append(kvp("guildId", discordGuildData.guildId));
                 buildDoc.append(kvp("guildName", discordGuildData.guildName));
+                buildDoc.append(kvp("memberCount", bsoncxx::types::b_int32(discordGuildData.memberCount)));
                 buildDoc.append(kvp("blackjackStack",
                     [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
                         for (auto& value : discordGuildData.blackjackStack) {
@@ -339,7 +340,6 @@ namespace DiscordCoreAPI {
                                 });
                         }
                     }));
-                buildDoc.append(kvp("memberCount", bsoncxx::types::b_int32(discordGuildData.memberCount)));
                 buildDoc.append(kvp("borderColor", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
                     for (auto& value : discordGuildData.borderColor) {
                         subArray.append(bsoncxx::types::b_int32(value));
@@ -354,19 +354,19 @@ namespace DiscordCoreAPI {
                     subDocument.append(kvp("items", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
                         for (const auto& value : discordGuildData.guildShop.items) {
                             subArray.append([value](bsoncxx::builder::basic::sub_document subDocument2) {
-                                subDocument2.append(kvp("itemCost", bsoncxx::types::b_int32(value.itemCost)));
-                                subDocument2.append(kvp("itemName", value.itemName));
-                                subDocument2.append(kvp("emoji", value.emoji));
-                                subDocument2.append(kvp("selfMod", bsoncxx::types::b_int32(value.selfMod)));
-                                subDocument2.append(kvp("oppMod", bsoncxx::types::b_int32(value.oppMod)));
+                                subDocument2.append(kvp("itemName", value.itemName),
+                                    kvp("itemCost", bsoncxx::types::b_int32(value.itemCost)),
+                                    kvp("selfMod", bsoncxx::types::b_int32(value.selfMod)),
+                                    kvp("oppMod", bsoncxx::types::b_int32(value.oppMod)),
+                                    kvp("emoji", value.emoji));
                                 });
                         }
                         })),
                         subDocument.append(kvp("roles", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
                             for (const auto& value : discordGuildData.guildShop.roles) {
                                 subArray.append([value](bsoncxx::builder::basic::sub_document subDocument2) {
-                                    subDocument2.append(kvp("roleId", value.roleId));
                                     subDocument2.append(kvp("roleName", value.roleName));
+                                    subDocument2.append(kvp("roleId", value.roleId));
                                     subDocument2.append(kvp("roleCost", bsoncxx::types::b_int32(value.roleCost)));
                                     });
                             }
@@ -425,7 +425,7 @@ namespace DiscordCoreAPI {
                 return buildDoc;
             }
             catch (bsoncxx::v_noabi::exception& e) {
-                cout << "DatabaseManager::convertGuildDataToDBDoc() Error: " << e.what() << endl;
+                cout << "DatabaseManagerAgent::convertGuildDataToDBDoc() Error: " << e.what() << endl;
             }
         };
 
@@ -445,7 +445,6 @@ namespace DiscordCoreAPI {
                 for (unsigned int x = 0; x < 3; x += 1) {
                     guildData.borderColor[x] = docValue.view()["borderColor"].get_array().value[x].get_int32().value;
                 }
-                
                 for (auto& value : docValue.view()["gameChannelIds"].get_array().value) {
                     guildData.gameChannelIds.push_back(value.get_utf8().value.to_string());
                 }
@@ -502,7 +501,7 @@ namespace DiscordCoreAPI {
                 return guildData;
             }
             catch (bsoncxx::v_noabi::exception& e) {
-                cout << "DatabaseManager::parseGuildData() Error: " << e.what() << endl;
+                cout << "DatabaseManagerAgent::parseGuildData() Error: " << e.what() << endl;
             }
         };
 
@@ -510,12 +509,12 @@ namespace DiscordCoreAPI {
             try {
                 bsoncxx::builder::basic::document buildDoc;
                 using bsoncxx::builder::basic::kvp;
-                buildDoc.append(kvp("guildId", discordGuildMemberData.guildId));
                 buildDoc.append(kvp("_id", discordGuildMemberData.globalId));
-                buildDoc.append(kvp("globalId", discordGuildMemberData.globalId));
-                buildDoc.append(kvp("displayName", discordGuildMemberData.displayName));
+                buildDoc.append(kvp("guildId", discordGuildMemberData.guildId));
                 buildDoc.append(kvp("guildMemberId", discordGuildMemberData.guildMemberId));
+                buildDoc.append(kvp("globalId", discordGuildMemberData.globalId));
                 buildDoc.append(kvp("userName", discordGuildMemberData.userName));
+                buildDoc.append(kvp("displayName", discordGuildMemberData.displayName));
                 buildDoc.append(kvp("lastTimeRobbed", bsoncxx::types::b_int32(discordGuildMemberData.lastTimeRobbed)));
                 buildDoc.append(kvp("lastTimeWorked", bsoncxx::types::b_int32(discordGuildMemberData.lastTimeWorked)));
                 buildDoc.append(kvp("currency", [discordGuildMemberData](bsoncxx::builder::basic::sub_document subDocument) {
@@ -526,8 +525,8 @@ namespace DiscordCoreAPI {
                 buildDoc.append(kvp("items", [discordGuildMemberData](bsoncxx::builder::basic::sub_array subArray) {
                     for (auto& [key, value] : discordGuildMemberData.items) {
                         subArray.append([value](bsoncxx::builder::basic::sub_document subDocument) {
-                            subDocument.append(kvp("itemCost", bsoncxx::types::b_int32(value.itemCost)),
-                                kvp("itemName", value.itemName),
+                            subDocument.append(kvp("itemName", value.itemName),
+                                kvp("itemCost", bsoncxx::types::b_int32(value.itemCost)),
                                 kvp("selfMod", bsoncxx::types::b_int32(value.selfMod)),
                                 kvp("oppMod", bsoncxx::types::b_int32(value.oppMod)),
                                 kvp("emoji", value.emoji));
@@ -539,19 +538,17 @@ namespace DiscordCoreAPI {
                     buildDoc.append(kvp("roles", [discordGuildMemberData](bsoncxx::builder::basic::sub_array subArray) {
                         for (auto& [key, value] : discordGuildMemberData.roles) {
                             subArray.append([value](bsoncxx::builder::basic::sub_document subDocument) {
-                                subDocument.append(kvp("roleCost", bsoncxx::types::b_int32(value.roleCost)),
-                                    kvp("roleName", value.roleName),
-                                    kvp("roleId", value.roleId));
-
+                                subDocument.append(kvp("roleName", value.roleName),
+                                    kvp("roleId", value.roleId),
+                                    kvp("roleCost", bsoncxx::types::b_int32(value.roleCost)));
                                 });
                         }
-
                         }));
 
                 return buildDoc;
             }
             catch (bsoncxx::v_noabi::exception& e) {
-                cout << "DatabaseManager::convertGuildDataToDBDoc() Error: " << e.what() << endl;
+                cout << "DatabaseManagerAgent::convertGuildDataToDBDoc() Error: " << e.what() << endl;
             }
         };
 
@@ -587,7 +584,7 @@ namespace DiscordCoreAPI {
                 return guildMemberData;
             }
             catch (bsoncxx::v_noabi::exception& e) {
-                cout << "DatabaseManager::parseGuildData() Error: " << e.what() << endl;
+                cout << "DatabaseManagerAgent::parseGuildData() Error: " << e.what() << endl;
             }
         };
 
@@ -596,20 +593,23 @@ namespace DiscordCoreAPI {
                 DatabaseWorkload workload;
                 if (try_receive(this->requestBuffer, workload)) {
                     if (workload.workloadType == DatabaseWorkloadType::DISCORD_USER_WRITE) {
-                        bsoncxx::builder::basic::document doc = DatabaseManager::convertUserDataToDBDoc(workload.userData);
-                        auto result = DatabaseManager::collection.find_one_and_update(bsoncxx::builder::stream::document{} << "userId" << workload.userData.userId << finalize, doc.view());
-                        cout << "USER WRITE: " << bsoncxx::to_json(doc.view()) << endl;
+                        bsoncxx::builder::basic::document doc = DatabaseManagerAgent::convertUserDataToDBDoc(workload.userData);
+                        mongocxx::v_noabi::options::find_one_and_update options;
+                        options.return_document(mongocxx::v_noabi::options::return_document::k_after);
+                        auto result = DatabaseManagerAgent::collection.find_one_and_update(bsoncxx::builder::stream::document{} << "_id" << workload.userData.userId << finalize, doc.view(), options);
+                        if (result.get_ptr() != NULL) {
+                            cout << "USER WRITE 01: " << bsoncxx::to_json(result.get().view()) << endl;
+                        }                        
                         if (result.get_ptr() == NULL) {
-                            cout << "USER WRITE: " << bsoncxx::to_json(doc.view()) << endl;
-                            DatabaseManager::collection.insert_one(doc.view());
+                            cout << "USER WRITE 02: " << bsoncxx::to_json(doc.view()) << endl;
+                            DatabaseManagerAgent::collection.insert_one(doc.view());
                         }
                     }
                     if (workload.workloadType == DatabaseWorkloadType::DISCORD_USER_READ) {
-                        auto result = DatabaseManager::collection.find_one(bsoncxx::builder::stream::document{} << "userId" << workload.userData.userId << finalize);
+                        auto result = DatabaseManagerAgent::collection.find_one(bsoncxx::builder::stream::document{} << "_id" << workload.userData.userId << finalize);
                         if (result.get_ptr() != NULL) {
-                            DiscordUserData userData = DatabaseManager::parseUserData(result.get());
+                            DiscordUserData userData = DatabaseManagerAgent::parseUserData(result.get());
                             send(this->discordUserOutputBuffer, userData);
-                            cout << "USER READ: " << bsoncxx::to_json(result.get().view()) << endl;
                         }
                         else {
                             DiscordUserData userData;
@@ -617,46 +617,50 @@ namespace DiscordCoreAPI {
                         }
                     }
                     if (workload.workloadType == DatabaseWorkloadType::DISCORD_GUILD_WRITE) {
-                        bsoncxx::builder::basic::document doc = DatabaseManager::convertGuildDataToDBDoc(workload.guildData);
-                        auto result = DatabaseManager::collection.find_one_and_update(bsoncxx::builder::stream::document{} << "guildId" << workload.guildData.guildId << finalize, doc.view());
-                        cout << "GUILD WRITE: " << bsoncxx::to_json(doc.view()) << endl;
+                        bsoncxx::builder::basic::document doc = DatabaseManagerAgent::convertGuildDataToDBDoc(workload.guildData);
+                        mongocxx::v_noabi::options::find_one_and_update options;
+                        options.return_document(mongocxx::v_noabi::options::return_document::k_after);
+                        auto result = DatabaseManagerAgent::collection.find_one_and_update(bsoncxx::builder::stream::document{} << "_id" << workload.guildData.guildId << finalize, doc.view(), options);
+                        if (result.get_ptr() != NULL) {
+                            cout << "GUILD WRITE 01: " << bsoncxx::to_json(result.get().view()) << endl;
+                        }                        
                         if (result.get_ptr() == NULL) {
-                            cout << "GUILD WRITE: " << bsoncxx::to_json(doc.view()) << endl;
-                            DatabaseManager::collection.insert_one(doc.view());
+                            cout << "GUILD WRITE 02: " << bsoncxx::to_json(doc.view()) << endl;
+                            DatabaseManagerAgent::collection.insert_one(doc.view());
                         }
                     }
                     if (workload.workloadType == DatabaseWorkloadType::DISCORD_GUILD_READ) {
-                        auto result = DatabaseManager::collection.find_one(bsoncxx::builder::stream::document{} << "guildId" << workload.guildData.guildId << finalize);
+                        auto result = DatabaseManagerAgent::collection.find_one(bsoncxx::builder::stream::document{} << "_id" << workload.guildData.guildId << finalize);
                         if (result.get_ptr() != NULL) {
-                            DiscordGuildData guildData = DatabaseManager::parseGuildData(result.get());
+                            DiscordGuildData guildData = DatabaseManagerAgent::parseGuildData(result.get());
                             send(this->discordGuildOutputBuffer, guildData);
-                            cout << "GUILD READ: " << bsoncxx::to_json(result.get().view()) << endl;
                         }
                         else {
                             DiscordGuildData guildData;
-                            cout << "GUILD READ DEFAULT: " << guildData.guildId << endl;
                             send(this->discordGuildOutputBuffer, guildData);
                         }
                     }
                     if (workload.workloadType == DatabaseWorkloadType::DISCORD_GUILD_MEMBER_WRITE) {
-                        bsoncxx::builder::basic::document doc = DatabaseManager::convertGuildMemberDataToDBDoc(workload.guildMemberData);
-                        auto result = DatabaseManager::collection.find_one_and_update(bsoncxx::builder::stream::document{} << "globalId" << workload.guildMemberData.globalId << finalize, doc.view());
-                        cout << "GUILDMEMBER WRITE: " << bsoncxx::to_json(doc.view()) << endl;
+                        bsoncxx::builder::basic::document doc = DatabaseManagerAgent::convertGuildMemberDataToDBDoc(workload.guildMemberData);
+                        mongocxx::v_noabi::options::find_one_and_update options;
+                        options.return_document(mongocxx::v_noabi::options::return_document::k_after);
+                        auto result = DatabaseManagerAgent::collection.find_one_and_update(bsoncxx::builder::stream::document{} << "_id" << workload.guildMemberData.globalId << finalize, doc.view(), options);
+                        if (result.get_ptr() != NULL) {
+                            cout << "GUILDMEMBER WRITE 01: " << bsoncxx::to_json(result.get().view()) << endl;
+                        }                        
                         if (result.get_ptr() == NULL) {
-                            cout << "GUILDMEMBER WRITE: " << bsoncxx::to_json(doc.view()) << endl;
-                            DatabaseManager::collection.insert_one(doc.view());
+                            cout << "GUILDMEMBER WRITE 02: " << bsoncxx::to_json(doc.view()) << endl;
+                            DatabaseManagerAgent::collection.insert_one(doc.view());
                         }
                     }
                     if (workload.workloadType == DatabaseWorkloadType::DISCORD_GUILD_MEMBER_READ) {
-                        auto result = DatabaseManager::collection.find_one(bsoncxx::builder::stream::document{} << "globalId" << workload.guildMemberData.globalId << finalize);
+                        auto result = DatabaseManagerAgent::collection.find_one(bsoncxx::builder::stream::document{} << "_id" << workload.guildMemberData.globalId << finalize);
                         if (result.get_ptr() != NULL) {
-                            DiscordGuildMemberData guildMemberData = DatabaseManager::parseGuildMemberData(result.get());
+                            DiscordGuildMemberData guildMemberData = DatabaseManagerAgent::parseGuildMemberData(result.get());
                             send(this->discordGuildMemberOutputBuffer, guildMemberData);
-                            cout << "GUILDMEMBER READ: " << bsoncxx::to_json(result.get().view()) << endl;
                         }
                         else {
                             DiscordGuildMemberData guildMemberData;
-                            cout << "GUILDMEMBER DEFAULT READ: " << workload.guildMemberData.globalId << endl;
                             send(this->discordGuildMemberOutputBuffer, guildMemberData);
                         }
                     }
@@ -672,7 +676,6 @@ namespace DiscordCoreAPI {
     class DiscordUser {
     public:
         DiscordUserData data;
-        DiscordUser() = delete;
         DiscordUser(string userNameNew, string userIdNew) {
             this->data.userId = userIdNew;
             this->getDataFromDB().get();
@@ -681,49 +684,38 @@ namespace DiscordCoreAPI {
         }
 
         task<void> writeDataToDB() {
-            try {
-                DatabaseManager databaseManager;
-                DatabaseWorkload workload;
-                workload.workloadType = DatabaseWorkloadType::DISCORD_USER_WRITE;
-                workload.userData = this->data;
-                send(databaseManager.requestBuffer, workload);
-                databaseManager.start();
-                agent::wait(&databaseManager);
-                exception error;
-                while (databaseManager.getError(error)) {
-                    cout << "DiscordUser::writeDataToDB() Error: " << error.what() << endl << endl;
-                }
-                co_return;
+            DatabaseManagerAgent databaseManager;
+            DatabaseWorkload workload;
+            workload.workloadType = DatabaseWorkloadType::DISCORD_USER_WRITE;
+            workload.userData = this->data;
+            send(databaseManager.requestBuffer, workload);
+            databaseManager.start();
+            agent::wait(&databaseManager);
+            exception error;
+            while (databaseManager.getError(error)) {
+                cout << "DiscordUser::writeDataToDB() Error: " << error.what() << endl << endl;
             }
-            catch (mongocxx::v_noabi::logic_error& e) {
-                cout << "DiscordUser::writeDataToDB() Error: " << e.what() << endl << endl;
-            }
+            co_return;
         }
 
         task<void> getDataFromDB() {
-            try {
-                DatabaseManager databaseManager;
-                DatabaseWorkload workload;
-                workload.workloadType = DatabaseWorkloadType::DISCORD_USER_READ;
-                workload.userData = this->data;
-                send(databaseManager.requestBuffer, workload);
-                databaseManager.start();
-                agent::wait(&databaseManager);
-                exception error;
-                while (databaseManager.getError(error)) {
-                    cout << "DiscordUser::getDataFromDB() Error 01: " << error.what() << endl << endl;
-                }
-                DiscordUserData userData;
-                try_receive(databaseManager.discordUserOutputBuffer, userData);
-                if (userData.userId != "") {
-                    this->data = userData;
-                }
-                co_return;
+            DatabaseManagerAgent databaseManager;
+            DatabaseWorkload workload;
+            workload.workloadType = DatabaseWorkloadType::DISCORD_USER_READ;
+            workload.userData = this->data;
+            send(databaseManager.requestBuffer, workload);
+            databaseManager.start();
+            agent::wait(&databaseManager);
+            exception error;
+            while (databaseManager.getError(error)) {
+                cout << "DiscordUser::getDataFromDB() Error: " << error.what() << endl << endl;
             }
-            catch (mongocxx::v_noabi::logic_error& e) {
-                cout << "DiscordUser::getDataFromDB() Error 02: " << e.what() << endl << endl;
+            DiscordUserData userData;
+            try_receive(databaseManager.discordUserOutputBuffer, userData);
+            if (userData.userId != "") {
+                this->data = userData;
             }
-            
+            co_return;            
         }
 
     };
@@ -731,7 +723,6 @@ namespace DiscordCoreAPI {
     class DiscordGuild {
     public:
         DiscordGuildData data;
-        DiscordGuild() = delete;
         DiscordGuild(DiscordCoreInternal::GuildData guildData) {
             this->data.guildId = guildData.id;
             this->getDataFromDB().get();
@@ -740,48 +731,38 @@ namespace DiscordCoreAPI {
         }
 
         task<void> writeDataToDB() {
-            try {
-                DatabaseManager databaseManager;
-                DatabaseWorkload workload;
-                workload.workloadType = DatabaseWorkloadType::DISCORD_GUILD_WRITE;
-                workload.guildData = this->data;
-                send(databaseManager.requestBuffer, workload);
-                databaseManager.start();
-                agent::wait(&databaseManager);
-                exception error;
-                while (databaseManager.getError(error)) {
-                    cout << "DiscordGuild::writeDataToDB() Error: " << error.what() << endl << endl;
-                }
-                co_return;
+            DatabaseManagerAgent databaseManager;
+            DatabaseWorkload workload;
+            workload.workloadType = DatabaseWorkloadType::DISCORD_GUILD_WRITE;
+            workload.guildData = this->data;
+            send(databaseManager.requestBuffer, workload);
+            databaseManager.start();
+            agent::wait(&databaseManager);
+            exception error;
+            while (databaseManager.getError(error)) {
+                cout << "DiscordGuild::writeDataToDB() Error: " << error.what() << endl << endl;
             }
-            catch (mongocxx::v_noabi::logic_error& e) {
-                cout << "DiscordGUild::writeDataToDB() Error: " << e.what() << endl << endl;
-            }
+            co_return;
         }
 
         task<void> getDataFromDB() {
-            try {
-                DatabaseManager databaseManager;
-                DatabaseWorkload workload;
-                workload.workloadType = DatabaseWorkloadType::DISCORD_GUILD_READ;
-                workload.guildData = this->data;
-                send(databaseManager.requestBuffer, workload);
-                databaseManager.start();
-                agent::wait(&databaseManager);
-                exception error;
-                while (databaseManager.getError(error)) {
-                    cout << "DiscordGuild::getDataFromDB() Error 01: " << error.what() << endl << endl;
-                }
-                DiscordGuildData guildData;
-                try_receive(databaseManager.discordGuildOutputBuffer, guildData);
-                if (guildData.guildId != "") {
-                    this->data = guildData;
-                }
-                co_return;
+            DatabaseManagerAgent databaseManager;
+            DatabaseWorkload workload;
+            workload.workloadType = DatabaseWorkloadType::DISCORD_GUILD_READ;
+            workload.guildData = this->data;
+            send(databaseManager.requestBuffer, workload);
+            databaseManager.start();
+            agent::wait(&databaseManager);
+            exception error;
+            while (databaseManager.getError(error)) {
+                cout << "DiscordGuild::getDataFromDB() Error: " << error.what() << endl << endl;
             }
-            catch (mongocxx::v_noabi::logic_error& e) {
-                cout << "DiscordGuild::getDataFromDB() Error 02: " << e.what() << endl << endl;
+            DiscordGuildData guildData;
+            try_receive(databaseManager.discordGuildOutputBuffer, guildData);
+            if (guildData.guildId != "") {
+                this->data = guildData;
             }
+            co_return;
 
         }
     };
@@ -789,71 +770,61 @@ namespace DiscordCoreAPI {
     class DiscordGuildMember {
     public:
         DiscordGuildMemberData data;
-        DiscordGuildMember() = delete;
         DiscordGuildMember(DiscordCoreInternal::GuildMemberData guildMemberData) {
             this->data.guildMemberId = guildMemberData.user.id;
             this->data.guildId = guildMemberData.guildId;
             this->data.globalId = this->data.guildId + " + " + this->data.guildMemberId;
             this->getDataFromDB().get();
-            this->data.guildMemberId = guildMemberData.user.id;
-            this->data.guildId = guildMemberData.guildId;
-            this->data.globalId = this->data.guildId + " + " + this->data.guildMemberId;
-            this->data.displayName = guildMemberData.user.username;
+            if (guildMemberData.nick == "") {
+                this->data.displayName = guildMemberData.user.username;
+            }
+            else {
+                this->data.displayName = guildMemberData.nick;
+            }            
             this->data.userName = guildMemberData.user.username;
         }
 
         task<void> writeDataToDB() {
-            try {
-                DatabaseManager databaseManager;
-                DatabaseWorkload workload;
-                workload.workloadType = DatabaseWorkloadType::DISCORD_GUILD_MEMBER_WRITE;
-                workload.guildMemberData = this->data;
-                send(databaseManager.requestBuffer, workload);
-                databaseManager.start();
-                agent::wait(&databaseManager);
-                exception error;
-                while (databaseManager.getError(error)) {
-                    cout << "DiscordGuildMember::writeDataToDB() Error 01: " << error.what() << endl << endl;
-                }
-                co_return;
+            DatabaseManagerAgent databaseManager;
+            DatabaseWorkload workload;
+            workload.workloadType = DatabaseWorkloadType::DISCORD_GUILD_MEMBER_WRITE;
+            workload.guildMemberData = this->data;
+            send(databaseManager.requestBuffer, workload);
+            databaseManager.start();
+            agent::wait(&databaseManager);
+            exception error;
+            while (databaseManager.getError(error)) {
+                cout << "DiscordGuildMember::writeDataToDB() Error: " << error.what() << endl << endl;
             }
-            catch (mongocxx::v_noabi::logic_error& e) {
-                cout << "DiscordGuildMember::writeDataToDB() Error 02: " << e.what() << endl << endl;
-            }
+            co_return;
         }
 
         task<void> getDataFromDB() {
-            try {
-                DatabaseManager databaseManager;
-                DatabaseWorkload workload;
-                workload.workloadType = DatabaseWorkloadType::DISCORD_GUILD_MEMBER_READ;
-                workload.guildMemberData = this->data;
-                send(databaseManager.requestBuffer, workload);
-                databaseManager.start();
-                agent::wait(&databaseManager);
-                exception error;
-                while (databaseManager.getError(error)) {
-                    cout << "DiscordGuildMember::getDataFromDB() Error 01: " << error.what() << endl << endl;
-                }
-                DiscordGuildMemberData guildMemberData;
-                try_receive(databaseManager.discordGuildMemberOutputBuffer, guildMemberData);
-                if (guildMemberData.guildId != "") {
-                    this->data = guildMemberData;
-                }
-                co_return;
+            DatabaseManagerAgent databaseManager;
+            DatabaseWorkload workload;
+            workload.workloadType = DatabaseWorkloadType::DISCORD_GUILD_MEMBER_READ;
+            workload.guildMemberData = this->data;
+            send(databaseManager.requestBuffer, workload);
+            databaseManager.start();
+            agent::wait(&databaseManager);
+            exception error;
+            while (databaseManager.getError(error)) {
+                cout << "DiscordGuildMember::getDataFromDB() Error: " << error.what() << endl << endl;
             }
-            catch (mongocxx::v_noabi::logic_error& e) {
-                cout << "DiscordGuildMember::getDataFromDB() Error 02: " << e.what() << endl << endl;
+            DiscordGuildMemberData guildMemberData;
+            try_receive(databaseManager.discordGuildMemberOutputBuffer, guildMemberData);
+            if (guildMemberData.globalId != "") {
+                this->data = guildMemberData;
             }
-
+            co_return;
         }
     };
-    Scheduler* DatabaseManager::pScheduler;
-    string DatabaseManager::botUserId;
-    mongocxx::instance* DatabaseManager::instance;
-    mongocxx::collection DatabaseManager::collection;
-    mongocxx::database DatabaseManager::dataBase;
-    mongocxx::client DatabaseManager::client;
+    Scheduler* DatabaseManagerAgent::pScheduler;
+    string DatabaseManagerAgent::botUserId;
+    mongocxx::instance* DatabaseManagerAgent::instance;
+    mongocxx::collection DatabaseManagerAgent::collection;
+    mongocxx::database DatabaseManagerAgent::dataBase;
+    mongocxx::client DatabaseManagerAgent::client;
 };
 #endif
 

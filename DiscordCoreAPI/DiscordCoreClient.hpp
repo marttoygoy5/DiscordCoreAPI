@@ -16,8 +16,8 @@
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
 #include "EventMachine.hpp"
-
 void myPurecallHandler(void) {
+
 	cout << "CURRENT THREAD: " << this_thread::get_id() << endl;
 	return;
 }
@@ -40,17 +40,15 @@ namespace DiscordCoreAPI {
 		SlashCommandManager* slashCommands{ nullptr };
 		shared_ptr<DiscordCoreAPI::EventMachine> EventMachine{ nullptr };
 		DiscordUser* discordUser{ nullptr };
-		DiscordCoreClient(hstring botTokenNew)
-			:webSocketWorkloadSource(this->webSocketWorkCollectionBuffer),
-			webSocketWorkloadTarget(this->webSocketWorkCollectionBuffer) {
+		DiscordCoreClient(hstring botTokenNew) {
 			this->botToken = botTokenNew;
 		}
 
 		DiscordGuild getDiscordGuild(DiscordCoreInternal::GuildData guildData) {
-			auto guildCursor = this->guildMap.find(guildData.id);
-			if (guildCursor == this->guildMap.end()) {
+			auto guildCursor = DiscordCoreClient::guildMap.find(guildData.id);
+			if (guildCursor == DiscordCoreClient::guildMap.end()) {
 				DiscordGuild discordGuild(guildData);
-				this->guildMap.insert(make_pair(guildData.id, discordGuild));
+				DiscordCoreClient::guildMap.insert(make_pair(guildData.id, discordGuild));
 				return discordGuild;
 			}
 			else {
@@ -59,10 +57,10 @@ namespace DiscordCoreAPI {
 		}
 
 		DiscordGuildMember getDiscordGuildMember(DiscordCoreInternal::GuildMemberData guildMemberData) {
-			auto guildMemberCursor = this->guildMemberMap.find(guildMemberData.guildId + guildMemberData.user.id);
-			if (guildMemberCursor == this->guildMemberMap.end()){
+			auto guildMemberCursor = DiscordCoreClient::guildMemberMap.find(guildMemberData.guildId + guildMemberData.user.id);
+			if (guildMemberCursor == DiscordCoreClient::guildMemberMap.end()){
 				DiscordGuildMember discordGuildMember(guildMemberData);
-				this->guildMemberMap.insert(make_pair(guildMemberData.guildId + guildMemberData.user.id, discordGuildMember));
+				DiscordCoreClient::guildMemberMap.insert(make_pair(guildMemberData.guildId + guildMemberData.user.id, discordGuildMember));
 				return discordGuildMember;
 			}
 			else {
@@ -78,12 +76,11 @@ namespace DiscordCoreAPI {
 			return;
 		}
 
-		void checkForErrors() {
-			exception error;
+		bool getError(exception& error) {
 			if (try_receive(errorBuffer, error)) {
-				cout << "DiscordCoreClient::run() Error: " << error.what() << endl << endl;
+				return true;
 			}
-			return;
+			return false;
 		}
 
 		void terminate() {
@@ -98,12 +95,10 @@ namespace DiscordCoreAPI {
 		hstring baseURL = L"https://discord.com/api/v9";
 		DiscordCoreInternal::WebSocketConnectionAgent* pWebSocketConnectionAgent{ nullptr };
 		DiscordCoreInternal::WebSocketReceiverAgent* pWebSocketReceiverAgent{ nullptr };
-		ISource<DiscordCoreInternal::WebSocketWorkload>& webSocketWorkloadSource;
-		ITarget<DiscordCoreInternal::WebSocketWorkload>& webSocketWorkloadTarget;
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
 		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
-		single_assignment<exception> errorBuffer;
+		unbounded_buffer<exception> errorBuffer;
 		
 		task<void> initialize(hstring botTokenNew) {
 			_set_purecall_handler(myPurecallHandler);
@@ -126,13 +121,13 @@ namespace DiscordCoreAPI {
 			requestAgent.start();
 			agent::wait(&requestAgent);
 			exception error;
-			if (requestAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "DiscordCoreClient::initialize() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			this->pWebSocketConnectionAgent->setSocketPath(returnData.data.dump());
-			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkloadTarget, this->pSystemThreads->getThreads().get()->at(1));
+			this->pWebSocketReceiverAgent = new DiscordCoreInternal::WebSocketReceiverAgent(this->webSocketIncWorkloadBuffer, this->webSocketWorkCollectionBuffer, this->pSystemThreads->getThreads().get()->at(1));
 			ReactionManagerAgent::initialize();
 			UserManagerAgent::initialize();
 			MessageManagerAgent::initialize();
@@ -149,8 +144,9 @@ namespace DiscordCoreAPI {
 			this->guilds = new GuildManager(agentResources, this->pSystemThreads->getThreads().get(), (DiscordCoreClient*)this, this);
 			this->currentUser = new User(this->users->fetchCurrentUserAsync().get().data, this);
 			this->slashCommands = new SlashCommandManager(agentResources, this->pSystemThreads->getThreads().get(), this->currentUser->data.id);
-			DatabaseManager::initialize(this->currentUser->data.id, this->pSystemThreads->getThreads().get()->at(10).scheduler);
+			DatabaseManagerAgent::initialize(this->currentUser->data.id, this->pSystemThreads->getThreads().get()->at(10).scheduler);
 			this->discordUser = new DiscordUser(this->currentUser->data.username, this->currentUser->data.id);
+			this->discordUser->writeDataToDB();
 			co_await mainThread;
 		}
 
@@ -161,8 +157,8 @@ namespace DiscordCoreAPI {
 				agentResources.botToken = this->botToken;
 				Guild guild(agentResources, this->pSystemThreads->getThreads().get(), guildData, (DiscordCoreClient*)this, this);
 				DiscordGuild discordGuild(guild.data);
-				this->guildMap.insert(make_pair(guild.data.id, discordGuild));
 				discordGuild.writeDataToDB();
+				DiscordCoreClient::guildMap.insert(make_pair(guild.data.id, discordGuild));
 				OnGuildCreationData guildCreationData(guild);
 				guildCreationData.guild = guild;
 				this->discordUser->data.guildCount += 1;
@@ -202,7 +198,7 @@ namespace DiscordCoreAPI {
 			try {
 				while (doWeQuit == false) {
 					DiscordCoreInternal::WebSocketWorkload workload;
-					if (try_receive(this->webSocketWorkloadSource, workload)) {
+					if (try_receive(this->webSocketWorkCollectionBuffer, workload)) {
 						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
 							DiscordCoreInternal::GuildData guildData;
 							DiscordCoreInternal::parseObject(workload.payLoad, &guildData);
@@ -230,7 +226,7 @@ namespace DiscordCoreAPI {
 			done();
 		}
 	};
-	map<string, DiscordGuild> DiscordCoreClient::guildMap;
-	map<string, DiscordGuildMember> DiscordCoreClient::guildMemberMap;
+	map<string, DiscordGuild> DiscordCoreClientBase::guildMap;
+	map<string, DiscordGuildMember> DiscordCoreClientBase::guildMemberMap;
 }
 #endif

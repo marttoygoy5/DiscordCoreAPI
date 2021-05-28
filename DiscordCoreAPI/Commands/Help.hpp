@@ -30,7 +30,7 @@ namespace DiscordCoreAPI {
 				string newPerms = DiscordCoreInternal::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
 				GuildMember guildMember = newArgs->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->message.data.author.id }).get();
 				vector<Role> roles = newArgs->coreClient->roles->getGuildMemberRolesAsync({ .guildId = args->message.data.guildId, .guildMember = guildMember }).get();
-				DiscordGuildMember guildMemberNew(guildMember.data);
+				DiscordGuildMember guildMemberNew = args->coreClient->getDiscordGuildMember(guildMember.data);
 				guildMemberNew.data.currency.wallet = 1111444;
 				guildMemberNew.writeDataToDB();
 				//args->coreClient->slashCommands->displayGlobalApplicationCommandsAsync().get();

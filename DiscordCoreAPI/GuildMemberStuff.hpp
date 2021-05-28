@@ -26,11 +26,12 @@ namespace DiscordCoreAPI {
 		GuildMemberManager* guildMembers{ nullptr };
 		RoleManager* roles{ nullptr };
 		UserManager* users{ nullptr };
-		static map<string, DiscordGuild> guildMap;
-		static map<string, DiscordGuildMember> guildMemberMap;
 	protected:
+		friend class Guild;
 		friend class WebSocketConnectionAgent;
 		friend class HttpRequestAgent;
+		static map<string, DiscordGuild> guildMap;
+		static map<string, DiscordGuildMember> guildMemberMap;
 	};
 
 	class GuildMember {
