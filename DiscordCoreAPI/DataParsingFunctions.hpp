@@ -1950,8 +1950,8 @@ namespace DiscordCoreInternal {
         *pDataStructure = interactionAppCommandCallbackData;
     }
 
-    void parseObject(json jsonObjectData, InteractionData* pDataStructure) {
-        InteractionData interactionData = *pDataStructure;
+    void parseObject(json jsonObjectData, InteractionResponseData* pDataStructure) {
+        InteractionResponseData interactionData = *pDataStructure;
 
         if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
             InteractionResponseType theValue = jsonObjectData.at("type");
@@ -2200,7 +2200,7 @@ namespace DiscordCoreInternal {
 
         if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
             int theValue = jsonObjectData.at("type");
-            messageData.type = theValue;
+            messageData.type = (DiscordCoreInternal::MessageType)theValue;
         }
 
         if (jsonObjectData.contains("activity") && !jsonObjectData.at("activity").is_null()) {
@@ -2248,7 +2248,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("interaction") && !jsonObjectData.at("interaction").is_null()) {
-            InteractionData theValue = messageData.interaction;
+            InteractionResponseData theValue = messageData.interaction;
             parseObject(jsonObjectData.at("interaction"), &theValue);
             messageData.interaction = theValue;
         }
@@ -2361,5 +2361,52 @@ namespace DiscordCoreInternal {
 
         *pDataStructure = appCommandData;
     }
+
+    void parseObject(json jsonObjectData, InteractionIncData* pDataStructure) {
+        InteractionIncData interactionIncData = *pDataStructure;
+
+        if (jsonObjectData.contains("token") && !jsonObjectData.at("token").is_null()) {
+            string theValue = jsonObjectData.at("token");
+            interactionIncData.interactionToken = theValue;
+        }
+
+        if (jsonObjectData.at("member").at("user").contains("id") && !jsonObjectData.at("member").at("user").at("id").is_null()) {
+            string theValue = jsonObjectData.at("member").at("user").at("id");
+            interactionIncData.userId = theValue;
+        }
+
+        if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
+            string theValue = jsonObjectData.at("channel_id");
+            interactionIncData.channelId = theValue;
+        }
+
+        if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
+            string theValue = jsonObjectData.at("guild_id");
+            interactionIncData.guildId = theValue;
+        }
+
+        if (jsonObjectData.at("data").contains("name") && !jsonObjectData.at("data").at("name").is_null()) {
+            string theValue = jsonObjectData.at("data").at("name");
+            interactionIncData.commandName = theValue;
+        }
+
+        if (jsonObjectData.at("data").contains("options") && !jsonObjectData.at("data").at("options").is_null()) {
+            json theValue = jsonObjectData.at("data").at("options");
+            interactionIncData.optionsArgs = theValue;
+        }
+
+        if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
+            string theValue = jsonObjectData.at("id");
+            interactionIncData.interactionId = theValue;
+        }
+
+        if (jsonObjectData.contains("application_id") && !jsonObjectData.at("application_id").is_null()) {
+            string theValue = jsonObjectData.at("application_id");
+            interactionIncData.applicationId = theValue;
+        }
+
+        *pDataStructure = interactionIncData;
+    }
+
 };
 #endif

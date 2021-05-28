@@ -21,7 +21,8 @@ namespace DiscordCoreInternal {
 		MESSAGE_DELETE = 4,
 		CHANNEL_UPDATE = 5,
 		USER_UPDATE = 6,
-		REACTION_ADD = 7
+		REACTION_ADD = 7,
+		INTERACTION_CREATE = 8
 	};
 
 	struct WebSocketWorkload {
@@ -39,12 +40,11 @@ namespace DiscordCoreInternal {
 			this->threadContext = threadContextNew;
 		}
 
-		void checkForErrors() {
-			exception error;
+		bool getError(exception& error) {
 			if (try_receive(errorBuffer, error)) {
-				cout << "DiscordCoreClient::run() Error: " << error.what() << endl << endl;
+				return true;
 			}
-			return;
+			return false;
 		}
 
 		void terminate() {
@@ -60,7 +60,7 @@ namespace DiscordCoreInternal {
 		ThreadContext threadContext;
 		ISource<json>& workloadSource;
 		ITarget<WebSocketWorkload>& workloadTarget;
-		single_assignment<exception> errorBuffer;
+		unbounded_buffer<exception> errorBuffer;
 
 		void run() {
 			try {
@@ -118,6 +118,14 @@ namespace DiscordCoreInternal {
 			co_return;
 		}
 
+		fire_and_forget onInteractionCreate(json payload){
+			WebSocketWorkload workload;
+			workload.payLoad = payload;
+			workload.eventType = WebSocketEventType::INTERACTION_CREATE;
+			send(this->workloadTarget, workload);
+			co_return;
+		}
+
 		void onMessageReceived(json payload) {
 			try {
 
@@ -139,6 +147,10 @@ namespace DiscordCoreInternal {
 
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					onGuildMemberAdd(payload.at("d"));
+				}
+
+				if (payload.at("t") == "INTERACTION_CREATE") {
+					onInteractionCreate(payload.at("d"));
 				}
 			}
 			catch (winrt::hresult_error const& ex) {
@@ -167,12 +179,15 @@ namespace DiscordCoreInternal {
 			this->socketPath = stream.str();
 		}
 
-		void checkForErrors() {
-			exception error;
+		bool getError(exception& error) {
 			if (try_receive(errorBuffer, error)) {
-				cout << "DiscordCoreClient::run() Error: " << error.what() << endl << endl;
+				return true;
 			}
-			return;
+			return false;
+		}
+
+		void terminate() {
+			done();
 		}
 
 		~WebSocketConnectionAgent() {
@@ -196,7 +211,7 @@ namespace DiscordCoreInternal {
 		DispatcherQueue dispatchQueueForHB{ nullptr };
 		DispatcherQueueTimer heartbeatTimer{ nullptr };
 		ITarget<json>& webSocketMessageTarget;
-		single_assignment<exception> errorBuffer;
+		unbounded_buffer<exception> errorBuffer;
 
 		void run() {
 			try {
@@ -206,11 +221,16 @@ namespace DiscordCoreInternal {
 				concurrency::send(errorBuffer, e);
 				this->connect();
 			}
+			catch (hresult& e) {
+				exception eNew(to_string(e.value).c_str());
+				concurrency::send(errorBuffer, eNew);
+				this->connect();
+			}
 			
 		}
 
 		void cleanup() {
-			done();
+			this->terminate();
 
 			if (this->messageWriter != nullptr) {
 				this->messageWriter.DetachStream();

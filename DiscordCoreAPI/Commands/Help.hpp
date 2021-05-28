@@ -18,8 +18,12 @@ namespace DiscordCoreAPI {
 		unsigned int inValue;
 	};
 
-	class HelpCommand : public  BaseFunction {
+	class Help : public  BaseFunction {
 	public:
+		Help() {
+			this->commandName = "help";
+		}
+
 		virtual  void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
 				HelpCommandArguments* newArgs = (HelpCommandArguments*)args;
@@ -36,7 +40,7 @@ namespace DiscordCoreAPI {
 				//args->coreClient->slashCommands->displayGlobalApplicationCommandsAsync().get();
 				/*
 				args->coreClient->slashCommands->deleteGlobalApplicationCommand({ .applicationId = args->coreClient->currentUser->data.id, .name = "testname" }).get();
-				
+
 				Role newRole = args->coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 				newRole = role.coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
 				vector<ApplicationCommandOptionData> appCommandOptionDataVector;
@@ -85,11 +89,11 @@ namespace DiscordCoreAPI {
 				*/
 			}
 			catch (exception error) {
-				cout << "HelpCommand::execute() Error: " << error.what() << endl << endl;
+				cout << "Help::execute() Error: " << error.what() << endl << endl;
 			}
 
 		}
 	};
-	HelpCommand helpCommand{};
+	Help help{};
 }
 #endif

@@ -586,9 +586,35 @@ namespace  DiscordCoreInternal {
         int flags = 0;
     };
 
-    struct InteractionData {
+    struct InteractionResponseData {
         InteractionResponseType type;
         InteractionApplicationCommandCallbackData data;
+    };
+
+    enum class MessageType {
+        DEFAULT	= 0,
+        RECIPIENT_ADD = 1,
+        RECIPIENT_REMOVE = 2,
+        CALL = 3,
+        CHANNEL_NAME_CHANGE = 4,
+        CHANNEL_ICON_CHANGE = 5,
+        CHANNEL_PINNED_MESSAGE = 6,
+        GUILD_MEMBER_JOIN = 7,
+        USER_PREMIUM_GUILD_SUBSCRIPTION = 8,
+        USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1 = 9,
+        USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 10,
+        USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 11,
+        CHANNEL_FOLLOW_ADD = 12,
+        GUILD_DISCOVERY_DISQUALIFIED = 14,
+        GUILD_DISCOVERY_REQUALIFIED = 15,
+        GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 16,
+        GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING = 17,
+        THREAD_CREATED = 18,
+        REPLY = 19,
+        APPLICATION_COMMAND = 20,
+        THREAD_STARTER_MESSAGE = 21,
+        GUILD_INVITE_REMINDER = 22,
+        INTERACTION = 23
     };
 
     struct MessageDataOld {
@@ -600,6 +626,9 @@ namespace  DiscordCoreInternal {
         string content;
         string timestamp;
         string editedTimestamp;
+        string applicationId;
+        string interactionId;
+        string interactionToken;
         bool tts;
         bool mentionEveryone;
         vector<UserData> mentions;
@@ -611,13 +640,13 @@ namespace  DiscordCoreInternal {
         string nonce;
         bool pinned;
         string webhookId;
-        int type;
+        MessageType type;
         MessageActivityData activity;
         ApplicationData application;
-        MessageReferenceData messageReference;;
+        MessageReferenceData messageReference;
         int flags = 0;
         vector<MessageStickerData> stickers;
-        InteractionData interaction;
+        InteractionResponseData interaction;
     };
 
     struct MessageData : MessageDataOld {
@@ -827,7 +856,9 @@ namespace  DiscordCoreInternal {
         GET_SLASH_COMMANDS = 22,
         GET_SOCKET_PATH = 23,
         DELETE_SLASH_COMMAND = 24,
-        PATCH_SLASH_COMMAND
+        PATCH_SLASH_COMMAND = 25,
+        POST_INTERACTION_RESPONSE = 26,
+        PATCH_INTERACTION_RESPONSE = 27
     };
 
     struct HttpAgentResources {
@@ -1127,5 +1158,79 @@ namespace  DiscordCoreInternal {
         bool defaultPermission;
     };
 
+    struct InteractionIncData {
+        string channelId;
+        string guildId;
+        string interactionId;
+        string interactionToken;
+        string applicationId;
+        json optionsArgs;
+        string userId;
+        string commandName;
+    };
+
+    enum class InteractionType {
+        Ping = 1,
+        ApplicationCommand = 2,
+        MessageComponent = 3
+    };
+
+    struct ApplicationCommandInteractionDataResolved {
+        map<string, UserData> users;
+        map<string, GuildMemberData> members;
+        map<string, RoleData> roles;
+        map<string, ChannelData> channels;
+    };
+
+    struct ApplicationCommandInteractionDataOption {
+        string name;
+        int type;
+        ApplicationCommandOptionType value;
+        vector<ApplicationCommandInteractionDataOption> options;
+    };
+
+    struct ApplicationCommandInteractionData {
+        string name;
+        string id;
+        ApplicationCommandInteractionDataResolved resolved;
+        vector<ApplicationCommandInteractionDataOption >options;
+        string customId;
+        int componentType;
+    };
+
+    struct InteractionData {
+        string id;
+        string applicationId;
+        InteractionType type;
+        ApplicationCommandInteractionData data;
+        string guildId;
+        string channelId;
+        GuildMemberData member;
+        UserData user;
+        string token;
+        int version;
+        MessageData message;
+    };
+
+    struct InteractionResponseFullData {
+        InteractionIncData interactionIncData;
+        InteractionResponseData interactionResponseData;
+    };
+
+    struct EditInteractionResponseData {
+        string content;
+        vector<EmbedData> embeds;
+        AllowedMentionsData allowedMentions;
+    };
+
+    struct PatchInteractionResponseData {
+        string channelId;
+        string messageId;
+        string applicationId;
+        string interactionToken;
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string content;
+    };
 }
 #endif

@@ -9,7 +9,7 @@
 #define _COMMANDS_
 
 #include "../pch.h"
-#include "../DiscordCoreClient.hpp"
+#include "HelperFunctions.hpp"
 
 namespace DiscordCoreAPI {
 
@@ -51,18 +51,16 @@ namespace DiscordCoreAPI {
 
 			functionPointer->execute(&args);
 		}
-		
-	protected:
+
 		static map<string, BaseFunction*> commands;
+
+	protected:
 
 		static BaseFunction* getCommand(string messageContents) {
 			if (messageContents[0] == commandPrefix[0]) {
 				for (auto const& [key, value] : DiscordCoreAPI::CommandController::commands) {
 					if (messageContents.find(key) != string::npos) {
 						return value;
-					}
-					else {
-						return nullptr;
 					}
 				}
 			}
@@ -132,7 +130,6 @@ namespace DiscordCoreAPI {
 			return args;
 		}
 	};
-	
 	map<string, BaseFunction*> CommandController::commands;
 };
 #endif

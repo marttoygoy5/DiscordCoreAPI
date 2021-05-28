@@ -13,7 +13,7 @@
 
 namespace DiscordCoreInternal {
 
-	class HttpRequestAgent :public agent {
+	class HttpRequestAgent : public agent {
 	public:
 		unbounded_buffer<HttpData> workReturnBuffer;
 		unbounded_buffer<HttpWorkload> workSubmissionBuffer;

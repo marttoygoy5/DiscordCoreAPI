@@ -11,11 +11,12 @@
 #include "pch.h"
 #include "SystemThreads.hpp"
 #include "HttpStuff.hpp"
-#include "SlashCommandStuff.hpp"
 #include "WebSocketStuff.hpp"
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
 #include "EventMachine.hpp"
+#include "OnInteractionCreate.hpp"
+
 void myPurecallHandler(void) {
 
 	cout << "CURRENT THREAD: " << this_thread::get_id() << endl;
@@ -86,6 +87,16 @@ namespace DiscordCoreAPI {
 		void terminate() {
 			this->doWeQuit = true;
 			this->pWebSocketReceiverAgent->terminate();
+			agent::wait(this->pWebSocketReceiverAgent);
+			exception error;
+			while (this->pWebSocketReceiverAgent->getError(error)) {
+				cout << "DiscordCoreClient::terminate() Error 01: " << error.what() << endl << endl;
+			}
+			this->pWebSocketConnectionAgent->terminate();
+			agent::wait(this->pWebSocketConnectionAgent);
+			while (this->pWebSocketReceiverAgent->getError(error)) {
+				cout << "DiscordCoreClient::terminate() Error 02: " << error.what() << endl << endl;
+			}
 		}
 
 	protected:
@@ -166,7 +177,7 @@ namespace DiscordCoreAPI {
 				co_return guildCreationData;
 			}
 			catch (exception error) {
-				cout << "Error Message: " << error.what() << endl;
+				cout << "createGuild() Error Message: " << error.what() << endl;
 			}
 		}
 
@@ -178,7 +189,7 @@ namespace DiscordCoreAPI {
 				co_return messageCreationData;
 			}
 			catch (exception error) {
-				cout << "Error Message: " << error.what() << endl;
+				cout << "createMessage() Error Message: " << error.what() << endl;
 			}
 		}
 
@@ -190,7 +201,7 @@ namespace DiscordCoreAPI {
 				co_return reactionAddData;
 			}
 			catch (exception error) {
-				cout << "Error Message: " << error.what() << endl;
+				cout << "createReaction() Error Message: " << error.what() << endl;
 			}			
 		}
 
@@ -217,6 +228,26 @@ namespace DiscordCoreAPI {
 							OnReactionAddData reactionAddData = createReaction(reactionData).get();
 							this->EventMachine->onReactionAddEvent(reactionAddData);
 						}
+						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::INTERACTION_CREATE) {
+							DiscordCoreInternal::InteractionIncData interactionIncData;
+							DiscordCoreInternal::parseObject(workload.payLoad, &interactionIncData);
+							DiscordCoreInternal::MessageData messageData;
+							messageData.type = DiscordCoreInternal::MessageType::INTERACTION;
+							messageData.channelId = interactionIncData.channelId;
+							messageData.guildId = interactionIncData.guildId;
+							messageData.author.id = interactionIncData.userId;
+							messageData.applicationId = interactionIncData.applicationId;
+							messageData.interactionId = interactionIncData.interactionId;
+							messageData.interactionToken = interactionIncData.interactionToken;
+							messageData.content = this->discordUser->data.prefix + DiscordCoreInternal::constructStringContent(interactionIncData);
+							DiscordCoreInternal::InteractionResponseFullData interactionResponseData;
+							interactionResponseData.interactionResponseData.type = DiscordCoreInternal::InteractionResponseType::DeferredChannelMessageWithSource;
+							interactionResponseData.interactionIncData = interactionIncData;
+							this->slashCommands->createInteractionResponseDeferralAsync(interactionResponseData).get();
+							Message message(messageData, this);
+							OnMessageCreationData messageCreationData = createMessage(messageData).get();
+							this->EventMachine->onMessageCreationEvent(messageCreationData);
+						}
 					}
 				}
 			}
@@ -224,6 +255,7 @@ namespace DiscordCoreAPI {
 				send(errorBuffer, e);
 			}
 			done();
+			this->terminate();
 		}
 	};
 	map<string, DiscordGuild> DiscordCoreClientBase::guildMap;
