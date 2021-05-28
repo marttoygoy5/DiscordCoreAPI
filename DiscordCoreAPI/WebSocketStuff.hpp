@@ -248,12 +248,7 @@ namespace DiscordCoreInternal {
 				this->messageWriter.UnicodeEncoding(UnicodeEncoding::Utf8);
 				this->closedToken = this->webSocket.Closed({ this, &WebSocketConnectionAgent::onClosed });
 				this->messageReceivedToken = this->webSocket.MessageReceived({ this, &WebSocketConnectionAgent::onMessageReceived });
-				if (this->socketPath != L"") {
-					this->webSocket.ConnectAsync(Uri(this->socketPath)).get();
-				}
-				else {
-					throw "MISSING THE SOCKETPATH!";
-				}
+				this->webSocket.ConnectAsync(Uri(this->socketPath)).get();
 			}
 			catch (hresult result) {
 				cout << result.value << endl;
@@ -317,9 +312,13 @@ namespace DiscordCoreInternal {
 
 		void onMessageReceived(MessageWebSocket const&, MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
-				DataReader dataReader{ args.GetDataReader() };
-				dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
-				auto message = dataReader.ReadString(dataReader.UnconsumedBufferLength());
+				DataReader dataReader{ nullptr };
+				hstring message;
+				if (args.GetDataReader() != nullptr) {
+					dataReader = args.GetDataReader();
+					dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
+					message = dataReader.ReadString(dataReader.UnconsumedBufferLength());
+				}
 				json payload = payload.parse(message);
 
 				asend(&this->webSocketMessageTarget, payload);
