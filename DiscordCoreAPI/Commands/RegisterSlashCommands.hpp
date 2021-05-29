@@ -20,6 +20,7 @@ namespace DiscordCoreAPI {
 			this->commandName = "registerslashcommands";
 		}
 		virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
+			/*
 			CreateApplicationCommandData createSellDrugsCommandData;
 			createSellDrugsCommandData.defaultPermission = true;
 			createSellDrugsCommandData.description = "Sell drugs in exchange for some currency!";
@@ -103,6 +104,18 @@ namespace DiscordCoreAPI {
 			createAddShopRoleCommandData.options.push_back(addShopRoleCommandOptionThree);
 			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createAddShopRoleCommandData).get();
 
+			CreateApplicationCommandData createCoinflipRoleCommandData;
+			createCoinflipRoleCommandData.defaultPermission = true;
+			createCoinflipRoleCommandData.description = "Play heads or tails.";
+			createCoinflipRoleCommandData.name = "coinflip";
+			ApplicationCommandOptionData coinflipCommandOptionOne;
+			coinflipCommandOptionOne.name = "betamount";
+			coinflipCommandOptionOne.required = true;
+			coinflipCommandOptionOne.type = ApplicationCommandOptionType::INTEGER;
+			coinflipCommandOptionOne.description = "The wager you would like to place.";
+			createCoinflipRoleCommandData.options.push_back(coinflipCommandOptionOne);
+			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createCoinflipRoleCommandData).get();
+			*/
 		}
 	};
 	RegisterSlashCommands registerSlashCommands{};

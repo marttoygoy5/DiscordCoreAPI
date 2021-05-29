@@ -179,7 +179,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::AllowedMentionsData allowedMentions;
 		DiscordCoreInternal::MessageReferenceData messageReference;
 		int nonce;
-		ActionRowData components;
+		vector<ActionRowData> components;
 	};
 
 	struct SendDMData {
@@ -563,6 +563,21 @@ namespace DiscordCoreAPI {
 					editInteractionResponseData.embeds.push_back(embedData);
 				}
 				editInteractionResponseData.allowedMentions = replyMessageData.allowedMentions;
+				for (auto& value : replyMessageData.components) {
+					DiscordCoreInternal::ActionRowData componentDatas;
+					for (auto& valueNew :value.components) {
+						DiscordCoreInternal::ComponentData componentData;
+						componentData.customId = valueNew.customId;
+						componentData.disabled = valueNew.disabled;
+						componentData.emoji = valueNew.emoji;
+						componentData.label = valueNew.label;
+						componentData.style = (DiscordCoreInternal::ButtonStyle)valueNew.style;
+						componentData.type = (DiscordCoreInternal::ComponentType)valueNew.type;
+						componentData.url = valueNew.url;
+						componentDatas.components.push_back(componentData);
+					}
+					editInteractionResponseData.components.push_back(componentDatas);
+				}
 				DiscordCoreInternal::PatchInteractionResponseData dataPackage;
 				dataPackage.agentResources = this->agentResources;
 				dataPackage.channelId = replyMessageData.replyingToMessageData.channelId;
@@ -571,6 +586,7 @@ namespace DiscordCoreAPI {
 				dataPackage.interactionToken = replyMessageData.replyingToMessageData.interactionToken;
 				dataPackage.threadContext = this->threads->at(5);
 				dataPackage.content = DiscordCoreInternal::getEditInteractionResponsePayload(editInteractionResponseData);
+				cout << dataPackage.content << endl;
 				MessageManagerAgent managerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(4).scheduler);
 				send(managerAgent.requestPatchInteractionBuffer, dataPackage);
 				managerAgent.start();
@@ -620,17 +636,22 @@ namespace DiscordCoreAPI {
 				createMessageDataNew.messageReference.messageId = replyMessageData.replyingToMessageData.id;
 				createMessageDataNew.messageReference.guildId = replyMessageData.replyingToMessageData.guildId;
 				createMessageDataNew.allowedMentions.repliedUser = true;
-				for (auto& value : replyMessageData.components.components) {
-					DiscordCoreInternal::ComponentData componentData;
-					componentData.customId = value.customId;
-					componentData.disabled = value.disabled;
-					componentData.emoji = value.emoji;
-					componentData.label = value.label;
-					componentData.style = (DiscordCoreInternal::ButtonStyle)value.style;
-					componentData.type = (DiscordCoreInternal::ComponentType)value.type;
-					componentData.url = value.url;
-					createMessageDataNew.components.components.push_back(componentData);
+				for (auto& value : replyMessageData.components) {
+					DiscordCoreInternal::ActionRowData componentDatas;
+					for (auto& valueNew : value.components) {
+						DiscordCoreInternal::ComponentData componentData;
+						componentData.customId = valueNew.customId;
+						componentData.disabled = valueNew.disabled;
+						componentData.emoji = valueNew.emoji;
+						componentData.label = valueNew.label;
+						componentData.style = (DiscordCoreInternal::ButtonStyle)valueNew.style;
+						componentData.type = (DiscordCoreInternal::ComponentType)valueNew.type;
+						componentData.url = valueNew.url;
+						componentDatas.components.push_back(componentData);
+					}
+					createMessageDataNew.components.push_back(componentDatas);
 				}
+				
 				dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
 				MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 				send(MessageManagerAgent::requestPostBuffer, dataPackage);

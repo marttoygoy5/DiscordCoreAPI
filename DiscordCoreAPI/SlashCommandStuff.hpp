@@ -29,8 +29,8 @@ namespace DiscordCoreAPI {
 
     struct ApplicationCommandOptionChoiceData {
         string name;
-        int	valueInt;
-        string valueString;
+        int	valueInt = 0;
+        string valueString = "";
     };
 
     struct ApplicationCommandOptionData {

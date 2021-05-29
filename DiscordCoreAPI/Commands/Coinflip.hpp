@@ -17,7 +17,7 @@ namespace DiscordCoreAPI {
 	class Coinflip :public BaseFunction {
 	public:
 		Coinflip() {
-			this->commandName = "coinflip+ACIAOw";
+			this->commandName = "coinflip";
 			this->helpDescription = "";
 		}
 			virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
@@ -30,12 +30,12 @@ namespace DiscordCoreAPI {
 					return;
 				}
 
-				if (args->message.data.type == DiscordCoreInternal::MessageType::INTERACTION) {
+				if (args->message.data.type != DiscordCoreInternal::MessageType::INTERACTION) {
 					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
 				}
 
 				Guild guild = args->coreClient->guilds->getGuildAsync({ args->message.data.guildId }).get();
-				DiscordGuild discordGuild = args->coreClient->getDiscordGuild(guild.data);
+				DiscordGuild discordGuild(guild.data);
 
 				bool areWeAllowed = checkIfAllowedGamingInChannel(args->message, discordGuild.data);
 
@@ -59,8 +59,8 @@ namespace DiscordCoreAPI {
 
 				regex betAmountRegExp("\\d{1,18}");
 
-				if (args->argumentsArray.size() == 0 || regex_search(args->argumentsArray.at(0), betAmountRegExp) || stoll(args->argumentsArray.at(0)) < 1) {
-					string msgString = "------\n**Please enter a valid amount to bet! 1 ${discordUser.userData.currencyName} or more! (!coinflip = BETAMOUNT)**\n------";
+				if (args->argumentsArray.size() == 0 || !regex_search(args->argumentsArray.at(0), betAmountRegExp) || stoll(args->argumentsArray.at(0)) < 1) {
+					string msgString = "------\n**Please enter a valid amount to bet! 1 " + args->coreClient->discordUser->data.currencyName + " or more! (!coinflip = BETAMOUNT)**\n------";
 					EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
@@ -92,10 +92,10 @@ namespace DiscordCoreAPI {
 					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
 					return;
 				}
-
 				string newBetString = "";
-				newBetString += "Welcome, +ADwAQAAhACI- +- guildMember.data.user.id +- +ACIAPg- , you have placed a bet of +ACoAKgAi- +- to_string(betAmount) +- " " +- args->coreClient->discordUser->data.currencyName +- +ACIAKgAqAFw-n+ACIAOw-";
-				newBetString += "React with :exploding_head: to choose heads, or with :snake: to choose tails+ACEAIgA7-";
+
+				newBetString += "Welcome, <@!" + guildMember.data.user.id + "> , you have placed a bet of **" + to_string(betAmount) + " " + args->coreClient->discordUser->data.currencyName + "**.\n";
+				newBetString += "React with :exploding_head: to choose heads, or with :snake: to choose tails!";
 
 				EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
@@ -106,6 +106,7 @@ namespace DiscordCoreAPI {
 				ReplyMessageData replyMessageData;
 				replyMessageData.replyingToMessageData = args->message.data;
 				replyMessageData.embed = msgEmbed;
+				ActionRowData actionRowData;
 				ComponentData componentData01;
 				componentData01.customId = "Heads";
 				componentData01.disabled = false;
@@ -113,7 +114,7 @@ namespace DiscordCoreAPI {
 				componentData01.label = "Heads";
 				componentData01.style = ButtonStyle::Success;
 				componentData01.type = ComponentType::Button;
-				replyMessageData.components.components.push_back(componentData01);
+				actionRowData.components.push_back(componentData01);
 				ComponentData componentData02;
 				componentData02.customId = "Tails";
 				componentData02.disabled = false;
@@ -121,7 +122,8 @@ namespace DiscordCoreAPI {
 				componentData02.label = "Tails";
 				componentData02.style = ButtonStyle::Success;
 				componentData02.type = ComponentType::Button;
-				replyMessageData.components.components.push_back(componentData02);
+				actionRowData.components.push_back(componentData02);
+				replyMessageData.components.push_back(actionRowData);
 				Message newMessage = args->coreClient->messages->replyAsync(replyMessageData).get();
 
 				//auto filter = +AFsAXQ-(DiscordCoreInternal::InteractionData interactionData) {interactionData; +AH0AOw-

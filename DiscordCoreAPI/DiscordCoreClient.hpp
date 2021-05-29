@@ -255,10 +255,6 @@ namespace DiscordCoreAPI {
 			catch (const exception& e) {
 				send(errorBuffer, e);
 			}
-			catch (nlohmann::detail::type_error& e) {
-				exception exceptNew(e.what());
-				send(errorBuffer, exceptNew);
-			}
 			done();
 			this->terminate();
 		}

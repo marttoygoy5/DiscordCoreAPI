@@ -371,8 +371,8 @@ namespace  DiscordCoreInternal {
     };
 
     struct EmojiData {
-        string id;
-        string name;
+        string id = "";
+        string name = "";
         map<string, RoleData> roles;
         UserData user;
         bool requireColons;
@@ -631,11 +631,11 @@ namespace  DiscordCoreInternal {
     struct ComponentData {
         ComponentType type;
         ButtonStyle style;
-        string label;
+        string label = "";
         EmojiData emoji;
-        string customId;
-        string url;
-        bool disabled;
+        string customId = "";
+        string url = "";
+        bool disabled = false;
     };
 
     struct ActionRowData {
@@ -892,7 +892,7 @@ namespace  DiscordCoreInternal {
         int flags = 0;
         vector<DiscordCoreInternal::AttachmentData> attachments;
         DiscordCoreInternal::AllowedMentionsData allowedMentions;
-        ActionRowData components;
+        vector<ActionRowData> components;
     };
 
     struct CreateMessageData {
@@ -902,7 +902,7 @@ namespace  DiscordCoreInternal {
         DiscordCoreInternal::EmbedData embed;
         DiscordCoreInternal::AllowedMentionsData allowedMentions;
         DiscordCoreInternal::MessageReferenceData messageReference;
-        ActionRowData components;
+        vector<ActionRowData> components;
     };
 
     struct ReplyMessageData {
@@ -913,7 +913,7 @@ namespace  DiscordCoreInternal {
         DiscordCoreInternal::EmbedData embed;
         int nonce;
         bool tts = false;
-        ActionRowData components;
+        vector<ActionRowData> components;
     };
 
     struct SendDMData {
@@ -1043,6 +1043,12 @@ namespace  DiscordCoreInternal {
         bool defaultPermission;
     };
 
+    enum class InteractionType {
+        Ping = 1,
+        ApplicationCommand = 2,
+        MessageComponent = 3
+    };
+
     struct InteractionIncData {
         string channelId;
         string guildId;
@@ -1052,12 +1058,7 @@ namespace  DiscordCoreInternal {
         vector<string> optionsArgs;
         string userId;
         string commandName;
-    };
-
-    enum class InteractionType {
-        Ping = 1,
-        ApplicationCommand = 2,
-        MessageComponent = 3
+        InteractionType type;
     };
 
     struct ApplicationCommandInteractionDataResolved {
@@ -1106,6 +1107,7 @@ namespace  DiscordCoreInternal {
         string content = "";
         vector<EmbedData> embeds;
         AllowedMentionsData allowedMentions;
+        vector<ActionRowData> components;
     };
 
     struct PatchInteractionResponseData {
