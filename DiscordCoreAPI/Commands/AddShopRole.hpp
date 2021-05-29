@@ -85,11 +85,7 @@ namespace DiscordCoreAPI {
 			regex_search(args->argumentsArray.at(0).c_str(), matchResults, nameRegExp);
 			string roleName = matchResults.str();
 			regex_search(args->argumentsArray.at(1).c_str(), matchResults, hexColorRegExp);
-			unsigned int roleColor = stol(matchResults.str(), 0, 16);
-			stringstream stream;
-			cout << setbase(10) << roleColor << endl;
-			stream << setbase(10) << roleColor;
-			string roleColorReal = stream.str();
+			string roleColor = matchResults.str();
 			regex_search(args->argumentsArray.at(2).c_str(), matchResults, costRegExp);
 			unsigned int roleCost = (unsigned int)stoll(matchResults.str());
 
@@ -115,7 +111,7 @@ namespace DiscordCoreAPI {
 			rolePermsString = DiscordCoreAPI::PermissionsConverter::addPermissionsToString(rolePermsString, permissions, 10);
 			
 			CreateRoleData createRoleData;
-			createRoleData.color = roleColorReal;
+			createRoleData.color = roleColor;
 			createRoleData.guildId = args->message.data.guildId;
 			createRoleData.hoist = true;
 			createRoleData.mentionable = true;
@@ -132,7 +128,8 @@ namespace DiscordCoreAPI {
 			discordGuild.writeDataToDB();
 
 			string msgString = "";
-			msgString = "Nicely done! You've added a new role to the store's inventory, giving the server access to it!\nIt is as follows:\n------\n__**Role:**__ <@&" + currentRole.roleId + ">* __Cost__** : ${ roleCost }\n------";
+			msgString = "Nicely done! You've added a new role to the store's inventory, giving the server access to it!\nIt is as follows:\n------\n__**Role:**__ <@&" + currentRole.roleId + ">__**Cost**__ : " + to_string(roleCost) + " "
+				+ args->coreClient->discordUser->data.currencyName + "\n------";
 			EmbedData msgEmbed;
 			msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 			msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);

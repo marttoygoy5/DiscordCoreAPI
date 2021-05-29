@@ -576,8 +576,12 @@ namespace DiscordCoreInternal {
 		}
 
 		string getCreateRolePayload(CreateRoleData createRoleData) {
+			unsigned int roleColorInt = stol(createRoleData.color, 0, 16);
+			stringstream stream;
+			stream << setbase(10) << roleColorInt;
+			string roleColorReal = stream.str();
 
-			json data = { {"color", createRoleData.color
+			json data = { {"color", roleColorReal
 
 				},
 				{"hoist", createRoleData.hoist},{"permissions", createRoleData.permissions},
