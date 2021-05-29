@@ -39,11 +39,11 @@ namespace DiscordCoreAPI {
 			}
 			Guild guild = args->coreClient->guilds->getGuildAsync({ .guildId = args->message.data.guildId }).get();
 
-			DiscordGuild discordGuild = args->coreClient->getDiscordGuild(guild.data);
+			DiscordGuild discordGuild(guild.data);
 
 			regex itemNameRegExp("\.{1,32}");
 			regex selfModRegExp("\\d{1,5}");
-			regex oppModRegExp("\\d{1,5}");
+			regex oppModRegExp("-{0,1}\\d{1,5}");
 			regex itemCostRegExp("\\d{1,6}");
 			regex emojiRegExp("\.{1,32}");
 			if (args->argumentsArray.size() == 0 || !regex_search(args->argumentsArray.at(0), itemNameRegExp)) {
@@ -112,7 +112,7 @@ namespace DiscordCoreAPI {
 			regex_search(args->argumentsArray.at(1).c_str(), matchResults, selfModRegExp);
 			unsigned int selfMod = (unsigned int)stoll(matchResults.str());
 			regex_search(args->argumentsArray.at(2).c_str(), matchResults, oppModRegExp);
-			unsigned int oppMod = (unsigned int)stoll(matchResults.str());
+			int oppMod = (int)stoll(matchResults.str());
 			regex_search(args->argumentsArray.at(3).c_str(), matchResults, itemCostRegExp);
 			unsigned int itemCost = (unsigned int)stoll(matchResults.str());
 			string emoji = args->argumentsArray.at(4);

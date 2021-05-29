@@ -88,19 +88,19 @@ namespace DiscordCoreAPI {
 			addShopRoleCommandOptionOne.required = true;
 			addShopRoleCommandOptionOne.type = ApplicationCommandOptionType::STRING;
 			addShopRoleCommandOptionOne.description = "The name of the role.";
-			createAddShopRoleCommandData.options.push_back(addShopItemCommandOptionOne);
+			createAddShopRoleCommandData.options.push_back(addShopRoleCommandOptionOne);
 			ApplicationCommandOptionData addShopRoleCommandOptionTwo;
 			addShopRoleCommandOptionTwo.name = "hexcolorvalue";
 			addShopRoleCommandOptionTwo.required = true;
 			addShopRoleCommandOptionTwo.type = ApplicationCommandOptionType::STRING;
 			addShopRoleCommandOptionTwo.description = "The hex-color value of the role.";
-			createAddShopItemCommandData.options.push_back(addShopItemCommandOptionTwo);
+			createAddShopRoleCommandData.options.push_back(addShopRoleCommandOptionTwo);
 			ApplicationCommandOptionData addShopRoleCommandOptionThree;
 			addShopRoleCommandOptionThree.name = "rolecost";
 			addShopRoleCommandOptionThree.required = true;
 			addShopRoleCommandOptionThree.type = ApplicationCommandOptionType::INTEGER;
 			addShopRoleCommandOptionThree.description = "The value/cost of the role.";
-			createAddShopItemCommandData.options.push_back(addShopItemCommandOptionThree);
+			createAddShopRoleCommandData.options.push_back(addShopRoleCommandOptionThree);
 			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createAddShopRoleCommandData).get();
 
 		}

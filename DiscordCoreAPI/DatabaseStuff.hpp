@@ -140,34 +140,34 @@ namespace DiscordCoreAPI {
     };
 
     struct Roulette {
-        vector<RouletteBet> rouletteBets{};
         bool currentlySpinning = false;
+        vector<RouletteBet> rouletteBets{};
     };
 
     struct LargestPayout {
         unsigned int amount = 0;
-        string date = "";
+        string timeStamp = "";
         string userId = "";
         string userName = "";
     };
 
     struct CasinoStats {
         LargestPayout largestBlackjackPayout{};
-        unsigned int totalBlackjackPayout = 0;
+        int totalBlackjackPayout = 0;
         LargestPayout largestCoinFlipPayout{};
-        unsigned int totalCoinFlipPayout = 0;
+        int totalCoinFlipPayout = 0;
         LargestPayout largestRoulettePayout{};
-        unsigned int totalRoulettePayout = 0;
+        int totalRoulettePayout = 0;
         LargestPayout largestSlotsPayout{};
-        unsigned int totalSlotsPayout = 0;
-        unsigned int totalPayout = 0;
+        int totalSlotsPayout = 0;
+        int totalPayout = 0;
     };
 
     struct InventoryItem {
         string emoji = "";
         unsigned int itemCost = 0;
         string itemName = "";
-        unsigned int oppMod = 0;
+        int oppMod = 0;
         unsigned int selfMod = 0;
     };
 
@@ -376,28 +376,28 @@ namespace DiscordCoreAPI {
                     subDocument.append(kvp("largestBlackjackPayout", [discordGuildData](bsoncxx::builder::basic::sub_document subDoc2) {
                         subDoc2.append(kvp("amount", bsoncxx::types::b_int32(discordGuildData.casinoStats.largestBlackjackPayout.amount)));
                         subDoc2.append(kvp("userId", discordGuildData.casinoStats.largestBlackjackPayout.userId));
-                        subDoc2.append(kvp("date", discordGuildData.casinoStats.largestBlackjackPayout.date));
+                        subDoc2.append(kvp("timeStamp", discordGuildData.casinoStats.largestBlackjackPayout.timeStamp));
                         subDoc2.append(kvp("userName", discordGuildData.casinoStats.largestBlackjackPayout.userName));
                         }));
                     subDocument.append(kvp("totalBlackjackPayout", bsoncxx::types::b_int32(discordGuildData.casinoStats.totalBlackjackPayout)));
                     subDocument.append(kvp("largestCoinFlipPayout", [discordGuildData](bsoncxx::builder::basic::sub_document subDoc2) {
                         subDoc2.append(kvp("amount", bsoncxx::types::b_int32(discordGuildData.casinoStats.largestCoinFlipPayout.amount)));
                         subDoc2.append(kvp("userId", discordGuildData.casinoStats.largestCoinFlipPayout.userId));
-                        subDoc2.append(kvp("date", discordGuildData.casinoStats.largestCoinFlipPayout.date));
+                        subDoc2.append(kvp("timeStamp", discordGuildData.casinoStats.largestCoinFlipPayout.timeStamp));
                         subDoc2.append(kvp("userName", discordGuildData.casinoStats.largestCoinFlipPayout.userName));
                         }));
                     subDocument.append(kvp("totalCoinFlipPayout", bsoncxx::types::b_int32(discordGuildData.casinoStats.totalCoinFlipPayout)));
                     subDocument.append(kvp("largestRoulettePayout", [discordGuildData](bsoncxx::builder::basic::sub_document subDoc2) {
                         subDoc2.append(kvp("amount", bsoncxx::types::b_int32(discordGuildData.casinoStats.largestRoulettePayout.amount)));
                         subDoc2.append(kvp("userId", discordGuildData.casinoStats.largestRoulettePayout.userId));
-                        subDoc2.append(kvp("date", discordGuildData.casinoStats.largestRoulettePayout.date));
+                        subDoc2.append(kvp("timeStamp", discordGuildData.casinoStats.largestRoulettePayout.timeStamp));
                         subDoc2.append(kvp("userName", discordGuildData.casinoStats.largestRoulettePayout.userName));
                         }));
                     subDocument.append(kvp("totalRoulettePayout", bsoncxx::types::b_int32(discordGuildData.casinoStats.totalRoulettePayout)));
                     subDocument.append(kvp("largestSlotsPayout", [discordGuildData](bsoncxx::builder::basic::sub_document subDoc2) {
                         subDoc2.append(kvp("amount", bsoncxx::types::b_int32(discordGuildData.casinoStats.largestSlotsPayout.amount)));
                         subDoc2.append(kvp("userId", discordGuildData.casinoStats.largestSlotsPayout.userId));
-                        subDoc2.append(kvp("date", discordGuildData.casinoStats.largestSlotsPayout.date));
+                        subDoc2.append(kvp("timeStamp", discordGuildData.casinoStats.largestSlotsPayout.timeStamp));
                         subDoc2.append(kvp("userName", discordGuildData.casinoStats.largestSlotsPayout.userName));
                         }));
                     subDocument.append(kvp("totalSlotsPayout", bsoncxx::types::b_int32(discordGuildData.casinoStats.totalSlotsPayout)));
@@ -465,22 +465,22 @@ namespace DiscordCoreAPI {
                     guildData.guildShop.roles.push_back(role);
                 }
                 guildData.casinoStats.largestBlackjackPayout.amount = docValue.view()["casinoStats"].get_document().value["largestBlackjackPayout"].get_document().value["amount"].get_int32().value;
-                guildData.casinoStats.largestBlackjackPayout.date = docValue.view()["casinoStats"].get_document().value["largestBlackjackPayout"].get_document().value["date"].get_utf8().value.to_string();
+                guildData.casinoStats.largestBlackjackPayout.timeStamp = docValue.view()["casinoStats"].get_document().value["largestBlackjackPayout"].get_document().value["timeStamp"].get_utf8().value.to_string();
                 guildData.casinoStats.largestBlackjackPayout.userId = docValue.view()["casinoStats"].get_document().value["largestBlackjackPayout"].get_document().value["userId"].get_utf8().value.to_string();
                 guildData.casinoStats.largestBlackjackPayout.userName = docValue.view()["casinoStats"].get_document().value["largestBlackjackPayout"].get_document().value["userName"].get_utf8().value.to_string();
                 guildData.casinoStats.totalBlackjackPayout = docValue.view()["casinoStats"].get_document().value["totalBlackjackPayout"].get_int32().value;
                 guildData.casinoStats.largestCoinFlipPayout.amount = docValue.view()["casinoStats"].get_document().value["largestCoinFlipPayout"].get_document().value["amount"].get_int32().value;
-                guildData.casinoStats.largestCoinFlipPayout.date = docValue.view()["casinoStats"].get_document().value["largestCoinFlipPayout"].get_document().value["date"].get_utf8().value.to_string();
+                guildData.casinoStats.largestCoinFlipPayout.timeStamp = docValue.view()["casinoStats"].get_document().value["largestCoinFlipPayout"].get_document().value["timeStamp"].get_utf8().value.to_string();
                 guildData.casinoStats.largestCoinFlipPayout.userId = docValue.view()["casinoStats"].get_document().value["largestCoinFlipPayout"].get_document().value["userId"].get_utf8().value.to_string();
                 guildData.casinoStats.largestCoinFlipPayout.userName = docValue.view()["casinoStats"].get_document().value["largestCoinFlipPayout"].get_document().value["userName"].get_utf8().value.to_string();
                 guildData.casinoStats.totalCoinFlipPayout = docValue.view()["casinoStats"].get_document().value["totalCoinFlipPayout"].get_int32().value;
                 guildData.casinoStats.largestRoulettePayout.amount = docValue.view()["casinoStats"].get_document().value["largestRoulettePayout"].get_document().value["amount"].get_int32().value;
-                guildData.casinoStats.largestRoulettePayout.date = docValue.view()["casinoStats"].get_document().value["largestRoulettePayout"].get_document().value["date"].get_utf8().value.to_string();
+                guildData.casinoStats.largestRoulettePayout.timeStamp = docValue.view()["casinoStats"].get_document().value["largestRoulettePayout"].get_document().value["timeStamp"].get_utf8().value.to_string();
                 guildData.casinoStats.largestRoulettePayout.userId = docValue.view()["casinoStats"].get_document().value["largestRoulettePayout"].get_document().value["userId"].get_utf8().value.to_string();
                 guildData.casinoStats.largestRoulettePayout.userName = docValue.view()["casinoStats"].get_document().value["largestRoulettePayout"].get_document().value["userName"].get_utf8().value.to_string();
                 guildData.casinoStats.totalRoulettePayout = docValue.view()["casinoStats"].get_document().value["totalRoulettePayout"].get_int32().value;
                 guildData.casinoStats.largestSlotsPayout.amount = docValue.view()["casinoStats"].get_document().value["largestSlotsPayout"].get_document().value["amount"].get_int32().value;
-                guildData.casinoStats.largestSlotsPayout.date = docValue.view()["casinoStats"].get_document().value["largestSlotsPayout"].get_document().value["date"].get_utf8().value.to_string();
+                guildData.casinoStats.largestSlotsPayout.timeStamp = docValue.view()["casinoStats"].get_document().value["largestSlotsPayout"].get_document().value["timeStamp"].get_utf8().value.to_string();
                 guildData.casinoStats.largestSlotsPayout.userId = docValue.view()["casinoStats"].get_document().value["largestSlotsPayout"].get_document().value["userId"].get_utf8().value.to_string();
                 guildData.casinoStats.largestSlotsPayout.userName = docValue.view()["casinoStats"].get_document().value["largestSlotsPayout"].get_document().value["userName"].get_utf8().value.to_string();
                 guildData.casinoStats.totalSlotsPayout = docValue.view()["casinoStats"].get_document().value["totalSlotsPayout"].get_int32().value;

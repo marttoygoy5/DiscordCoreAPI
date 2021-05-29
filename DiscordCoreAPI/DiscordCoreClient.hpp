@@ -46,6 +46,7 @@ namespace DiscordCoreAPI {
 			if (guildCursor == DiscordCoreClient::guildMap.end()) {
 				DiscordGuild discordGuild(guildData);
 				DiscordCoreClient::guildMap.insert(make_pair(guildData.id, discordGuild));
+				discordGuild.getDataFromDB().get();
 				return discordGuild;
 			}
 			else {
@@ -59,6 +60,7 @@ namespace DiscordCoreAPI {
 			if (guildMemberCursor == DiscordCoreClient::guildMemberMap.end()){
 				DiscordGuildMember discordGuildMember(guildMemberData);
 				DiscordCoreClient::guildMemberMap.insert(make_pair(guildMemberData.guildId + guildMemberData.user.id, discordGuildMember));
+				discordGuildMember.getDataFromDB().get();
 				return discordGuildMember;
 			}
 			else {
@@ -239,7 +241,6 @@ namespace DiscordCoreAPI {
 							messageData.applicationId = interactionIncData.applicationId;
 							messageData.interactionToken = interactionIncData.interactionToken;
 							messageData.content = this->discordUser->data.prefix + constructStringContent(interactionIncData);
-							cout << messageData.content << endl;
 							DiscordCoreInternal::InteractionResponseFullData interactionResponseData;
 							interactionResponseData.interactionResponseData.type = DiscordCoreInternal::InteractionResponseType::DeferredChannelMessageWithSource;
 							interactionResponseData.interactionIncData = interactionIncData;
@@ -253,6 +254,10 @@ namespace DiscordCoreAPI {
 			}
 			catch (const exception& e) {
 				send(errorBuffer, e);
+			}
+			catch (nlohmann::detail::type_error& e) {
+				exception exceptNew(e.what());
+				send(errorBuffer, exceptNew);
 			}
 			done();
 			this->terminate();

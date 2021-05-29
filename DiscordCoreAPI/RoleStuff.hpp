@@ -203,7 +203,6 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::RoleData roleData;
 			DiscordCoreInternal::parseObject(returnData.data, &roleData);
 			Role newRole(roleData, this->coreClient);
-			send(RoleManagerAgent::outBuffer, newRole);
 			co_return newRole;
 		}
 
@@ -232,7 +231,6 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::RoleData roleData;
 			DiscordCoreInternal::parseObject(returnData.data, &roleData);
 			Role newRole(roleData, this->coreClient);
-			send(RoleManagerAgent::outBuffer, newRole);
 			co_return newRole;
 		}
 

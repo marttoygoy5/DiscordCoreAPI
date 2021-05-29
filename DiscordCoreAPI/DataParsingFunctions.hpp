@@ -2402,15 +2402,24 @@ namespace DiscordCoreInternal {
                 interactionIncData.commandName = theValue;
             }
         }
-
-        if (jsonObjectData.contains("data")&& !jsonObjectData.at("data").is_null()) {
+        
+        if (jsonObjectData.contains("data") && !jsonObjectData.at("data").is_null()) {
             if (jsonObjectData.at("data").contains("options") && !jsonObjectData.at("data").at("options").is_null()) {
                 json::array_t theValue = jsonObjectData.at("data").at("options");
                 for (auto& value : theValue) {
-                    interactionIncData.optionsArgs.push_back(value.at("value"));
+                    if (value.contains("value") && !value.at("value").is_null()) {
+                        auto valueNew = value.at("value");
+                        if (valueNew.is_string()) {
+                            interactionIncData.optionsArgs.push_back(valueNew);
+                        }
+                        else if (valueNew.is_number()) {
+                            interactionIncData.optionsArgs.push_back(to_string(valueNew));
+                        }
+                        
+                    }
                 }
             }
-        }        
+        }
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
             string theValue = jsonObjectData.at("id");

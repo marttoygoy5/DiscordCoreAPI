@@ -15,5 +15,6 @@
 #include "Balance.hpp"
 #include "AddShopItem.hpp"
 #include "AddShopRole.hpp"
+#include "Coinflip.hpp"
 
 #endif
