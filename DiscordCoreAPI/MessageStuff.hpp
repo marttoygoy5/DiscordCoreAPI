@@ -126,6 +126,33 @@ namespace DiscordCoreAPI {
 		int actualColorVal;
 	};
 
+	enum class ComponentType {
+		ActionRow = 1,
+		Button = 2
+	};
+
+	enum class ButtonStyle {
+		Primary = 1,
+		Secondary = 2,
+		Success = 3,
+		Danger = 4,
+		Link = 5
+	};
+
+	struct ComponentData {
+		ComponentType type;
+		ButtonStyle style;
+		string label;
+		DiscordCoreInternal::EmojiData emoji;
+		string customId;
+		string url;
+		bool disabled;
+	};
+
+	struct ActionRowData {
+		vector<ComponentData> components;
+	};
+
 	struct EditMessageData {
 		string content = "";
 		EmbedData embed;
@@ -152,6 +179,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::AllowedMentionsData allowedMentions;
 		DiscordCoreInternal::MessageReferenceData messageReference;
 		int nonce;
+		ActionRowData components;
 	};
 
 	struct SendDMData {
@@ -592,6 +620,17 @@ namespace DiscordCoreAPI {
 				createMessageDataNew.messageReference.messageId = replyMessageData.replyingToMessageData.id;
 				createMessageDataNew.messageReference.guildId = replyMessageData.replyingToMessageData.guildId;
 				createMessageDataNew.allowedMentions.repliedUser = true;
+				for (auto& value : replyMessageData.components.components) {
+					DiscordCoreInternal::ComponentData componentData;
+					componentData.customId = value.customId;
+					componentData.disabled = value.disabled;
+					componentData.emoji = value.emoji;
+					componentData.label = value.label;
+					componentData.style = (DiscordCoreInternal::ButtonStyle)value.style;
+					componentData.type = (DiscordCoreInternal::ComponentType)value.type;
+					componentData.url = value.url;
+					createMessageDataNew.components.components.push_back(componentData);
+				}
 				dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
 				MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 				send(MessageManagerAgent::requestPostBuffer, dataPackage);

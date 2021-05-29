@@ -76,6 +76,26 @@ namespace DiscordCoreInternal {
 	};
 
 	string getCreateMessagePayload(CreateMessageData createMessageData) {
+		
+		auto components = json::array();
+
+				for (auto& value : createMessageData.components.components) {
+			json component = { {"custom_id", value.customId},
+				{"disabled", value.disabled},
+				{"emoji",{
+					{"name", value.emoji.name},
+				{"id", value.emoji.id},
+				{"animated", value.emoji.animated}
+			} },
+				{"label", value.label},
+				{"style", value.style},
+				{"type", value.type},
+				{"url", value.url}
+			};
+
+				components.push_back(component);
+		}
+		
 		auto fields = json::array();
 
 		for (unsigned int x = 0; x < createMessageData.embed.fields.size(); x += 1) {
@@ -137,7 +157,8 @@ namespace DiscordCoreInternal {
 				{"description" , createMessageData.embed.description},
 				{"fields", fields},
 				{"color",colorValue},
-					{"timestamp", createMessageData.embed.timestamp}
+					{"timestamp", createMessageData.embed.timestamp},
+					{"components", components}
 		}}
 					};
 					return data.dump();
@@ -187,7 +208,8 @@ namespace DiscordCoreInternal {
 				{"description" , createMessageData.embed.description},
 				{"fields", fields},
 				{"color",colorValue},
-						{"timestamp", createMessageData.embed.timestamp}
+						{"timestamp", createMessageData.embed.timestamp},
+						{"components", components}
 		}}
 				};
 				return data.dump();
@@ -208,7 +230,8 @@ namespace DiscordCoreInternal {
 				{"fail_if_not_exists", createMessageData.messageReference.failIfNotExists}
 					}},
 			{"content", createMessageData.content},
-			{"tts" , createMessageData.tts}
+			{"tts" , createMessageData.tts},
+					{"components", components}
 				};
 
 				return data.dump();
@@ -222,7 +245,8 @@ namespace DiscordCoreInternal {
 				{"users", createMessageData.allowedMentions.users}
 				}},
 			{"content", createMessageData.content},
-			{"tts" , createMessageData.tts}
+			{"tts" , createMessageData.tts},
+					{"components", components}
 				};
 
 				return data.dump();

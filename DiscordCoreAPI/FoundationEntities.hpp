@@ -615,6 +615,33 @@ namespace  DiscordCoreInternal {
         INTERACTION = 23
     };
 
+    enum class ComponentType {
+        ActionRow = 1,
+        Button = 2
+    };
+
+    enum class ButtonStyle {
+        Primary = 1,
+        Secondary = 2,
+        Success = 3,
+        Danger = 4,
+        Link = 5
+    };
+
+    struct ComponentData {
+        ComponentType type;
+        ButtonStyle style;
+        string label;
+        EmojiData emoji;
+        string customId;
+        string url;
+        bool disabled;
+    };
+
+    struct ActionRowData {
+        vector<ComponentData> components;
+    };
+
     struct MessageDataOld {
         string id;
         string channelId;
@@ -645,6 +672,7 @@ namespace  DiscordCoreInternal {
         int flags = 0;
         vector<MessageStickerData> stickers;
         InteractionResponseData interaction;
+        ActionRowData components;
     };
 
     struct MessageData : MessageDataOld {
@@ -864,6 +892,7 @@ namespace  DiscordCoreInternal {
         int flags = 0;
         vector<DiscordCoreInternal::AttachmentData> attachments;
         DiscordCoreInternal::AllowedMentionsData allowedMentions;
+        ActionRowData components;
     };
 
     struct CreateMessageData {
@@ -873,6 +902,7 @@ namespace  DiscordCoreInternal {
         DiscordCoreInternal::EmbedData embed;
         DiscordCoreInternal::AllowedMentionsData allowedMentions;
         DiscordCoreInternal::MessageReferenceData messageReference;
+        ActionRowData components;
     };
 
     struct ReplyMessageData {
@@ -883,6 +913,7 @@ namespace  DiscordCoreInternal {
         DiscordCoreInternal::EmbedData embed;
         int nonce;
         bool tts = false;
+        ActionRowData components;
     };
 
     struct SendDMData {

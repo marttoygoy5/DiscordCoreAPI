@@ -416,6 +416,7 @@ namespace DiscordCoreAPI {
         msgEmbed.setTimeStamp(getTimeAndDate());
         msgEmbed.setTitle("__**Permissions Issue:**__");
         Message msg = message.coreClient->messages->replyAsync({ .replyingToMessageData = message.data, .embed = msgEmbed }).get();
+        message.coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id,.timeDelay = 20000 }).get();
         return false;
     }
 }

@@ -1,4 +1,4 @@
-﻿// Coinflip.hpp - Header for the "coinflip" game/command.
+// Coinflip.hpp - Header for the "coinflip" game/command.
 // May 29, 2021
 // Chris M.
 // https://github.com/RealTimeChris
@@ -15,175 +15,198 @@
 namespace DiscordCoreAPI {
 
 	class Coinflip :public BaseFunction {
+	public:
 		Coinflip() {
-			this->commandName = "coinflip";
+			this->commandName = "coinflip+ACIAOw";
 			this->helpDescription = "";
 		}
+			virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
+			try {
+				Channel channel = args->coreClient->channels->getChannelAsync({ args->message.data.channelId }).get();
 
-		virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
-			const areWeInADM = await HelperFunctions.areWeInADM(commandData);
+				bool areWeInADm = areWeInADM(args->message, channel);
 
-			if (areWeInADM == = true) {
-				return commandReturnData;
-			}
-
-			const areWeAllowed = await HelperFunctions.checkIfAllowedInChannel(commandData, discordUser);
-
-			if (areWeAllowed == = false) {
-				return commandReturnData;
-			}
-
-			const guildData = new GuildData({ dataBase: discordUser.dataBase, id : commandData.guild!.id, memberCount : commandData.guild!.memberCount, name : commandData.guild!.name });
-			await guildData.getFromDataBase();
-
-			const guildMemberData = new GuildMemberData({ dataBase: discordUser.dataBase, id : commandData.guildMember!.id, guildId : commandData.guild!.id,
-				userName : (commandData.guildMember as Discord.GuildMember)!.user.username, displayName : (commandData.guildMember as Discord.GuildMember).displayName });
-			await guildMemberData.getFromDataBase();
-
-			if (!(commandData.fromTextChannel as Discord.TextChannel).permissionsFor(commandData.guild ? .client.user as Discord.User) ? .has('MANAGE_MESSAGES')) {
-				const msgString = `----- - \n * *I need the Manage Messages permission in this channel, for this game!**\n------`;
-					let msgEmbed = new Discord.MessageEmbed()
-					.setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL()!)
-					.setColor(guildData.borderColor as[number, number, number])
-					.setDescription(msgString)
-					.setTimestamp(Date() as unknown as Date)
-					.setTitle('__**Permissions Issue:**__')
-					let msg = await HelperFunctions.sendMessageWithCorrectChannel(commandData, msgEmbed);
-				if (commandData.toTextChannel instanceof Discord.WebhookClient) {
-					msg = new Discord.Message(commandData.guild!.client, msg, commandData.fromTextChannel!);
+				if (areWeInADm == true) {
+					return;
 				}
-				await msg.delete({ timeout: 20000 });
-				return commandReturnData;
-			}
 
-			const betAmountRegExp = / \d{ 1,18 } / ;
-
-			if (commandData.args[0] == = undefined || !betAmountRegExp.test(commandData.args[0]) || parseInt(commandData.args[0], 10) < 1) {
-				const msgString = `----- - \n * *Please enter a valid amount to bet!1 ${ discordUser.userData.currencyName } or more!(!coinflip = BETAMOUNT) * *\n------`;
-					let msgEmbed = new Discord.MessageEmbed()
-					.setAuthor((commandData.guildMember as Discord.GuildMember) ? .user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL()!)
-					.setColor(guildData.borderColor as[number, number, number])
-					.setDescription(msgString)
-					.setTimestamp(Date() as unknown as Date)
-					.setTitle('__**Missing Or Invalid Arguments:**__')
-					let msg = await HelperFunctions.sendMessageWithCorrectChannel(commandData, msgEmbed);
-				if (commandData.toTextChannel instanceof Discord.WebhookClient) {
-					msg = new Discord.Message(commandData.guild!.client, msg, commandData.fromTextChannel!);
+				if (args->message.data.type == DiscordCoreInternal::MessageType::INTERACTION) {
+					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
 				}
-				await msg.delete({ timeout: 20000 });
-				return commandReturnData;
-			}
 
-			const betAmount = parseInt(commandData.args[0].match(betAmountRegExp)![0]!, 10);
+				Guild guild = args->coreClient->guilds->getGuildAsync({ args->message.data.guildId }).get();
+				DiscordGuild discordGuild = args->coreClient->getDiscordGuild(guild.data);
 
-			let currencyAmount = guildMemberData.currency.wallet;
+				bool areWeAllowed = checkIfAllowedGamingInChannel(args->message, discordGuild.data);
 
-			if (betAmount > currencyAmount) {
-				const msgString = `----- - \n * *Sorry, but you have insufficient funds in your wallet to place that wager!**\n------`;
-					let msgEmbed = new Discord.MessageEmbed()
-					.setAuthor((commandData.guildMember as Discord.GuildMember) ? .user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL()!)
-					.setColor(guildData.borderColor as[number, number, number])
-					.setDescription(msgString)
-					.setTimestamp(Date() as unknown as Date)
-					.setTitle('__**Insufficient Funds:**__')
-					let msg = await HelperFunctions.sendMessageWithCorrectChannel(commandData, msgEmbed);
-				if (commandData.toTextChannel instanceof Discord.WebhookClient) {
-					msg = new Discord.Message(commandData.guild!.client, msg, commandData.fromTextChannel!);
+				if (areWeAllowed == false) {
+					return;
 				}
-				await msg.delete({ timeout: 20000 });
-				return commandReturnData;
-			}
+				GuildMember guildMember = args->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->message.data.author.id }).get();
 
-			let newBetString = '';
-
-			newBetString += `Welcome, < @!${ commandData.guildMember!.id } > , you have placed a bet of** ${ betAmount } ${ discordUser.userData.currencyName }**\n`;
-				newBetString += 'React with :exploding_head: to choose heads, or with :snake: to choose tails!';
-
-			const messageEmbed = new Discord.MessageEmbed();
-			messageEmbed
-				.setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL()!)
-				.setColor([0, 0, 255])
-				.setDescription(newBetString)
-				.setTimestamp(Date.now())
-				.setTitle('__**Heads, or Tails!?**__');
-			let newMessage = await HelperFunctions.sendMessageWithCorrectChannel(commandData, messageEmbed);
-			if (commandData.toTextChannel instanceof Discord.WebhookClient) {
-				newMessage = new Discord.Message(commandData.guild!.client, newMessage, commandData.fromTextChannel!);
-			}
-			await newMessage.react('🤯');
-			await newMessage.react('🐍');
-			const filter = (reaction: Discord.MessageReaction, user : Discord.User) = > (reaction.emoji.name == = '🤯' || reaction.emoji.name == = '🐍') && user.id == = commandData.guildMember!.id;
-			await newMessage.awaitReactions(filter, { max: 1, time : 120000 }).then(async collected = > {
-				if (collected.size == = 0) {
-					let timeOutString = '';
-					timeOutString = newBetString;
-
-					timeOutString += '\n\n__**Sorry, but you ran out of time to select heads or tails!**__';
-					const messageEmbed2 = new Discord.MessageEmbed();
-					messageEmbed2.setColor([255, 0, 0]).setTimestamp(Date.now()).setTitle('__**Heads, or Tails!?**__').setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL()!)
-						.setDescription(timeOutString);
-					await newMessage.edit(messageEmbed2);
-					newMessage.reactions.removeAll();
+				if (!DiscordCoreAPI::PermissionsConverter::checkForPermission(guildMember, channel, DiscordCoreInternal::Permissions::MANAGE_MESSAGES)) {
+					string msgString = "------\n**I need the Manage Messages permission in this channel, for this game!**\n------";
+					EmbedData msgEmbed;
+					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setDescription(msgString);
+					msgEmbed.setTimeStamp(getTimeAndDate());
+					msgEmbed.setTitle("__**Permissions Issue:**__");
+					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
+					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
+					return;
 				}
-				else if (collected.first()!.emoji.name == = '🤯' || collected.first()!.emoji.name == = '🐍') {
-					const number = Math.random() * 2;
-					let completionString = '';
-					completionString = newBetString;
-					let newBalance = 0;
-					const messageEmbed3 = new Discord.MessageEmbed();
 
-					await guildMemberData.getFromDataBase();
-					currencyAmount = guildMemberData.currency.wallet;
+				regex betAmountRegExp("\\d{1,18}");
 
-					if (betAmount > currencyAmount) {
-						completionString += '\n\n__**Sorry, but you have insufficient funds in your wallet to place that wager!**__';
+				if (args->argumentsArray.size() == 0 || regex_search(args->argumentsArray.at(0), betAmountRegExp) || stoll(args->argumentsArray.at(0)) < 1) {
+					string msgString = "------\n**Please enter a valid amount to bet! 1 ${discordUser.userData.currencyName} or more! (!coinflip = BETAMOUNT)**\n------";
+					EmbedData msgEmbed;
+					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setDescription(msgString);
+					msgEmbed.setTimeStamp(getTimeAndDate());
+					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
+					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
+					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
+					return;
+				}
 
-						messageEmbed3.setColor([255, 0, 0]).setDescription(completionString).setTimestamp(Date.now()).setTitle('__**Heads, or Tails!?**__')
-							.setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL()!);
-						await newMessage.edit(messageEmbed3);
+				DiscordGuildMember discordGuildMember(guildMember.data);
+
+				cmatch matchResults;
+				regex_search(args->argumentsArray.at(0).c_str(), matchResults, betAmountRegExp);
+				unsigned int betAmount = (unsigned int)stoll(matchResults.str());
+
+				unsigned int currencyAmount = discordGuildMember.data.currency.wallet;
+
+				if (betAmount > currencyAmount) {
+					string msgString = "------\n**Sorry, but you have insufficient funds in your wallet to place that wager!**\n------";
+					EmbedData msgEmbed;
+					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setDescription(msgString);
+					msgEmbed.setTimeStamp(getTimeAndDate());
+					msgEmbed.setTitle("__**Insufficient Funds:**__");
+					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
+					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
+					return;
+				}
+
+				string newBetString = "";
+				newBetString += "Welcome, +ADwAQAAhACI- +- guildMember.data.user.id +- +ACIAPg- , you have placed a bet of +ACoAKgAi- +- to_string(betAmount) +- " " +- args->coreClient->discordUser->data.currencyName +- +ACIAKgAqAFw-n+ACIAOw-";
+				newBetString += "React with :exploding_head: to choose heads, or with :snake: to choose tails+ACEAIgA7-";
+
+				EmbedData msgEmbed;
+				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+				msgEmbed.setColor(0, 0, 255);
+				msgEmbed.setDescription(newBetString);
+				msgEmbed.setTimeStamp(getTimeAndDate());
+				msgEmbed.setTitle("__**Heads, or Tails!?**__");
+				ReplyMessageData replyMessageData;
+				replyMessageData.replyingToMessageData = args->message.data;
+				replyMessageData.embed = msgEmbed;
+				ComponentData componentData01;
+				componentData01.customId = "Heads";
+				componentData01.disabled = false;
+				componentData01.emoji.name = "🤯";
+				componentData01.label = "Heads";
+				componentData01.style = ButtonStyle::Success;
+				componentData01.type = ComponentType::Button;
+				replyMessageData.components.components.push_back(componentData01);
+				ComponentData componentData02;
+				componentData02.customId = "Tails";
+				componentData02.disabled = false;
+				componentData02.emoji.name = "🐍";
+				componentData02.label = "Tails";
+				componentData02.style = ButtonStyle::Success;
+				componentData02.type = ComponentType::Button;
+				replyMessageData.components.components.push_back(componentData02);
+				Message newMessage = args->coreClient->messages->replyAsync(replyMessageData).get();
+
+				//auto filter = +AFsAXQ-(DiscordCoreInternal::InteractionData interactionData) {interactionData; +AH0AOw-
+				/*
+				args->coreClient->reactions->createReactionAsync({.channelId = newMessage.data.channelId, .messageId = newMessage.data.id, .emojiName = +ACLYPt0vACI - } ).get();
+				args->coreClient->reactions->createReactionAsync({.channelId = newMessage.data.channelId, .messageId = newMessage.data.id, .emojiName = +ACLYPdwNACI - } ).get();
+				const filter = (reaction: Discord.MessageReaction, user : Discord.User) = +AD4 - (reaction.emoji.name == = +AHwAfA - reaction.emoji.name == = ) + ACYAJg - user.id == = commandData.guildMember + ACE - .id;
+				await newMessage.awaitReactions(filter, { max: 1, time : 120000).then(async collected = +AD4 - {
+					if (collected.size == = 0) {
+						let timeOutString = '';
+						timeOutString = newBetString;
+
+						timeOutString + -= '+AFw-n+AFw-n+AF8AXwAqACo-Sorry, but you ran out of time to select heads or tails+ACEAKgAqAF8AXw-';
+						const messageEmbed2 = new Discord.MessageEmbed();
+						messageEmbed2.setColor(+AFs - 255, 0, 0 + AF0 - ).setTimestamp(Date.now()).setTitle('+AF8AXwAqACo-Heads, or Tails+ACE-?+ACoAKgBfAF8-').setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL() + ACE - )
+							.setDescription(timeOutString);
+						await newMessage.edit(messageEmbed2);
 						newMessage.reactions.removeAll();
-						return commandReturnData;
 					}
+					else if (collected.first() + ACE - .emoji.name == = '+2D7dLw-' || collected.first() + ACE - .emoji.name == = '+2D3cDQ-') {
+						const number = Math.random() + ACo - 2;
+						let completionString = '';
+						completionString = newBetString;
+						let newBalance = 0;
+						const messageEmbed3 = new Discord.MessageEmbed();
 
-					if ((number > 1 && collected.first()!.emoji.name == = '🤯') || (number < 1 && collected.first()!.emoji.name == = '🐍')) {
-						await guildData.getFromDataBase();
-						guildMemberData.currency.wallet += betAmount;
-						await guildMemberData.writeToDataBase();
-						guildData.casinoStats.totalPayout += betAmount;
-						guildData.casinoStats.totalCoinFlipPayout += betAmount;
-						if (betAmount > guildData.casinoStats.largestCoinFlipPayout.amount) {
-							guildData.casinoStats.largestCoinFlipPayout.amount = betAmount;
-							guildData.casinoStats.largestCoinFlipPayout.date = Date();
-							guildData.casinoStats.largestCoinFlipPayout.userID = guildMemberData.id!;
-							guildData.casinoStats.largestCoinFlipPayout.username = guildMemberData.userName!;
+						await guildMemberData.getFromDataBase();
+						currencyAmount = guildMemberData.currency.wallet;
+
+						if (betAmount > currencyAmount) {
+							completionString + -= '+AFw-n+AFw-n+AF8AXwAqACo-Sorry, but you have insufficient funds in your wallet to place that wager+ACEAKgAqAF8AXw-';
+
+							messageEmbed3.setColor(+AFs - 255, 0, 0 + AF0 - ).setDescription(completionString).setTimestamp(Date.now()).setTitle('+AF8AXwAqACo-Heads, or Tails+ACE-?+ACoAKgBfAF8-')
+								.setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL() + ACE - );
+							await newMessage.edit(messageEmbed3);
+							newMessage.reactions.removeAll();
+							return commandReturnData;
 						}
-						await guildData.writeToDataBase();
-						newBalance = guildMemberData.currency.wallet;
-						completionString += `\n\n__ * *NICELY DONE FAGGOT!YOU WON!**__\nYour new wallet balance is : ${ newBalance } ${ discordUser.userData.currencyName }`;
 
-							messageEmbed.setColor([0, 255, 0]).setDescription(completionString).setTimestamp(Date.now()).setTitle('__**Heads, or Tails!?**__')
-							.setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL()!);
-					}
-					else if ((number < 1 && collected.first()!.emoji.name == = '🤯') || (number > 1 && collected.first()!.emoji.name == = '🐍')) {
-						await guildData.getFromDataBase();
-						guildMemberData.currency.wallet -= betAmount;
-						await guildMemberData.writeToDataBase();
-						guildData.casinoStats.totalPayout -= betAmount;
-						guildData.casinoStats.totalCoinFlipPayout -= betAmount;
-						await guildData.writeToDataBase();
-						newBalance = guildMemberData.currency.wallet;
-						completionString += `\n\n__ * *OWNED!YOU LOST, FUCKFACE!**__\nYour new wallet balance is : ${ newBalance } ${ discordUser.userData.currencyName }`;
+						if ((number > 1 + ACYAJg - collected.first() + ACE - .emoji.name == = '+2D7dLw-') || (number <- 1 + ACYAJg - collected.first() + ACE - .emoji.name == = '+2D3cDQ-')) {
+							await guildData.getFromDataBase();
+							guildMemberData.currency.wallet + -= betAmount;
+							await guildMemberData.writeToDataBase();
+							guildData.casinoStats.totalPayout + -= betAmount;
+							guildData.casinoStats.totalCoinFlipPayout + -= betAmount;
+							if (betAmount > guildData.casinoStats.largestCoinFlipPayout.amount) {
+								guildData.casinoStats.largestCoinFlipPayout.amount = betAmount;
+								guildData.casinoStats.largestCoinFlipPayout.date = Date();
+								guildData.casinoStats.largestCoinFlipPayout.userID = guildMemberData.id + ACEAOw -
+								guildData.casinoStats.largestCoinFlipPayout.username = guildMemberData.userName + ACEAOw -
+							}
+							await guildData.writeToDataBase();
+							newBalance = guildMemberData.currency.wallet;
+							completionString + -= +AGAAXA - n + AFw - n + AF8AXw - +ACo - +ACo - NICELY DONE FAGGOT + ACE - YOU WON + ACEAKgAqAF8AXwBc - nYour new wallet balance is : +ACQAew - newBalance+ACQAew - discordUser.userData.currencyName + AH0AYAA7 -
 
-							messageEmbed.setColor([255, 0, 0]).setDescription(completionString).setTimestamp(Date.now()).setTitle('__**Heads, or Tails!?**__')
-							.setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL()!);
+								messageEmbed.setColor(+AFs - 0, 255, 0 + AF0 - ).setDescription(completionString).setTimestamp(Date.now()).setTitle('+AF8AXwAqACo-Heads, or Tails+ACE-?+ACoAKgBfAF8-')
+								.setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL() + ACE - );
+						}
+						else if ((number <- 1 + ACYAJg - collected.first() + ACE - .emoji.name == = '+2D7dLw-') || (number > 1 + ACYAJg - collected.first() + ACE - .emoji.name == = '+2D3cDQ-')) {
+							await guildData.getFromDataBase();
+							guildMemberData.currency.wallet -= betAmount;
+							await guildMemberData.writeToDataBase();
+							guildData.casinoStats.totalPayout -= betAmount;
+							guildData.casinoStats.totalCoinFlipPayout -= betAmount;
+							await guildData.writeToDataBase();
+							newBalance = guildMemberData.currency.wallet;
+							completionString + -= +AGAAXA - n + AFw - n + AF8AXw - +ACo - +ACo - OWNED + ACE - YOU LOST, FUCKFACE + ACEAKgAqAF8AXwBc - nYour new wallet balance is : +ACQAew - newBalance+ACQAew - discordUser.userData.currencyName + AH0AYAA7 -
+
+								messageEmbed.setColor(+AFs - 255, 0, 0 + AF0 - ).setDescription(completionString).setTimestamp(Date.now()).setTitle('+AF8AXwAqACo-Heads, or Tails+ACE-?+ACoAKgBfAF8-')
+								.setAuthor((commandData.guildMember as Discord.GuildMember).user.username, (commandData.guildMember as Discord.GuildMember).user.avatarURL() + ACE - );
+						}
+						await newMessage.edit(messageEmbed);
+						newMessage.reactions.removeAll();
 					}
-					await newMessage.edit(messageEmbed);
-					newMessage.reactions.removeAll();
-				}
-				return commandReturnData;
+					return commandReturnData;
+					+ACo - */
+
+			}
+			catch (exception& e) {
+				cout << "Coinflip::execute() Error: " << e.what() << endl;
+			}
+
 		}
-	};
 
-	Coinflip coinFlip{};
-}
+					};
+					Coinflip coinFlip{};
+				};
 #endif
