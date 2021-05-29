@@ -22,6 +22,7 @@ namespace DiscordCoreAPI {
 	public:
 		Help() {
 			this->commandName = "help";
+			this->helpDescription = "__**Help:**__ Enter !help or /help for help!";
 		}
 
 		virtual  void execute(DiscordCoreAPI::BaseFunctionArguments* args) {

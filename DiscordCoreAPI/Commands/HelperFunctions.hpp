@@ -56,14 +56,14 @@ namespace DiscordCoreAPI {
         return false;
 	}
 
-	bool checkIfAllowedGamingInChannel(Message message, DiscordGuildData guildData) {
+    bool checkIfAllowedGamingInChannel(Message message, DiscordGuildData guildData) {
         bool isItFound = true;
-        if (guildData.gameChannelIds.size()> 0) {
+        if (guildData.gameChannelIds.size() > 0) {
             isItFound = false;
             string msgString = "------\n**Sorry, but please do that in one of the following channels:**\n------\n";
             EmbedData msgEmbed;
-            for (auto& value: guildData.gameChannelIds) {
-                if (message.data.channelId ==  value) {
+            for (auto& value : guildData.gameChannelIds) {
+                if (message.data.channelId == value) {
                     isItFound = true;
                     break;
                 }
@@ -91,7 +91,7 @@ namespace DiscordCoreAPI {
             }
         }
         return isItFound;
-	}
+    }
 
     class PermissionsConverter {
     public:
@@ -375,5 +375,48 @@ namespace DiscordCoreAPI {
         }
 
     };
+
+    bool checkForBotCommanderStatus(GuildMember guildMember, DiscordUser discordUser) {
+        bool areWeACommander;
+        for (auto& value : discordUser.data.botCommanders) {
+            if (guildMember.data.user.id == value) {
+                areWeACommander = true;
+                return areWeACommander;
+                break;
+            }
+        }
+        return false;
+    }
+
+    bool doWeHaveAdminPermissions(Message message) {
+        Guild guild = message.coreClient->guilds->getGuildAsync({ .guildId = message.data.guildId }).get();
+        DiscordGuild discordGuild = message.coreClient->getDiscordGuild(guild.data);
+
+        GuildMember guildMember = message.coreClient->guildMembers->getGuildMemberAsync({ .guildId = message.data.guildId, .guildMemberId = message.data.author.id }).get();
+
+        Channel channel = message.coreClient->channels->getChannelAsync({ message.data.channelId }).get();
+
+        bool doWeHaveAdmin = PermissionsConverter::checkForPermission(guildMember, channel, DiscordCoreInternal::Permissions::ADMINISTRATOR);
+
+        if (doWeHaveAdmin) {
+            return true;
+        }
+
+        bool areWeACommander = checkForBotCommanderStatus(guildMember, *message.coreClient->discordUser);
+
+        if (areWeACommander) {
+            return true;
+        }
+
+        string msgString = "------\n**Sorry, but you don't have the permissions required for that!**\n------";
+        EmbedData msgEmbed;
+        msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
+        msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+        msgEmbed.setDescription(msgString);
+        msgEmbed.setTimeStamp(getTimeAndDate());
+        msgEmbed.setTitle("__**Permissions Issue:**__");
+        Message msg = message.coreClient->messages->replyAsync({ .replyingToMessageData = message.data, .embed = msgEmbed }).get();
+        return false;
+    }
 }
 #endif

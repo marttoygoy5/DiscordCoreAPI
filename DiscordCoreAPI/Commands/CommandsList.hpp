@@ -13,5 +13,6 @@
 #include "RegisterSlashCommands.hpp"
 #include "SellDrugs.hpp"
 #include "Balance.hpp"
+#include "AddShopItem.hpp"
 
 #endif

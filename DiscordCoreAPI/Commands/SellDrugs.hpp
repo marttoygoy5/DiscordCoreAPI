@@ -18,6 +18,7 @@ namespace DiscordCoreAPI {
 	public:
 		SellDrugs() {
 			this->commandName = "selldrugs";
+			this->helpDescription = "__**Sell Drugs:**__ Enter !selldrugs or /selldrugs to gain currency.";
 		}
 		virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {

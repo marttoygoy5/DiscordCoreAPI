@@ -18,6 +18,7 @@ namespace DiscordCoreAPI {
 	public:
 		Balance() {
 			this->commandName = "balance";
+			this->helpDescription = "__**Balance:**__ Enter !balance or /balance to view your own balance, or !balance = @USERMENTION /balance @USERMENTION to view someone else's balances.";
 		}
 		virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			Channel channel = args->coreClient->channels->getChannelAsync({ args->message.data.channelId }).get();
