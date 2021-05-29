@@ -18,8 +18,8 @@ namespace DiscordCoreAPI {
 	public:
 		AddShopItem() {
 			this->commandName = "addshopitem";
+			this->helpDescription = "__**Add Shop Item:**__ Enter !addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI, or /addshopitem ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI.";
 		}
-		
 		virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			Channel channel = args->coreClient->channels->getChannelAsync({ .channelId = args->message.data.channelId }).get();
 			bool areWeInADm = areWeInADM(args->message, channel);
@@ -28,29 +28,24 @@ namespace DiscordCoreAPI {
 				return;
 			}
 
-			args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 }).get();
+			if (args->message.data.type != DiscordCoreInternal::MessageType::INTERACTION) {
+				args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
+			}
 
 			bool doWeHaveAdmin = doWeHaveAdminPermissions(args->message);
 
 			if (doWeHaveAdmin == false) {
 				return;
 			}
-
 			Guild guild = args->coreClient->guilds->getGuildAsync({ .guildId = args->message.data.guildId }).get();
 
 			DiscordGuild discordGuild = args->coreClient->getDiscordGuild(guild.data);
 
-			regex itemNameRegExp("[:print:]{1, 32}");
-			/*
-			regex selfModRegExp("\\d{ 1,3 }");
-			regex oppModRegExp("\\d{ 1,3 }");
-			regex itemCostRegExp("\\d{ 1,10 }");
-			regex emojiRegExp(".{1, 64}");
-			*/
-			regex selfModRegExp("");
-			regex oppModRegExp("");
-			regex itemCostRegExp("");
-			regex emojiRegExp("");
+			regex itemNameRegExp("\.{1,32}");
+			regex selfModRegExp("\\d{1,5}");
+			regex oppModRegExp("\\d{1,5}");
+			regex itemCostRegExp("\\d{1,6}");
+			regex emojiRegExp("\.{1,32}");
 			if (args->argumentsArray.size() == 0 || !regex_search(args->argumentsArray.at(0), itemNameRegExp)) {
 				string msgString = "------\n**Please enter a valid item name! (!addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI)**\n------";
 				EmbedData msgEmbed;
@@ -73,8 +68,7 @@ namespace DiscordCoreAPI {
 				msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
 				Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
 				args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 }).get();
-				return ;
-			
+				return;
 			}
 			if (args->argumentsArray.size() <3|| !regex_search(args->argumentsArray.at(2), oppModRegExp) || stoll(args->argumentsArray.at(2)) < -100 || stoll(args->argumentsArray.at(2))> 0) {
 				string msgString = "------\n**Please enter a valid opp - mod value between - 100 and 0! (!addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI)**\n------";
@@ -150,7 +144,7 @@ namespace DiscordCoreAPI {
 
 			string msgString = "";
 			msgString = "Good job! You've added a new item to the shop, making it available for purchase by the members of this server!\n\
-				The item's stats are as follows**__:\n__Item Name__: " + itemName + "\n__Self-Mod Value__: " + to_string(selfMod) + "\n__Opp-Mod Value__: " + to_string(oppMod) + "\n\
+				The item's stats are as follows:\n__Item Name__: " + itemName + "\n__Self-Mod Value__: " + to_string(selfMod) + "\n__Opp-Mod Value__: " + to_string(oppMod) + "\n\
 				__Item Cost__: " + to_string(itemCost) + " " + args->coreClient->discordUser->data.currencyName + "\n__Emoji__: " + emoji;
 			EmbedData msgEmbed;
 			msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());

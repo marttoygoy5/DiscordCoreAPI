@@ -696,7 +696,8 @@ namespace  DiscordCoreInternal {
         DELETE_SLASH_COMMAND = 24,
         PATCH_SLASH_COMMAND = 25,
         POST_INTERACTION_RESPONSE = 26,
-        PATCH_INTERACTION_RESPONSE = 27
+        PATCH_INTERACTION_RESPONSE = 27,
+        POST_ROLE = 28
     };
 
     struct HttpAgentResources {
@@ -914,6 +915,13 @@ namespace  DiscordCoreInternal {
         string roleId;
     };
 
+    struct PostRoleData {
+        string content;
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string guildId;
+    };
+
     struct UpdateRoleData {
         string name;
         string permissions;
@@ -943,6 +951,14 @@ namespace  DiscordCoreInternal {
             int colorValue = 65536 * this->colorFirst[0] + 256 * this->colorFirst[1] + this->colorFirst[2];
             this->color = colorValue;
         };
+    };
+
+    struct CreateRoleData {
+        string name;
+        string permissions;
+        string color;
+        bool hoist;
+        bool mentionable;
     };
 
     enum class ApplicationCommandOptionType {

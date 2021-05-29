@@ -62,6 +62,7 @@
 #include <ppl.h>
 #include <regex>
 #include <cctype>
+#include <iomanip>
 
 using namespace winrt::Windows::Security::Cryptography::Certificates;
 using namespace winrt::Windows::Networking::Sockets;

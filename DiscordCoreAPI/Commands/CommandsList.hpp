@@ -14,5 +14,6 @@
 #include "SellDrugs.hpp"
 #include "Balance.hpp"
 #include "AddShopItem.hpp"
+#include "AddShopRole.hpp"
 
 #endif

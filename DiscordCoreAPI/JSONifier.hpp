@@ -574,7 +574,18 @@ namespace DiscordCoreInternal {
 				return data.dump();
 			}
 		}
-	
+
+		string getCreateRolePayload(CreateRoleData createRoleData) {
+
+			json data = { {"color", createRoleData.color
+
+				},
+				{"hoist", createRoleData.hoist},{"permissions", createRoleData.permissions},
+				{"mentionable", createRoleData.mentionable},
+				{"name", createRoleData.name }
+			};
+			return data.dump();
+		};
 
 }
 #endif
