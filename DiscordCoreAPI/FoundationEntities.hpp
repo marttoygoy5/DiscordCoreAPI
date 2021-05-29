@@ -1002,7 +1002,7 @@ namespace  DiscordCoreInternal {
         string interactionId;
         string interactionToken;
         string applicationId;
-        json optionsArgs;
+        vector<string> optionsArgs;
         string userId;
         string commandName;
     };

@@ -2378,6 +2378,7 @@ namespace DiscordCoreInternal {
                 }
             }
         }
+
         else if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
             if (jsonObjectData.at("user").contains("id") && !jsonObjectData.at("user").at("id").is_null()) {
                 string theValue = jsonObjectData.at("user").at("id");
@@ -2400,14 +2401,16 @@ namespace DiscordCoreInternal {
                 string theValue = jsonObjectData.at("data").at("name");
                 interactionIncData.commandName = theValue;
             }
-        }        
-
-        if (jsonObjectData.contains("data")) {
-            if (jsonObjectData.at("data").contains("options") && !jsonObjectData.at("data").at("options").is_null()) {
-                json theValue = jsonObjectData.at("data").at("options");
-                interactionIncData.optionsArgs = theValue;
-            }
         }
+
+        if (jsonObjectData.contains("data")&& !jsonObjectData.at("data").is_null()) {
+            if (jsonObjectData.at("data").contains("options") && !jsonObjectData.at("data").at("options").is_null()) {
+                json::array_t theValue = jsonObjectData.at("data").at("options");
+                for (auto& value : theValue) {
+                    interactionIncData.optionsArgs.push_back(value.at("value"));
+                }
+            }
+        }        
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
             string theValue = jsonObjectData.at("id");

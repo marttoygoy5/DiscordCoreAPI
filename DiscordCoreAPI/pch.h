@@ -60,6 +60,8 @@
 #include <curl.h>
 #include <math.h>
 #include <ppl.h>
+#include <regex>
+#include <cctype>
 
 using namespace winrt::Windows::Security::Cryptography::Certificates;
 using namespace winrt::Windows::Networking::Sockets;

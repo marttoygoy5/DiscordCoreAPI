@@ -30,6 +30,18 @@ namespace DiscordCoreAPI {
 			registerSlashCommandsCommandData.description = "Register the programmatically designated slash commands.";
 			registerSlashCommandsCommandData.name = "registerslashcommands";
 			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(registerSlashCommandsCommandData).get();
+
+			CreateApplicationCommandData createBalanceCommandData;
+			createBalanceCommandData.defaultPermission = true;
+			createBalanceCommandData.description = "Check your or another person's currency balances.";
+			createBalanceCommandData.name = "balance";
+			ApplicationCommandOptionData applicationCommandOptionOne;
+			applicationCommandOptionOne.name = "person";
+			applicationCommandOptionOne.required = false;
+			applicationCommandOptionOne.type = ApplicationCommandOptionType::USER;
+			applicationCommandOptionOne.description = "The person who's balances you would like to check.";
+			createBalanceCommandData.options.push_back(applicationCommandOptionOne);
+			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createBalanceCommandData).get();
 		}
 	};
 	RegisterSlashCommands registerSlashCommands{};

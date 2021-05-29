@@ -43,9 +43,92 @@ namespace DiscordCoreAPI {
 
 	};
 
+	struct EmbedData {
+		EmbedData setTitle(string titleNew) {
+			this->title = titleNew;
+			return *this;
+		}
+		EmbedData setAuthor(string authorName, string authorAvatarURL = "") {
+			this->author.name = authorName;
+			this->author.iconUrl = authorAvatarURL;
+			return *this;
+		}
+		EmbedData setImage(string imageURL) {
+			this->image.url = imageURL;
+			return *this;
+		}
+		EmbedData setThumbnail(string thumbnailURL) {
+			this->thumbnail.url = thumbnailURL;
+			return *this;
+		}
+		EmbedData setColor(unsigned int colorRed, unsigned int colorGreen,unsigned int colorBlue) {
+			this->color[0] = colorRed;
+			this->color[1] = colorGreen;
+			this->color[2] = colorBlue;
+			return *this;
+		}
+		EmbedData setDescription(string descriptionNew) {
+			this->description = descriptionNew;
+			return *this;
+		}
+		EmbedData setFooter(string footerText, string footerIconURLText = "") {
+			this->footer.text = footerText;
+			this->footer.iconUrl = footerIconURLText;
+			return *this;
+		}
+		EmbedData setTimeStamp(string timeStamp) {
+			this->timestamp = timeStamp;
+			return *this;
+		}
+		EmbedData addField(string name, string value, bool Inline = true) {
+			DiscordCoreInternal::EmbedFieldData embedFieldData;
+			embedFieldData.name = name;
+			embedFieldData.Inline = Inline;
+			embedFieldData.value = value;
+			this->fields.push_back(embedFieldData);
+			return *this;
+		}
+		string title;
+		string type;
+		string description;
+		string url;
+		string timestamp;
+		unsigned int color[3] = { 255, 255, 255 };
+		DiscordCoreInternal::EmbedFooterData footer;
+		DiscordCoreInternal::EmbedImageData image;
+		DiscordCoreInternal::EmbedThumbnailData thumbnail;
+		DiscordCoreInternal::EmbedVideoData video;
+		DiscordCoreInternal::EmbedProviderData provider;
+		DiscordCoreInternal::EmbedAuthorData author;
+		vector<DiscordCoreInternal::EmbedFieldData> fields;
+		int actualColor() {
+			if (this->color[0] > 255) {
+				this->color[0] = 255;
+			}
+			else if (this->color[0] < 0) {
+				this->color[0] = 0;
+			}
+			if (this->color[1] > 255) {
+				this->color[1] = 255;
+			}
+			else if (this->color[1] < 0) {
+				this->color[1] = 0;
+			}
+			if (this->color[2] > 255) {
+				this->color[2] = 255;
+			}
+			else if (this->color[2] < 0) {
+				this->color[2] = 0;
+			}
+			int colorValue = 65536 * this->color[0] + 256 * this->color[1] + this->color[2];
+			return colorValue;
+		};
+		int actualColorVal;
+	};
+
 	struct EditMessageData {
 		string content = "";
-		DiscordCoreInternal::EmbedData embed;
+		EmbedData embed;
 		int flags = 0;
 		vector<DiscordCoreInternal::AttachmentData> attachments;
 		DiscordCoreInternal::AllowedMentionsData allowedMentions;
@@ -55,7 +138,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::AllowedMentionsData allowedMentions;
 		string content = "";
 		string channelId;
-		DiscordCoreInternal::EmbedData embed;
+		EmbedData embed;
 		DiscordCoreInternal::MessageReferenceData messageReference;
 		int nonce;
 		bool tts = false;
@@ -65,7 +148,7 @@ namespace DiscordCoreAPI {
 		string content = "";
 		bool tts = false;
 		DiscordCoreInternal::MessageData replyingToMessageData;
-		DiscordCoreInternal::EmbedData embed;
+		EmbedData embed;
 		DiscordCoreInternal::AllowedMentionsData allowedMentions;
 		DiscordCoreInternal::MessageReferenceData messageReference;
 		int nonce;
@@ -431,7 +514,25 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::EditInteractionResponseData editInteractionResponseData;
 				editInteractionResponseData.content = replyMessageData.content;
 				if (replyMessageData.embed.description != ""|| replyMessageData.embed.fields.at(0).value != "") {
-					editInteractionResponseData.embeds.push_back(replyMessageData.embed);
+					DiscordCoreInternal::EmbedData embedData;
+					embedData.actualColorVal = replyMessageData.embed.actualColorVal;
+					embedData.author = replyMessageData.embed.author;
+					embedData.color[0] = replyMessageData.embed.color[0];
+					embedData.color[1] = replyMessageData.embed.color[1];
+					embedData.color[2] = replyMessageData.embed.color[2];
+					embedData.description = replyMessageData.embed.description;
+					embedData.fields = replyMessageData.embed.fields;
+					embedData.fields = replyMessageData.embed.fields;
+					embedData.footer= replyMessageData.embed.footer;
+					embedData.image = replyMessageData.embed.image;
+					embedData.provider= replyMessageData.embed.provider;
+					embedData.thumbnail = replyMessageData.embed.thumbnail;
+					embedData.timestamp = replyMessageData.embed.timestamp;
+					embedData.title = replyMessageData.embed.title;
+					embedData.type = replyMessageData.embed.type;
+					embedData.url = replyMessageData.embed.url;
+					embedData.video = replyMessageData.embed.video;
+					editInteractionResponseData.embeds.push_back(embedData);
 				}
 				editInteractionResponseData.allowedMentions = replyMessageData.allowedMentions;
 				DiscordCoreInternal::PatchInteractionResponseData dataPackage;
@@ -464,7 +565,25 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::CreateMessageData createMessageDataNew;
 				createMessageDataNew.allowedMentions = replyMessageData.allowedMentions;
 				createMessageDataNew.content = replyMessageData.content;
-				createMessageDataNew.embed = replyMessageData.embed;
+				DiscordCoreInternal::EmbedData embedData;
+				embedData.actualColorVal = replyMessageData.embed.actualColorVal;
+				embedData.author = replyMessageData.embed.author;
+				embedData.color[0] = replyMessageData.embed.color[0];
+				embedData.color[1] = replyMessageData.embed.color[1];
+				embedData.color[2] = replyMessageData.embed.color[2];
+				embedData.description = replyMessageData.embed.description;
+				embedData.fields = replyMessageData.embed.fields;
+				embedData.fields = replyMessageData.embed.fields;
+				embedData.footer = replyMessageData.embed.footer;
+				embedData.image = replyMessageData.embed.image;
+				embedData.provider = replyMessageData.embed.provider;
+				embedData.thumbnail = replyMessageData.embed.thumbnail;
+				embedData.timestamp = replyMessageData.embed.timestamp;
+				embedData.title = replyMessageData.embed.title;
+				embedData.type = replyMessageData.embed.type;
+				embedData.url = replyMessageData.embed.url;
+				embedData.video = replyMessageData.embed.video;
+				createMessageDataNew.embed = embedData;
 				createMessageDataNew.messageReference = replyMessageData.messageReference;
 				createMessageDataNew.nonce = replyMessageData.nonce;
 				createMessageDataNew.tts = replyMessageData.tts;
@@ -501,7 +620,25 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::CreateMessageData createMessageDataNew;
 			createMessageDataNew.allowedMentions = sendDMData.messageData.allowedMentions;
 			createMessageDataNew.content = sendDMData.messageData.content;
-			createMessageDataNew.embed = sendDMData.messageData.embed;
+			DiscordCoreInternal::EmbedData embedData;
+			embedData.actualColorVal = sendDMData.messageData.embed.actualColorVal;
+			embedData.author = sendDMData.messageData.embed.author;
+			embedData.color[0] = sendDMData.messageData.embed.color[0];
+			embedData.color[1] = sendDMData.messageData.embed.color[1];
+			embedData.color[2] = sendDMData.messageData.embed.color[2];
+			embedData.description = sendDMData.messageData.embed.description;
+			embedData.fields = sendDMData.messageData.embed.fields;
+			embedData.fields = sendDMData.messageData.embed.fields;
+			embedData.footer = sendDMData.messageData.embed.footer;
+			embedData.image = sendDMData.messageData.embed.image;
+			embedData.provider = sendDMData.messageData.embed.provider;
+			embedData.thumbnail = sendDMData.messageData.embed.thumbnail;
+			embedData.timestamp = sendDMData.messageData.embed.timestamp;
+			embedData.title = sendDMData.messageData.embed.title;
+			embedData.type = sendDMData.messageData.embed.type;
+			embedData.url = sendDMData.messageData.embed.url;
+			embedData.video = sendDMData.messageData.embed.video;
+			createMessageDataNew.embed = embedData;
 			createMessageDataNew.messageReference = sendDMData.messageData.messageReference;
 			createMessageDataNew.nonce = sendDMData.messageData.nonce;
 			createMessageDataNew.tts = sendDMData.messageData.tts;
@@ -531,7 +668,25 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::CreateMessageData createMessageDataNew;
 			createMessageDataNew.allowedMentions = createMessageData.allowedMentions;
 			createMessageDataNew.content = createMessageData.content;
-			createMessageDataNew.embed = createMessageData.embed;
+			DiscordCoreInternal::EmbedData embedData;
+			embedData.actualColorVal = createMessageData.embed.actualColorVal;
+			embedData.author = createMessageData.embed.author;
+			embedData.color[0] = createMessageData.embed.color[0];
+			embedData.color[1] = createMessageData.embed.color[1];
+			embedData.color[2] = createMessageData.embed.color[2];
+			embedData.description = createMessageData.embed.description;
+			embedData.fields = createMessageData.embed.fields;
+			embedData.fields = createMessageData.embed.fields;
+			embedData.footer = createMessageData.embed.footer;
+			embedData.image = createMessageData.embed.image;
+			embedData.provider = createMessageData.embed.provider;
+			embedData.thumbnail = createMessageData.embed.thumbnail;
+			embedData.timestamp = createMessageData.embed.timestamp;
+			embedData.title = createMessageData.embed.title;
+			embedData.type = createMessageData.embed.type;
+			embedData.url = createMessageData.embed.url;
+			embedData.video = createMessageData.embed.video;
+			createMessageDataNew.embed = embedData;
 			createMessageDataNew.messageReference = createMessageData.messageReference;
 			createMessageDataNew.nonce = createMessageData.nonce;
 			createMessageDataNew.tts = createMessageData.tts;
@@ -563,7 +718,25 @@ namespace DiscordCoreAPI {
 			editMessageDataNew.allowedMentions = editMessageData.allowedMentions;
 			editMessageDataNew.attachments = editMessageData.attachments;
 			editMessageDataNew.content = editMessageData.content;
-			editMessageDataNew.embed = editMessageData.embed;
+			DiscordCoreInternal::EmbedData embedData;
+			embedData.actualColorVal = editMessageData.embed.actualColorVal;
+			embedData.author = editMessageData.embed.author;
+			embedData.color[0] = editMessageData.embed.color[0];
+			embedData.color[1] = editMessageData.embed.color[1];
+			embedData.color[2] = editMessageData.embed.color[2];
+			embedData.description = editMessageData.embed.description;
+			embedData.fields = editMessageData.embed.fields;
+			embedData.fields = editMessageData.embed.fields;
+			embedData.footer = editMessageData.embed.footer;
+			embedData.image = editMessageData.embed.image;
+			embedData.provider = editMessageData.embed.provider;
+			embedData.thumbnail = editMessageData.embed.thumbnail;
+			embedData.timestamp = editMessageData.embed.timestamp;
+			embedData.title = editMessageData.embed.title;
+			embedData.type = editMessageData.embed.type;
+			embedData.url = editMessageData.embed.url;
+			embedData.video = editMessageData.embed.video;
+			editMessageDataNew.embed = embedData;
 			editMessageDataNew.flags = editMessageData.flags;
 			dataPackage.content = DiscordCoreInternal::getEditMessagePayload(editMessageDataNew);
 			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(6).scheduler);
@@ -690,3 +863,5 @@ namespace DiscordCoreAPI {
 	concurrent_queue<Message> MessageManagerAgent::messagesToInsert;
 }
 #endif
+
+

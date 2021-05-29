@@ -13,6 +13,19 @@
 
 namespace DiscordCoreAPI {
 
+    string convertToLowerCase(string stringToConvert) {
+        string newString;
+        for (auto& value : stringToConvert) {
+            if (isupper(value)) {
+                newString += (char)tolower(value);
+            }
+            else {
+                newString += value;
+            }
+        }
+        return newString;
+    }
+
     string getTimeAndDate() {
         const std::time_t now = std::time(nullptr);
         char charArray[32];
@@ -27,7 +40,7 @@ namespace DiscordCoreAPI {
 
         if (currentChannelType == DiscordCoreInternal::ChannelType::DM) {
             string msgString = "------\n**Sorry, but we can't do that in a direct message!**\n------";
-            DiscordCoreInternal::EmbedData msgEmbed;
+            EmbedData msgEmbed;
             msgEmbed.setAuthor(message.data.author.username, message.data.author.getAvatarURL());
             msgEmbed.setColor(254, 254, 254);
             msgEmbed.setDescription(msgString);
@@ -48,7 +61,7 @@ namespace DiscordCoreAPI {
         if (guildData.gameChannelIds.size()> 0) {
             isItFound = false;
             string msgString = "------\n**Sorry, but please do that in one of the following channels:**\n------\n";
-            DiscordCoreInternal::EmbedData msgEmbed;
+            EmbedData msgEmbed;
             for (auto& value: guildData.gameChannelIds) {
                 if (message.data.channelId ==  value) {
                     isItFound = true;
@@ -298,7 +311,7 @@ namespace DiscordCoreAPI {
                 permissionsInt |= stoll(currentRole.data.permissions);
             }
 
-            if (permissionsInt & (__int64)DiscordCoreInternal::Permissions::ADMINISTRATOR) {
+            if ((permissionsInt & (__int64)DiscordCoreInternal::Permissions::ADMINISTRATOR) == (__int64)DiscordCoreInternal::Permissions::ADMINISTRATOR) {
                 return allPermissions();
             }
             stringstream stream;

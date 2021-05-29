@@ -27,16 +27,6 @@ namespace DiscordCoreAPI {
 		virtual  void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
 				HelpCommandArguments* newArgs = (HelpCommandArguments*)args;
-				Guild guild = newArgs->coreClient->guilds->getGuildAsync({ args->message.data.guildId }).get();
-				Channel channel = newArgs->coreClient->channels->getChannelAsync({ args->message.data.channelId }).get();
-				Role role = newArgs->coreClient->roles->getRoleAsync({ .guildId = guild.data.id, .roleId = "790460906450583592" }).get();
-				DiscordCoreInternal::Permissions permsArray[1] = { DiscordCoreInternal::Permissions::MANAGE_GUILD };
-				string newPerms = DiscordCoreAPI::PermissionsConverter::addPermissionsToString(role.data.permissions, permsArray, 1);
-				GuildMember guildMember = newArgs->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->message.data.author.id }).get();
-				vector<Role> roles = newArgs->coreClient->roles->getGuildMemberRolesAsync({ .guildId = args->message.data.guildId, .guildMember = guildMember }).get();
-				DiscordGuildMember guildMemberNew = args->coreClient->getDiscordGuildMember(guildMember.data);
-				guildMemberNew.data.currency.wallet = 1111444;
-				guildMemberNew.writeDataToDB();
 				//args->coreClient->slashCommands->displayGlobalApplicationCommandsAsync().get();
 				/*
 				args->coreClient->slashCommands->deleteGlobalApplicationCommand({ .applicationId = args->coreClient->currentUser->data.id, .name = "testname" }).get();

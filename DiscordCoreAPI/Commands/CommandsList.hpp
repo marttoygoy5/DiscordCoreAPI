@@ -12,5 +12,6 @@
 #include "Help.hpp"
 #include "RegisterSlashCommands.hpp"
 #include "SellDrugs.hpp"
+#include "Balance.hpp"
 
 #endif

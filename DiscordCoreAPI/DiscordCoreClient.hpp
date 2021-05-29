@@ -15,7 +15,8 @@
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
 #include "EventMachine.hpp"
-#include "OnInteractionCreate.hpp"
+#include "SlashCommandStuff.hpp"
+#include "InteractionManager.hpp"
 
 void myPurecallHandler(void) {
 
@@ -25,12 +26,7 @@ void myPurecallHandler(void) {
 
 namespace DiscordCoreAPI {
 
-	class DiscordCoreClient;
-
-	struct CommandData {
-		Message message;
-		DiscordCoreClient* coreClient;
-	};
+	static string commandPrefix;
 
 	class DiscordCoreClient :public DiscordCoreClientBase,  protected agent {
 	public:
@@ -53,6 +49,7 @@ namespace DiscordCoreAPI {
 				return discordGuild;
 			}
 			else {
+				(*guildCursor).second.getDataFromDB().get();
 				return (*guildCursor).second;
 			}
 		}
@@ -65,6 +62,7 @@ namespace DiscordCoreAPI {
 				return discordGuildMember;
 			}
 			else {
+				(*guildMemberCursor).second.getDataFromDB().get();
 				return (*guildMemberCursor).second;
 			}
 		}
@@ -100,15 +98,14 @@ namespace DiscordCoreAPI {
 		}
 
 	protected:
-
 		bool doWeQuit = false;
 		hstring botToken;
 		hstring baseURL = L"https://discord.com/api/v9";
 		DiscordCoreInternal::WebSocketConnectionAgent* pWebSocketConnectionAgent{ nullptr };
 		DiscordCoreInternal::WebSocketReceiverAgent* pWebSocketReceiverAgent{ nullptr };
+		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
-		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		unbounded_buffer<exception> errorBuffer;
 		
 		task<void> initialize(hstring botTokenNew) {
@@ -146,6 +143,7 @@ namespace DiscordCoreAPI {
 			GuildMemberManagerAgent::initialize();
 			GuildManagerAgent::initialize();
 			ChannelManagerAgent::initialize();
+			InteractionManager::initialize(agentResources, this->pSystemThreads.get()->getThreads().get());
 			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->getThreads().get(), this);
 			this->users = new UserManager(agentResources, this->pSystemThreads->getThreads().get(), this);
 			this->messages = new MessageManager(agentResources, this->pSystemThreads->getThreads().get(), this);
@@ -157,6 +155,7 @@ namespace DiscordCoreAPI {
 			this->slashCommands = new SlashCommandManager(agentResources, this->pSystemThreads->getThreads().get(), this->currentUser->data.id);
 			DatabaseManagerAgent::initialize(this->currentUser->data.id, this->pSystemThreads->getThreads().get()->at(10).scheduler);
 			this->discordUser = new DiscordUser(this->currentUser->data.username, this->currentUser->data.id);
+			DiscordCoreAPI::commandPrefix = this->discordUser->data.prefix;
 			this->discordUser->writeDataToDB();
 			co_await mainThread;
 		}
@@ -236,14 +235,15 @@ namespace DiscordCoreAPI {
 							messageData.channelId = interactionIncData.channelId;
 							messageData.guildId = interactionIncData.guildId;
 							messageData.author = this->users->getUserAsync({ .userId = interactionIncData.userId }).get().data;
-							messageData.applicationId = interactionIncData.applicationId;
 							messageData.interactionId = interactionIncData.interactionId;
+							messageData.applicationId = interactionIncData.applicationId;
 							messageData.interactionToken = interactionIncData.interactionToken;
-							messageData.content = this->discordUser->data.prefix + DiscordCoreInternal::constructStringContent(interactionIncData);
+							messageData.content = this->discordUser->data.prefix + constructStringContent(interactionIncData);
+							cout << messageData.content << endl;
 							DiscordCoreInternal::InteractionResponseFullData interactionResponseData;
 							interactionResponseData.interactionResponseData.type = DiscordCoreInternal::InteractionResponseType::DeferredChannelMessageWithSource;
 							interactionResponseData.interactionIncData = interactionIncData;
-							this->slashCommands->createInteractionResponseDeferralAsync(interactionResponseData).get();
+							InteractionManager::createInteractionResponseDeferralAsync(interactionResponseData).get();
 							Message message(messageData, this);
 							OnMessageCreationData messageCreationData = createMessage(messageData).get();
 							this->EventMachine->onMessageCreationEvent(messageCreationData);

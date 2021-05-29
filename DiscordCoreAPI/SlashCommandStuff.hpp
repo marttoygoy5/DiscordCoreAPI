@@ -238,31 +238,6 @@ namespace DiscordCoreAPI {
                 cout << "SlashCommandManager::deleteGlobalApplicationCommandAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
             }
         }
-        
-        task<void> createInteractionResponseDeferralAsync(DiscordCoreInternal::InteractionResponseFullData interactionData) {
-            DiscordCoreInternal::HttpWorkload workload;
-            workload.relativePath = "/interactions/" + interactionData.interactionIncData.interactionId + "/" + interactionData.interactionIncData.interactionToken + "/callback";
-            workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
-            workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_INTERACTION_RESPONSE;
-            workload.content = DiscordCoreInternal::getInteractionResponsePayload(interactionData);
-            DiscordCoreInternal::HttpRequestAgent requestAgent(this->agentResources, this->threads->at(5).scheduler);
-            send(requestAgent.workSubmissionBuffer, workload);
-            requestAgent.start();
-            agent::wait(&requestAgent);
-            exception error;
-            while (requestAgent.getError(error)) {
-                cout << "SlashCommandManager::createInteractionResponseDeferral() Error: " << error.what() << endl << endl;
-            }
-            DiscordCoreInternal::HttpData returnData;
-            try_receive(requestAgent.workReturnBuffer, returnData);
-            if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-                cout << "SlashCommandManager::createInteractionResponseDeferralAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
-            }
-            else {
-                cout << "SlashCommandManager::createInteractionResponseDeferralAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
-            }
-            co_return;
-        }
 
         task<void> displayGlobalApplicationCommandsAsync() {
             vector<ApplicationCommand> applicationCommands = getGlobalApplicationCommandsAsync().get();
