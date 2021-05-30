@@ -535,58 +535,19 @@ namespace DiscordCoreInternal {
 		return data.dump();
 	}
 		
-		string getEditInteractionResponsePayload(EditInteractionResponseData editInteractionResponseData) {
 
-			auto componentsActionRow = json::array();
-
-			for (auto& value : editInteractionResponseData.components) {
-				auto components = json::array();
-
-				for (auto& valueNew : value.components) {
-					if (valueNew.emoji.id == "") {
-						json component = { {"custom_id", valueNew.customId},
-						{"disabled", valueNew.disabled},
-						{"emoji",{
-							{"name", valueNew.emoji.name},
-						{"animated", valueNew.emoji.animated}
-					} },
-						{"label", valueNew.label},
-						{"style", valueNew.style},
-						{"type", valueNew.type},
-						{"url", valueNew.url}
-						};
-						components.push_back(component);
-					}
-					else {
-						json component = { {"custom_id", valueNew.customId},
-						{"disabled", valueNew.disabled},
-						{"emoji",{
-							{"name", valueNew.emoji.name},
-							{"id", valueNew.emoji.id},
-						{"animated", valueNew.emoji.animated}
-					} },
-						{"label", valueNew.label},
-						{"style", valueNew.style},
-						{"type", valueNew.type},
-						{"url", valueNew.url}
-						};
-						components.push_back(component);
-					}
-				}
-				json componentActionRow = { {"type", 1},{
-					"components", components} };
-				componentsActionRow.push_back(componentActionRow);
-			}
-
+		string getCreateInteractionPayload(InteractionResponseData interactionData) {
 			auto embedsArray = json::array();
-			for (auto& value : editInteractionResponseData.embeds) {
+
+			for (auto& value : interactionData.data.embeds) {
 
 				auto fields = json::array();
 
-				for (unsigned int x = 0; x < value.fields.size(); x += 1) {
-					json field = { {"inline", value.fields.at(x).Inline},
-									{"value", value.fields.at(x).value},
-									{"name", value.fields.at(x).name} };
+				for (auto& value2 : value.fields) {
+					json field =
+					{ {"inline", value2.Inline},
+								{"value", value2.value},
+								{"name", value2.name} };
 					fields.push_back(field);
 				}
 
@@ -625,52 +586,102 @@ namespace DiscordCoreInternal {
 				{ "fields", fields },
 				{ "color",colorValue },
 					{"timestamp", value.timestamp}
-					 };
-
+				};
 				embedsArray.push_back(embed);
-
 			}
-
+				
 			auto parseArray = json::array();
-			for (auto& value : editInteractionResponseData.allowedMentions.parse) {
+			for (auto& value : interactionData.data.allowedMentions.parse) {
 				parseArray.push_back(value);
 			};
 
 			auto rolesArray = json::array();
-			for (auto& value : editInteractionResponseData.allowedMentions.roles) {
+			for (auto& value : interactionData.data.allowedMentions.roles) {
 				rolesArray.push_back(value);
 			}
 
 			auto usersArray = json::array();
-			for (auto& value : editInteractionResponseData.allowedMentions.users) {
+			for (auto& value : interactionData.data.allowedMentions.users) {
 				usersArray.push_back(value);
 			}
-			if (editInteractionResponseData.content == "") {
+
+			auto componentsActionRow = json::array();
+
+			for (auto& value : interactionData.data.components) {
+				auto components = json::array();
+
+				for (auto& valueNew : value.components) {
+					if (valueNew.emoji.id == "") {
+						json component = { {"custom_id", valueNew.customId},
+						{"disabled", valueNew.disabled},
+						{"emoji",{
+							{"name", valueNew.emoji.name},
+						{"animated", valueNew.emoji.animated}
+					} },
+						{"label", valueNew.label},
+						{"style", valueNew.style},
+						{"type", valueNew.type},
+						{"url", valueNew.url}
+						};
+						components.push_back(component);
+					}
+					else {
+						json component = { {"custom_id", valueNew.customId},
+						{"disabled", valueNew.disabled},
+						{"emoji",{
+							{"name", valueNew.emoji.name},
+							{"id", valueNew.emoji.id},
+						{"animated", valueNew.emoji.animated}
+					} },
+						{"label", valueNew.label},
+						{"style", valueNew.style},
+						{"type", valueNew.type},
+						{"url", valueNew.url}
+						};
+						components.push_back(component);
+					}
+				}
+				json componentActionRow = { {"type", 1},{
+					"components", components} };
+				componentsActionRow.push_back(componentActionRow);
+			}
+
+			if (interactionData.data.content == "") {
 				json data = {
+					{"type", interactionData.type},
+					{"tts", interactionData.data.tts},
+					{"flags", interactionData.data.flags},
 				{ "embeds", embedsArray },
 				{ "allowed_mentions", {
 				{"parse", parseArray},
 			{"roles", rolesArray},
 			{"users", usersArray},
-			{"repliedUser", editInteractionResponseData.allowedMentions.repliedUser},
-			
+			{"repliedUser", interactionData.data.allowedMentions.repliedUser},
+
 		} }, {"components", componentsActionRow}
 				};
 				return data.dump();
 			}
 			else {
-				json data = { {"content", editInteractionResponseData.content},
+				json data = { {"content", interactionData.data.content},
+					{"type", interactionData.type},
+					{"tts", interactionData.data.tts},
+					{"flags", interactionData.data.flags},
 				{"embeds", embedsArray},
 				{"allowed_mentions", {
 				{"parse", parseArray},
 			{"roles", rolesArray},
 			{"users", usersArray},
-			{"repliedUser", editInteractionResponseData.allowedMentions.repliedUser}
-			
+			{"repliedUser", interactionData.data.allowedMentions.repliedUser}
+
 		} }, {"components", componentsActionRow} };
 				return data.dump();
-			}
-		}
+			};
+		 }
+
+
+
+		
 
 		string getCreateRolePayload(CreateRoleData createRoleData) {
 			unsigned int roleColorInt = stol(createRoleData.color, 0, 16);

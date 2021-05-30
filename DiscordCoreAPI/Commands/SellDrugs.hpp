@@ -29,9 +29,9 @@ namespace DiscordCoreAPI {
 				if (areWeInADm == true) {
 					return;
 				}
-				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
 
-					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
+				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
+					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 }).get();
 				}
 
 				Guild guild = args->coreClient->guilds->getGuildAsync({ args->message.data.guildId }).get();
@@ -66,7 +66,7 @@ namespace DiscordCoreAPI {
 					string msgString = "";
 					msgString += "You've been busy dealing drugs... and you've earned " + to_string(amountEarned) + " " + args->coreClient->discordUser->data.currencyName + "\nNice job and watch out for cops!\nYour new wallet balance is: ";
 					msgString += to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName;
-					EmbedData messageEmbed;
+					DiscordCoreInternal::EmbedData messageEmbed;
 					messageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					messageEmbed.setDescription(msgString);
 					messageEmbed.setTitle("__**Drug Dealing:**__");
@@ -96,7 +96,7 @@ namespace DiscordCoreAPI {
 				else {
 					msgString += "Sorry, but you need to wait " + to_string(secondsLeft) + " seconds before you can get paid again!";
 				}
-				EmbedData  messageEmbed;
+				DiscordCoreInternal::EmbedData  messageEmbed;
 				messageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				messageEmbed.setDescription(msgString);
 				messageEmbed.setTitle("__**Drug Dealing:**__");

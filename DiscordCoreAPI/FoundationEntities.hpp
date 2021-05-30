@@ -257,14 +257,6 @@ namespace  DiscordCoreInternal {
         NITRO = 2
     };
 
-    enum class InteractionResponseType {
-        Pong = 1,
-        Acknowledge = 2,
-        ChannelMessage = 3,
-        ChannelMessageWithSource = 4,
-        DeferredChannelMessageWithSource = 5
-    };
-
     enum class InteractionCallbackType {
         Pong = 1,
         Acknowledge = 2,
@@ -586,44 +578,6 @@ namespace  DiscordCoreInternal {
         int formatType;
     };
 
-    struct InteractionApplicationCommandCallbackData {
-        bool tts;
-        string content;
-        vector<EmbedData> embeds;
-        AllowedMentionsData allowedMentions;
-        int flags = 0;
-    };
-
-    struct InteractionResponseData {
-        InteractionResponseType type;
-        InteractionApplicationCommandCallbackData data;
-    };
-
-    enum class MessageType {
-        DEFAULT	= 0,
-        RECIPIENT_ADD = 1,
-        RECIPIENT_REMOVE = 2,
-        CALL = 3,
-        CHANNEL_NAME_CHANGE = 4,
-        CHANNEL_ICON_CHANGE = 5,
-        CHANNEL_PINNED_MESSAGE = 6,
-        GUILD_MEMBER_JOIN = 7,
-        USER_PREMIUM_GUILD_SUBSCRIPTION = 8,
-        USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1 = 9,
-        USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 10,
-        USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 11,
-        CHANNEL_FOLLOW_ADD = 12,
-        GUILD_DISCOVERY_DISQUALIFIED = 14,
-        GUILD_DISCOVERY_REQUALIFIED = 15,
-        GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 16,
-        GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING = 17,
-        THREAD_CREATED = 18,
-        REPLY = 19,
-        APPLICATION_COMMAND = 20,
-        THREAD_STARTER_MESSAGE = 21,
-        GUILD_INVITE_REMINDER = 22
-    };
-
     enum class MessageTypeReal {
         INTERACTION = 1,
         REGULAR = 2
@@ -656,42 +610,38 @@ namespace  DiscordCoreInternal {
         vector<ComponentData> components;
     };
 
-    struct MessageDataOld {
-        MessageTypeReal messageType = MessageTypeReal::REGULAR;
-        string id;
-        string channelId;
-        string guildId;
-        UserData author;
-        GuildMemberData member;
-        string content;
-        string timestamp;
-        string editedTimestamp;
-        string applicationId;
-        string interactionId;
-        string interactionToken;
+    struct InteractionApplicationCommandCallbackData {
         bool tts;
-        bool mentionEveryone;
-        vector<UserData> mentions;
-        vector<string> mentionRoles;
-        vector<ChannelMentionData> mentionChannels;
-        vector<AttachmentData> attachments;
+        string content;
         vector<EmbedData> embeds;
-        vector<ReactionData> reactions;
-        string nonce;
-        bool pinned;
-        string webhookId;
-        MessageType type;
-        MessageActivityData activity;
-        ApplicationData application;
-        MessageReferenceData messageReference;
+        AllowedMentionsData allowedMentions;
         int flags = 0;
-        vector<MessageStickerData> stickers;
-        InteractionResponseData interaction;
-        vector<ActionRowData> components;
+        vector<DiscordCoreInternal::ActionRowData> components;
     };
 
-    struct MessageData : MessageDataOld {
-        MessageDataOld referencedMessage;
+    enum class MessageType {
+        DEFAULT	= 0,
+        RECIPIENT_ADD = 1,
+        RECIPIENT_REMOVE = 2,
+        CALL = 3,
+        CHANNEL_NAME_CHANGE = 4,
+        CHANNEL_ICON_CHANGE = 5,
+        CHANNEL_PINNED_MESSAGE = 6,
+        GUILD_MEMBER_JOIN = 7,
+        USER_PREMIUM_GUILD_SUBSCRIPTION = 8,
+        USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1 = 9,
+        USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 10,
+        USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 11,
+        CHANNEL_FOLLOW_ADD = 12,
+        GUILD_DISCOVERY_DISQUALIFIED = 14,
+        GUILD_DISCOVERY_REQUALIFIED = 15,
+        GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 16,
+        GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING = 17,
+        THREAD_CREATED = 18,
+        REPLY = 19,
+        APPLICATION_COMMAND = 20,
+        THREAD_STARTER_MESSAGE = 21,
+        GUILD_INVITE_REMINDER = 22
     };
 
     struct ReactionAddEventData {
@@ -753,6 +703,21 @@ namespace  DiscordCoreInternal {
         ThreadContext threadContext;
     };
 
+    struct InteractionResponseData {
+        ThreadContext threadContext;
+        HttpAgentResources agentResources;
+        InteractionCallbackType type;
+        InteractionApplicationCommandCallbackData data;
+        string channelId;
+        string applicationId;
+        string token;
+        string messageId;
+        string interactionId;
+        string guildId;
+        string userId;
+        string content;
+    };
+
     struct HttpData {
         unsigned int returnCode = 0;
         string returnMessage = "";
@@ -764,6 +729,44 @@ namespace  DiscordCoreInternal {
         HttpWorkloadType workloadType;
         string relativePath;
         string content;
+    };
+
+    struct MessageDataOld {
+        MessageTypeReal messageType = MessageTypeReal::REGULAR;
+        string id;
+        string channelId;
+        string guildId;
+        UserData author;
+        GuildMemberData member;
+        string content;
+        string timestamp;
+        string editedTimestamp;
+        string applicationId;
+        string interactionId;
+        string interactionToken;
+        bool tts;
+        bool mentionEveryone;
+        vector<UserData> mentions;
+        vector<string> mentionRoles;
+        vector<ChannelMentionData> mentionChannels;
+        vector<AttachmentData> attachments;
+        vector<EmbedData> embeds;
+        vector<ReactionData> reactions;
+        string nonce;
+        bool pinned;
+        string webhookId;
+        MessageType type;
+        MessageActivityData activity;
+        ApplicationData application;
+        MessageReferenceData messageReference;
+        int flags = 0;
+        vector<MessageStickerData> stickers;
+        InteractionResponseData interaction;
+        vector<ActionRowData> components;
+    };
+
+    struct MessageData : MessageDataOld {
+        MessageDataOld referencedMessage;
     };
 
     struct RateLimitData {
@@ -1064,16 +1067,9 @@ namespace  DiscordCoreInternal {
         MessageComponent = 3
     };
 
-    struct InteractionIncData {
-        string channelId;
-        string guildId;
-        string interactionId;
-        string interactionToken;
-        string applicationId;
+    struct CommandData {
         vector<string> optionsArgs;
-        string userId;
         string commandName;
-        InteractionType type;
     };
 
     struct ApplicationCommandInteractionDataResolved {
@@ -1115,29 +1111,23 @@ namespace  DiscordCoreInternal {
     };
 
     struct InteractionResponseFullData {
-        InteractionIncData interactionIncData;
+        InteractionData interactionData;
         InteractionResponseData interactionResponseData;
     };
-
-    struct EditInteractionResponseData {
+    /*
+    struct PatchInteractionResponseData {
         string applicationId;
         string interactionToken;
         string content = "";
         vector<EmbedData> embeds;
         AllowedMentionsData allowedMentions;
         vector<ActionRowData> components;
-    };
-
-    struct PatchInteractionResponseData {
-        string channelId;
-        string messageId;
-        string applicationId;
-        string interactionToken;
         HttpAgentResources agentResources;
         ThreadContext threadContext;
-        string content = "";
+        string channelId;
+        string messageId;
     };
-
+    */
     class StopWatch {
     public:
         StopWatch(unsigned long long maxNumberOfMsNew) {

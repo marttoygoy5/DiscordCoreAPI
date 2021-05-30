@@ -48,7 +48,7 @@ namespace DiscordCoreAPI {
 			regex emojiRegExp("\.{1,32}");
 			if (args->argumentsArray.size() == 0 || !regex_search(args->argumentsArray.at(0), itemNameRegExp)) {
 				string msgString = "------\n**Please enter a valid item name! (!addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI)**\n------";
-				EmbedData msgEmbed;
+				DiscordCoreInternal::EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 				msgEmbed.setDescription(msgString);
@@ -60,7 +60,7 @@ namespace DiscordCoreAPI {
 			}
 			if (args->argumentsArray.size() < 2 || !regex_search(args->argumentsArray.at(1), selfModRegExp) || stoll(args->argumentsArray.at(1)) > 100 || stoll(args->argumentsArray.at(1)) < 0) {
 				string msgString = "------\n**Please enter a valid self - mod value, between 0 and 100! (!addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI)**\n------";
-				EmbedData msgEmbed;
+				DiscordCoreInternal::EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 				msgEmbed.setDescription(msgString);
@@ -72,7 +72,7 @@ namespace DiscordCoreAPI {
 			}
 			if (args->argumentsArray.size() <3|| !regex_search(args->argumentsArray.at(2), oppModRegExp) || stoll(args->argumentsArray.at(2)) < -100 || stoll(args->argumentsArray.at(2))> 0) {
 				string msgString = "------\n**Please enter a valid opp - mod value between - 100 and 0! (!addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI)**\n------";
-				EmbedData msgEmbed;
+				DiscordCoreInternal::EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 				msgEmbed.setDescription(msgString);
@@ -84,7 +84,7 @@ namespace DiscordCoreAPI {
 			}
 			if (args->argumentsArray.size() <4 ||!regex_search(args->argumentsArray.at(3), itemCostRegExp) || stoll(args->argumentsArray.at(3)) < 1) {
 				string msgString = "------\n**Please enter a valid item cost! (!addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI)**\n------";
-				EmbedData msgEmbed;
+				DiscordCoreInternal::EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 				msgEmbed.setDescription(msgString);
@@ -96,7 +96,7 @@ namespace DiscordCoreAPI {
 			}
 			if (args->argumentsArray.size() < 5|| !regex_search(args->argumentsArray.at(4), emojiRegExp)) {
 				string msgString = "------\n**Please enter a valid emoji! (!addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI)**\n------";
-				EmbedData msgEmbed;
+				DiscordCoreInternal::EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 				msgEmbed.setDescription(msgString);
@@ -120,7 +120,7 @@ namespace DiscordCoreAPI {
 			for (auto& value: discordGuild.data.guildShop.items) {
 				if (itemName == value.itemName) {
 					string msgString = "------\n**Sorry, but an item by that name already exists!**\n------";
-					EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 					msgEmbed.setDescription(msgString);
@@ -146,7 +146,7 @@ namespace DiscordCoreAPI {
 			msgString = "Good job! You've added a new item to the shop, making it available for purchase by the members of this server!\n\
 				The item's stats are as follows:\n__Item Name__: " + itemName + "\n__Self-Mod Value__: " + to_string(selfMod) + "\n__Opp-Mod Value__: " + to_string(oppMod) + "\n\
 				__Item Cost__: " + to_string(itemCost) + " " + args->coreClient->discordUser->data.currencyName + "\n__Emoji__: " + emoji;
-			EmbedData msgEmbed;
+			DiscordCoreInternal::EmbedData msgEmbed;
 			msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 			msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 			msgEmbed.setDescription(msgString);

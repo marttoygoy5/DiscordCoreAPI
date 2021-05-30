@@ -266,7 +266,6 @@ namespace DiscordCoreAPI {
 							interactionResponseData.interactionId = messageData.interactionId;
 							interactionResponseData.token = messageData.interactionToken;
 							interactionResponseData.userId = messageData.member.user.id;
-							InteractionManager::interactions.insert(make_pair(interactionData.channelId + interactionData.user.id + interactionData.id, interactionData));
 							if (interactionData.type == DiscordCoreInternal::InteractionType::ApplicationCommand){
 								interactionResponseData.type = DiscordCoreInternal::InteractionCallbackType::DeferredChannelMessageWithSource;
 								InteractionManager::createInteractionResponseDeferralAsync(interactionResponseData).get();

@@ -54,7 +54,7 @@ namespace DiscordCoreAPI {
 			else if (args->argumentsArray.at(0) != "") {
 				if (!regex_search(args->argumentsArray.at(0), mentionRegExp, regex_constants::match_flag_type::format_first_only) && !regex_search(args->argumentsArray.at(0), idRegExp, regex_constants::match_flag_type::format_first_only)) {
 					string msgString = "------\n* *Please, enter a valid user mention, or enter none at all!(!balance = @USERMENTION)**\n------";
-					EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 					msgEmbed.setDescription(msgString);
@@ -73,7 +73,7 @@ namespace DiscordCoreAPI {
 
 			if (guildMember.data.user.id == "") {
 				string msgString = "------\n**Sorry, but that user could not be found!**\n------";
-				EmbedData msgEmbed;
+				DiscordCoreInternal::EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 				msgEmbed.setDescription(msgString);
@@ -92,7 +92,7 @@ namespace DiscordCoreAPI {
 			msgString = "<@!" + guildMember.data.user.id + "> 's balances are:\n------\n__**Bank Balance:**__ " + to_string(bankAmount) + " " + args->coreClient->discordUser->data.currencyName +
 				"\n__**Wallet Balance:**__ " + to_string(walletAmount) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
 
-			EmbedData msgEmbed;
+			DiscordCoreInternal::EmbedData msgEmbed;
 			msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 			msgEmbed.setDescription(msgString);
 			msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);

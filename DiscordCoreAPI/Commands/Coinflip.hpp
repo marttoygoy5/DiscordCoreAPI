@@ -46,7 +46,7 @@ namespace DiscordCoreAPI {
 
 				if (!DiscordCoreAPI::PermissionsConverter::checkForPermission(guildMember, channel, DiscordCoreInternal::Permissions::MANAGE_MESSAGES)) {
 					string msgString = "------\n**I need the Manage Messages permission in this channel, for this game!**\n------";
-					EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 					msgEmbed.setDescription(msgString);
@@ -61,7 +61,7 @@ namespace DiscordCoreAPI {
 
 				if (args->argumentsArray.size() == 0 || !regex_search(args->argumentsArray.at(0), betAmountRegExp) || stoll(args->argumentsArray.at(0)) < 1) {
 					string msgString = "------\n**Please enter a valid amount to bet! 1 " + args->coreClient->discordUser->data.currencyName + " or more! (!coinflip = BETAMOUNT)**\n------";
-					EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 					msgEmbed.setDescription(msgString);
@@ -82,7 +82,7 @@ namespace DiscordCoreAPI {
 
 				if (betAmount > currencyAmount) {
 					string msgString = "------\n**Sorry, but you have insufficient funds in your wallet to place that wager!**\n------";
-					EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 					msgEmbed.setDescription(msgString);
@@ -97,7 +97,7 @@ namespace DiscordCoreAPI {
 				newBetString += "Welcome, <@!" + guildMember.data.user.id + "> , you have placed a bet of **" + to_string(betAmount) + " " + args->coreClient->discordUser->data.currencyName + "**.\n";
 				newBetString += "React with :exploding_head: to choose heads, or with :snake: to choose tails!";
 
-				EmbedData msgEmbed;
+				DiscordCoreInternal::EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				msgEmbed.setColor(0, 0, 255);
 				msgEmbed.setDescription(newBetString);
@@ -106,29 +106,31 @@ namespace DiscordCoreAPI {
 				ReplyMessageData replyMessageData;
 				replyMessageData.replyingToMessageData = args->message.data;
 				replyMessageData.embed = msgEmbed;
-				ActionRowData actionRowData;
-				ComponentData componentData01;
+				DiscordCoreInternal::ActionRowData actionRowData;
+				DiscordCoreInternal::ComponentData componentData01;
 				componentData01.customId = "Heads";
 				componentData01.disabled = false;
 				componentData01.emoji.name = "🤯";
 				componentData01.label = "Heads";
-				componentData01.style = ButtonStyle::Success;
-				componentData01.type = ComponentType::Button;
-				ComponentData componentData02;
+				componentData01.style = DiscordCoreInternal::ButtonStyle::Success;
+				componentData01.type = DiscordCoreInternal::ComponentType::Button;
+				DiscordCoreInternal::ComponentData componentData02;
 				actionRowData.components.push_back(componentData01);
 				componentData02.disabled = false;
 				componentData02.customId = "Tails";
 				componentData02.emoji.name = "🐍";
 				componentData02.label = "Tails";
-				componentData02.style = ButtonStyle::Success;
-				componentData02.type = ComponentType::Button;
+				componentData02.style = DiscordCoreInternal::ButtonStyle::Success;
+				componentData02.type = DiscordCoreInternal::ComponentType::Button;
 				actionRowData.components.push_back(componentData02);
 				replyMessageData.components.push_back(actionRowData);
+				cout << "APP ID: " << replyMessageData.replyingToMessageData.applicationId << "INTERACTION ID: " << replyMessageData.replyingToMessageData.interactionId << "INT TOKEN: " << replyMessageData.replyingToMessageData.interactionToken << endl;
 				Message message = args->coreClient->messages->replyAsync(replyMessageData).get();
+				cout << message.data.applicationId << "  " << message.data.interactionId << "   " << message.data.interactionToken<<  "  " << endl;
 				vector<string> buttonIds;
 				buttonIds.push_back("Heads");
-				buttonIds.push_back("Tails");
 				ButtonRequest buttonRequest;
+				buttonIds.push_back("Tails");
 				buttonRequest.buttonIds = buttonIds;
 				buttonRequest.channelId = args->message.data.channelId;
 				buttonRequest.userId = args->message.data.author.id;
@@ -140,22 +142,19 @@ namespace DiscordCoreAPI {
 				}
 				catch (exception& e) {
 					string timeOutString = "------\nSorry, but you ran out of time to select heads or tails.\n------";
-					EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setColor(255, 0, 0);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Heads, or Tails:**__");
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed.setDescription(timeOutString);
 					message.data.components.resize(0);
-					vector<EmbedData>embeds;
+					vector<DiscordCoreInternal::EmbedData>embeds;
 					embeds.push_back(msgEmbed);
-					//InteractionManager::editInteractionResponse({ .applicationId = message.data.applicationId, .interactionToken = message.data.interactionToken,.embeds = embeds, }).get();
-					args->coreClient->messages->editMessageAsync({ .embed = msgEmbed,.originalMessage = message, .components = vector<ActionRowData>() }, args->message.data.channelId, message.data.id).get();
+					args->coreClient->messages->editMessageAsync({ .embed = msgEmbed,.originalMessage = message, .components = vector<DiscordCoreInternal::ActionRowData>() }, args->message.data.channelId, message.data.id).get();
 					return;
 				}
-
 				srand((unsigned int)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-				unsigned int amountEarned = (unsigned int)trunc(((float)rand() / (float)RAND_MAX) * 5000.0f);
 				float number = ((float)rand() / (float)RAND_MAX);
 				unsigned int newBalance = 0;
 
@@ -164,7 +163,7 @@ namespace DiscordCoreAPI {
 
 				if (betAmount > currencyAmount) {
 					string completionString = "------\nSorry, but you have insufficient funds in your wallet to place that wager.\n------";
-					EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setColor(255, 0, 0);
 					msgEmbed.setDescription(completionString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
@@ -174,7 +173,7 @@ namespace DiscordCoreAPI {
 					return;
 				}
 
-				EmbedData msgEmbed2;
+				DiscordCoreInternal::EmbedData msgEmbed2;
 				if (buttonResponse.buttonId == "Heads" && number > 0.50 || buttonResponse.buttonId == "Tails" && number < 0.50) {
 					discordGuildMember.data.currency.wallet += betAmount;
 					discordGuildMember.writeDataToDB().get();
@@ -185,8 +184,8 @@ namespace DiscordCoreAPI {
 						discordGuild.data.casinoStats.largestCoinFlipPayout.timeStamp = getTimeAndDate();
 						discordGuild.data.casinoStats.largestCoinFlipPayout.userId = args->message.data.author.id;
 						discordGuild.data.casinoStats.largestCoinFlipPayout.userName = args->message.data.author.username;
+						discordGuild.writeDataToDB();
 					}
-					discordGuild.writeDataToDB();
 					newBalance = discordGuildMember.data.currency.wallet;
 					string completionString = "------\nNICELY DONE FAGGOT! YOU WON!\nYour new wallet balance is: " + to_string(newBalance) + " " + args->coreClient->discordUser->data.currencyName + ".\n------";
 					msgEmbed2.setColor(0, 255, 0);

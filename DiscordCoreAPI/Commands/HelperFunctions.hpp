@@ -40,7 +40,7 @@ namespace DiscordCoreAPI {
 
         if (currentChannelType == DiscordCoreInternal::ChannelType::DM) {
             string msgString = "------\n**Sorry, but we can't do that in a direct message!**\n------";
-            EmbedData msgEmbed;
+            DiscordCoreInternal::EmbedData msgEmbed;
             msgEmbed.setAuthor(message.data.author.username, message.data.author.getAvatarURL());
             msgEmbed.setColor(254, 254, 254);
             msgEmbed.setDescription(msgString);
@@ -61,7 +61,7 @@ namespace DiscordCoreAPI {
         if (guildData.gameChannelIds.size() > 0) {
             isItFound = false;
             string msgString = "------\n**Sorry, but please do that in one of the following channels:**\n------\n";
-            EmbedData msgEmbed;
+            DiscordCoreInternal::EmbedData msgEmbed;
             for (auto& value : guildData.gameChannelIds) {
                 if (message.data.channelId == value) {
                     isItFound = true;
@@ -409,7 +409,7 @@ namespace DiscordCoreAPI {
         }
 
         string msgString = "------\n**Sorry, but you don't have the permissions required for that!**\n------";
-        EmbedData msgEmbed;
+        DiscordCoreInternal::EmbedData msgEmbed;
         msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
         msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
         msgEmbed.setDescription(msgString);
