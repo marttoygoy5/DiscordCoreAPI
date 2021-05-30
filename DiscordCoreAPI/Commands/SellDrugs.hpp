@@ -29,8 +29,8 @@ namespace DiscordCoreAPI {
 				if (areWeInADm == true) {
 					return;
 				}
+				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
 
-				if (args->message.data.type != DiscordCoreInternal::MessageType::INTERACTION) {
 					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
 				}
 

@@ -12,6 +12,7 @@
 #include "ReactionStuff.hpp"
 #include "JSONifier.hpp"
 #include "HttpStuff.hpp"
+#include "InteractionManager.hpp"
 
 namespace DiscordCoreAPI {
 
@@ -30,6 +31,7 @@ namespace DiscordCoreAPI {
 		friend class DiscordCoreClient;
 		friend class MessageManager;
 		friend class MessageManagerAgent;
+		friend class InteractionManager;
 
 		Message(DiscordCoreInternal::MessageData dataNew, DiscordCoreClient* coreClientNew) {
 			this->initialize(dataNew, coreClientNew).get();
@@ -43,122 +45,14 @@ namespace DiscordCoreAPI {
 
 	};
 
-	struct EmbedData {
-		EmbedData setTitle(string titleNew) {
-			this->title = titleNew;
-			return *this;
-		}
-		EmbedData setAuthor(string authorName, string authorAvatarURL = "") {
-			this->author.name = authorName;
-			this->author.iconUrl = authorAvatarURL;
-			return *this;
-		}
-		EmbedData setImage(string imageURL) {
-			this->image.url = imageURL;
-			return *this;
-		}
-		EmbedData setThumbnail(string thumbnailURL) {
-			this->thumbnail.url = thumbnailURL;
-			return *this;
-		}
-		EmbedData setColor(unsigned int colorRed, unsigned int colorGreen,unsigned int colorBlue) {
-			this->color[0] = colorRed;
-			this->color[1] = colorGreen;
-			this->color[2] = colorBlue;
-			return *this;
-		}
-		EmbedData setDescription(string descriptionNew) {
-			this->description = descriptionNew;
-			return *this;
-		}
-		EmbedData setFooter(string footerText, string footerIconURLText = "") {
-			this->footer.text = footerText;
-			this->footer.iconUrl = footerIconURLText;
-			return *this;
-		}
-		EmbedData setTimeStamp(string timeStamp) {
-			this->timestamp = timeStamp;
-			return *this;
-		}
-		EmbedData addField(string name, string value, bool Inline = true) {
-			DiscordCoreInternal::EmbedFieldData embedFieldData;
-			embedFieldData.name = name;
-			embedFieldData.Inline = Inline;
-			embedFieldData.value = value;
-			this->fields.push_back(embedFieldData);
-			return *this;
-		}
-		string title;
-		string type;
-		string description;
-		string url;
-		string timestamp;
-		unsigned int color[3] = { 255, 255, 255 };
-		DiscordCoreInternal::EmbedFooterData footer;
-		DiscordCoreInternal::EmbedImageData image;
-		DiscordCoreInternal::EmbedThumbnailData thumbnail;
-		DiscordCoreInternal::EmbedVideoData video;
-		DiscordCoreInternal::EmbedProviderData provider;
-		DiscordCoreInternal::EmbedAuthorData author;
-		vector<DiscordCoreInternal::EmbedFieldData> fields;
-		int actualColor() {
-			if (this->color[0] > 255) {
-				this->color[0] = 255;
-			}
-			else if (this->color[0] < 0) {
-				this->color[0] = 0;
-			}
-			if (this->color[1] > 255) {
-				this->color[1] = 255;
-			}
-			else if (this->color[1] < 0) {
-				this->color[1] = 0;
-			}
-			if (this->color[2] > 255) {
-				this->color[2] = 255;
-			}
-			else if (this->color[2] < 0) {
-				this->color[2] = 0;
-			}
-			int colorValue = 65536 * this->color[0] + 256 * this->color[1] + this->color[2];
-			return colorValue;
-		};
-		int actualColorVal;
-	};
-
-	enum class ComponentType {
-		ActionRow = 1,
-		Button = 2
-	};
-
-	enum class ButtonStyle {
-		Primary = 1,
-		Secondary = 2,
-		Success = 3,
-		Danger = 4,
-		Link = 5
-	};
-
-	struct ComponentData {
-		ComponentType type;
-		ButtonStyle style;
-		string label;
-		DiscordCoreInternal::EmojiData emoji;
-		string customId;
-		string url;
-		bool disabled;
-	};
-
-	struct ActionRowData {
-		vector<ComponentData> components;
-	};
-
 	struct EditMessageData {
 		string content = "";
 		EmbedData embed;
 		int flags = 0;
 		vector<DiscordCoreInternal::AttachmentData> attachments;
 		DiscordCoreInternal::AllowedMentionsData allowedMentions;
+		Message originalMessage;
+		vector<ActionRowData> components;
 	};
 
 	struct CreateMessageData {
@@ -208,6 +102,7 @@ namespace DiscordCoreAPI {
 	protected:
 		friend class DiscordCoreClient;
 		friend class MessageManager;
+		friend class InteractionManager;
 
 		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestGetBuffer;
@@ -216,6 +111,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::PatchMessageData>* requestPatchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* requestDeleteBuffer;
 		static unbounded_buffer<DiscordCoreInternal::PatchInteractionResponseData>* requestPatchInteractionBuffer;
+		static unbounded_buffer<DiscordCoreInternal::MessageData>* requestInteractionBuffer;
 		static unbounded_buffer<Message>* outBuffer;
 		static concurrent_queue<Message> messagesToInsert;
 		static overwrite_buffer<map<string, Message>> cache;
@@ -240,6 +136,7 @@ namespace DiscordCoreAPI {
 			MessageManagerAgent::requestPatchBuffer = new unbounded_buffer<DiscordCoreInternal::PatchMessageData>;
 			MessageManagerAgent::requestPatchInteractionBuffer = new unbounded_buffer<DiscordCoreInternal::PatchInteractionResponseData>;
 			MessageManagerAgent::requestDeleteBuffer = new unbounded_buffer<DiscordCoreInternal::DeleteMessageData>;
+			MessageManagerAgent::requestInteractionBuffer = new unbounded_buffer<DiscordCoreInternal::MessageData>;
 			MessageManagerAgent::outBuffer = new unbounded_buffer<Message>;
 			return;
 		}
@@ -290,15 +187,15 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			exception error;
 			while (requestAgent.getError(error)) {
-				cout << "MessageManagerAgent::patchObjectAsync() Error: " << error.what() << endl << endl;
+				cout << "MessageManagerAgent::patchObjectAsync() Error 01: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-				cout << "MessageManagerAgent::patchObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+				cout << "MessageManagerAgent::patchObjectAsync() Error 01: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			else {
-				cout << "MessageManagerAgent::patchObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+				cout << "MessageManagerAgent::patchObjectAsync() Success 01: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
@@ -318,18 +215,27 @@ namespace DiscordCoreAPI {
 			agent::wait(&requestAgent);
 			exception error;
 			while (requestAgent.getError(error)) {
-				cout << "MessageManagerAgent::patchObjectAsync() Error: " << error.what() << endl << endl;
+				cout << "MessageManagerAgent::patchObjectAsync() Error 02: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::HttpData returnData;
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-				cout << "MessageManagerAgent::patchObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+				cout << "MessageManagerAgent::patchObjectAsync() Error 02: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			else {
-				cout << "MessageManagerAgent::patchObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+				cout << "MessageManagerAgent::patchObjectAsync() Success 02: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
+			DiscordCoreInternal::StopWatch watch(300);
+			while (!try_receive(MessageManagerAgent::requestInteractionBuffer, messageData)) {
+				try_receive(MessageManagerAgent::requestInteractionBuffer, messageData);
+				cout << "WE'RE HERE WE'RE HERE" << endl;
+				if (watch.hasTimePassed()) {
+					break;
+				}
+			}
+			messageData.messageType = DiscordCoreInternal::MessageTypeReal::INTERACTION;
 			Message messageNew(messageData, this->coreClient);
 			co_return messageNew;
 		}
@@ -538,7 +444,7 @@ namespace DiscordCoreAPI {
 		task<Message> replyAsync(ReplyMessageData replyMessageData) {
 			apartment_context mainThread;
 			co_await resume_background();
-			if (replyMessageData.replyingToMessageData.type == DiscordCoreInternal::MessageType::INTERACTION) {
+			if (replyMessageData.replyingToMessageData.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION) {
 				DiscordCoreInternal::EditInteractionResponseData editInteractionResponseData;
 				editInteractionResponseData.content = replyMessageData.content;
 				if (replyMessageData.embed.description != ""|| replyMessageData.embed.fields.at(0).value != "") {
@@ -551,7 +457,7 @@ namespace DiscordCoreAPI {
 					embedData.description = replyMessageData.embed.description;
 					embedData.fields = replyMessageData.embed.fields;
 					embedData.fields = replyMessageData.embed.fields;
-					embedData.footer= replyMessageData.embed.footer;
+					embedData.footer = replyMessageData.embed.footer;
 					embedData.image = replyMessageData.embed.image;
 					embedData.provider= replyMessageData.embed.provider;
 					embedData.thumbnail = replyMessageData.embed.thumbnail;
@@ -586,7 +492,6 @@ namespace DiscordCoreAPI {
 				dataPackage.interactionToken = replyMessageData.replyingToMessageData.interactionToken;
 				dataPackage.threadContext = this->threads->at(5);
 				dataPackage.content = DiscordCoreInternal::getEditInteractionResponsePayload(editInteractionResponseData);
-				cout << dataPackage.content << endl;
 				MessageManagerAgent managerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(4).scheduler);
 				send(managerAgent.requestPatchInteractionBuffer, dataPackage);
 				managerAgent.start();
@@ -769,6 +674,20 @@ namespace DiscordCoreAPI {
 		task<Message> editMessageAsync(EditMessageData editMessageData, string channelId, string messageId) {
 			apartment_context mainThread;
 			co_await resume_background();
+			if (editMessageData.originalMessage.data.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION) {
+				EditInteractionResponseData editInteractionData;
+				editInteractionData.allowedMentions = editMessageData.allowedMentions;
+				editInteractionData.applicationId = editMessageData.originalMessage.data.applicationId;
+				editInteractionData.components = editMessageData.components;
+				editInteractionData.content = editMessageData.content;
+				vector<EmbedData> embeds;
+				embeds.push_back(editMessageData.embed);
+				editInteractionData.embeds = embeds;
+				editInteractionData.interactionToken = editMessageData.originalMessage.data.interactionToken;
+				DiscordCoreInternal::MessageData messageData = InteractionManager::editInteractionResponse(editInteractionData).get();
+				Message message(messageData, this->coreClient);
+				co_return message;
+			}
 			DiscordCoreInternal::PatchMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(7);
@@ -919,6 +838,7 @@ namespace DiscordCoreAPI {
 	unbounded_buffer<DiscordCoreInternal::PatchMessageData>* MessageManagerAgent::requestPatchBuffer;
 	unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* MessageManagerAgent::requestDeleteBuffer;
 	unbounded_buffer<DiscordCoreInternal::PatchInteractionResponseData>* MessageManagerAgent::requestPatchInteractionBuffer;
+	unbounded_buffer<DiscordCoreInternal::MessageData>* MessageManagerAgent::requestInteractionBuffer;
 	unbounded_buffer<Message>* MessageManagerAgent::outBuffer;
 	concurrent_queue<Message> MessageManagerAgent::messagesToInsert;
 }

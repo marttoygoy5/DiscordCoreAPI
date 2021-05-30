@@ -265,6 +265,16 @@ namespace  DiscordCoreInternal {
         DeferredChannelMessageWithSource = 5
     };
 
+    enum class InteractionCallbackType {
+        Pong = 1,
+        Acknowledge = 2,
+        ChannelMessage = 3,
+        ChannelMessageWithSource = 4,
+        DeferredChannelMessageWithSource = 5,
+        DeferredUpdateMessage = 6,
+        UpdateMessage = 7
+    };
+
     enum class ChannelType {
         GUILD_TEXT = 0,
         DM = 1,
@@ -611,8 +621,12 @@ namespace  DiscordCoreInternal {
         REPLY = 19,
         APPLICATION_COMMAND = 20,
         THREAD_STARTER_MESSAGE = 21,
-        GUILD_INVITE_REMINDER = 22,
-        INTERACTION = 23
+        GUILD_INVITE_REMINDER = 22
+    };
+
+    enum class MessageTypeReal {
+        INTERACTION = 1,
+        REGULAR = 2
     };
 
     enum class ComponentType {
@@ -643,6 +657,7 @@ namespace  DiscordCoreInternal {
     };
 
     struct MessageDataOld {
+        MessageTypeReal messageType = MessageTypeReal::REGULAR;
         string id;
         string channelId;
         string guildId;
@@ -672,7 +687,7 @@ namespace  DiscordCoreInternal {
         int flags = 0;
         vector<MessageStickerData> stickers;
         InteractionResponseData interaction;
-        ActionRowData components;
+        vector<ActionRowData> components;
     };
 
     struct MessageData : MessageDataOld {
@@ -1079,7 +1094,7 @@ namespace  DiscordCoreInternal {
         string name;
         string id;
         ApplicationCommandInteractionDataResolved resolved;
-        vector<ApplicationCommandInteractionDataOption >options;
+        vector<ApplicationCommandInteractionDataOption> options;
         string customId;
         int componentType;
     };
@@ -1096,6 +1111,7 @@ namespace  DiscordCoreInternal {
         string token;
         int version;
         MessageData message;
+        string customId;
     };
 
     struct InteractionResponseFullData {
@@ -1104,6 +1120,8 @@ namespace  DiscordCoreInternal {
     };
 
     struct EditInteractionResponseData {
+        string applicationId;
+        string interactionToken;
         string content = "";
         vector<EmbedData> embeds;
         AllowedMentionsData allowedMentions;
@@ -1118,6 +1136,29 @@ namespace  DiscordCoreInternal {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         string content = "";
+    };
+
+    class StopWatch {
+    public:
+        StopWatch(unsigned long long maxNumberOfMsNew) {
+            this->maxNumberOfMs = maxNumberOfMsNew;
+            this->startTime = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
+        }
+
+        bool hasTimePassed() {
+            unsigned long long currentTime = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
+            unsigned long long elapsedTime = currentTime - this->startTime;
+            if (elapsedTime >= this->maxNumberOfMs) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+    protected:
+        unsigned long long maxNumberOfMs;
+        unsigned long long startTime;
     };
 }
 #endif

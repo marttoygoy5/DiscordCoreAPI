@@ -36,6 +36,7 @@ namespace DiscordCoreAPI {
 		MessageManager* messages{ nullptr };
 		SlashCommandManager* slashCommands{ nullptr };
 		shared_ptr<DiscordCoreAPI::EventMachine> EventMachine{ nullptr };
+		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		DiscordUser* discordUser{ nullptr };
 		DiscordCoreClient(hstring botTokenNew) {
 			this->botToken = botTokenNew;
@@ -105,7 +106,6 @@ namespace DiscordCoreAPI {
 		hstring baseURL = L"https://discord.com/api/v9";
 		DiscordCoreInternal::WebSocketConnectionAgent* pWebSocketConnectionAgent{ nullptr };
 		DiscordCoreInternal::WebSocketReceiverAgent* pWebSocketReceiverAgent{ nullptr };
-		shared_ptr<DiscordCoreInternal::SystemThreads> pSystemThreads{ nullptr };
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
 		unbounded_buffer<exception> errorBuffer;
@@ -145,7 +145,7 @@ namespace DiscordCoreAPI {
 			GuildMemberManagerAgent::initialize();
 			GuildManagerAgent::initialize();
 			ChannelManagerAgent::initialize();
-			InteractionManager::initialize(agentResources, this->pSystemThreads.get()->getThreads().get());
+			InteractionManager::initialize(agentResources, this->pSystemThreads.get()->getThreads().get(), this->pSystemThreads.get()->getThreads().get()->at(8).scheduler, this);
 			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->getThreads().get(), this);
 			this->users = new UserManager(agentResources, this->pSystemThreads->getThreads().get(), this);
 			this->messages = new MessageManager(agentResources, this->pSystemThreads->getThreads().get(), this);
@@ -206,6 +206,23 @@ namespace DiscordCoreAPI {
 			}			
 		}
 
+		task<void> collectAndSendButtonResponse(ButtonRequest request, DiscordCoreInternal::InteractionData interactionData) {
+			apartment_context mainThread;
+			co_await resume_foreground(*this->pSystemThreads.get()->getThreads().get()->at(9).threadQueue.get());
+			if (InteractionManager::areWeRunning == true) {
+				for (auto& value : request.buttonIds) {
+					if (interactionData.customId == value && interactionData.user.id == request.userId && interactionData.channelId == request.channelId) {
+						ButtonResponse buttonResponse;
+						buttonResponse.buttonId = interactionData.customId;
+						asend(InteractionManager::buttonResponseBuffer, buttonResponse);
+						InteractionManager::areWeRunning = false;
+					}
+				}
+			}
+			co_await mainThread;
+			co_return;
+		}
+
 		void run() {
 			try {
 				while (doWeQuit == false) {
@@ -231,9 +248,11 @@ namespace DiscordCoreAPI {
 						}
 						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::INTERACTION_CREATE) {
 							DiscordCoreInternal::InteractionIncData interactionIncData;
+							DiscordCoreInternal::InteractionData interactionData;
+							DiscordCoreInternal::parseObject(workload.payLoad, &interactionData);
 							DiscordCoreInternal::parseObject(workload.payLoad, &interactionIncData);
 							DiscordCoreInternal::MessageData messageData;
-							messageData.type = DiscordCoreInternal::MessageType::INTERACTION;
+							messageData.messageType = DiscordCoreInternal::MessageTypeReal::INTERACTION;
 							messageData.channelId = interactionIncData.channelId;
 							messageData.guildId = interactionIncData.guildId;
 							messageData.author = this->users->getUserAsync({ .userId = interactionIncData.userId }).get().data;
@@ -242,10 +261,18 @@ namespace DiscordCoreAPI {
 							messageData.interactionToken = interactionIncData.interactionToken;
 							messageData.content = this->discordUser->data.prefix + constructStringContent(interactionIncData);
 							DiscordCoreInternal::InteractionResponseFullData interactionResponseData;
-							interactionResponseData.interactionResponseData.type = DiscordCoreInternal::InteractionResponseType::DeferredChannelMessageWithSource;
 							interactionResponseData.interactionIncData = interactionIncData;
-							InteractionManager::createInteractionResponseDeferralAsync(interactionResponseData).get();
-							Message message(messageData, this);
+							if (interactionData.type == DiscordCoreInternal::InteractionType::ApplicationCommand){
+								interactionResponseData.interactionResponseData.type = DiscordCoreInternal::InteractionResponseType::DeferredChannelMessageWithSource;
+								InteractionManager::createInteractionResponseDeferralAsync(interactionResponseData).get();
+							}
+							else if (interactionData.type == DiscordCoreInternal::InteractionType::MessageComponent) {
+								ButtonRequest buttonRequest;
+								try_receive(InteractionManager::buttonRequestBuffer, buttonRequest);
+								collectAndSendButtonResponse(buttonRequest, interactionData).get();
+							}
+							messageData.interaction;
+							send(MessageManagerAgent::requestInteractionBuffer, messageData);
 							OnMessageCreationData messageCreationData = createMessage(messageData).get();
 							this->EventMachine->onMessageCreationEvent(messageCreationData);
 						}
