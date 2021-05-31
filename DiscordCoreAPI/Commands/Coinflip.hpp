@@ -108,8 +108,8 @@ namespace DiscordCoreAPI {
 				replyMessageData.embed = msgEmbed;
 				DiscordCoreInternal::ActionRowData actionRowData;
 				DiscordCoreInternal::ComponentData componentData01;
-				componentData01.customId = "Heads";
 				componentData01.disabled = false;
+				componentData01.customId = "Heads";
 				componentData01.emoji.name = "🤯";
 				componentData01.label = "Heads";
 				componentData01.style = DiscordCoreInternal::ButtonStyle::Success;
@@ -129,30 +129,25 @@ namespace DiscordCoreAPI {
 				buttonIds.push_back("Heads");
 				buttonIds.push_back("Tails");
 				InteractionData interactionData;
+				message.data.author = args->message.data.author;
 				Button button(message.data, 10000);
 				try {
-					InteractionManager::areWeRunning = true;
-					interactionData = receive(InteractionManager::inputInteractionBuffer, 5000);
-					InteractionManager::areWeRunning = false;
-					message.data.interactionToken = interactionData.token;
-					message.data.applicationId = interactionData.applicationId;
-					button.buttonId = interactionData.data.customId;
+					button.collectButton(10000);
 				}
-				catch (exception& e) {
+				catch (exception& e){
 					string timeOutString = "------\nSorry, but you ran out of time to select heads or tails.\n------";
 					DiscordCoreInternal::EmbedData msgEmbed2;
 					msgEmbed2.setColor(255, 0, 0);
-					msgEmbed2.setTimeStamp(getTimeAndDate());
+					msgEmbed2.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 					msgEmbed2.setTitle("__**Heads, or Tails:**__");
 					msgEmbed2.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed2.setDescription(timeOutString);
 					message.data.components.resize(0);
-					vector<DiscordCoreInternal::EmbedData>embeds;
-					embeds.push_back(msgEmbed);
+					vector<DiscordCoreInternal::EmbedData> embeds;
+					embeds.push_back(msgEmbed2);
 					args->coreClient->messages->editMessageAsync({ .embed = msgEmbed2,.originalMessage = message, .components = vector<DiscordCoreInternal::ActionRowData>() }, args->message.data.channelId, message.data.id).get();
-					return;
 				}
-				
+
 				srand((unsigned int)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
 				float number = ((float)rand() / (float)RAND_MAX);
 				unsigned int newBalance = 0;

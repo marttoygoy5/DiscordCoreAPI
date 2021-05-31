@@ -54,7 +54,7 @@ namespace DiscordCoreAPI {
 
 	class InteractionManager {
     public:
-        static overwrite_buffer<InteractionData> inputInteractionBuffer;
+        static unbounded_buffer<InteractionData> inputInteractionBuffer;
         static DiscordCoreClient* pDiscordCoreClient;
         static map<string, Button> activeButtons;
         static bool areWeRunning;
@@ -67,7 +67,7 @@ namespace DiscordCoreAPI {
             InteractionManager::agentResources = agentResourcesNew;
             InteractionManager::threads = threadsNew;
             InteractionManager::pDiscordCoreClient = pDiscordCoreClientNew;
-        }        
+        }
 
         static task<void> createInteractionResponseAsync(InteractionResponseData interactionData) {
             DiscordCoreInternal::InteractionResponseData interactionDataNew;
@@ -112,6 +112,7 @@ namespace DiscordCoreAPI {
             DiscordCoreInternal::InteractionResponseData editInteractionResponseDataNew;
             editInteractionResponseDataNew.data.allowedMentions = editInteractionData.data.allowedMentions;
             editInteractionResponseDataNew.applicationId = editInteractionData.applicationId;
+            editInteractionResponseDataNew.originalAuthorId = editInteractionData.userId;
             for (auto& value : editInteractionData.data.components) {
                 DiscordCoreInternal::ActionRowData actionRow;
                 for (auto& value2 : value.components) {
@@ -174,7 +175,7 @@ namespace DiscordCoreAPI {
             DiscordCoreInternal::MessageData messageData;
             parseObject(returnData.data, &messageData);
             messageData.messageType = DiscordCoreInternal::MessageTypeReal::INTERACTION;
-            cout << "RETURN DATA REAL: " << returnData.data << endl;
+            messageData.author.id = editInteractionResponseDataNew.originalAuthorId;
             co_return messageData;
         }
         
@@ -185,12 +186,13 @@ namespace DiscordCoreAPI {
 	};
     DiscordCoreInternal::HttpAgentResources InteractionManager::agentResources;
     concurrent_vector<DiscordCoreInternal::ThreadContext>* InteractionManager::threads;
-    overwrite_buffer<InteractionData> InteractionManager::inputInteractionBuffer;
+    unbounded_buffer<InteractionData> InteractionManager::inputInteractionBuffer;
     DiscordCoreClient* InteractionManager::pDiscordCoreClient;
     map<string, Button> InteractionManager::activeButtons;
     bool InteractionManager::areWeRunning;
 
     struct Button {
+    public:
         Button(DiscordCoreInternal::MessageData messageData, unsigned long long maxTimeInMsNew) {
             this->startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             this->channelId = messageData.channelId;
@@ -200,34 +202,34 @@ namespace DiscordCoreAPI {
             this->token = messageData.interactionToken;
             InteractionManager::activeButtons.insert(make_pair(this->channelId + this->messageId + this->userId, *this));
         }
-        unsigned long long startTime;
-        unsigned long long maxTimeInMs;
+
+        void collectButton(unsigned long long timeToWaitInMs) {
+            InteractionManager::activeButtons.insert(make_pair(this->channelId + this->messageId + this->userId, *this));
+            InteractionData interactionData;
+            InteractionManager::areWeRunning = true;
+            interactionData = receive(InteractionManager::inputInteractionBuffer, 10000);
+            InteractionManager::areWeRunning = false;
+        }
+
         string buttonId;
+        string token;
         string channelId;
         string messageId;
         string userId;
-        string interactionId;
-        string token;
+    protected:
+        unsigned long long startTime;
+        unsigned long long maxTimeInMs;        
     };
 
-    bool checkIfButtonIsActive(string channelId, string messageId, string userId, string interactionId) {
-        if (InteractionManager::activeButtons.contains(channelId + messageId + userId)) {
+    bool checkIfButtonIsActive(string channelId, string messageId, string userId) {
+        if (InteractionManager::activeButtons.contains(channelId + messageId + userId)){
             Button button = InteractionManager::activeButtons.at(channelId + messageId + userId);
-            unsigned long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-            if (currentTime - button.startTime > button.maxTimeInMs) {
-
-                InteractionManager::activeButtons.erase(button.channelId + button.messageId + button.userId);
-                return false;
-            }
-            cout << button.interactionId << " INTERACTION ID2: " << interactionId << endl;
-            if (button.token == interactionId) {
-                return true;
-            }
+            InteractionManager::activeButtons.erase(button.channelId + button.messageId + button.userId);
+            return true;
         }
         else {
             return false;
         }
     }
-
 };
 #endif

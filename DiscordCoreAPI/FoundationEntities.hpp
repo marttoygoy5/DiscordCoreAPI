@@ -716,6 +716,7 @@ namespace  DiscordCoreInternal {
         string guildId;
         string userId;
         string content;
+        string originalAuthorId;
     };
 
     enum class InteractionType {

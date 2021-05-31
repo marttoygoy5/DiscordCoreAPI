@@ -244,12 +244,12 @@ namespace DiscordCoreAPI {
 							messageData.content = this->discordUser->data.prefix + constructStringContent(commandData);
 							messageData.id = interactionData.message.id;
 							InteractionResponseData interactionResponseData;
-							interactionResponseData.applicationId = messageData.applicationId;
-							interactionResponseData.channelId = messageData.channelId;
 							interactionResponseData.token = messageData.interactionToken;
-							interactionResponseData.userId = messageData.member.user.id;
 							interactionResponseData.guildId = messageData.guildId;
 							interactionResponseData.interactionId = messageData.interactionId;
+							interactionResponseData.applicationId = messageData.applicationId;
+							interactionResponseData.channelId = messageData.channelId;
+							interactionResponseData.userId = messageData.member.user.id;
 							InteractionData interactionDataNew;
 							interactionDataNew.applicationId = interactionData.applicationId;
 							interactionDataNew.channelId = interactionData.channelId;
@@ -272,7 +272,7 @@ namespace DiscordCoreAPI {
 							else if (interactionData.type == DiscordCoreInternal::InteractionType::MessageComponent) {
 								interactionResponseData.type = DiscordCoreInternal::InteractionCallbackType::DeferredUpdateMessage;
 								InteractionManager::createInteractionResponseAsync(interactionResponseData).get();
-								if (checkIfButtonIsActive(interactionData.channelId, interactionData.message.id, interactionData.member.user.id, interactionData.id) && InteractionManager::areWeRunning == true) {
+								if (checkIfButtonIsActive(interactionData.channelId, interactionData.message.id, interactionData.member.user.id) && InteractionManager::areWeRunning == true) {
 									send(InteractionManager::inputInteractionBuffer, interactionDataNew);
 								}
 							}

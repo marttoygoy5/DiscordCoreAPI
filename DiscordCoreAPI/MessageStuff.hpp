@@ -620,6 +620,7 @@ namespace DiscordCoreAPI {
 				editInteractionResponseData.token = replyMessageData.replyingToMessageData.interactionToken;
 				DiscordCoreInternal::MessageData messageData = InteractionManager::editInteractionResponseAsync(editInteractionResponseData).get();
 				Message messageNew(messageData, this->coreClient);
+				messageNew.data.messageType = DiscordCoreInternal::MessageTypeReal::INTERACTION;
 				co_await mainThread;
 				co_return messageNew;
 			}
@@ -802,6 +803,7 @@ namespace DiscordCoreAPI {
 				embeds.push_back(editMessageData.embed);
 				editInteractionData.data.embeds = embeds;
 				editInteractionData.userId = editMessageData.originalMessage.data.author.id;
+				cout << editInteractionData.userId << endl;
 				editInteractionData.token = editMessageData.originalMessage.data.interactionToken;
 				editInteractionData.channelId = editMessageData.originalMessage.data.channelId;
 				editInteractionData.interactionId = editMessageData.originalMessage.data.interaction.id;
