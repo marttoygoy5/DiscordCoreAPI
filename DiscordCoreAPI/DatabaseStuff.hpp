@@ -598,10 +598,10 @@ namespace DiscordCoreAPI {
                         options.return_document(mongocxx::v_noabi::options::return_document::k_after);
                         auto result = DatabaseManagerAgent::collection.find_one_and_update(bsoncxx::builder::stream::document{} << "_id" << workload.userData.userId << finalize, doc.view(), options);
                         if (result.get_ptr() != NULL) {
-                            cout << "USER WRITE 01: " << bsoncxx::to_json(result.get().view()) << endl;
+                            cout << "USER WRITE 01: " << bsoncxx::to_json(result.get().view()) << endl << endl;
                         }                        
                         if (result.get_ptr() == NULL) {
-                            cout << "USER WRITE 02: " << bsoncxx::to_json(doc.view()) << endl;
+                            cout << "USER WRITE 02: " << bsoncxx::to_json(doc.view()) << endl << endl;
                             DatabaseManagerAgent::collection.insert_one(doc.view());
                         }
                     }
@@ -622,10 +622,10 @@ namespace DiscordCoreAPI {
                         options.return_document(mongocxx::v_noabi::options::return_document::k_after);
                         auto result = DatabaseManagerAgent::collection.find_one_and_update(bsoncxx::builder::stream::document{} << "_id" << workload.guildData.guildId << finalize, doc.view(), options);
                         if (result.get_ptr() != NULL) {
-                            cout << "GUILD WRITE 01: " << bsoncxx::to_json(result.get().view()) << endl;
+                            cout << "GUILD WRITE 01: " << bsoncxx::to_json(result.get().view()) << endl << endl;
                         }                        
                         if (result.get_ptr() == NULL) {
-                            cout << "GUILD WRITE 02: " << bsoncxx::to_json(doc.view()) << endl;
+                            cout << "GUILD WRITE 02: " << bsoncxx::to_json(doc.view()) << endl << endl;
                             DatabaseManagerAgent::collection.insert_one(doc.view());
                         }
                     }
@@ -646,10 +646,10 @@ namespace DiscordCoreAPI {
                         options.return_document(mongocxx::v_noabi::options::return_document::k_after);
                         auto result = DatabaseManagerAgent::collection.find_one_and_update(bsoncxx::builder::stream::document{} << "_id" << workload.guildMemberData.globalId << finalize, doc.view(), options);
                         if (result.get_ptr() != NULL) {
-                            cout << "GUILDMEMBER WRITE 01: " << bsoncxx::to_json(result.get().view()) << endl;
+                            cout << "GUILDMEMBER WRITE 01: " << bsoncxx::to_json(result.get().view()) << endl << endl;
                         }                        
                         if (result.get_ptr() == NULL) {
-                            cout << "GUILDMEMBER WRITE 02: " << bsoncxx::to_json(doc.view()) << endl;
+                            cout << "GUILDMEMBER WRITE 02: " << bsoncxx::to_json(doc.view()) << endl << endl;
                             DatabaseManagerAgent::collection.insert_one(doc.view());
                         }
                     }

@@ -274,6 +274,7 @@ namespace DiscordCoreAPI {
 								InteractionManager::createInteractionResponseAsync(interactionResponseData).get();
 								if (checkIfButtonIsActive(interactionData.channelId, interactionData.message.id, interactionData.member.user.id) && InteractionManager::areWeRunning == true) {
 									send(InteractionManager::inputInteractionBuffer, interactionDataNew);
+									InteractionManager::areWeRunning = false;
 								}
 							}
 						}
