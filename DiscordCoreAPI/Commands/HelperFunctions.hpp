@@ -41,7 +41,7 @@ namespace DiscordCoreAPI {
         if (currentChannelType == DiscordCoreInternal::ChannelType::DM) {
             string msgString = "------\n**Sorry, but we can't do that in a direct message!**\n------";
             DiscordCoreInternal::EmbedData msgEmbed;
-            msgEmbed.setAuthor(message.data.author.username, message.data.author.getAvatarURL());
+            msgEmbed.setAuthor(message.data.interaction.user.username, message.data.interaction.user.getAvatarURL());
             msgEmbed.setColor(254, 254, 254);
             msgEmbed.setDescription(msgString);
             msgEmbed.setTimeStamp(getTimeAndDate());

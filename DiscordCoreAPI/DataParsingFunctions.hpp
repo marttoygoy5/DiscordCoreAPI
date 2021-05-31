@@ -2054,6 +2054,33 @@ namespace DiscordCoreInternal {
         *pDataStructure = actionRowData;
     }
 
+    void parseObject(json jsonObjectData, MessageInteractionData* pDataStructure) {
+        MessageInteractionData messageInteractionData = *pDataStructure;
+
+        if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
+            string theValue = jsonObjectData.at("id");
+            messageInteractionData.id = theValue;
+        }
+
+        if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
+            InteractionType theValue = jsonObjectData.at("type");
+            messageInteractionData.type = theValue;
+        }
+
+        if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
+            string theValue = jsonObjectData.at("name");
+            messageInteractionData.name = theValue;
+        }
+
+        if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
+            UserData theValue = messageInteractionData.user;
+            parseObject(jsonObjectData.at("user"), &theValue);
+            messageInteractionData.user = theValue;
+        }
+
+        *pDataStructure = messageInteractionData;
+    }
+
     void parseObject(json jsonObjectData, MessageData* pDataStructure) {
         MessageData messageData = *pDataStructure;
 
@@ -2297,7 +2324,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("interaction") && !jsonObjectData.at("interaction").is_null()) {
-            InteractionResponseData theValue = messageData.interaction;
+            MessageInteractionData theValue = messageData.interaction;
             parseObject(jsonObjectData.at("interaction"), &theValue);
             messageData.interaction = theValue;
         }
@@ -2419,6 +2446,103 @@ namespace DiscordCoreInternal {
         *pDataStructure = appCommandData;
     }
 
+    void parseObject(json jsonObjectData, ApplicationCommandInteractionDataResolved* pDataStructure) {
+        ApplicationCommandInteractionDataResolved appCommandInteractionDataResolved = *pDataStructure;
+
+        
+
+        if (jsonObjectData.contains("users") && !jsonObjectData.at("users").is_null()) {
+            json usersMap = jsonObjectData.at("users");
+            cout << usersMap << endl;
+            /*
+            for (const auto&  value : usersMap) {
+                UserData userData;
+                parseObject(value, &userData);
+                appCommandInteractionDataResolved.users.insert(make_pair(key, userData));
+            }
+            */
+        }
+        map<string, UserData> users;
+        map<string, GuildMemberData> members;
+        map<string, RoleData> roles;
+        map<string, ChannelData> channels;
+
+
+        *pDataStructure = appCommandInteractionDataResolved;
+    }
+
+    void parseObject(json jsonObjectData, ApplicationCommandInteractionDataOption* pDataStructure) {
+        ApplicationCommandInteractionDataOption appCommandInteractionDataOption = *pDataStructure;
+
+        if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
+            string theValue = jsonObjectData.at("name");
+            appCommandInteractionDataOption.name = theValue;
+        }
+
+        if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
+            int theValue = jsonObjectData.at("type");
+            appCommandInteractionDataOption.type = theValue;
+        }
+
+        if (jsonObjectData.contains("value") && !jsonObjectData.at("value").is_null()) {
+            ApplicationCommandOptionType theValue = jsonObjectData.at("value");
+            appCommandInteractionDataOption.value = theValue;
+        }
+
+        if (jsonObjectData.contains("options") && !jsonObjectData.at("options").is_null()) {
+            json optionsArray = jsonObjectData.at("options");
+            for (const auto& value: optionsArray){
+                ApplicationCommandInteractionDataOption option;
+                parseObject(value, &option);
+                appCommandInteractionDataOption.options.push_back(option);
+            }
+        }
+
+        *pDataStructure = appCommandInteractionDataOption;
+    }
+
+    void parseObject(json jsonObjectData, ApplicationCommandInteractionData* pDataStructure) {
+        ApplicationCommandInteractionData appCommandInteractionData = *pDataStructure;
+
+        if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
+            string theValue = jsonObjectData.at("name");
+            appCommandInteractionData.name = theValue;
+        }
+
+        if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
+            string theValue = jsonObjectData.at("id");
+            appCommandInteractionData.id = theValue;
+        }
+        
+        if (jsonObjectData.contains("custom_id") && !jsonObjectData.at("custom_id").is_null()) {
+            string theValue = jsonObjectData.at("custom_id");
+            appCommandInteractionData.customId = theValue;
+        }
+
+        if (jsonObjectData.contains("component_type") && !jsonObjectData.at("component_type").is_null()) {
+            int theValue = jsonObjectData.at("component_type");
+            appCommandInteractionData.componentType = theValue;
+        }
+
+        if (jsonObjectData.contains("resolved") && !jsonObjectData.at("resolved").is_null()) {
+            ApplicationCommandInteractionDataResolved theValue = appCommandInteractionData.resolved;
+            parseObject(jsonObjectData.at("resovled"), &theValue);
+            appCommandInteractionData.resolved = theValue;
+        }
+
+        if (jsonObjectData.contains("options") && !jsonObjectData.at("options").is_null()) {
+            json optionsArray = jsonObjectData.at("options");
+            for (auto& value : optionsArray) {
+                ApplicationCommandInteractionDataOption option;
+                parseObject(value, &option);
+                appCommandInteractionData.options.push_back(option);
+            }
+        }
+
+        ApplicationCommandInteractionDataResolved resolved;
+        vector<ApplicationCommandInteractionDataOption> options;
+        *pDataStructure = appCommandInteractionData;
+    }
 
     void parseObject(json jsonObjectData, InteractionData* pDataStructure, CommandData* pDataStructure2) {
         InteractionData interactionData = *pDataStructure;
@@ -2498,7 +2622,7 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("version") && !jsonObjectData.at("version").is_null()) {
             int theValue = jsonObjectData.at("version");
             interactionData.version = theValue;
-        }        
+        }
 
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
             string theValue = jsonObjectData.at("id");
@@ -2508,10 +2632,10 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("application_id") && !jsonObjectData.at("application_id").is_null()) {
             string theValue = jsonObjectData.at("application_id");
             interactionData.applicationId = theValue;
-        }
-        *pDataStructure2 = commandData;
-        *pDataStructure = interactionData;
-    }
 
+            *pDataStructure = interactionData;
+            *pDataStructure2 = commandData;
+        }
+    }
 };
 #endif

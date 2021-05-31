@@ -55,6 +55,8 @@ namespace DiscordCoreAPI {
         string channelId;
         string userId;
         string messageId;
+        string interactionId;
+        string token;
     };
 
     struct ButtonResponse {
@@ -62,7 +64,22 @@ namespace DiscordCoreAPI {
         string channelId;
         string messageId;
         string userId;
+        string interactionId;
+        string token;
     };
+
+    bool checkIfThisIsARightButton(ButtonRequest request, ButtonResponse response) {
+        bool isItACorrectId = false;
+        for (auto& value : request.buttonIds) {
+            if (response.buttonId == value) {
+                isItACorrectId = true;
+            }
+        }
+        if (isItACorrectId == true && request.channelId == response.channelId && request.messageId == response.messageId && request.userId == response.userId) {
+            return true;
+        }
+        return false;
+    }
 
 	class InteractionManager {
     public:
@@ -114,10 +131,11 @@ namespace DiscordCoreAPI {
             else {
                 cout << "InteractionManager::createInteractionResponseDeferralAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
             }
+            cout << returnData.data << endl;
             co_return;
         }
 
-        static task<DiscordCoreInternal::MessageData> editInteractionResponse(InteractionResponseData editInteractionData) {
+        static task<DiscordCoreInternal::MessageData> editInteractionResponseAsync(InteractionResponseData editInteractionData) {
             DiscordCoreInternal::HttpWorkload workload;
             workload.relativePath = "/webhooks/" + editInteractionData.applicationId + "/" + editInteractionData.token+ "/messages/@original";
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
@@ -162,6 +180,10 @@ namespace DiscordCoreAPI {
                 embedData.video = editInteractionData.data.embeds.at(0).video;
                 editInteractionResponseDataNew.data.embeds.push_back(embedData);
             }
+            editInteractionResponseDataNew.userId = editInteractionData.userId;
+            editInteractionResponseDataNew.channelId = editInteractionData.channelId;
+            editInteractionResponseDataNew.guildId = editInteractionData.guildId;
+            editInteractionResponseDataNew.interactionId = editInteractionData.interactionId;
             editInteractionResponseDataNew.type = DiscordCoreInternal::InteractionCallbackType::UpdateMessage;
             workload.content = DiscordCoreInternal::getCreateInteractionPayload(editInteractionResponseDataNew);
             DiscordCoreInternal::HttpRequestAgent requestAgent(InteractionManager::agentResources, InteractionManager::threads->at(5).scheduler);

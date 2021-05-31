@@ -211,11 +211,15 @@ namespace DiscordCoreAPI {
 			co_await resume_foreground(*this->pSystemThreads.get()->getThreads().get()->at(9).threadQueue.get());
 			if (InteractionManager::areWeRunning == true) {
 				for (auto& value : request.buttonIds) {
-					if (interactionData.customId == value && request.userId == interactionData.user.id && request.channelId == interactionData.channelId) {
+					if ((interactionData.customId == value && request.userId == interactionData.user.id && request.channelId == interactionData.channelId) || (interactionData.customId == value && request.interactionId == interactionData.id)) {
 						ButtonResponse buttonResponse;
 						buttonResponse.buttonId = interactionData.customId;
+						buttonResponse.channelId = interactionData.channelId;
+						buttonResponse.interactionId = interactionData.id;
+						buttonResponse.messageId = interactionData.message.id;
+						buttonResponse.token = interactionData.token;
+						buttonResponse.userId = interactionData.user.id;
 						send(InteractionManager::buttonResponseBuffer, buttonResponse);
-						InteractionManager::areWeRunning = false;
 					}
 				}
 			}
@@ -259,6 +263,7 @@ namespace DiscordCoreAPI {
 							messageData.applicationId = interactionData.applicationId;
 							messageData.interactionToken = interactionData.token;
 							messageData.content = this->discordUser->data.prefix + constructStringContent(commandData);
+							messageData.id = interactionData.message.id;
 							InteractionResponseData interactionResponseData;
 							interactionResponseData.applicationId = messageData.applicationId;
 							interactionResponseData.channelId = messageData.channelId;
@@ -271,6 +276,8 @@ namespace DiscordCoreAPI {
 								InteractionManager::createInteractionResponseDeferralAsync(interactionResponseData).get();
 							}
 							else if (interactionData.type == DiscordCoreInternal::InteractionType::MessageComponent) {
+								interactionResponseData.type = DiscordCoreInternal::InteractionCallbackType::DeferredUpdateMessage;
+								InteractionManager::createInteractionResponseDeferralAsync(interactionResponseData).get();
 								ButtonRequest buttonRequest = receive(InteractionManager::buttonRequestBuffer, 5000);
 								collectAndSendButtonResponse(buttonRequest, interactionData).get();
 								ButtonResponse response;
@@ -278,7 +285,11 @@ namespace DiscordCoreAPI {
 								response.channelId = interactionData.channelId;
 								response.messageId = interactionData.message.id;
 								response.userId = interactionData.member.user.id;
-								send(InteractionManager::buttonResponseBuffer, response);
+								response.interactionId = interactionData.id;
+								if (InteractionManager::areWeRunning == true) {
+									send(InteractionManager::buttonResponseBuffer, response);
+									InteractionManager::areWeRunning = false;
+								}
 							}
 							send(MessageManagerAgent::requestInteractionBuffer, messageData);
 							OnMessageCreationData messageCreationData = createMessage(messageData).get();

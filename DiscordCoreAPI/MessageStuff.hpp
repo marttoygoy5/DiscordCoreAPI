@@ -250,7 +250,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::PatchMessageData>* requestPatchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* requestDeleteBuffer;
 		static unbounded_buffer<DiscordCoreInternal::InteractionResponseData>* requestPatchInteractionBuffer;
-		static unbounded_buffer<DiscordCoreInternal::MessageData>* requestInteractionBuffer;
+		static overwrite_buffer<DiscordCoreInternal::MessageData>* requestInteractionBuffer;
 		static unbounded_buffer<Message>* outBuffer;
 		static concurrent_queue<Message> messagesToInsert;
 		static overwrite_buffer<map<string, Message>> cache;
@@ -275,7 +275,7 @@ namespace DiscordCoreAPI {
 			MessageManagerAgent::requestPatchBuffer = new unbounded_buffer<DiscordCoreInternal::PatchMessageData>;
 			MessageManagerAgent::requestPatchInteractionBuffer = new unbounded_buffer<DiscordCoreInternal::InteractionResponseData>;
 			MessageManagerAgent::requestDeleteBuffer = new unbounded_buffer<DiscordCoreInternal::DeleteMessageData>;
-			MessageManagerAgent::requestInteractionBuffer = new unbounded_buffer<DiscordCoreInternal::MessageData>;
+			MessageManagerAgent::requestInteractionBuffer = new overwrite_buffer<DiscordCoreInternal::MessageData>;
 			MessageManagerAgent::outBuffer = new unbounded_buffer<Message>;
 			return;
 		}
@@ -348,7 +348,6 @@ namespace DiscordCoreAPI {
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_INTERACTION_RESPONSE;
 			workload.relativePath = "/webhooks/" + dataPackage.applicationId + "/" + dataPackage.token + "/messages/@original";
 			workload.content = dataPackage.content;
-			cout << "APP ID: " << dataPackage.applicationId << "TOKEN: " << dataPackage.token << endl;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
@@ -813,20 +812,24 @@ namespace DiscordCoreAPI {
 		task<Message> editMessageAsync(EditMessageData editMessageData, string channelId, string messageId) {
 			apartment_context mainThread;
 			co_await resume_background();
-			if (editMessageData.originalMessage.data.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION || editMessageData.originalMessage.data.components.size() > 0) {
+			if (editMessageData.originalMessage.data.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION) {
 				InteractionResponseData editInteractionData;
 				editInteractionData.type = DiscordCoreInternal::InteractionCallbackType::UpdateMessage;
 				editInteractionData.data.allowedMentions = editMessageData.allowedMentions;
 				editInteractionData.applicationId = editMessageData.originalMessage.data.applicationId;
+				cout << editInteractionData.applicationId << endl;
 				editInteractionData.data.components = editMessageData.components;
 				editInteractionData.data.content = editMessageData.content;
 				vector<DiscordCoreInternal::EmbedData> embeds;
 				embeds.push_back(editMessageData.embed);
 				editInteractionData.data.embeds = embeds;
 				editInteractionData.token = editMessageData.originalMessage.data.interactionToken;
+				cout << editInteractionData.token << endl;
 				editInteractionData.channelId = editMessageData.originalMessage.data.channelId;
+				cout << editInteractionData.channelId << endl;
 				editInteractionData.interactionId = editMessageData.originalMessage.data.interactionId;
-				DiscordCoreInternal::MessageData messageData = InteractionManager::editInteractionResponse(editInteractionData).get();
+				cout << editInteractionData.interactionId << endl;
+				DiscordCoreInternal::MessageData messageData = InteractionManager::editInteractionResponseAsync(editInteractionData).get();
 				Message message(messageData, this->coreClient);
 				co_return message;
 			}
@@ -980,7 +983,7 @@ namespace DiscordCoreAPI {
 	unbounded_buffer<DiscordCoreInternal::PatchMessageData>* MessageManagerAgent::requestPatchBuffer;
 	unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* MessageManagerAgent::requestDeleteBuffer;
 	unbounded_buffer<DiscordCoreInternal::InteractionResponseData>* MessageManagerAgent::requestPatchInteractionBuffer;
-	unbounded_buffer<DiscordCoreInternal::MessageData>* MessageManagerAgent::requestInteractionBuffer;
+	overwrite_buffer<DiscordCoreInternal::MessageData>* MessageManagerAgent::requestInteractionBuffer;
 	unbounded_buffer<Message>* MessageManagerAgent::outBuffer;
 	concurrent_queue<Message> MessageManagerAgent::messagesToInsert;
 }

@@ -718,6 +718,19 @@ namespace  DiscordCoreInternal {
         string content;
     };
 
+    enum class InteractionType {
+        Ping = 1,
+        ApplicationCommand = 2,
+        MessageComponent = 3
+    };
+
+    struct MessageInteractionData {
+        string id;
+        InteractionType type;
+        string name;
+        UserData user;
+    };
+
     struct HttpData {
         unsigned int returnCode = 0;
         string returnMessage = "";
@@ -761,7 +774,7 @@ namespace  DiscordCoreInternal {
         MessageReferenceData messageReference;
         int flags = 0;
         vector<MessageStickerData> stickers;
-        InteractionResponseData interaction;
+        MessageInteractionData interaction;
         vector<ActionRowData> components;
     };
 
@@ -1061,12 +1074,6 @@ namespace  DiscordCoreInternal {
         bool defaultPermission;
     };
 
-    enum class InteractionType {
-        Ping = 1,
-        ApplicationCommand = 2,
-        MessageComponent = 3
-    };
-
     struct CommandData {
         vector<string> optionsArgs;
         string commandName;
@@ -1113,21 +1120,8 @@ namespace  DiscordCoreInternal {
     struct InteractionResponseFullData {
         InteractionData interactionData;
         InteractionResponseData interactionResponseData;
-    };
-    /*
-    struct PatchInteractionResponseData {
-        string applicationId;
-        string interactionToken;
-        string content = "";
-        vector<EmbedData> embeds;
-        AllowedMentionsData allowedMentions;
-        vector<ActionRowData> components;
-        HttpAgentResources agentResources;
-        ThreadContext threadContext;
-        string channelId;
-        string messageId;
-    };
-    */
+    };    
+
     class StopWatch {
     public:
         StopWatch(unsigned long long maxNumberOfMsNew) {

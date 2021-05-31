@@ -502,7 +502,6 @@ namespace DiscordCoreInternal {
 				{"timestamp", value.timestamp}} };
 
 			embedsArray.push_back(embed);
-
 		}
 
 		json data = { { "type", interactionData.interactionResponseData.type }, { "data",{
