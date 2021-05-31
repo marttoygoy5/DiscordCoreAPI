@@ -1088,8 +1088,10 @@ namespace  DiscordCoreInternal {
 
     struct ApplicationCommandInteractionDataOption {
         string name;
-        int type;
-        ApplicationCommandOptionType value;
+        ApplicationCommandOptionType type;
+        bool valueBool;
+        string valueString;
+        int valueInt;
         vector<ApplicationCommandInteractionDataOption> options;
     };
 

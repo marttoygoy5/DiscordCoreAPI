@@ -2449,11 +2449,9 @@ namespace DiscordCoreInternal {
     void parseObject(json jsonObjectData, ApplicationCommandInteractionDataResolved* pDataStructure) {
         ApplicationCommandInteractionDataResolved appCommandInteractionDataResolved = *pDataStructure;
 
-        
-
         if (jsonObjectData.contains("users") && !jsonObjectData.at("users").is_null()) {
-            json usersMap = jsonObjectData.at("users");
-            cout << usersMap << endl;
+            json theMap = jsonObjectData.at("users");
+            cout << theMap << endl;
             /*
             for (const auto&  value : usersMap) {
                 UserData userData;
@@ -2462,11 +2460,42 @@ namespace DiscordCoreInternal {
             }
             */
         }
-        map<string, UserData> users;
-        map<string, GuildMemberData> members;
-        map<string, RoleData> roles;
-        map<string, ChannelData> channels;
 
+        if (jsonObjectData.contains("members") && !jsonObjectData.at("members").is_null()) {
+            json theMap = jsonObjectData.at("members");
+            cout << theMap << endl;
+            /*
+            for (const auto&  value : usersMap) {
+                UserData userData;
+                parseObject(value, &userData);
+                appCommandInteractionDataResolved.users.insert(make_pair(key, userData));
+            }
+            */
+        }
+
+        if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
+            json theMap = jsonObjectData.at("roles");
+            cout << theMap << endl;
+            /*
+            for (const auto&  value : usersMap) {
+                UserData userData;
+                parseObject(value, &userData);
+                appCommandInteractionDataResolved.users.insert(make_pair(key, userData));
+            }
+            */
+        }
+
+        if (jsonObjectData.contains("channels") && !jsonObjectData.at("channels").is_null()) {
+            json theMap = jsonObjectData.at("channels");
+            cout << theMap << endl;
+            /*
+            for (const auto&  value : usersMap) {
+                UserData userData;
+                parseObject(value, &userData);
+                appCommandInteractionDataResolved.users.insert(make_pair(key, userData));
+            }
+            */
+        }
 
         *pDataStructure = appCommandInteractionDataResolved;
     }
@@ -2480,13 +2509,23 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
-            int theValue = jsonObjectData.at("type");
+            ApplicationCommandOptionType theValue = jsonObjectData.at("type");
             appCommandInteractionDataOption.type = theValue;
         }
 
         if (jsonObjectData.contains("value") && !jsonObjectData.at("value").is_null()) {
-            ApplicationCommandOptionType theValue = jsonObjectData.at("value");
-            appCommandInteractionDataOption.value = theValue;
+            if (jsonObjectData.at("value").is_boolean()) {
+                bool theValue = jsonObjectData.at("value");
+                appCommandInteractionDataOption.valueBool = theValue;
+            }
+            if (jsonObjectData.at("value").is_string()) {
+                string theValue = jsonObjectData.at("value");
+                appCommandInteractionDataOption.valueString = theValue;
+            }
+            if (jsonObjectData.at("value").is_number()) {
+                int theValue = jsonObjectData.at("value");
+                appCommandInteractionDataOption.valueInt = theValue;
+            }
         }
 
         if (jsonObjectData.contains("options") && !jsonObjectData.at("options").is_null()) {
@@ -2539,8 +2578,6 @@ namespace DiscordCoreInternal {
             }
         }
 
-        ApplicationCommandInteractionDataResolved resolved;
-        vector<ApplicationCommandInteractionDataOption> options;
         *pDataStructure = appCommandInteractionData;
     }
 
@@ -2549,9 +2586,9 @@ namespace DiscordCoreInternal {
         CommandData commandData = *pDataStructure2;
 
         if (jsonObjectData.contains("data") && !jsonObjectData.at("data").is_null()) {
-            if (jsonObjectData.at("data").contains("custom_id") && !jsonObjectData.at("data").at("custom_id").is_null()) {
-                interactionData.customId = jsonObjectData.at("data").at("custom_id");
-            }
+            ApplicationCommandInteractionData theValue = interactionData.data;
+            parseObject(jsonObjectData.at("data"), &theValue);
+            interactionData.data = theValue;
         }
 
         if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
@@ -2615,7 +2652,6 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("message") && !jsonObjectData.at("message").is_null()) {
             MessageData theValue;
             parseObject(jsonObjectData.at("message"), &theValue);
-            cout << "MESSAGE OBJECT: " << jsonObjectData.at("message") << endl;
             interactionData.message = theValue;
         }
 

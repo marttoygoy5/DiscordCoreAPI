@@ -128,28 +128,15 @@ namespace DiscordCoreAPI {
 				vector<string> buttonIds;
 				buttonIds.push_back("Heads");
 				buttonIds.push_back("Tails");
-				ButtonRequest buttonRequest;
-				if (args->message.data.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION) {
-					buttonRequest.buttonIds = buttonIds;
-					buttonRequest.interactionId = message.data.interactionId;
-					cout << buttonRequest.interactionId << endl;
-				}
-				else {
-					buttonRequest.buttonIds = buttonIds;
-					buttonRequest.channelId = message.data.channelId;
-					buttonRequest.userId = args->message.data.author.id;
-					buttonRequest.messageId = message.data.id;
-					buttonRequest.interactionId = message.data.interactionId;
-					cout << buttonRequest.interactionId << endl;
-				}
-				InteractionManager::areWeRunning = true;
-				send(InteractionManager::buttonRequestBuffer, buttonRequest);
-				ButtonResponse buttonResponse;
+				InteractionData interactionData;
+				Button button(message.data, 10000);
 				try {
-					while(!checkIfThisIsARightButton(buttonRequest, buttonResponse)) {
-						buttonResponse = receive(InteractionManager::buttonResponseBuffer, 5000);
-						cout << buttonRequest.buttonIds.at(0) << "  " << buttonRequest.channelId << buttonResponse.channelId << "  " << " REQUEST: " << buttonRequest.messageId << " RESPONSE: " << buttonResponse.messageId << " REQUEST: " << buttonRequest.userId << " RESPONSE: " << buttonResponse.userId << endl;
-					};
+					InteractionManager::areWeRunning = true;
+					interactionData = receive(InteractionManager::inputInteractionBuffer, 5000);
+					InteractionManager::areWeRunning = false;
+					message.data.interactionToken = interactionData.token;
+					message.data.applicationId = interactionData.applicationId;
+					button.buttonId = interactionData.data.customId;
 				}
 				catch (exception& e) {
 					string timeOutString = "------\nSorry, but you ran out of time to select heads or tails.\n------";
@@ -165,6 +152,7 @@ namespace DiscordCoreAPI {
 					args->coreClient->messages->editMessageAsync({ .embed = msgEmbed2,.originalMessage = message, .components = vector<DiscordCoreInternal::ActionRowData>() }, args->message.data.channelId, message.data.id).get();
 					return;
 				}
+				
 				srand((unsigned int)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
 				float number = ((float)rand() / (float)RAND_MAX);
 				unsigned int newBalance = 0;
@@ -180,12 +168,12 @@ namespace DiscordCoreAPI {
 					msgEmbed3.setTimeStamp(getTimeAndDate());
 					msgEmbed3.setTitle("__**Heads, or Tails**__");
 					msgEmbed3.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					args->coreClient->messages->editMessageAsync({ .embed = msgEmbed3, .originalMessage = message }, args->message.data.channelId, message.data.id);
+					args->coreClient->messages->editMessageAsync({ .embed = msgEmbed3, .originalMessage = message, }, args->message.data.channelId, message.data.id).get();
 					return;
 				}
 
-				DiscordCoreInternal::EmbedData msgEmbed2;
-				if (buttonResponse.buttonId == "Heads" && number > 0.50 || buttonResponse.buttonId == "Tails" && number < 0.50) {
+				DiscordCoreInternal::EmbedData msgEmbed4;
+				if (button.buttonId == "Heads" && number > 0.50 || button.buttonId == "Tails" && number < 0.50) {
 					discordGuildMember.data.currency.wallet += betAmount;
 					discordGuildMember.writeDataToDB().get();
 					discordGuild.data.casinoStats.totalCoinFlipPayout += betAmount;
@@ -199,13 +187,14 @@ namespace DiscordCoreAPI {
 					}
 					newBalance = discordGuildMember.data.currency.wallet;
 					string completionString = "------\nNICELY DONE FAGGOT! YOU WON!\nYour new wallet balance is: " + to_string(newBalance) + " " + args->coreClient->discordUser->data.currencyName + ".\n------";
-					msgEmbed2.setColor(0, 255, 0);
-					msgEmbed2.setDescription(completionString);
-					msgEmbed2.setTimeStamp(getTimeAndDate());
-					msgEmbed2.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed2.setTitle("__**Heads, or Tails?**__");
+					msgEmbed4.setColor(0, 255, 0);
+					msgEmbed4.setDescription(completionString);
+					msgEmbed4.setTimeStamp(getTimeAndDate());
+					msgEmbed4.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+					msgEmbed4.setTitle("__**Heads, or Tails?**__");
+					args->coreClient->messages->editMessageAsync({ .embed = msgEmbed4, .originalMessage = message }, args->message.data.channelId, message.data.id).get();
 				}
-				else if (buttonResponse.buttonId == "Heads" && number <= 0.50 || buttonResponse.buttonId == "Tails" && number >= 0.50) {
+				else if (button.buttonId == "Heads" && number <= 0.50 || button.buttonId == "Tails" && number >= 0.50) {
 					discordGuildMember.data.currency.wallet -= betAmount;
 					discordGuildMember.writeDataToDB();
 					discordGuild.data.casinoStats.totalCoinFlipPayout -= betAmount;
@@ -213,13 +202,13 @@ namespace DiscordCoreAPI {
 					discordGuild.writeDataToDB();
 					newBalance = discordGuildMember.data.currency.wallet;
 					string completionString = "------\nOWNED FUCK FACE! YOU LOST!\nYour new wallet balance is: " + to_string(newBalance) + " " + args->coreClient->discordUser->data.currencyName + ".\n------";
-					msgEmbed2.setColor(255, 0, 0);
-					msgEmbed2.setDescription(completionString);
-					msgEmbed2.setTimeStamp(getTimeAndDate());
-					msgEmbed2.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed2.setTitle("__**Heads, or Tails?**__");
+					msgEmbed4.setColor(255, 0, 0);
+					msgEmbed4.setDescription(completionString);
+					msgEmbed4.setTimeStamp(getTimeAndDate());
+					msgEmbed4.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+					msgEmbed4.setTitle("__**Heads, or Tails?**__");
+					args->coreClient->messages->editMessageAsync({ .embed = msgEmbed4, .originalMessage = message }, args->message.data.channelId, message.data.id).get();
 				}
-				args->coreClient->messages->editMessageAsync({ .embed = msgEmbed2, .originalMessage = message }, args->message.data.channelId, message.data.id).get();
 				return;
 			}
 			catch (exception& e) {

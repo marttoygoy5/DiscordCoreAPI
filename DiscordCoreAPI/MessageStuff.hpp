@@ -40,6 +40,7 @@ namespace DiscordCoreAPI {
 		task<void> initialize(DiscordCoreInternal::MessageData dataNew, DiscordCoreClient* coreClientNew) {
 			this->data = dataNew;
 			this->coreClient = coreClientNew;
+			this->data.interactionId = this->data.interaction.id;
 			co_return;
 		}
 
@@ -365,17 +366,9 @@ namespace DiscordCoreAPI {
 				cout << "MessageManagerAgent::patchObjectAsync() Success 02: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			DiscordCoreInternal::MessageData messageData;
-			DiscordCoreInternal::parseObject(returnData.data, &messageData);
-			DiscordCoreInternal::StopWatch watch(300);
-			while (!try_receive(MessageManagerAgent::requestInteractionBuffer, messageData)) {
-				try_receive(MessageManagerAgent::requestInteractionBuffer, messageData);
-				if (watch.hasTimePassed()) {
-					break;
-				}
-			}
-			messageData.messageType = DiscordCoreInternal::MessageTypeReal::INTERACTION;
-			Message messageNew(messageData, this->coreClient);
-			co_return messageNew;
+			parseObject(returnData.data, &messageData);
+			Message message(messageData, this->coreClient);
+			co_return message;
 		}
 
 		task<Message> postObjectAsync(DiscordCoreInternal::PostMessageData dataPackage) {
@@ -541,8 +534,8 @@ namespace DiscordCoreAPI {
 						}
 					}
 					Message message = patchObjectAsync(dataPackageGetNewInteraction).get();
-					cacheTemp.insert(make_pair(dataPackageGetNewInteraction.channelId + dataPackageGetNewInteraction.messageId, message));
 					send(MessageManagerAgent::outBuffer, message);
+					cacheTemp.insert(make_pair(message.data.channelId + message.data.id, message));
 					asend(MessageManagerAgent::cache, cacheTemp);
 				}
 				DiscordCoreInternal::DeleteMessageData dataPackageDelete;
@@ -583,7 +576,7 @@ namespace DiscordCoreAPI {
 			apartment_context mainThread;
 			co_await resume_background();
 			if (replyMessageData.replyingToMessageData.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION) {
-				DiscordCoreInternal::InteractionResponseData editInteractionResponseData;
+				InteractionResponseData editInteractionResponseData;
 				editInteractionResponseData.data.content = replyMessageData.content;
 				if (replyMessageData.embed.description != ""|| replyMessageData.embed.fields.at(0).value != "") {
 					DiscordCoreInternal::EmbedData embedData;
@@ -622,25 +615,11 @@ namespace DiscordCoreAPI {
 					}
 					editInteractionResponseData.data.components.push_back(componentDatas);
 				}
-				DiscordCoreInternal::InteractionResponseData dataPackage;
-				dataPackage.agentResources = this->agentResources;
-				dataPackage.channelId = replyMessageData.replyingToMessageData.channelId;
-				dataPackage.messageId = replyMessageData.replyingToMessageData.id;
-				dataPackage.applicationId = replyMessageData.replyingToMessageData.applicationId;
-				dataPackage.token = replyMessageData.replyingToMessageData.interactionToken;
-				dataPackage.threadContext = this->threads->at(5);
-				dataPackage.content = DiscordCoreInternal::getCreateInteractionPayload(editInteractionResponseData);
-				MessageManagerAgent managerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(4).scheduler);
-				send(managerAgent.requestPatchInteractionBuffer, dataPackage);
-				managerAgent.start();
-				agent::wait(&managerAgent);
-				exception error;
-				while (managerAgent.getError(error)) {
-					cout << "MessageManager::replyAsync() Error: " << error.what() << endl << endl;
-				}
-				DiscordCoreInternal::MessageData messageData;
+				editInteractionResponseData.channelId = replyMessageData.replyingToMessageData.channelId;
+				editInteractionResponseData.applicationId = replyMessageData.replyingToMessageData.applicationId;
+				editInteractionResponseData.token = replyMessageData.replyingToMessageData.interactionToken;
+				DiscordCoreInternal::MessageData messageData = InteractionManager::editInteractionResponseAsync(editInteractionResponseData).get();
 				Message messageNew(messageData, this->coreClient);
-				try_receive(MessageManagerAgent::outBuffer, messageNew);
 				co_await mainThread;
 				co_return messageNew;
 			}
@@ -817,18 +796,15 @@ namespace DiscordCoreAPI {
 				editInteractionData.type = DiscordCoreInternal::InteractionCallbackType::UpdateMessage;
 				editInteractionData.data.allowedMentions = editMessageData.allowedMentions;
 				editInteractionData.applicationId = editMessageData.originalMessage.data.applicationId;
-				cout << editInteractionData.applicationId << endl;
 				editInteractionData.data.components = editMessageData.components;
 				editInteractionData.data.content = editMessageData.content;
 				vector<DiscordCoreInternal::EmbedData> embeds;
 				embeds.push_back(editMessageData.embed);
 				editInteractionData.data.embeds = embeds;
+				editInteractionData.userId = editMessageData.originalMessage.data.author.id;
 				editInteractionData.token = editMessageData.originalMessage.data.interactionToken;
-				cout << editInteractionData.token << endl;
 				editInteractionData.channelId = editMessageData.originalMessage.data.channelId;
-				cout << editInteractionData.channelId << endl;
-				editInteractionData.interactionId = editMessageData.originalMessage.data.interactionId;
-				cout << editInteractionData.interactionId << endl;
+				editInteractionData.interactionId = editMessageData.originalMessage.data.interaction.id;
 				DiscordCoreInternal::MessageData messageData = InteractionManager::editInteractionResponseAsync(editInteractionData).get();
 				Message message(messageData, this->coreClient);
 				co_return message;
