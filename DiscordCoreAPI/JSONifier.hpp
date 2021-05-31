@@ -88,7 +88,6 @@ namespace DiscordCoreInternal {
 					{"disabled", valueNew.disabled},
 					{"emoji",{
 						{"name", valueNew.emoji.name},
-					
 					{"animated", valueNew.emoji.animated}
 				} },
 					{"label", valueNew.label},
@@ -113,16 +112,11 @@ namespace DiscordCoreInternal {
 					};
 					components.push_back(component);
 				}
-				
-
-				
 			}
 			json componentActionRow = { {"type", 1},{
 				"components", components} };
 			componentsActionRow.push_back(componentActionRow);
 		}
-
-		
 		
 		auto fields = json::array();
 
@@ -174,8 +168,6 @@ namespace DiscordCoreInternal {
 				{"url", createMessageData.embed.thumbnail.url},
 				{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
 			}},
-
-
 				{"footer", {
 					{"icon_url", createMessageData.embed.footer.iconUrl},
 					{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
@@ -186,59 +178,56 @@ namespace DiscordCoreInternal {
 				{"fields", fields},
 				{"color",colorValue},
 					{"timestamp", createMessageData.embed.timestamp},
-					
 		}},{"components", componentsActionRow}
-					};
-					return data.dump();
+				};
+				return data.dump();
 			}
 				else {
-					json data = {
-		{"allowed_mentions", {
-			{"parse", createMessageData.allowedMentions.parse},
-			{"replied_user", createMessageData.allowedMentions.repliedUser},
-			{"roles", createMessageData.allowedMentions.roles},
-			{"users", createMessageData.allowedMentions.users}
-			}},
-		{"content", createMessageData.content},
-		{"tts" , createMessageData.tts},
-		{"embed" ,
-					{{"author", {
-					{"icon_url", createMessageData.embed.author.iconUrl},
-					{"name", createMessageData.embed.author.name},
-					{"url", createMessageData.embed.author.url },
-					{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
-			}},
-			{"image", {
-				{"height", createMessageData.embed.image.height},
-				{"width", createMessageData.embed.image.width},
-				{"url", createMessageData.embed.image.url},
-				{"proxy_url",createMessageData.embed.image.proxyUrl}
+				json data = {
+	{"allowed_mentions", {
+		{"parse", createMessageData.allowedMentions.parse},
+		{"replied_user", createMessageData.allowedMentions.repliedUser},
+		{"roles", createMessageData.allowedMentions.roles},
+		{"users", createMessageData.allowedMentions.users}
 		}},
-			{ "provider" , {
-				{"name", createMessageData.embed.provider.name},
-				{"url", createMessageData.embed.provider.url}
-
+	{"content", createMessageData.content},
+	{"tts" , createMessageData.tts},
+	{"embed" ,
+				{{"author", {
+				{"icon_url", createMessageData.embed.author.iconUrl},
+				{"name", createMessageData.embed.author.name},
+				{"url", createMessageData.embed.author.url },
+				{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
 		}},
-			{"thumbnail", {
-				{"height", createMessageData.embed.thumbnail.height},
-				{"width", createMessageData.embed.thumbnail.width},
-				{"url", createMessageData.embed.thumbnail.url},
-				{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
-			}},
+		{"image", {
+			{"height", createMessageData.embed.image.height},
+			{"width", createMessageData.embed.image.width},
+			{"url", createMessageData.embed.image.url},
+			{"proxy_url",createMessageData.embed.image.proxyUrl}
+	}},
+		{ "provider" , {
+			{"name", createMessageData.embed.provider.name},
+			{"url", createMessageData.embed.provider.url}
 
-
-				{"footer", {
-					{"icon_url", createMessageData.embed.footer.iconUrl},
-					{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
-					{"text", createMessageData.embed.footer.text}
+	}},
+		{"thumbnail", {
+			{"height", createMessageData.embed.thumbnail.height},
+			{"width", createMessageData.embed.thumbnail.width},
+			{"url", createMessageData.embed.thumbnail.url},
+			{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
 		}},
-				{"title", createMessageData.embed.title},
-				{"description" , createMessageData.embed.description},
-				{"fields", fields},
-				{"color",colorValue},
-						{"timestamp", createMessageData.embed.timestamp},
-						
-		}},{"components", componentsActionRow}
+			{"footer", {
+				{"icon_url", createMessageData.embed.footer.iconUrl},
+				{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
+				{"text", createMessageData.embed.footer.text}
+	}},
+			{"title", createMessageData.embed.title},
+			{"description" , createMessageData.embed.description},
+			{"fields", fields},
+			{"color",colorValue},
+					{"timestamp", createMessageData.embed.timestamp},
+
+	}},{"components", componentsActionRow}
 				};
 				return data.dump();
 			}
@@ -261,7 +250,6 @@ namespace DiscordCoreInternal {
 			{"tts" , createMessageData.tts},
 					{"components", componentsActionRow}
 				};
-
 				return data.dump();
 			}
 			else {
@@ -276,7 +264,6 @@ namespace DiscordCoreInternal {
 			{"tts" , createMessageData.tts},
 				{"components", componentsActionRow}
 				};
-
 				return data.dump();
 			}
 			
@@ -533,8 +520,7 @@ namespace DiscordCoreInternal {
 
 		};
 		return data.dump();
-	}
-		
+	}		
 
 		string getCreateInteractionPayload(InteractionResponseData interactionData) {
 			auto embedsArray = json::array();

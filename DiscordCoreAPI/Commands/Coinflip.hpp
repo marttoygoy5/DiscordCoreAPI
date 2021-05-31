@@ -92,8 +92,8 @@ namespace DiscordCoreAPI {
 					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
 					return;
 				}
-				string newBetString = "";
 
+				string newBetString = "";
 				newBetString += "Welcome, <@!" + guildMember.data.user.id + "> , you have placed a bet of **" + to_string(betAmount) + " " + args->coreClient->discordUser->data.currencyName + "**.\n";
 				newBetString += "React with :exploding_head: to choose heads, or with :snake: to choose tails!";
 
@@ -124,9 +124,8 @@ namespace DiscordCoreAPI {
 				componentData02.type = DiscordCoreInternal::ComponentType::Button;
 				actionRowData.components.push_back(componentData02);
 				replyMessageData.components.push_back(actionRowData);
-				cout << "APP ID: " << replyMessageData.replyingToMessageData.applicationId << "INTERACTION ID: " << replyMessageData.replyingToMessageData.interactionId << "INT TOKEN: " << replyMessageData.replyingToMessageData.interactionToken << endl;
 				Message message = args->coreClient->messages->replyAsync(replyMessageData).get();
-				cout << message.data.applicationId << "  " << message.data.interactionId << "   " << message.data.interactionToken<<  "  " << endl;
+				cout << message.data.channelId << "  " << message.data.author.id << "MSG ID: " << message.data.id << "  " << endl;
 				vector<string> buttonIds;
 				buttonIds.push_back("Heads");
 				ButtonRequest buttonRequest;

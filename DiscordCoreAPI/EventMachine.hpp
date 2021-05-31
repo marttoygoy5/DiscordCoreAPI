@@ -34,8 +34,20 @@ namespace DiscordCoreAPI {
 		DiscordCoreAPI::Guild guild;
 	};
 
+	struct OnInteractionCreateData {
+		DiscordCoreAPI::InteractionData interactionData;
+	};
+
 	class EventMachine  {
 	public:
+
+		winrt::event_token onInteractionCreate(winrt::delegate<OnInteractionCreateData> const& handler) {
+			return onInteractionCreateEvent.add(handler);
+		}
+
+		void onInteractionCreate(winrt::event_token const& token) {
+			onInteractionCreateEvent.remove(token);
+		}
 
 		winrt::event_token onGuildCreation(winrt::delegate<OnGuildCreationData> const& handler) {
 			return onGuildCreationEvent.add(handler);
@@ -80,6 +92,8 @@ namespace DiscordCoreAPI {
 	protected:
 
 		friend class DiscordCoreClient;
+
+		winrt::event<winrt::delegate<OnInteractionCreateData>> onInteractionCreateEvent;
 
 		winrt::event<winrt::delegate<OnGuildCreationData>> onGuildCreationEvent;
 

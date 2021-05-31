@@ -23,17 +23,6 @@ namespace DiscordCoreAPI {
         }
         return finalCommandString;
     };
-
-    struct ButtonResponse {
-        vector<string> responseValues;
-        string buttonId;
-    };
-
-    struct ButtonRequest {
-        vector<string> buttonIds;
-        string channelId;
-        string userId;
-    };
     
     struct InteractionResponseData {
         DiscordCoreInternal::InteractionCallbackType type;
@@ -46,13 +35,41 @@ namespace DiscordCoreAPI {
         string token;
     };
 
+    struct InteractionData {
+        string id;
+        string applicationId;
+        DiscordCoreInternal::InteractionType type;
+        DiscordCoreInternal::ApplicationCommandInteractionData data;
+        string guildId;
+        string channelId;
+        DiscordCoreInternal::GuildMemberData member;
+        DiscordCoreInternal::UserData user;
+        string token;
+        int version;
+        DiscordCoreInternal::MessageData message;
+        string customId;
+    };
+
+    struct ButtonRequest {
+        vector<string> buttonIds;
+        string channelId;
+        string userId;
+        string messageId;
+    };
+
+    struct ButtonResponse {
+        string buttonId;
+        string channelId;
+        string messageId;
+        string userId;
+    };
+
 	class InteractionManager {
     public:
         static unbounded_buffer<ButtonResponse> buttonResponseBuffer;
         static unbounded_buffer<ButtonRequest> buttonRequestBuffer;
         static unbounded_buffer<DiscordCoreInternal::MessageData> requestInteractionBuffer;
         static DiscordCoreClient* pDiscordCoreClient;
-        static map<string, DiscordCoreInternal::InteractionData> interactions;
         static bool areWeRunning;
 
 		InteractionManager() {
@@ -77,7 +94,6 @@ namespace DiscordCoreAPI {
             interactionDataNew.userId = interactionData.userId;
             interactionDataNew.type = DiscordCoreInternal::InteractionCallbackType::DeferredChannelMessageWithSource;
             DiscordCoreInternal::HttpWorkload workload;
-            cout << interactionData.applicationId << " = APP ID" << interactionData.token<< " = INTERACTINO TOKEN010101" << endl;
             workload.relativePath = "/interactions/" + interactionData.interactionId + "/" + interactionData.token + "/callback";
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_INTERACTION_RESPONSE;
@@ -103,7 +119,6 @@ namespace DiscordCoreAPI {
 
         static task<DiscordCoreInternal::MessageData> editInteractionResponse(InteractionResponseData editInteractionData) {
             DiscordCoreInternal::HttpWorkload workload;
-            cout << editInteractionData.applicationId << " = APP ID" << editInteractionData.token<< " = INTERACTINO TOKEN020202" << endl;
             workload.relativePath = "/webhooks/" + editInteractionData.applicationId + "/" + editInteractionData.token+ "/messages/@original";
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_INTERACTION_RESPONSE;
@@ -182,7 +197,6 @@ namespace DiscordCoreAPI {
     unbounded_buffer<ButtonResponse> InteractionManager::buttonResponseBuffer;
     unbounded_buffer<DiscordCoreInternal::MessageData> InteractionManager::requestInteractionBuffer;
     unbounded_buffer<ButtonRequest> InteractionManager::buttonRequestBuffer;
-    map<string, DiscordCoreInternal::InteractionData> InteractionManager::interactions;
     bool InteractionManager::areWeRunning;
     DiscordCoreClient* InteractionManager::pDiscordCoreClient;
 };

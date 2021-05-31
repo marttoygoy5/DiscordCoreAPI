@@ -14,9 +14,9 @@
 #include "WebSocketStuff.hpp"
 #include "GuildStuff.hpp"
 #include "UserStuff.hpp"
+#include "InteractionManager.hpp"
 #include "EventMachine.hpp"
 #include "SlashCommandStuff.hpp"
-#include "InteractionManager.hpp"
 
 void myPurecallHandler(void) {
 
@@ -262,11 +262,10 @@ namespace DiscordCoreAPI {
 							InteractionResponseData interactionResponseData;
 							interactionResponseData.applicationId = messageData.applicationId;
 							interactionResponseData.channelId = messageData.channelId;
-							interactionResponseData.guildId = messageData.guildId;
-							interactionResponseData.interactionId = messageData.interactionId;
 							interactionResponseData.token = messageData.interactionToken;
 							interactionResponseData.userId = messageData.member.user.id;
-							InteractionManager::interactions.insert(make_pair(interactionData.channelId + interactionData.user.id + interactionData.id, interactionData));
+							interactionResponseData.guildId = messageData.guildId;
+							interactionResponseData.interactionId = messageData.interactionId;
 							if (interactionData.type == DiscordCoreInternal::InteractionType::ApplicationCommand){
 								interactionResponseData.type = DiscordCoreInternal::InteractionCallbackType::DeferredChannelMessageWithSource;
 								InteractionManager::createInteractionResponseDeferralAsync(interactionResponseData).get();
@@ -274,8 +273,13 @@ namespace DiscordCoreAPI {
 							else if (interactionData.type == DiscordCoreInternal::InteractionType::MessageComponent) {
 								ButtonRequest buttonRequest = receive(InteractionManager::buttonRequestBuffer, 5000);
 								collectAndSendButtonResponse(buttonRequest, interactionData).get();
+								ButtonResponse response;
+								response.buttonId = interactionData.customId;
+								response.channelId = interactionData.channelId;
+								response.messageId = interactionData.message.id;
+								response.userId = interactionData.member.user.id;
+								send(InteractionManager::buttonResponseBuffer, response);
 							}
-							messageData.interaction;
 							send(MessageManagerAgent::requestInteractionBuffer, messageData);
 							OnMessageCreationData messageCreationData = createMessage(messageData).get();
 							this->EventMachine->onMessageCreationEvent(messageCreationData);

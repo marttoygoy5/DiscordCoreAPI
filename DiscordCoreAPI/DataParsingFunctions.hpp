@@ -2441,6 +2441,11 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
+            GuildMemberData theValue;
+            parseObject(jsonObjectData.at("member"), &theValue);
+            interactionData.member = theValue;
+        }
+        else if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
             if (jsonObjectData.at("member").contains("user") && !jsonObjectData.at("member").at("user").is_null()) {
                 UserData theValue;
                 parseObject(jsonObjectData.at("member").at("user"), &theValue);
@@ -2456,14 +2461,6 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
             string theValue = jsonObjectData.at("guild_id");
             interactionData.guildId = theValue;
-        }
-
-        if (jsonObjectData.contains("member")) {
-            if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
-                GuildMemberData theValue;
-                parseObject(jsonObjectData.at("member"), &theValue);
-                interactionData.member = theValue;
-            }
         }
 
         if (jsonObjectData.contains("data") && !jsonObjectData.at("data").is_null()) {
@@ -2494,6 +2491,7 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("message") && !jsonObjectData.at("message").is_null()) {
             MessageData theValue;
             parseObject(jsonObjectData.at("message"), &theValue);
+            cout << "MESSAGE OBJECT: " << jsonObjectData.at("message") << endl;
             interactionData.message = theValue;
         }
 

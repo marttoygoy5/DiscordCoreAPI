@@ -346,9 +346,9 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_INTERACTION_RESPONSE;
-			cout << dataPackage.applicationId << " = APP ID" << dataPackage.token<< " = INTERACTINO TOKEN" << endl;
-			workload.relativePath = "/webhooks/" + dataPackage.applicationId + "/" + dataPackage.token+ "/messages/@original";
+			workload.relativePath = "/webhooks/" + dataPackage.applicationId + "/" + dataPackage.token + "/messages/@original";
 			workload.content = dataPackage.content;
+			cout << "APP ID: " << dataPackage.applicationId << "TOKEN: " << dataPackage.token << endl;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
@@ -588,7 +588,6 @@ namespace DiscordCoreAPI {
 				editInteractionResponseData.data.content = replyMessageData.content;
 				if (replyMessageData.embed.description != ""|| replyMessageData.embed.fields.at(0).value != "") {
 					DiscordCoreInternal::EmbedData embedData;
-					cout << replyMessageData.embed.description << endl;
 					embedData.actualColorVal = replyMessageData.embed.actualColorVal;
 					embedData.author = replyMessageData.embed.author;
 					embedData.color[0] = replyMessageData.embed.color[0];
@@ -627,12 +626,11 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::InteractionResponseData dataPackage;
 				dataPackage.agentResources = this->agentResources;
 				dataPackage.channelId = replyMessageData.replyingToMessageData.channelId;
-				dataPackage.messageId = replyMessageData.replyingToMessageData.interactionId;
+				dataPackage.messageId = replyMessageData.replyingToMessageData.id;
 				dataPackage.applicationId = replyMessageData.replyingToMessageData.applicationId;
 				dataPackage.token = replyMessageData.replyingToMessageData.interactionToken;
 				dataPackage.threadContext = this->threads->at(5);
 				dataPackage.content = DiscordCoreInternal::getCreateInteractionPayload(editInteractionResponseData);
-				cout << dataPackage.content << endl;
 				MessageManagerAgent managerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(4).scheduler);
 				send(managerAgent.requestPatchInteractionBuffer, dataPackage);
 				managerAgent.start();
@@ -815,7 +813,7 @@ namespace DiscordCoreAPI {
 		task<Message> editMessageAsync(EditMessageData editMessageData, string channelId, string messageId) {
 			apartment_context mainThread;
 			co_await resume_background();
-			if (editMessageData.originalMessage.data.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION) {
+			if (editMessageData.originalMessage.data.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION || editMessageData.originalMessage.data.components.size() > 0) {
 				InteractionResponseData editInteractionData;
 				editInteractionData.type = DiscordCoreInternal::InteractionCallbackType::UpdateMessage;
 				editInteractionData.data.allowedMentions = editMessageData.allowedMentions;
@@ -826,6 +824,8 @@ namespace DiscordCoreAPI {
 				embeds.push_back(editMessageData.embed);
 				editInteractionData.data.embeds = embeds;
 				editInteractionData.token = editMessageData.originalMessage.data.interactionToken;
+				editInteractionData.channelId = editMessageData.originalMessage.data.channelId;
+				editInteractionData.interactionId = editMessageData.originalMessage.data.interactionId;
 				DiscordCoreInternal::MessageData messageData = InteractionManager::editInteractionResponse(editInteractionData).get();
 				Message message(messageData, this->coreClient);
 				co_return message;
