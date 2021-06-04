@@ -295,11 +295,53 @@ namespace DiscordCoreInternal {
 			attachments.push_back(attachment);
 		}
 
+		auto componentsActionRow = json::array();
+
+		for (auto& value : editMessageData.components) {
+			auto components = json::array();
+
+			for (auto& valueNew : value.components) {
+				if (valueNew.emoji.id == "") {
+					json component = { {"custom_id", valueNew.customId},
+					{"disabled", valueNew.disabled},
+					{"emoji",{
+						{"name", valueNew.emoji.name},
+					{"animated", valueNew.emoji.animated}
+				} },
+					{"label", valueNew.label},
+					{"style", valueNew.style},
+					{"type", valueNew.type},
+					{"url", valueNew.url}
+					};
+					components.push_back(component);
+				}
+				else {
+					json component = { {"custom_id", valueNew.customId},
+					{"disabled", valueNew.disabled},
+					{"emoji",{
+						{"name", valueNew.emoji.name},
+						{"id", valueNew.emoji.id},
+					{"animated", valueNew.emoji.animated}
+				} },
+					{"label", valueNew.label},
+					{"style", valueNew.style},
+					{"type", valueNew.type},
+					{"url", valueNew.url}
+					};
+					components.push_back(component);
+				}
+			}
+			json componentActionRow = { {"type", 1},{
+				"components", components} };
+			componentsActionRow.push_back(componentActionRow);
+		}
+
 		int colorValue = editMessageData.embed.actualColor();
 
 		json data = {
 			{"flags", editMessageData.flags},
 			{"attachments", attachments},
+			{"components", componentsActionRow},
 			{"allowed_mentions", {
 				{"parse", editMessageData.allowedMentions.parse},
 				{"replied_user", editMessageData.allowedMentions.repliedUser},
@@ -350,10 +392,13 @@ namespace DiscordCoreInternal {
 	}
 
 	string getModifyRolePayload(UpdateRoleData modifyRoleData) {
-		modifyRoleData.actualColor();
+		unsigned int roleColorInt = stol(modifyRoleData.hexColorValue, 0, 16);
+		stringstream stream;
+		stream << setbase(10) << roleColorInt;
+		string roleColorReal = stream.str();
 
 		json data = {
-			{"color", modifyRoleData.color},
+			{"color", roleColorReal},
 			{"hoist", modifyRoleData.hoist},
 			{"mendtionable", modifyRoleData.mentionable},
 			{"name", modifyRoleData.name},
@@ -433,91 +478,6 @@ namespace DiscordCoreInternal {
 
 		return data.dump();
 	}
-
-	string getInteractionResponsePayload(InteractionResponseFullData interactionData) {
-
-		auto parseArray = json::array();
-		for (auto& value : interactionData.interactionResponseData.data.allowedMentions.parse) {
-			parseArray.push_back(value);
-		};
-
-		auto rolesArray = json::array();
-		for (auto& value : interactionData.interactionResponseData.data.allowedMentions.roles) {
-			rolesArray.push_back(value);
-		}
-
-		auto usersArray = json::array();
-		for (auto& value : interactionData.interactionResponseData.data.allowedMentions.users) {
-			usersArray.push_back(value);
-		}
-
-		auto embedsArray = json::array();
-		for (auto& value : interactionData.interactionResponseData.data.embeds) {
-
-			auto fields = json::array();
-
-			for (unsigned int x = 0; x < value.fields.size(); x += 1) {
-				json field = { {"inline", value.fields.at(x).Inline},
-								{"value", value.fields.at(x).value},
-								{"name", value.fields.at(x).name} };
-				fields.push_back(field);
-			}
-
-			int colorValue = value.actualColor();
-
-			json embed = { "embed",
-			{ { "author", {
-		   {"icon_url", value.author.iconUrl},
-		   {"name", value.author.name},
-		   {"url", value.author.url },
-		   {"proxy_icon_url", value.author.proxyIconUrl}
-   } },
-			{ "image", {
-				{"height", value.image.height},
-				{"width", value.image.width},
-				{"url", value.image.url},
-				{"proxy_url",value.image.proxyUrl}
-		} },
-			{ "provider" , {
-				{"name", value.provider.name},
-				{"url", value.provider.url}
-		} },
-			{ "thumbnail", {
-				{"height", value.thumbnail.height},
-				{"width", value.thumbnail.width},
-				{"url", value.thumbnail.url},
-				{"proxy_url", value.thumbnail.proxyUrl}
-			} },
-			{ "footer", {
-				{"icon_url", value.footer.iconUrl},
-				{"proxy_icon_url", value.footer.proxyIconUrl},
-				{"text", value.footer.text}
-	} },
-			{ "description" , value.description },
-			{ "title", value.title },
-			{ "fields", fields },
-			{ "color",colorValue },
-				{"timestamp", value.timestamp}} };
-
-			embedsArray.push_back(embed);
-		}
-
-		json data = { { "type", interactionData.interactionResponseData.type }, { "data",{
-			{"tts", interactionData.interactionResponseData.data.tts},
-			{"content", interactionData.interactionResponseData.data.content},
-			{"flags", interactionData.interactionResponseData.data.flags},
-			{"embeds", embedsArray},
-			{"allowed_mentions", {
-				{"parse", parseArray},
-			{"roles", rolesArray},
-			{"users", usersArray},
-			{"repliedUser", interactionData.interactionResponseData.data.allowedMentions.repliedUser}
-		}}}
-		}
-
-		};
-		return data.dump();
-	}		
 
 		string getCreateInteractionPayload(InteractionResponseData interactionData) {
 			auto embedsArray = json::array();
@@ -663,7 +623,7 @@ namespace DiscordCoreInternal {
 		 }
 
 		 string getCreateRolePayload(CreateRoleData createRoleData) {
-			 unsigned int roleColorInt = stol(createRoleData.color, 0, 16);
+			 unsigned int roleColorInt = stol(createRoleData.hexColorValue, 0, 16);
 			 stringstream stream;
 			 stream << setbase(10) << roleColorInt;
 			 string roleColorReal = stream.str();
@@ -677,5 +637,13 @@ namespace DiscordCoreInternal {
 			 };
 			 return data.dump();
 		 };
+
+		 string getEditChannelPermissionOverwritesPayload(EditChannelPermissionOverwritesData editChannelPermsOWData) {
+			 json data = { {"allow", editChannelPermsOWData.allow},
+				 {"deny", editChannelPermsOWData.deny},
+				 {"type", editChannelPermsOWData.type} };
+
+			 return data.dump();
+		 }
 }
 #endif

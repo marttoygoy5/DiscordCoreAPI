@@ -20,13 +20,13 @@ namespace DiscordCoreAPI {
 			this->commandName = "balance";
 			this->helpDescription = "__**Balance:**__ Enter !balance or /balance to view your own balance, or !balance = @USERMENTION /balance @USERMENTION to view someone else's balances.";
 		}
-		virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
+		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			Channel channel = args->coreClient->channels->getChannelAsync({ args->message.data.channelId }).get();
 
 			bool areWeInADm = areWeInADM(args->message, channel);
 
 			if (areWeInADm == true) {
-				return;
+				co_return;
 			}
 
 			if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
@@ -39,7 +39,7 @@ namespace DiscordCoreAPI {
 			bool areWeAllowed = checkIfAllowedGamingInChannel(args->message, discordGuild.data);
 
 			if (areWeAllowed == false) {
-				return;
+				co_return;
 			}
 
 			string userID = "";
@@ -54,7 +54,7 @@ namespace DiscordCoreAPI {
 			else if (args->argumentsArray.at(0) != "") {
 				if (!regex_search(args->argumentsArray.at(0), mentionRegExp, regex_constants::match_flag_type::format_first_only) && !regex_search(args->argumentsArray.at(0), idRegExp, regex_constants::match_flag_type::format_first_only)) {
 					string msgString = "------\n* *Please, enter a valid user mention, or enter none at all!(!balance = @USERMENTION)**\n------";
-					DiscordCoreInternal::EmbedData msgEmbed;
+					EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 					msgEmbed.setDescription(msgString);
@@ -62,7 +62,7 @@ namespace DiscordCoreAPI {
 					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
 					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data,.embed = msgEmbed }).get();
 					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 }).get();
-					return;
+					co_return;
 				}
 				cmatch matchResults;
 				regex_search(args->argumentsArray.at(0).c_str(), matchResults, idRegExp);
@@ -73,7 +73,7 @@ namespace DiscordCoreAPI {
 
 			if (guildMember.data.user.id == "") {
 				string msgString = "------\n**Sorry, but that user could not be found!**\n------";
-				DiscordCoreInternal::EmbedData msgEmbed;
+				EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
 				msgEmbed.setDescription(msgString);
@@ -81,7 +81,7 @@ namespace DiscordCoreAPI {
 				msgEmbed.setTitle("__**User Issue:**__");
 				Message  msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
 				args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 }).get();
-				return;
+				co_return;
 			}
 
 			DiscordGuildMember discordGuildMember = args->coreClient->getDiscordGuildMember(guildMember.data);
@@ -92,7 +92,7 @@ namespace DiscordCoreAPI {
 			msgString = "<@!" + guildMember.data.user.id + "> 's balances are:\n------\n__**Bank Balance:**__ " + to_string(bankAmount) + " " + args->coreClient->discordUser->data.currencyName +
 				"\n__**Wallet Balance:**__ " + to_string(walletAmount) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
 
-			DiscordCoreInternal::EmbedData msgEmbed;
+			EmbedData msgEmbed;
 			msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 			msgEmbed.setDescription(msgString);
 			msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);

@@ -185,21 +185,63 @@ namespace DiscordCoreAPI {
 		int actualColorVal;
 	};
 
+	struct AllowedMentionsData {
+		vector<string> parse;
+		vector<string> roles;
+		vector<string> users;
+		bool repliedUser;
+	};
+
+	struct MessageReferenceData {
+		string messageId;
+		string channelId;
+		string guildId;
+		bool failIfNotExists;
+	};
+
+	enum class ComponentType {
+		ActionRow = 1,
+		Button = 2
+	};
+
+	enum class ButtonStyle {
+		Primary = 1,
+		Secondary = 2,
+		Success = 3,
+		Danger = 4,
+		Link = 5
+	};
+
+	struct ComponentData {
+		ComponentType type;
+		ButtonStyle style;
+		string label = "";
+		DiscordCoreInternal::EmojiData emoji;
+		string customId = "";
+		string url = "";
+		bool disabled = false;
+	};
+
+	struct ActionRowData {
+		vector<ComponentData> components;
+	};
+
 	struct EditMessageData {
 		string content = "";
-		DiscordCoreInternal::EmbedData embed;
+		EmbedData embed;
 		int flags = 0;
-		vector<DiscordCoreInternal::AttachmentData> attachments;
-		DiscordCoreInternal::AllowedMentionsData allowedMentions;
-		Message originalMessage;
-		vector<DiscordCoreInternal::ActionRowData> components;
+		vector<AttachmentData> attachments;
+		AllowedMentionsData allowedMentions;
+		DiscordCoreInternal::MessageData originalMessageData;
+		vector<ActionRowData> components;
 	};
 
 	struct CreateMessageData {
 		DiscordCoreInternal::AllowedMentionsData allowedMentions;
 		string content = "";
 		string channelId;
-		DiscordCoreInternal::EmbedData embed;
+		string requesterId;
+		EmbedData embed;
 		DiscordCoreInternal::MessageReferenceData messageReference;
 		int nonce;
 		bool tts = false;
@@ -209,11 +251,11 @@ namespace DiscordCoreAPI {
 		string content = "";
 		bool tts = false;
 		DiscordCoreInternal::MessageData replyingToMessageData;
-		DiscordCoreInternal::EmbedData embed;
-		DiscordCoreInternal::AllowedMentionsData allowedMentions;
-		DiscordCoreInternal::MessageReferenceData messageReference;
+		EmbedData embed;
+		AllowedMentionsData allowedMentions;
+		MessageReferenceData messageReference;
 		int nonce;
-		vector<DiscordCoreInternal::ActionRowData> components;
+		vector<ActionRowData> components;
 	};
 
 	struct SendDMData {
@@ -225,9 +267,11 @@ namespace DiscordCoreAPI {
 	struct GetMessageData {
 		string channelId;
 		string id;
+		string requesterId;
 	};
 
 	struct FetchMessageData {
+		string requesterId;
 		string channelId;
 		string id;
 	};
@@ -247,10 +291,11 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestGetBuffer;
 		static unbounded_buffer<DiscordCoreInternal::PostMessageData>* requestPostBuffer;
+		static unbounded_buffer<DiscordCoreInternal::SendDMData>* requestPostDMBuffer;
 		static unbounded_buffer<DiscordCoreInternal::PatchMessageData>* requestPatchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* requestDeleteBuffer;
 		static unbounded_buffer<Message>* outBuffer;
-		static concurrent_queue<Message> messagesToInsert;
+		static concurrent_queue<Message>* messagesToInsert;
 		static overwrite_buffer<map<string, Message>> cache;
 		unbounded_buffer<exception> errorBuffer;
 
@@ -269,8 +314,10 @@ namespace DiscordCoreAPI {
 			MessageManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::GetMessageData>;
 			MessageManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetMessageData>;
 			MessageManagerAgent::requestPostBuffer = new unbounded_buffer<DiscordCoreInternal::PostMessageData>;
+			MessageManagerAgent::requestPostDMBuffer = new unbounded_buffer<DiscordCoreInternal::SendDMData>;
 			MessageManagerAgent::requestPatchBuffer = new unbounded_buffer<DiscordCoreInternal::PatchMessageData>;
 			MessageManagerAgent::requestDeleteBuffer = new unbounded_buffer<DiscordCoreInternal::DeleteMessageData>;
+			MessageManagerAgent::messagesToInsert = new concurrent_queue<Message>;
 			MessageManagerAgent::outBuffer = new unbounded_buffer<Message>;
 			return;
 		}
@@ -305,7 +352,8 @@ namespace DiscordCoreAPI {
 			}
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
-			Message messageNew(messageData,  this->coreClient);
+			Message messageNew(messageData, this->coreClient);
+			messageNew.data.requesterId = dataPackage.requesterId;
 			co_return messageNew;
 		}
 
@@ -334,13 +382,14 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
 			Message messageNew(messageData, this->coreClient);
+			messageNew.data.requesterId = dataPackage.requesterId;
 			co_return messageNew;
 		}
 
 		task<Message> postObjectAsync(DiscordCoreInternal::PostMessageData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.content = dataPackage.content;
-			workload.workloadType = dataPackage.workloadType;
+			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_MESSAGE;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
 			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages";
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
@@ -355,6 +404,35 @@ namespace DiscordCoreAPI {
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
 				cout << "MessageManagerAgent::postObjectAsync() Error 02: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			else {
+				cout << "MessageManagerAgent::postObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			DiscordCoreInternal::MessageData messageData;
+			DiscordCoreInternal::parseObject(returnData.data, &messageData);
+			Message messageNew(messageData, this->coreClient);
+			messageNew.data.requesterId = dataPackage.requesterId;
+			co_return messageNew;
+		}
+
+		task<Message> postObjectAsync(DiscordCoreInternal::SendDMData dataPackage) {
+			DiscordCoreInternal::HttpWorkload workload;
+			workload.content = dataPackage.content;
+			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_USER_DM;
+			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
+			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages";
+			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+			send(requestAgent.workSubmissionBuffer, workload);
+			requestAgent.start();
+			agent::wait(&requestAgent);
+			exception error;
+			while (requestAgent.getError(error)) {
+				cout << "MessageManagerAgent::postObjectAsync() Error 03: " << error.what() << endl << endl;
+			}
+			DiscordCoreInternal::HttpData returnData;
+			try_receive(requestAgent.workReturnBuffer, returnData);
+			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
+				cout << "MessageManagerAgent::postObjectAsync() Error 04: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			else {
 				cout << "MessageManagerAgent::postObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
@@ -410,7 +488,6 @@ namespace DiscordCoreAPI {
 		void run() {
 			try {
 				DiscordCoreInternal::PostMessageData dataPackage;
-				dataPackage.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_MESSAGE;
 				if (try_receive(MessageManagerAgent::requestPostBuffer, dataPackage)) {
 					Message message = this->postObjectAsync(dataPackage).get();
 					map<string, Message> cacheTemp;
@@ -429,9 +506,8 @@ namespace DiscordCoreAPI {
 						}
 					}
 				};
-				DiscordCoreInternal::PostMessageData dataPackageNewer;
-				dataPackageNewer.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_USER_DM;
-				if (try_receive(MessageManagerAgent::requestPostBuffer, dataPackageNewer)) {
+				DiscordCoreInternal::SendDMData dataPackageNewer;
+				if (try_receive(MessageManagerAgent::requestPostDMBuffer, dataPackageNewer)) {
 					Message message = this->postObjectAsync(dataPackageNewer).get();
 					map<string, Message> cacheTemp;
 					try_receive(MessageManagerAgent::cache, cacheTemp);
@@ -478,7 +554,7 @@ namespace DiscordCoreAPI {
 				}
 				DiscordCoreInternal::MessageData messageData;
 				Message message(messageData, this->coreClient);
-				while (MessageManagerAgent::messagesToInsert.try_pop(message)) {
+				while (MessageManagerAgent::messagesToInsert->try_pop(message)) {
 					map<string, Message> cacheTemp;
 					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
 						if (cacheTemp.contains(message.data.channelId + message.data.id)) {
@@ -505,28 +581,51 @@ namespace DiscordCoreAPI {
 			if (replyMessageData.replyingToMessageData.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION) {
 				InteractionResponseData editInteractionResponseData;
 				editInteractionResponseData.data.content = replyMessageData.content;
-				if (replyMessageData.embed.description != ""|| replyMessageData.embed.fields.at(0).value != "") {
+				if (replyMessageData.embed.description != ""|| replyMessageData.embed.fields.size() > 0) {
 					DiscordCoreInternal::EmbedData embedData;
 					embedData.actualColorVal = replyMessageData.embed.actualColorVal;
-					embedData.author = replyMessageData.embed.author;
+					embedData.author.iconUrl = replyMessageData.embed.author.iconUrl;
+					embedData.author.name = replyMessageData.embed.author.name;
+					embedData.author.proxyIconUrl = replyMessageData.embed.author.proxyIconUrl;
+					embedData.author.url = replyMessageData.embed.author.url;
 					embedData.color[0] = replyMessageData.embed.color[0];
 					embedData.color[1] = replyMessageData.embed.color[1];
 					embedData.color[2] = replyMessageData.embed.color[2];
 					embedData.description = replyMessageData.embed.description;
-					embedData.fields = replyMessageData.embed.fields;
-					embedData.fields = replyMessageData.embed.fields;
-					embedData.footer = replyMessageData.embed.footer;
-					embedData.image = replyMessageData.embed.image;
-					embedData.provider = replyMessageData.embed.provider;
-					embedData.thumbnail = replyMessageData.embed.thumbnail;
+					for (auto& value : replyMessageData.embed.fields) {
+						DiscordCoreInternal::EmbedFieldData field;
+						field.value = value.value;
+						field.name = value.name;
+						field.Inline = value.Inline;
+						embedData.fields.push_back(field);
+					}
+					embedData.footer.iconUrl = replyMessageData.embed.footer.iconUrl;
+					embedData.footer.proxyIconUrl = replyMessageData.embed.footer.proxyIconUrl;
+					embedData.footer.text = replyMessageData.embed.footer.text;
+					embedData.image.height = replyMessageData.embed.image.height;
+					embedData.image.proxyUrl = replyMessageData.embed.image.proxyUrl;
+					embedData.image.url = replyMessageData.embed.image.url;
+					embedData.image.width = replyMessageData.embed.image.width;
+					embedData.provider.name = replyMessageData.embed.provider.name;
+					embedData.provider.url = replyMessageData.embed.provider.url;
+					embedData.thumbnail.height = replyMessageData.embed.thumbnail.height;
+					embedData.thumbnail.proxyUrl = replyMessageData.embed.thumbnail.proxyUrl;
+					embedData.thumbnail.url = replyMessageData.embed.thumbnail.url;
+					embedData.thumbnail.width = replyMessageData.embed.thumbnail.width;
 					embedData.timestamp = replyMessageData.embed.timestamp;
 					embedData.title = replyMessageData.embed.title;
 					embedData.type = replyMessageData.embed.type;
 					embedData.url = replyMessageData.embed.url;
-					embedData.video = replyMessageData.embed.video;
+					embedData.video.height = replyMessageData.embed.video.height;
+					embedData.video.proxyUrl = replyMessageData.embed.video.proxyUrl;
+					embedData.video.url = replyMessageData.embed.video.url;
+					embedData.video.width = replyMessageData.embed.video.width;
 					editInteractionResponseData.data.embeds.push_back(embedData);
 				}
-				editInteractionResponseData.data.allowedMentions = replyMessageData.allowedMentions;
+				editInteractionResponseData.data.allowedMentions.parse = replyMessageData.allowedMentions.parse;
+				editInteractionResponseData.data.allowedMentions.repliedUser = replyMessageData.allowedMentions.repliedUser;
+				editInteractionResponseData.data.allowedMentions.roles = replyMessageData.allowedMentions.roles;
+				editInteractionResponseData.data.allowedMentions.users = replyMessageData.allowedMentions.users;
 				for (auto& value : replyMessageData.components) {
 					DiscordCoreInternal::ActionRowData componentDatas;
 					for (auto& valueNew :value.components) {
@@ -548,6 +647,9 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::MessageData messageData = InteractionManager::editInteractionResponseAsync(editInteractionResponseData).get();
 				Message messageNew(messageData, this->coreClient);
 				messageNew.data.messageType = DiscordCoreInternal::MessageTypeReal::INTERACTION;
+				messageNew.data.applicationId = replyMessageData.replyingToMessageData.applicationId;
+				messageNew.data.interactionToken = replyMessageData.replyingToMessageData.interactionToken;
+				messageNew.data.requesterId = replyMessageData.replyingToMessageData.requesterId;
 				co_await mainThread;
 				co_return messageNew;
 			}
@@ -557,28 +659,55 @@ namespace DiscordCoreAPI {
 				dataPackage.threadContext = this->threads->at(3);
 				dataPackage.channelId = replyMessageData.replyingToMessageData.channelId;
 				DiscordCoreInternal::CreateMessageData createMessageDataNew;
-				createMessageDataNew.allowedMentions = replyMessageData.allowedMentions;
+				createMessageDataNew.allowedMentions.parse = replyMessageData.allowedMentions.parse;
+				createMessageDataNew.allowedMentions.repliedUser = replyMessageData.allowedMentions.repliedUser;
+				createMessageDataNew.allowedMentions.roles = replyMessageData.allowedMentions.roles;
+				createMessageDataNew.allowedMentions.users = replyMessageData.allowedMentions.users;
 				createMessageDataNew.content = replyMessageData.content;
 				DiscordCoreInternal::EmbedData embedData;
 				embedData.actualColorVal = replyMessageData.embed.actualColorVal;
-				embedData.author = replyMessageData.embed.author;
+				embedData.actualColorVal = replyMessageData.embed.actualColorVal;
+				embedData.author.iconUrl = replyMessageData.embed.author.iconUrl;
+				embedData.author.name = replyMessageData.embed.author.name;
+				embedData.author.proxyIconUrl = replyMessageData.embed.author.proxyIconUrl;
+				embedData.author.url = replyMessageData.embed.author.url;
 				embedData.color[0] = replyMessageData.embed.color[0];
 				embedData.color[1] = replyMessageData.embed.color[1];
 				embedData.color[2] = replyMessageData.embed.color[2];
 				embedData.description = replyMessageData.embed.description;
-				embedData.fields = replyMessageData.embed.fields;
-				embedData.fields = replyMessageData.embed.fields;
-				embedData.footer = replyMessageData.embed.footer;
-				embedData.image = replyMessageData.embed.image;
-				embedData.provider = replyMessageData.embed.provider;
-				embedData.thumbnail = replyMessageData.embed.thumbnail;
+				for (auto& value : replyMessageData.embed.fields) {
+					DiscordCoreInternal::EmbedFieldData field;
+					field.value = value.value;
+					field.name = value.name;
+					field.Inline = value.Inline;
+					embedData.fields.push_back(field);
+				}
+				embedData.footer.iconUrl = replyMessageData.embed.footer.iconUrl;
+				embedData.footer.proxyIconUrl = replyMessageData.embed.footer.proxyIconUrl;
+				embedData.footer.text = replyMessageData.embed.footer.text;
+				embedData.image.height = replyMessageData.embed.image.height;
+				embedData.image.proxyUrl = replyMessageData.embed.image.proxyUrl;
+				embedData.image.url = replyMessageData.embed.image.url;
+				embedData.image.width = replyMessageData.embed.image.width;
+				embedData.provider.name = replyMessageData.embed.provider.name;
+				embedData.provider.url = replyMessageData.embed.provider.url;
+				embedData.thumbnail.height = replyMessageData.embed.thumbnail.height;
+				embedData.thumbnail.proxyUrl = replyMessageData.embed.thumbnail.proxyUrl;
+				embedData.thumbnail.url = replyMessageData.embed.thumbnail.url;
+				embedData.thumbnail.width = replyMessageData.embed.thumbnail.width;
 				embedData.timestamp = replyMessageData.embed.timestamp;
 				embedData.title = replyMessageData.embed.title;
 				embedData.type = replyMessageData.embed.type;
 				embedData.url = replyMessageData.embed.url;
-				embedData.video = replyMessageData.embed.video;
+				embedData.video.height = replyMessageData.embed.video.height;
+				embedData.video.proxyUrl = replyMessageData.embed.video.proxyUrl;
+				embedData.video.url = replyMessageData.embed.video.url;
+				embedData.video.width = replyMessageData.embed.video.width;
 				createMessageDataNew.embed = embedData;
-				createMessageDataNew.messageReference = replyMessageData.messageReference;
+				createMessageDataNew.messageReference.channelId = replyMessageData.messageReference.channelId;
+				createMessageDataNew.messageReference.failIfNotExists = replyMessageData.messageReference.failIfNotExists;
+				createMessageDataNew.messageReference.guildId = replyMessageData.messageReference.guildId;
+				createMessageDataNew.messageReference.messageId = replyMessageData.messageReference.messageId;
 				createMessageDataNew.nonce = replyMessageData.nonce;
 				createMessageDataNew.tts = replyMessageData.tts;
 				createMessageDataNew.messageReference.channelId = replyMessageData.replyingToMessageData.channelId;
@@ -601,7 +730,6 @@ namespace DiscordCoreAPI {
 					}
 					createMessageDataNew.components.push_back(componentDatas);
 				}
-				
 				dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
 				MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 				send(MessageManagerAgent::requestPostBuffer, dataPackage);
@@ -614,6 +742,7 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::MessageData messageData;
 				Message messageNew(messageData, this->coreClient);
 				try_receive(MessageManagerAgent::outBuffer, messageNew);
+				messageNew.data.requesterId = replyMessageData.replyingToMessageData.author.id;
 				co_await mainThread;
 				co_return messageNew;
 			}
@@ -622,7 +751,7 @@ namespace DiscordCoreAPI {
 		task<Message> sendDMAsync(SendDMData sendDMData) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::PostMessageData dataPackage;
+			DiscordCoreInternal::SendDMData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userId = sendDMData.userId;
@@ -632,29 +761,51 @@ namespace DiscordCoreAPI {
 			createMessageDataNew.content = sendDMData.messageData.content;
 			DiscordCoreInternal::EmbedData embedData;
 			embedData.actualColorVal = sendDMData.messageData.embed.actualColorVal;
-			embedData.author = sendDMData.messageData.embed.author;
+			embedData.actualColorVal = sendDMData.messageData.embed.actualColorVal;
+			embedData.actualColorVal = sendDMData.messageData.embed.actualColorVal;
+			embedData.author.iconUrl = sendDMData.messageData.embed.author.iconUrl;
+			embedData.author.name = sendDMData.messageData.embed.author.name;
+			embedData.author.proxyIconUrl = sendDMData.messageData.embed.author.proxyIconUrl;
+			embedData.author.url = sendDMData.messageData.embed.author.url;
 			embedData.color[0] = sendDMData.messageData.embed.color[0];
 			embedData.color[1] = sendDMData.messageData.embed.color[1];
 			embedData.color[2] = sendDMData.messageData.embed.color[2];
 			embedData.description = sendDMData.messageData.embed.description;
-			embedData.fields = sendDMData.messageData.embed.fields;
-			embedData.fields = sendDMData.messageData.embed.fields;
-			embedData.footer = sendDMData.messageData.embed.footer;
-			embedData.image = sendDMData.messageData.embed.image;
-			embedData.provider = sendDMData.messageData.embed.provider;
-			embedData.thumbnail = sendDMData.messageData.embed.thumbnail;
+			for (auto& value : sendDMData.messageData.embed.fields) {
+				DiscordCoreInternal::EmbedFieldData field;
+				field.value = value.value;
+				field.name = value.name;
+				field.Inline = value.Inline;
+				embedData.fields.push_back(field);
+			}
+			embedData.footer.iconUrl = sendDMData.messageData.embed.footer.iconUrl;
+			embedData.footer.proxyIconUrl = sendDMData.messageData.embed.footer.proxyIconUrl;
+			embedData.footer.text = sendDMData.messageData.embed.footer.text;
+			embedData.image.height = sendDMData.messageData.embed.image.height;
+			embedData.image.proxyUrl = sendDMData.messageData.embed.image.proxyUrl;
+			embedData.image.url = sendDMData.messageData.embed.image.url;
+			embedData.image.width = sendDMData.messageData.embed.image.width;
+			embedData.provider.name = sendDMData.messageData.embed.provider.name;
+			embedData.provider.url = sendDMData.messageData.embed.provider.url;
+			embedData.thumbnail.height = sendDMData.messageData.embed.thumbnail.height;
+			embedData.thumbnail.proxyUrl = sendDMData.messageData.embed.thumbnail.proxyUrl;
+			embedData.thumbnail.url = sendDMData.messageData.embed.thumbnail.url;
+			embedData.thumbnail.width = sendDMData.messageData.embed.thumbnail.width;
+			embedData.video.height = sendDMData.messageData.embed.video.height;
+			embedData.video.proxyUrl = sendDMData.messageData.embed.video.proxyUrl;
+			embedData.video.url = sendDMData.messageData.embed.video.url;
+			embedData.video.width = sendDMData.messageData.embed.video.width;
 			embedData.timestamp = sendDMData.messageData.embed.timestamp;
 			embedData.title = sendDMData.messageData.embed.title;
 			embedData.type = sendDMData.messageData.embed.type;
 			embedData.url = sendDMData.messageData.embed.url;
-			embedData.video = sendDMData.messageData.embed.video;
 			createMessageDataNew.embed = embedData;
 			createMessageDataNew.messageReference = sendDMData.messageData.messageReference;
 			createMessageDataNew.nonce = sendDMData.messageData.nonce;
 			createMessageDataNew.tts = sendDMData.messageData.tts;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
 			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			send(MessageManagerAgent::requestPostBuffer, dataPackage);
+			send(MessageManagerAgent::requestPostDMBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
@@ -680,22 +831,42 @@ namespace DiscordCoreAPI {
 			createMessageDataNew.content = createMessageData.content;
 			DiscordCoreInternal::EmbedData embedData;
 			embedData.actualColorVal = createMessageData.embed.actualColorVal;
-			embedData.author = createMessageData.embed.author;
+			embedData.author.iconUrl = createMessageData.embed.author.iconUrl;
+			embedData.author.name = createMessageData.embed.author.name;
+			embedData.author.proxyIconUrl = createMessageData.embed.author.proxyIconUrl;
+			embedData.author.url = createMessageData.embed.author.url;
 			embedData.color[0] = createMessageData.embed.color[0];
 			embedData.color[1] = createMessageData.embed.color[1];
 			embedData.color[2] = createMessageData.embed.color[2];
 			embedData.description = createMessageData.embed.description;
-			embedData.fields = createMessageData.embed.fields;
-			embedData.fields = createMessageData.embed.fields;
-			embedData.footer = createMessageData.embed.footer;
-			embedData.image = createMessageData.embed.image;
-			embedData.provider = createMessageData.embed.provider;
-			embedData.thumbnail = createMessageData.embed.thumbnail;
+			for (auto& value : createMessageData.embed.fields) {
+				DiscordCoreInternal::EmbedFieldData field;
+				field.value = value.value;
+				field.name = value.name;
+				field.Inline = value.Inline;
+				embedData.fields.push_back(field);
+			}
+			embedData.footer.iconUrl = createMessageData.embed.footer.iconUrl;
+			embedData.footer.proxyIconUrl = createMessageData.embed.footer.proxyIconUrl;
+			embedData.footer.text = createMessageData.embed.footer.text;
+			embedData.image.height = createMessageData.embed.image.height;
+			embedData.image.proxyUrl = createMessageData.embed.image.proxyUrl;
+			embedData.image.url = createMessageData.embed.image.url;
+			embedData.image.width = createMessageData.embed.image.width;
+			embedData.provider.name = createMessageData.embed.provider.name;
+			embedData.provider.url = createMessageData.embed.provider.url;
+			embedData.thumbnail.height = createMessageData.embed.thumbnail.height;
+			embedData.thumbnail.proxyUrl = createMessageData.embed.thumbnail.proxyUrl;
+			embedData.thumbnail.url = createMessageData.embed.thumbnail.url;
+			embedData.thumbnail.width = createMessageData.embed.thumbnail.width;
+			embedData.video.height = createMessageData.embed.video.height;
+			embedData.video.proxyUrl = createMessageData.embed.video.proxyUrl;
+			embedData.video.url = createMessageData.embed.video.url;
+			embedData.video.width = createMessageData.embed.video.width;
 			embedData.timestamp = createMessageData.embed.timestamp;
 			embedData.title = createMessageData.embed.title;
 			embedData.type = createMessageData.embed.type;
 			embedData.url = createMessageData.embed.url;
-			embedData.video = createMessageData.embed.video;
 			createMessageDataNew.embed = embedData;
 			createMessageDataNew.messageReference = createMessageData.messageReference;
 			createMessageDataNew.nonce = createMessageData.nonce;
@@ -712,6 +883,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::MessageData messageData;
 			Message messageNew(messageData, this->coreClient);
 			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			messageNew.data.requesterId = createMessageData.requesterId;
 			co_await mainThread;
 			co_return messageNew;
 		}
@@ -719,22 +891,80 @@ namespace DiscordCoreAPI {
 		task<Message> editMessageAsync(EditMessageData editMessageData, string channelId, string messageId) {
 			apartment_context mainThread;
 			co_await resume_background();
-			if (editMessageData.originalMessage.data.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION) {
+			if (editMessageData.originalMessageData.messageType == DiscordCoreInternal::MessageTypeReal::INTERACTION) {
 				InteractionResponseData editInteractionData;
 				editInteractionData.type = DiscordCoreInternal::InteractionCallbackType::UpdateMessage;
-				editInteractionData.data.allowedMentions = editMessageData.allowedMentions;
-				editInteractionData.applicationId = editMessageData.originalMessage.data.applicationId;
-				editInteractionData.data.components = editMessageData.components;
+				editInteractionData.data.allowedMentions.parse = editMessageData.allowedMentions.parse;
+				editInteractionData.data.allowedMentions.repliedUser= editMessageData.allowedMentions.repliedUser;
+				editInteractionData.data.allowedMentions.roles= editMessageData.allowedMentions.roles;
+				editInteractionData.data.allowedMentions.users = editMessageData.allowedMentions.users;
+				editInteractionData.applicationId = editMessageData.originalMessageData.applicationId;
+				for (auto& value : editMessageData.components) {
+					DiscordCoreInternal::ActionRowData rowData;
+					for (auto& value2 : value.components) {
+						DiscordCoreInternal::ComponentData component;
+						component.customId = value2.customId;
+						component.disabled = value2.disabled;
+						component.emoji = value2.emoji;
+						component.label = value2.label;
+						component.style = (DiscordCoreInternal::ButtonStyle)value2.style;
+						component.type = (DiscordCoreInternal::ComponentType)value2.type;
+						component.url = value2.url;
+						rowData.components.push_back(component);
+					}
+					editInteractionData.data.components.push_back(rowData);
+				}
 				editInteractionData.data.content = editMessageData.content;
 				vector<DiscordCoreInternal::EmbedData> embeds;
-				embeds.push_back(editMessageData.embed);
+				DiscordCoreInternal::EmbedData embed;
+				for (auto& value : editMessageData.embed.fields) {
+					DiscordCoreInternal::EmbedFieldData field;
+					field.value = value.value;
+					field.name = value.name;
+					field.Inline = value.Inline;
+					embed.fields.push_back(field);
+				}
+				embed.actualColorVal = editMessageData.embed.actualColorVal;
+				embed.footer.iconUrl = editMessageData.embed.footer.iconUrl;
+				embed.color[0] = editMessageData.embed.color[0];
+				embed.color[1] = editMessageData.embed.color[1];
+				embed.color[2] = editMessageData.embed.color[2];
+				embed.author.iconUrl = editMessageData.embed.author.iconUrl;
+				embed.author.name = editMessageData.embed.author.name;
+				embed.author.proxyIconUrl = editMessageData.embed.author.proxyIconUrl;
+				embed.author.url = editMessageData.embed.author.url;
+				embed.footer.proxyIconUrl = editMessageData.embed.footer.proxyIconUrl;
+				embed.footer.text = editMessageData.embed.footer.text;
+				embed.image.height = editMessageData.embed.image.height;
+				embed.image.proxyUrl = editMessageData.embed.image.proxyUrl;
+				embed.image.url = editMessageData.embed.image.url;
+				embed.image.width = editMessageData.embed.image.width;
+				embed.provider.name = editMessageData.embed.provider.name;
+				embed.provider.url = editMessageData.embed.provider.url;
+				embed.thumbnail.height = editMessageData.embed.thumbnail.height;
+				embed.thumbnail.proxyUrl = editMessageData.embed.thumbnail.proxyUrl;
+				embed.thumbnail.url = editMessageData.embed.thumbnail.url;
+				embed.thumbnail.width = editMessageData.embed.thumbnail.width;
+				embed.video.height = editMessageData.embed.video.height;
+				embed.video.proxyUrl = editMessageData.embed.video.proxyUrl;
+				embed.video.url = editMessageData.embed.video.url;
+				embed.video.width = editMessageData.embed.video.width;
+				embed.timestamp = editMessageData.embed.timestamp;
+				embed.title = editMessageData.embed.title;
+				embed.type = editMessageData.embed.type;
+				embed.url = editMessageData.embed.url;
+				embed.description = editMessageData.embed.description;
+				embeds.push_back(embed);
 				editInteractionData.data.embeds = embeds;
-				editInteractionData.userId = editMessageData.originalMessage.data.author.id;
-				editInteractionData.token = editMessageData.originalMessage.data.interactionToken;
-				editInteractionData.channelId = editMessageData.originalMessage.data.channelId;
-				editInteractionData.interactionId = editMessageData.originalMessage.data.interaction.id;
+				editInteractionData.userId = editMessageData.originalMessageData.author.id;
+				editInteractionData.token = editMessageData.originalMessageData.interactionToken;
+				editInteractionData.channelId = editMessageData.originalMessageData.channelId;
+				editInteractionData.interactionId = editMessageData.originalMessageData.interaction.id;
 				DiscordCoreInternal::MessageData messageData = InteractionManager::editInteractionResponseAsync(editInteractionData).get();
 				Message message(messageData, this->coreClient);
+				message.data.interactionToken = editMessageData.originalMessageData.interactionToken;
+				message.data.applicationId = editMessageData.originalMessageData.applicationId;
+				message.data.requesterId = editMessageData.originalMessageData.requesterId;
 				co_return message;
 			}
 			DiscordCoreInternal::PatchMessageData dataPackage;
@@ -743,27 +973,75 @@ namespace DiscordCoreAPI {
 			dataPackage.channelId = channelId;
 			dataPackage.messageId = messageId;
 			DiscordCoreInternal::EditMessageData editMessageDataNew;
-			editMessageDataNew.allowedMentions = editMessageData.allowedMentions;
-			editMessageDataNew.attachments = editMessageData.attachments;
-			editMessageDataNew.content = editMessageData.content;
+			editMessageDataNew.allowedMentions.parse = editMessageData.allowedMentions.parse;
+			editMessageDataNew.allowedMentions.repliedUser = editMessageData.allowedMentions.repliedUser;
+			editMessageDataNew.allowedMentions.roles = editMessageData.allowedMentions.roles;
+			editMessageDataNew.allowedMentions.users = editMessageData.allowedMentions.users;
+			for (auto& value : editMessageData.attachments) {
+				DiscordCoreInternal::AttachmentData attachment;
+				attachment.contentType = value.contentType;
+				attachment.filename = value.filename;
+				attachment.height = value.height;
+				attachment.id = value.id;
+				attachment.proxyUrl = value.proxyUrl;
+				attachment.size = value.size;
+				attachment.url = value.url;
+				attachment.width = value.width;
+				editMessageDataNew.attachments.push_back(attachment);
+			}
+			for (auto& value : editMessageData.components) {
+				DiscordCoreInternal::ActionRowData componentDatas;
+				for (auto& valueNew : value.components) {
+					DiscordCoreInternal::ComponentData componentData;
+					componentData.customId = valueNew.customId;
+					componentData.disabled = valueNew.disabled;
+					componentData.emoji = valueNew.emoji;
+					componentData.label = valueNew.label;
+					componentData.style = (DiscordCoreInternal::ButtonStyle)valueNew.style;
+					componentData.type = (DiscordCoreInternal::ComponentType)valueNew.type;
+					componentData.url = valueNew.url;
+					componentDatas.components.push_back(componentData);
+				}
+				editMessageDataNew.components.push_back(componentDatas);
+			}
 			DiscordCoreInternal::EmbedData embedData;
+			for (auto& value : editMessageData.embed.fields) {
+				DiscordCoreInternal::EmbedFieldData field;
+				field.value = value.value;
+				field.name = value.name;
+				field.Inline = value.Inline;
+				embedData.fields.push_back(field);
+			}
 			embedData.actualColorVal = editMessageData.embed.actualColorVal;
-			embedData.author = editMessageData.embed.author;
 			embedData.color[0] = editMessageData.embed.color[0];
 			embedData.color[1] = editMessageData.embed.color[1];
 			embedData.color[2] = editMessageData.embed.color[2];
-			embedData.description = editMessageData.embed.description;
-			embedData.fields = editMessageData.embed.fields;
-			embedData.fields = editMessageData.embed.fields;
-			embedData.footer = editMessageData.embed.footer;
-			embedData.image = editMessageData.embed.image;
-			embedData.provider = editMessageData.embed.provider;
-			embedData.thumbnail = editMessageData.embed.thumbnail;
+			embedData.author.iconUrl = editMessageData.embed.author.iconUrl;
+			embedData.author.name = editMessageData.embed.author.name;
+			embedData.author.proxyIconUrl = editMessageData.embed.author.proxyIconUrl;
+			embedData.author.url = editMessageData.embed.author.url;
+			embedData.footer.iconUrl = editMessageData.embed.footer.iconUrl;
+			embedData.footer.proxyIconUrl = editMessageData.embed.footer.proxyIconUrl;
+			embedData.footer.text = editMessageData.embed.footer.text;
+			embedData.image.height = editMessageData.embed.image.height;
+			embedData.image.proxyUrl = editMessageData.embed.image.proxyUrl;
+			embedData.image.url = editMessageData.embed.image.url;
+			embedData.image.width = editMessageData.embed.image.width;
+			embedData.provider.name = editMessageData.embed.provider.name;
+			embedData.provider.url = editMessageData.embed.provider.url;
+			embedData.thumbnail.height = editMessageData.embed.thumbnail.height;
+			embedData.thumbnail.proxyUrl = editMessageData.embed.thumbnail.proxyUrl;
+			embedData.thumbnail.url = editMessageData.embed.thumbnail.url;
+			embedData.thumbnail.width = editMessageData.embed.thumbnail.width;
+			embedData.video.height = editMessageData.embed.video.height;
+			embedData.video.proxyUrl = editMessageData.embed.video.proxyUrl;
+			embedData.video.url = editMessageData.embed.video.url;
+			embedData.video.width = editMessageData.embed.video.width;
 			embedData.timestamp = editMessageData.embed.timestamp;
 			embedData.title = editMessageData.embed.title;
 			embedData.type = editMessageData.embed.type;
 			embedData.url = editMessageData.embed.url;
-			embedData.video = editMessageData.embed.video;
+			embedData.description = editMessageData.embed.description;
 			editMessageDataNew.embed = embedData;
 			editMessageDataNew.flags = editMessageData.flags;
 			dataPackage.content = DiscordCoreInternal::getEditMessagePayload(editMessageDataNew);
@@ -778,6 +1056,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::MessageData messageData;
 			Message messageNew(messageData, this->coreClient);
 			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			messageNew.data.requesterId = editMessageData.originalMessageData.requesterId;
 			co_await mainThread;
 			co_return messageNew;
 		}
@@ -825,6 +1104,7 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::MessageData messageData;
 			Message messageNew(messageData, this->coreClient);
 			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			messageNew.data.requesterId = getMessageData.requesterId;
 			co_await mainThread;
 			co_return messageNew;
 		}
@@ -848,13 +1128,14 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::MessageData messageData;
 			Message messageNew(messageData, this->coreClient);
 			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			messageNew.data.requesterId = fetchMessageData.requesterId;
 			co_await mainThread;
 			co_return messageNew;
 		}
 
 		task<void> insertMessageAsync(Message message) {
 			MessageManagerAgent messageManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			MessageManagerAgent::messagesToInsert.push(message);
+			MessageManagerAgent::messagesToInsert->push(message);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
@@ -881,12 +1162,13 @@ namespace DiscordCoreAPI {
 	};
 	overwrite_buffer<map<string, Message>> MessageManagerAgent::cache;
 	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestFetchBuffer;
-	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestGetBuffer;
 	unbounded_buffer<DiscordCoreInternal::PostMessageData>* MessageManagerAgent::requestPostBuffer;
-	unbounded_buffer<DiscordCoreInternal::PatchMessageData>* MessageManagerAgent::requestPatchBuffer;
+	unbounded_buffer<DiscordCoreInternal::SendDMData>* MessageManagerAgent::requestPostDMBuffer;
 	unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* MessageManagerAgent::requestDeleteBuffer;
+	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestGetBuffer;
+	unbounded_buffer<DiscordCoreInternal::PatchMessageData>* MessageManagerAgent::requestPatchBuffer;
 	unbounded_buffer<Message>* MessageManagerAgent::outBuffer;
-	concurrent_queue<Message> MessageManagerAgent::messagesToInsert;
+	concurrent_queue<Message>* MessageManagerAgent::messagesToInsert;
 }
 #endif
 

@@ -20,14 +20,14 @@ namespace DiscordCoreAPI {
 			this->commandName = "selldrugs";
 			this->helpDescription = "__**Sell Drugs:**__ Enter !selldrugs or /selldrugs to gain currency.";
 		}
-		virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
+		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
 				Channel channel = args->coreClient->channels->getChannelAsync({ args->message.data.channelId }).get();
 				
 				bool areWeInADm = areWeInADM(args->message, channel);
 
 				if (areWeInADm == true) {
-					return;
+					co_return;
 				}
 
 				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
@@ -40,7 +40,7 @@ namespace DiscordCoreAPI {
 				bool areWeAllowed = checkIfAllowedGamingInChannel(args->message, discordGuild.data);
 
 				if (areWeAllowed ==  false) {
-					return;
+					co_return;
 				}
 				
 				unsigned long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -66,7 +66,7 @@ namespace DiscordCoreAPI {
 					string msgString = "";
 					msgString += "You've been busy dealing drugs... and you've earned " + to_string(amountEarned) + " " + args->coreClient->discordUser->data.currencyName + "\nNice job and watch out for cops!\nYour new wallet balance is: ";
 					msgString += to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName;
-					DiscordCoreInternal::EmbedData messageEmbed;
+					EmbedData messageEmbed;
 					messageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					messageEmbed.setDescription(msgString);
 					messageEmbed.setTitle("__**Drug Dealing:**__");
@@ -96,7 +96,7 @@ namespace DiscordCoreAPI {
 				else {
 					msgString += "Sorry, but you need to wait " + to_string(secondsLeft) + " seconds before you can get paid again!";
 				}
-				DiscordCoreInternal::EmbedData  messageEmbed;
+				EmbedData  messageEmbed;
 				messageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				messageEmbed.setDescription(msgString);
 				messageEmbed.setTitle("__**Drug Dealing:**__");

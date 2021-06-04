@@ -19,7 +19,7 @@ namespace DiscordCoreAPI {
 		RegisterSlashCommands() {
 			this->commandName = "registerslashcommands";
 		}
-		virtual void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
+		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			/*
 			CreateApplicationCommandData createSellDrugsCommandData;
 			createSellDrugsCommandData.defaultPermission = true;
@@ -115,7 +115,56 @@ namespace DiscordCoreAPI {
 			coinflipCommandOptionOne.description = "The wager you would like to place.";
 			createCoinflipRoleCommandData.options.push_back(coinflipCommandOptionOne);
 			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createCoinflipRoleCommandData).get();
+			
+			CreateApplicationCommandData createBotInfoCommandData;
+			createBotInfoCommandData.defaultPermission = true;
+			createBotInfoCommandData.description = "Display info about the current bot.";
+			createBotInfoCommandData.name = "botinfo";
+			ApplicationCommandOptionData botInfoCommandOptionOne;
+			botInfoCommandOptionOne.name = "botname";
+			botInfoCommandOptionOne.required = true;
+			botInfoCommandOptionOne.type = ApplicationCommandOptionType::STRING;
+			botInfoCommandOptionOne.description = "The bot which you would like to display the info of.";
+			ApplicationCommandOptionChoiceData botInfoChoiceOne;
+			botInfoChoiceOne.name = "name";
+			botInfoChoiceOne.valueString = "gamehouse";
+			botInfoCommandOptionOne.choices.push_back(botInfoChoiceOne);
+			createBotInfoCommandData.options.push_back(botInfoCommandOptionOne);
+			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createBotInfoCommandData).get();
+			
+			CreateApplicationCommandData createBlackjackCommandData;
+			createBlackjackCommandData.defaultPermission = true;
+			createBlackjackCommandData.description = "Play a round of blackjack.";
+			createBlackjackCommandData.name = "blackjack";
+			ApplicationCommandOptionData blackJackCommandOptionOne;
+			blackJackCommandOptionOne.name = "betamount";
+			blackJackCommandOptionOne.required = true;
+			blackJackCommandOptionOne.type = ApplicationCommandOptionType::INTEGER;
+			blackJackCommandOptionOne.description = "The amount which you would like to wager.";
+			createBlackjackCommandData.options.push_back(blackJackCommandOptionOne);
+			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createBlackjackCommandData).get();
+			
+			CreateApplicationCommandData createButtonsCommandData;
+			createButtonsCommandData.defaultPermission = true;
+			createButtonsCommandData.description = "Test the buttons.";
+			createButtonsCommandData.name = "buttons";
+			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createButtonsCommandData).get();
+
+			CreateApplicationCommandData createShopCommandData;
+			createShopCommandData.defaultPermission = true;
+			createShopCommandData.description = "Check out the server's shop!";
+			createShopCommandData.name = "shop";
+			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createShopCommandData).get();
 			*/
+			Guild guild = args->coreClient->guilds->getGuildAsync({ .guildId = args->message.data.guildId }).get();
+			DiscordGuild discordGuild(guild.data);
+			EmbedData msgEmbed;
+			msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+			msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+			msgEmbed.setDescription("Nicely done, you've registered some commands!");
+			msgEmbed.setTimeStamp(getTimeAndDate());
+			msgEmbed.setTitle("__**Register Slash Commands Complete:**__");
+			Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
 		}
 	};
 	RegisterSlashCommands registerSlashCommands{};

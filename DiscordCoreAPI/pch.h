@@ -38,6 +38,7 @@
 #include <winrt/Windows.System.Threading.Core.h>
 #include <winrt/windows.networking.sockets.h>
 #include <winrt/Windows.System.Threading.h>
+#include <winrt/Windows.Web.Http.Filters.h>
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/windows.storage.streams.h>
 #include <winrt/Windows.Foundation.h>

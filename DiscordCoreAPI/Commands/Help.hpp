@@ -25,9 +25,47 @@ namespace DiscordCoreAPI {
 			this->helpDescription = "__**Help:**__ Enter !help or /help for help!";
 		}
 
-		virtual  void execute(DiscordCoreAPI::BaseFunctionArguments* args) {
+		virtual  task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
-				HelpCommandArguments* newArgs = (HelpCommandArguments*)args;
+
+				vector<Role> guildRoles = args->coreClient->roles->getGuildRolesAsync({ .guildId = args->message.data.guildId }).get();
+				for (auto role : guildRoles) {
+					cout << "ROLE NAME: " << role.data.name << endl;
+				}				
+
+				UpdateRoleData roleData;
+				roleData.hexColorValue = "FF33DD";
+				roleData.guildId = args->message.data.guildId;
+				roleData.hoist = true;
+				roleData.mentionable = true;
+				roleData.roleId = "850239731186663435";
+				roleData.name = "NEW ROLE AGAIN";
+				string permsString;
+				vector<DiscordCoreInternal::Permissions> perms;
+				perms.push_back(DiscordCoreInternal::Permissions::ADD_REACTIONS);
+				perms.push_back(DiscordCoreInternal::Permissions::ADMINISTRATOR);
+				roleData.permissions = PermissionsConverter::addPermissionsToString(permsString, perms);
+				Role role = args->coreClient->roles->updateRoleAsync(roleData).get();
+				args->coreClient->guilds->fetchAsync({ .guildId = args->message.data.guildId }).get();
+				args->coreClient->roles->addRoleToGuildMemberAsync({ .guildId = args->message.data.guildId, .userId = args->message.data.author.id, .roleId = role.data.id }).get();
+				args->coreClient->roles->removeRoleFromGuildMemberAsync({ .guildId = args->message.data.guildId, .userId = args->message.data.author.id, .roleId = role.data.id }).get();
+				string allowPerms;
+				vector<DiscordCoreInternal::Permissions> permsVector;
+				permsVector.push_back(DiscordCoreInternal::Permissions::ADD_REACTIONS);
+				permsVector.push_back(DiscordCoreInternal::Permissions::ATTACH_FILES);
+				permsVector.push_back(DiscordCoreInternal::Permissions::CREATE_INSTANT_INVITE);
+				permsVector.push_back(DiscordCoreInternal::Permissions::MANAGE_NICKNAMES);
+				allowPerms = PermissionsConverter::addPermissionsToString(allowPerms, permsVector);
+				permsVector.clear();
+				permsVector.push_back(DiscordCoreInternal::Permissions::MANAGE_CHANNELS);
+				permsVector.push_back(DiscordCoreInternal::Permissions::MANAGE_THREADS);
+				string denyPerms;
+				denyPerms = PermissionsConverter::addPermissionsToString(denyPerms, permsVector);
+				args->coreClient->channels->editChannelPermissionOverwritesAsync({ .allow = allowPerms, .deny = denyPerms, .type = 1  ,.roleOrUserId = args->message.data.author.id, .channelId = args->message.data.channelId }).get();
+				args->coreClient->channels->deleteChannelPermissionOverwritesAsync({ .channelId = args->message.data.channelId, .roleOrUserId = args->message.data.author.id }).get();
+				//Role newRole = args->coreClient->roles->createRoleAsync(roleData).get();
+				
+				//HelpCommandArguments* newArgs = (HelpCommandArguments*)args;
 				//args->coreClient->slashCommands->displayGlobalApplicationCommandsAsync().get();
 				/*
 				args->coreClient->slashCommands->deleteGlobalApplicationCommand({ .applicationId = args->coreClient->currentUser->data.id, .name = "testname" }).get();
@@ -78,6 +116,7 @@ namespace DiscordCoreAPI {
 				updateRoleData.roleId = "790460906450583592";
 				role = role.coreClient->roles->updateRoleAsync(updateRoleData).get();
 				*/
+				co_return;
 			}
 			catch (exception error) {
 				cout << "Help::execute() Error: " << error.what() << endl << endl;

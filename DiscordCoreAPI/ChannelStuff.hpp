@@ -49,6 +49,19 @@ namespace DiscordCoreAPI {
 		string channelId;
 	};
 
+	struct EditChannelPermissionOverwritesData {
+		string allow;
+		string deny;
+		unsigned int type;
+		string roleOrUserId;
+		string channelId;
+	};
+
+	struct DeleteChannelPermissionOverwritesData {
+		string channelId;
+		string roleOrUserId;
+	};
+
 	struct GetDMChannelData {
 		string userId;
 	};
@@ -62,6 +75,8 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::FetchChannelData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetChannelData>* requestGetBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetDMChannelData>* requestDMChannelBuffer;
+		static unbounded_buffer<DiscordCoreInternal::EditChannelPermissionOverwritesData>* requestPutChannelPermsBuffer;
+		static unbounded_buffer<DiscordCoreInternal::DeleteChannelPermissionOverwritesData>* requestDeleteChannelPermsBuffer;
 		static unbounded_buffer<Channel>* outBuffer;
 		static concurrent_queue<Channel> channelsToInsert;
 		static overwrite_buffer<map<string, Channel>> cache;
@@ -82,6 +97,8 @@ namespace DiscordCoreAPI {
 			ChannelManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::FetchChannelData>;
 			ChannelManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetChannelData>;
 			ChannelManagerAgent::requestDMChannelBuffer = new unbounded_buffer<DiscordCoreInternal::GetDMChannelData>;
+			ChannelManagerAgent::requestPutChannelPermsBuffer = new unbounded_buffer<DiscordCoreInternal::EditChannelPermissionOverwritesData>;
+			ChannelManagerAgent::requestDeleteChannelPermsBuffer = new unbounded_buffer<DiscordCoreInternal::DeleteChannelPermissionOverwritesData>;
 			ChannelManagerAgent::outBuffer = new unbounded_buffer<Channel>;
 			return;
 		}
@@ -149,6 +166,55 @@ namespace DiscordCoreAPI {
 			co_return channelNew;
 		}
 
+		task<void> putObjectAsync(DiscordCoreInternal::EditChannelPermissionOverwritesData dataPackage) {
+			DiscordCoreInternal::HttpWorkload workload;
+			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PUT_CHANNEL_PERMISSION_OVERWRITES;
+			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PUT;
+			workload.relativePath = "/channels/" + dataPackage.channelId + "/permissions/" + dataPackage.roleOrUserId;
+			workload.content = dataPackage.content;
+			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+			send(requestAgent.workSubmissionBuffer, workload);
+			requestAgent.start();
+			agent::wait(&requestAgent);
+			exception error;
+			while (requestAgent.getError(error)) {
+				cout << "ChannelManagerAgent::putObjectAsync() Error: " << error.what() << endl << endl;
+			}
+			DiscordCoreInternal::HttpData returnData;
+			try_receive(requestAgent.workReturnBuffer, returnData);
+			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
+				cout << "ChannelManagerAgent::putObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			else {
+				cout << "ChannelManagerAgent::putObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			co_return;
+		}
+
+		task<void> deleteObjectAsync(DiscordCoreInternal::DeleteChannelPermissionOverwritesData dataPackage) {
+			DiscordCoreInternal::HttpWorkload workload;
+			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_CHANNEL_PERMISSION_OVERWRITES;
+			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
+			workload.relativePath = "/channels/" + dataPackage.channelId + "/permissions/" + dataPackage.roleOrUserId;
+			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+			send(requestAgent.workSubmissionBuffer, workload);
+			requestAgent.start();
+			agent::wait(&requestAgent);
+			exception error;
+			while (requestAgent.getError(error)) {
+				cout << "ChannelManagerAgent::deleteObjectAsync() Error: " << error.what() << endl << endl;
+			}
+			DiscordCoreInternal::HttpData returnData;
+			try_receive(requestAgent.workReturnBuffer, returnData);
+			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
+				cout << "ChannelManagerAgent::deleteObjectAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			else {
+				cout << "ChannelManagerAgent::deleteObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+			}
+			co_return;
+		}
+
 		void run() {
 			try {
 				DiscordCoreInternal::GetChannelData getData;
@@ -173,6 +239,14 @@ namespace DiscordCoreAPI {
 					cacheTemp.insert(make_pair(fetchData.channelId, channel));
 					send(ChannelManagerAgent::outBuffer, channel);
 					asend(cache, cacheTemp);
+				}
+				DiscordCoreInternal::EditChannelPermissionOverwritesData editData;
+				if (try_receive(ChannelManagerAgent::requestPutChannelPermsBuffer, editData)) {
+					putObjectAsync(editData).get();
+				}
+				DiscordCoreInternal::DeleteChannelPermissionOverwritesData deleteData;
+				if (try_receive(ChannelManagerAgent::requestDeleteChannelPermsBuffer, deleteData)) {
+					deleteObjectAsync(deleteData).get();
 				}
 				DiscordCoreInternal::GetDMChannelData getDataNewest;
 				if (try_receive(ChannelManagerAgent::requestDMChannelBuffer, getDataNewest)) {
@@ -286,6 +360,48 @@ namespace DiscordCoreAPI {
 			co_return channel;
 		}
 
+		task<void> editChannelPermissionOverwritesAsync(EditChannelPermissionOverwritesData editChannelPermissionOverwritesData) {
+			apartment_context mainThread;
+			co_await resume_background();
+			DiscordCoreInternal::EditChannelPermissionOverwritesData dataPackage;
+			dataPackage.agentResources = this->agentResources;
+			dataPackage.threadContext = this->threads->at(3);
+			dataPackage.channelId = editChannelPermissionOverwritesData.channelId;
+			dataPackage.allow = editChannelPermissionOverwritesData.allow;
+			dataPackage.deny = editChannelPermissionOverwritesData.deny;
+			dataPackage.roleOrUserId = editChannelPermissionOverwritesData.roleOrUserId;
+			dataPackage.type = editChannelPermissionOverwritesData.type;
+			dataPackage.content = DiscordCoreInternal::getEditChannelPermissionOverwritesPayload(dataPackage);
+			ChannelManagerAgent channelManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
+			send(ChannelManagerAgent::requestPutChannelPermsBuffer, dataPackage);
+			channelManagerAgent.start();
+			agent::wait(&channelManagerAgent);
+			exception error;
+			while (channelManagerAgent.getError(error)) {
+				cout << "ChannelManager::editChannelPermissionOverwritesAsync() Error: " << error.what() << endl << endl;
+			}
+			co_return;
+		}
+
+		task<void> deleteChannelPermissionOverwritesAsync(DeleteChannelPermissionOverwritesData deleteChannelPermissionOverwritesData) {
+			apartment_context mainThread;
+			co_await resume_background();
+			DiscordCoreInternal::DeleteChannelPermissionOverwritesData dataPackage;
+			dataPackage.agentResources = this->agentResources;
+			dataPackage.threadContext = this->threads->at(7);
+			dataPackage.channelId = deleteChannelPermissionOverwritesData.channelId;
+			dataPackage.roleOrUserId = deleteChannelPermissionOverwritesData.roleOrUserId;
+			ChannelManagerAgent channelManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(6).scheduler);
+			send(ChannelManagerAgent::requestDeleteChannelPermsBuffer, dataPackage);
+			channelManagerAgent.start();
+			agent::wait(&channelManagerAgent);
+			exception error;
+			while (channelManagerAgent.getError(error)) {
+				cout << "ChannelManager::deleteChannelPermissionOverwritesAsync() Error: " << error.what() << endl << endl;
+			}
+			co_return;
+		}
+
 		task<void> insertChannelAsync(Channel channel) {
 			ChannelManagerAgent channelManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
 			ChannelManagerAgent::channelsToInsert.push(channel);
@@ -320,6 +436,8 @@ namespace DiscordCoreAPI {
 	unbounded_buffer<DiscordCoreInternal::FetchChannelData>* ChannelManagerAgent::requestFetchBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetChannelData>* ChannelManagerAgent::requestGetBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetDMChannelData>* ChannelManagerAgent::requestDMChannelBuffer;
+	unbounded_buffer<DiscordCoreInternal::EditChannelPermissionOverwritesData>* ChannelManagerAgent::requestPutChannelPermsBuffer;
+	unbounded_buffer<DiscordCoreInternal::DeleteChannelPermissionOverwritesData>* ChannelManagerAgent::requestDeleteChannelPermsBuffer;
 	unbounded_buffer<Channel>* ChannelManagerAgent::outBuffer;
 	concurrent_queue<Channel> ChannelManagerAgent::channelsToInsert;
 }

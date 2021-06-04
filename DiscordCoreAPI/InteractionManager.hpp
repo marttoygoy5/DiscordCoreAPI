@@ -15,6 +15,8 @@ namespace DiscordCoreAPI {
 
     class DiscordCoreClient;
 
+    class InteractionManager;
+
     struct Button;
 
     string constructStringContent(DiscordCoreInternal::CommandData commandData) {
@@ -26,7 +28,13 @@ namespace DiscordCoreAPI {
         return finalCommandString;
     };    
 
+    enum class InteractionResponseType {
+        CreateInteractionResponse = 1,
+        EditInteractionResponse = 2
+    };
+
     struct InteractionResponseData {
+        InteractionResponseType responseType;
         DiscordCoreInternal::InteractionCallbackType type;
         DiscordCoreInternal::InteractionApplicationCommandCallbackData data;
         string channelId;
@@ -52,11 +60,124 @@ namespace DiscordCoreAPI {
         string customId;
     };
 
+    struct ButtonInteractionData {
+        string token;
+        string id;
+        string applicationId;
+        DiscordCoreInternal::InteractionType type;
+        string customId;
+        DiscordCoreInternal::GuildMemberData member;
+        DiscordCoreInternal::UserData user;
+        DiscordCoreInternal::MessageData message;
+        string channelId;
+        string guildId;
+    };
+
+    class InteractionManagerAgent : public agent {
+    public:
+        static unbounded_buffer<DiscordCoreInternal::InteractionResponseData>* requestPatchBuffer;
+        static unbounded_buffer<DiscordCoreInternal::InteractionResponseData>* requestPostBuffer;
+        static unbounded_buffer<DiscordCoreInternal::MessageData>* outBuffer;
+
+        static unbounded_buffer<exception>* errorBuffer;
+        InteractionManagerAgent(Scheduler* pSchedulerNew)
+            :agent(*pSchedulerNew) {}
+
+        bool getError(exception& error) {
+            if (try_receive(errorBuffer, error)) {
+                return true;
+            }
+            return false;
+        }
+
+        static void initialize() {
+            InteractionManagerAgent::outBuffer = new unbounded_buffer<DiscordCoreInternal::MessageData>;
+            InteractionManagerAgent::errorBuffer = new unbounded_buffer<exception>;
+            InteractionManagerAgent::requestPostBuffer = new unbounded_buffer<DiscordCoreInternal::InteractionResponseData>;
+            InteractionManagerAgent::requestPatchBuffer = new unbounded_buffer <DiscordCoreInternal::InteractionResponseData>;
+        }
+
+        task<DiscordCoreInternal::MessageData> patchObjectDataAsync(DiscordCoreInternal::InteractionResponseData dataPackage){
+            DiscordCoreInternal::HttpWorkload workload;
+            workload.relativePath = "/webhooks/" + dataPackage.applicationId + "/" + dataPackage.token + "/messages/@original";
+            workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
+            workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_INTERACTION_RESPONSE;
+            workload.content = DiscordCoreInternal::getCreateInteractionPayload(dataPackage);
+            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+            send(requestAgent.workSubmissionBuffer, workload);
+            requestAgent.start();
+            agent::wait(&requestAgent);
+            exception error;
+            while (requestAgent.getError(error)) {
+                cout << "InteractionManagerAgent::patchObjectDataAsync() Error: " << error.what() << endl << endl;
+            }
+            DiscordCoreInternal::HttpData returnData;
+            try_receive(requestAgent.workReturnBuffer, returnData);
+            if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
+                cout << "InteractionManagerAgent::patchObjectDataAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+            }
+            else {
+                cout << "InteractionManagerAgent::patchObjectDataAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+            }
+            DiscordCoreInternal::MessageData messageData;
+            parseObject(returnData.data, &messageData);
+            messageData.messageType = DiscordCoreInternal::MessageTypeReal::INTERACTION;
+            messageData.author.id = dataPackage.originalAuthorId;
+            co_return messageData;
+        }
+
+        task<void> postObjectDataAsync(DiscordCoreInternal::InteractionResponseData dataPackage) {
+            DiscordCoreInternal::HttpWorkload workload;
+            workload.relativePath = "/interactions/" + dataPackage.interactionId + "/" + dataPackage.token + "/callback";
+            workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
+            workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_INTERACTION_RESPONSE;
+            workload.content = DiscordCoreInternal::getCreateInteractionPayload(dataPackage);
+            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+            send(requestAgent.workSubmissionBuffer, workload);
+            requestAgent.start();
+            agent::wait(&requestAgent);
+            exception error;
+            while (requestAgent.getError(error)) {
+                cout << "InteractionManagerAgent::postObjectDataAsync() Error: " << error.what() << endl << endl;
+            }
+            DiscordCoreInternal::HttpData returnData;
+            try_receive(requestAgent.workReturnBuffer, returnData);
+            if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
+                cout << "InteractionManagerAgent::postObjectDataAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+            }
+            else {
+                cout << "InteractionManagerAgent::postObjectDataAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+            }
+            co_return;
+        }
+
+    protected:
+
+        void run() {
+            try {
+                DiscordCoreInternal::InteractionResponseData dataPackage;
+                if (try_receive(InteractionManagerAgent::requestPatchBuffer, dataPackage)) {
+                    DiscordCoreInternal::MessageData messageData = patchObjectDataAsync(dataPackage).get();
+                    send(InteractionManagerAgent::outBuffer, messageData);
+                }
+                DiscordCoreInternal::InteractionResponseData dataPackageNew;
+                if (try_receive(InteractionManagerAgent::requestPostBuffer, dataPackageNew)) {
+                    postObjectDataAsync(dataPackageNew).get();
+                }
+            }
+            catch (const exception& e) {
+                send(errorBuffer, e);
+            }
+            done();
+        }
+
+    };
 	class InteractionManager {
     public:
+        friend class InteractionManagerAgent;
         static unbounded_buffer<InteractionData>* inputInteractionBuffer;
+        static unbounded_buffer<ButtonInteractionData>* buttonInteractionBuffer;
         static map<string, Button> activeButtons;
-        static bool areWeRunning;
 
 		InteractionManager() {
 
@@ -66,9 +187,12 @@ namespace DiscordCoreAPI {
             InteractionManager::agentResources = agentResourcesNew;
             InteractionManager::threads = threadsNew;
             InteractionManager::inputInteractionBuffer = new unbounded_buffer<InteractionData>;
+            InteractionManager::buttonInteractionBuffer = new unbounded_buffer<ButtonInteractionData>;
         }
 
         static task<void> createInteractionResponseAsync(InteractionResponseData interactionData) {
+            apartment_context mainThread;
+            co_await resume_background();
             DiscordCoreInternal::InteractionResponseData interactionDataNew;
             interactionDataNew.applicationId = interactionData.applicationId;
             interactionDataNew.channelId = interactionData.channelId;
@@ -79,35 +203,21 @@ namespace DiscordCoreAPI {
             interactionDataNew.type = interactionData.type;
             interactionDataNew.userId = interactionData.userId;
             interactionDataNew.type = interactionData.type;
-            DiscordCoreInternal::HttpWorkload workload;
-            workload.relativePath = "/interactions/" + interactionData.interactionId + "/" + interactionData.token + "/callback";
-            workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
-            workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_INTERACTION_RESPONSE;
-            workload.content = DiscordCoreInternal::getCreateInteractionPayload(interactionDataNew);
-            DiscordCoreInternal::HttpRequestAgent requestAgent(InteractionManager::agentResources, InteractionManager::threads->at(5).scheduler);
-            send(requestAgent.workSubmissionBuffer, workload);
-            requestAgent.start();
-            agent::wait(&requestAgent);
+            interactionDataNew.agentResources = InteractionManager::agentResources;
+            interactionDataNew.threadContext = InteractionManager::threads->at(6);
+            InteractionManagerAgent interactionManagerAgent(InteractionManager::threads->at(5).scheduler);
+            send(InteractionManagerAgent::requestPostBuffer, interactionDataNew);
+            interactionManagerAgent.start();
+            agent::wait(&interactionManagerAgent);
             exception error;
-            while (requestAgent.getError(error)) {
+            while (interactionManagerAgent.getError(error)) {
                 cout << "InteractionManager::createInteractionResponseAsync() Error: " << error.what() << endl << endl;
             }
-            DiscordCoreInternal::HttpData returnData;
-            try_receive(requestAgent.workReturnBuffer, returnData);
-            if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-                cout << "InteractionManager::createInteractionResponseAsync() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
-            }
-            else {
-                cout << "InteractionManager::createInteractionResponseAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
-            }
+            co_await mainThread;
             co_return;
         }
 
         static task<DiscordCoreInternal::MessageData> editInteractionResponseAsync(InteractionResponseData editInteractionData) {
-            DiscordCoreInternal::HttpWorkload workload;
-            workload.relativePath = "/webhooks/" + editInteractionData.applicationId + "/" + editInteractionData.token + "/messages/@original";
-            workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
-            workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_INTERACTION_RESPONSE;
             DiscordCoreInternal::InteractionResponseData editInteractionResponseDataNew;
             editInteractionResponseDataNew.data.allowedMentions = editInteractionData.data.allowedMentions;
             editInteractionResponseDataNew.applicationId = editInteractionData.applicationId;
@@ -154,30 +264,21 @@ namespace DiscordCoreAPI {
             editInteractionResponseDataNew.guildId = editInteractionData.guildId;
             editInteractionResponseDataNew.interactionId = editInteractionData.interactionId;
             editInteractionResponseDataNew.type = DiscordCoreInternal::InteractionCallbackType::UpdateMessage;
-            workload.content = DiscordCoreInternal::getCreateInteractionPayload(editInteractionResponseDataNew);
-            DiscordCoreInternal::HttpRequestAgent requestAgent(InteractionManager::agentResources, InteractionManager::threads->at(5).scheduler);
-            send(requestAgent.workSubmissionBuffer, workload);
-            requestAgent.start();
-            agent::wait(&requestAgent);
+            editInteractionResponseDataNew.agentResources = InteractionManager::agentResources;
+            editInteractionResponseDataNew.threadContext = InteractionManager::threads->at(6);
+            InteractionManagerAgent interactionManagerAgent(InteractionManager::threads->at(5).scheduler);
+            send(InteractionManagerAgent::requestPatchBuffer, editInteractionResponseDataNew);
+            interactionManagerAgent.start();
+            agent::wait(&interactionManagerAgent);
             exception error;
-            while (requestAgent.getError(error)) {
-                cout << "InteractionManager::editInteractionResponse() Error: " << error.what() << endl << endl;
-            }
-            DiscordCoreInternal::HttpData returnData;
-            try_receive(requestAgent.workReturnBuffer, returnData);
-            if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-                cout << "InteractionManager::editInteractionResponse() Error: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
-            }
-            else {
-                cout << "InteractionManager::editInteractionResponse() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
+            while (interactionManagerAgent.getError(error)) {
+                cout << "InteractionManager::editInteractionResponseAsync() Error: " << error.what() << endl << endl;
             }
             DiscordCoreInternal::MessageData messageData;
-            parseObject(returnData.data, &messageData);
-            messageData.messageType = DiscordCoreInternal::MessageTypeReal::INTERACTION;
-            messageData.author.id = editInteractionResponseDataNew.originalAuthorId;
+            try_receive(InteractionManagerAgent::outBuffer, messageData);
             co_return messageData;
         }
-        
+
 	protected:
         static DiscordCoreInternal::HttpAgentResources agentResources;
         static concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
@@ -185,39 +286,73 @@ namespace DiscordCoreAPI {
     };
     concurrent_vector<DiscordCoreInternal::ThreadContext>* InteractionManager::threads;
     unbounded_buffer<InteractionData>* InteractionManager::inputInteractionBuffer;
+    unbounded_buffer<DiscordCoreInternal::InteractionResponseData>* InteractionManagerAgent::requestPostBuffer;
+    unbounded_buffer<DiscordCoreInternal::InteractionResponseData>* InteractionManagerAgent::requestPatchBuffer;
+    unbounded_buffer<exception>* InteractionManagerAgent::errorBuffer;
+    unbounded_buffer<ButtonInteractionData>* InteractionManager::buttonInteractionBuffer;
+    unbounded_buffer<DiscordCoreInternal::MessageData>* InteractionManagerAgent::outBuffer;
     DiscordCoreInternal::HttpAgentResources InteractionManager::agentResources;
     map<string, Button> InteractionManager::activeButtons;
-    bool InteractionManager::areWeRunning;
 
     struct Button {
     public:
-        string buttonId;
-        string channelId;
-        string messageId;
-        string userId;
 
-        Button(DiscordCoreInternal::MessageData messageData, unsigned long long maxTimeInMsNew) {
+        Button(DiscordCoreInternal::MessageData messageData) {
             this->startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             this->channelId = messageData.channelId;
             this->messageId = messageData.id;
-            this->userId = messageData.author.id;
-            this->maxTimeInMs = maxTimeInMsNew;
+            this->userId = messageData.requesterId;
             InteractionManager::activeButtons.insert(make_pair(this->channelId + this->messageId + this->userId, *this));
         }
-    protected:
-        unsigned long long startTime;
-        unsigned long long maxTimeInMs;
-    };
 
-    bool checkIfButtonIsActive(string channelId, string messageId, string userId) {
-        if (InteractionManager::activeButtons.contains(channelId + messageId + userId)) {
-            InteractionManager::activeButtons.erase(channelId + messageId + userId);
-            return true;
+        string getButtonId() {
+            if (buttonId == "") {
+                return "";
+            }
+            else {
+                return this->buttonId;
+            }
         }
-        else {
-            return false;
+
+        ButtonInteractionData getOurButtonData(unsigned long long maxWaitTimeInMs) {
+            this->startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            ButtonInteractionData buttonInteractionData;
+            while (doWeQuit == false) {
+                if (checkIfTimeHasPassed(maxWaitTimeInMs)) {
+                    doWeQuit = true;
+                }
+                else {
+                    if (try_receive(InteractionManager::buttonInteractionBuffer, buttonInteractionData)) {
+                        if ((buttonInteractionData.channelId != this->channelId) || (buttonInteractionData.message.id != this->messageId)|| this->userId != buttonInteractionData.user.id) {
+                            send(InteractionManager::buttonInteractionBuffer, buttonInteractionData);
+                        }
+                        else {
+                            this->buttonId = buttonInteractionData.customId;
+                            return buttonInteractionData;
+                        }
+                    }
+                }
+            }
         }
-    }
+
+    protected:
+        string channelId;
+        string messageId;
+        string userId;
+        string buttonId = "";
+        unsigned long long startTime;
+        bool doWeQuit = false;
+        
+        bool checkIfTimeHasPassed(unsigned long long maxWaitTimeInMs) {
+            unsigned long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            if (currentTime - this->startTime > maxWaitTimeInMs) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    };
 
 };
 #endif

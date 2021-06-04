@@ -35,12 +35,12 @@ namespace DiscordCoreAPI {
         return charArray;
     }
 
-	bool areWeInADM(Message message, Channel channel) {
+    bool areWeInADM(Message message, Channel channel) {
         auto currentChannelType = channel.data.type;
 
         if (currentChannelType == DiscordCoreInternal::ChannelType::DM) {
             string msgString = "------\n**Sorry, but we can't do that in a direct message!**\n------";
-            DiscordCoreInternal::EmbedData msgEmbed;
+            EmbedData msgEmbed;
             msgEmbed.setAuthor(message.data.interaction.user.username, message.data.interaction.user.getAvatarURL());
             msgEmbed.setColor(254, 254, 254);
             msgEmbed.setDescription(msgString);
@@ -54,14 +54,14 @@ namespace DiscordCoreAPI {
             return true;
         }
         return false;
-	}
+    }
 
     bool checkIfAllowedGamingInChannel(Message message, DiscordGuildData guildData) {
         bool isItFound = true;
         if (guildData.gameChannelIds.size() > 0) {
             isItFound = false;
             string msgString = "------\n**Sorry, but please do that in one of the following channels:**\n------\n";
-            DiscordCoreInternal::EmbedData msgEmbed;
+            EmbedData msgEmbed;
             for (auto& value : guildData.gameChannelIds) {
                 if (message.data.channelId == value) {
                     isItFound = true;
@@ -73,8 +73,7 @@ namespace DiscordCoreAPI {
             }
             msgString += "------";
             if (isItFound == false) {
-                msgEmbed
-                    .setAuthor(message.data.author.username, message.data.author.getAvatarURL());
+                msgEmbed.setAuthor(message.data.author.username, message.data.author.getAvatarURL());
                 msgEmbed.setColor(254, 254, 254);
                 msgEmbed.setDescription(msgString);
                 msgEmbed.setTitle("__**Permissions Issue:**__");
@@ -109,13 +108,13 @@ namespace DiscordCoreAPI {
             }
         }
 
-        static string addPermissionsToString(string originalPermissionString, DiscordCoreInternal::Permissions permissionsToAdd[], int quantityOfPermsToAdd) {
+        static string addPermissionsToString(string originalPermissionString, vector<DiscordCoreInternal::Permissions> permissionsToAdd) {
             if (originalPermissionString == "") {
                 originalPermissionString = "0";
             }
             __int64 permissionsInteger = stoll(originalPermissionString);
-            for (unsigned int x = 0; x < (unsigned int)quantityOfPermsToAdd; x += 1) {
-                permissionsInteger = permissionsInteger | (__int64)permissionsToAdd[x];
+            for (unsigned int x = 0; x < permissionsToAdd.size(); x += 1) {
+                permissionsInteger = permissionsInteger | (__int64)permissionsToAdd.at(x);
             }
             stringstream sstream;
             sstream << permissionsInteger;
@@ -295,24 +294,6 @@ namespace DiscordCoreAPI {
             return stream.str();
         }
 
-        static string computePermissions(GuildMember guildMember, Channel channel) {
-            string permissions;
-            permissions = computeBasePermissions(guildMember, *guildMember.coreClient->guilds, *guildMember.coreClient->roles);
-            permissions = computeOverwrites(permissions, guildMember, channel);
-            return permissions;
-        }
-
-        static bool checkForPermission(GuildMember guildMember, Channel channel, DiscordCoreInternal::Permissions permission) {
-            string permissionsString = computePermissions(guildMember, channel);
-            if ((stoll(permissionsString) & (__int64)permission) == (__int64)permission) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-
-        protected:
         static string computeBasePermissions(GuildMember guildMember, GuildManager guilds, RoleManager roles) {
             Guild guild = guilds.getGuildAsync({ guildMember.data.guildId }).get();
 
@@ -375,6 +356,23 @@ namespace DiscordCoreAPI {
             return stream.str();
         }
 
+        static string computePermissions(GuildMember guildMember, Channel channel) {
+            string permissions;
+            permissions = computeBasePermissions(guildMember, *guildMember.coreClient->guilds, *guildMember.coreClient->roles);
+            permissions = computeOverwrites(permissions, guildMember, channel);
+            return permissions;
+        }
+
+        static bool checkForPermission(GuildMember guildMember, Channel channel, DiscordCoreInternal::Permissions permission) {
+            string permissionsString = computePermissions(guildMember, channel);
+            if ((stoll(permissionsString) & (__int64)permission) == (__int64)permission) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
     };
 
     bool checkForBotCommanderStatus(GuildMember guildMember, DiscordUser discordUser) {
@@ -410,7 +408,7 @@ namespace DiscordCoreAPI {
         }
 
         string msgString = "------\n**Sorry, but you don't have the permissions required for that!**\n------";
-        DiscordCoreInternal::EmbedData msgEmbed;
+        EmbedData msgEmbed;
         msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
         msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
         msgEmbed.setDescription(msgString);
@@ -420,5 +418,86 @@ namespace DiscordCoreAPI {
         message.coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id,.timeDelay = 20000 }).get();
         return false;
     }
+
+    /**
+    * Recurses through a succession of messages.
+    */
+    task<void> recurseThroughMessagePages(string userID, Message originalMessage, DiscordCoreClient* pDiscordCoreClient, unsigned int currentPageIndex, vector<EmbedData> messageEmbeds, bool deleteAfter) {
+        unsigned int newCurrentPageIndex = currentPageIndex;
+        try {
+
+            vector<ActionRowData> actionRowDataVector;
+            ActionRowData actionRowData;
+            ComponentData component01;
+            component01.customId = "backwards";
+            component01.disabled = false;
+            component01.emoji.name = "◀️";
+            component01.label = "Back";
+            component01.style = ButtonStyle::Primary;
+            component01.type = ComponentType::Button;
+            actionRowData.components.push_back(component01);
+            ComponentData component02;
+            component02.customId = "forwards";
+            component02.disabled = false;
+            component02.emoji.name = "▶️";
+            component02.label = "Forward";
+            component02.style = ButtonStyle::Primary;
+            component02.type = ComponentType::Button;
+            actionRowData.components.push_back(component02);
+
+            ComponentData component03;
+            component03.customId = "exit";
+            component03.disabled = false;
+            component03.emoji.name = "❌";
+            component03.label = "Exit";
+            component03.style = ButtonStyle::Primary;
+            component03.type = ComponentType::Button;
+            actionRowData.components.push_back(component03);
+            actionRowDataVector.push_back(actionRowData);
+            EditMessageData editMessageData;
+            editMessageData.embed = messageEmbeds.at(0);
+            editMessageData.components = actionRowDataVector;
+            editMessageData.originalMessageData = originalMessage.data;
+            bool doWeQuit = false;
+            Message newMessage = pDiscordCoreClient->messages->editMessageAsync(editMessageData, originalMessage.data.channelId, originalMessage.data.id).get();
+            Button button(newMessage.data);
+            while (doWeQuit == false) {
+                ButtonInteractionData buttonIntData = button.getOurButtonData(60000);
+                if (button.getButtonId() == "forwards" && (newCurrentPageIndex == (messageEmbeds.size() - 1))) {
+                    newCurrentPageIndex = 0;
+                    EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
+                    Message newerMessage = pDiscordCoreClient->messages->editMessageAsync({ .embed = messageEmbed, .originalMessageData = newMessage.data,.components = actionRowDataVector }, newMessage.data.channelId, newMessage.data.id).get();
+                }
+                else if (button.getButtonId() == "forwards" && (newCurrentPageIndex < messageEmbeds.size())) {
+                    newCurrentPageIndex += 1;
+                    EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
+                    Message newerMessage = pDiscordCoreClient->messages->editMessageAsync({ .embed = messageEmbed, .originalMessageData = newMessage.data,.components = actionRowDataVector }, newMessage.data.channelId, newMessage.data.id).get();
+                }
+                else if (button.getButtonId() == "backwards" && (newCurrentPageIndex > 0)) {
+                    newCurrentPageIndex -= 1;
+                    EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
+                    Message newerMessage = pDiscordCoreClient->messages->editMessageAsync({ .embed = messageEmbed, .originalMessageData = newMessage.data,.components = actionRowDataVector }, newMessage.data.channelId, newMessage.data.id).get();
+                }
+                else if (button.getButtonId() == "backwards" && (newCurrentPageIndex == 0)) {
+                    newCurrentPageIndex = (unsigned int)messageEmbeds.size() - 1;
+                    EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
+                    Message newerMessage = pDiscordCoreClient->messages->editMessageAsync({ .embed = messageEmbed, .originalMessageData = newMessage.data,.components = actionRowDataVector }, newMessage.data.channelId, newMessage.data.id).get();
+                }
+                else if (button.getButtonId() == "exit" || button.getButtonId() == "") {
+                    if (deleteAfter == true) {
+                        pDiscordCoreClient->messages->deleteMessageAsync({ .channelId = newMessage.data.channelId, .messageId = newMessage.data.id, .timeDelay = 0 }).get();
+                    }
+                    doWeQuit = true;
+                }
+            }
+
+            co_return;
+        }
+
+        catch (exception& e) {
+            cout << "recurseThroughMessagePages() Error: " << e.what() << endl << endl;
+        }
+    };
+
 }
 #endif

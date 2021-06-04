@@ -28,7 +28,7 @@ namespace DiscordCoreAPI {
 
 	class BaseFunction {
 	public:
-		virtual void execute(BaseFunctionArguments* args) = 0;
+		virtual task<void> execute(BaseFunctionArguments* args) = 0;
 		string commandName;
 		string helpDescription;
 	};
@@ -54,7 +54,7 @@ namespace DiscordCoreAPI {
 				args.coreClient = commandData.coreClient;
 				args.message = commandData.message;
 
-				functionPointer->execute(&args);
+				functionPointer->execute(&args).get();
 			}
 			catch (exception& e) {
 				cout << "CommandController::checkForAndRunCommands() Error: " << e.what() << endl << endl;

@@ -1,18 +1,18 @@
-// SystemThreads.hpp - Header for the "system threads" class.
+// ThreadManager.hpp - Header for the "system threads" class.
 // May 4, 2021
 // Chris M.
 // https://github.com/RealTimeChris
 
 #pragma once
 
-#ifndef _SYSTEM_THREADS_
-#define _SYSTEM_THREADS_
+#ifndef _THREAD_MANAGER_
+#define _THREAD_MANAGER_
 
 #include "pch.h"
 
 namespace DiscordCoreInternal {
 
-    class SystemThreads;
+    class ThreadManager;
 
     struct ThreadContext {
         Scheduler* scheduler{ nullptr };
@@ -20,15 +20,15 @@ namespace DiscordCoreInternal {
         shared_ptr<DispatcherQueue> threadQueue{ nullptr };
     };
 
-    class SystemThreadsAgent :public agent {
+    class ThreadManagerAgent :public agent {
     protected:
-        friend class SystemThreads;
+        friend class ThreadManager;
         unbounded_buffer<bool> requestBuffer;
         unbounded_buffer<concurrent_vector<ThreadContext>*> submitBuffer;
         unbounded_buffer<concurrent_vector<ThreadContext>*> responseBuffer;
         single_assignment<exception> errorBuffer;
         
-        SystemThreadsAgent(concurrent_vector<ThreadContext>* threads)
+        ThreadManagerAgent(concurrent_vector<ThreadContext>* threads)
             : agent(*threads->at(0).scheduler)
         {}
 
@@ -57,27 +57,27 @@ namespace DiscordCoreInternal {
         }
     };
 
-    class SystemThreads  {
+    class ThreadManager  {
     public:
 
         ThreadContext mainThreadContext;
         static concurrent_vector<ThreadContext>* threads;
 
         task<concurrent_vector<ThreadContext>*> getThreads() {
-            SystemThreadsAgent systemThreadsAgent(SystemThreads::threads);
-            systemThreadsAgent.start();
-            systemThreadsAgent.submitThreads(SystemThreads::threads).get();
-            send(systemThreadsAgent.requestBuffer, true);
-            concurrent_vector<ThreadContext>* threadsNew = receive(systemThreadsAgent.responseBuffer);
-            agent::wait(&systemThreadsAgent);
+            ThreadManagerAgent ThreadManagerAgent(ThreadManager::threads);
+            ThreadManagerAgent.start();
+            ThreadManagerAgent.submitThreads(ThreadManager::threads).get();
+            send(ThreadManagerAgent.requestBuffer, true);
+            concurrent_vector<ThreadContext>* threadsNew = receive(ThreadManagerAgent.responseBuffer);
+            agent::wait(&ThreadManagerAgent);
             exception error;
-            if (systemThreadsAgent.getError(error)) {
-                cout << "SystemThreads::getThreads() Error: " << error.what() << endl << endl;
+            if (ThreadManagerAgent.getError(error)) {
+                cout << "ThreadManager::getThreads() Error: " << error.what() << endl << endl;
             }
             co_return threadsNew;
         }
 
-        SystemThreads() {
+        ThreadManager() {
             this->MaxThreads = thread::hardware_concurrency();
         };
 
@@ -104,7 +104,7 @@ namespace DiscordCoreInternal {
             this->mainThreadContext.scheduler = CurrentScheduler::Get();
             shared_ptr<task_group> newTaskGroup = make_shared<task_group>();
             this->mainThreadContext.taskGroup = newTaskGroup;
-            SystemThreads::threads = new concurrent_vector<ThreadContext>();
+            ThreadManager::threads = new concurrent_vector<ThreadContext>();
             for (unsigned int x = 0; x < this->MaxThreads - 1; x += 1) {
                 DispatcherQueueController threadQueueController = DispatcherQueueController::CreateOnDedicatedThread();
                 ABI::Windows::System::IDispatcherQueueController* ptrNew2{};
@@ -122,15 +122,15 @@ namespace DiscordCoreInternal {
                 threadContext.taskGroup = newTaskGroup;
                 newScheduler->Attach();
                 co_await mainThread;
-                SystemThreads::threads->push_back(threadContext);
+                ThreadManager::threads->push_back(threadContext);
             }
         }
 
     protected:
-        friend class SystemThreadsAgent;
+        friend class ThreadManagerAgent;
         unsigned int MaxThreads;
 
     };
-    concurrent_vector<ThreadContext>* SystemThreads::threads;
+    concurrent_vector<ThreadContext>* ThreadManager::threads;
 }
 #endif

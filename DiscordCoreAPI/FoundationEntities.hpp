@@ -690,7 +690,11 @@ namespace  DiscordCoreInternal {
         PATCH_SLASH_COMMAND = 25,
         POST_INTERACTION_RESPONSE = 26,
         PATCH_INTERACTION_RESPONSE = 27,
-        POST_ROLE = 28
+        POST_ROLE = 28,
+        PUT_GUILD_MEMBER_ROLE = 30,
+        DELETE_GUILD_MEMBER_ROLE = 31,
+        PUT_CHANNEL_PERMISSION_OVERWRITES = 32,
+        DELETE_CHANNEL_PERMISSION_OVERWRITES = 33
     };
 
     struct HttpAgentResources {
@@ -758,6 +762,7 @@ namespace  DiscordCoreInternal {
         string applicationId;
         string interactionId;
         string interactionToken;
+        string requesterId = "";
         bool tts;
         bool mentionEveryone;
         vector<UserData> mentions;
@@ -792,8 +797,8 @@ namespace  DiscordCoreInternal {
     };
 
     struct GetGuildData {
-        HttpAgentResources agentResources;
         ThreadContext threadContext;
+        HttpAgentResources agentResources;
         GuildData oldGuildData;
         string guildId;
     };
@@ -849,6 +854,24 @@ namespace  DiscordCoreInternal {
         string channelId;
     };
 
+    struct EditChannelPermissionOverwritesData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
+        string allow;
+        string deny;
+        unsigned int type;
+        string roleOrUserId;
+        string content;
+        string channelId;
+    };
+
+    struct DeleteChannelPermissionOverwritesData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
+        string roleOrUserId;
+        string channelId;
+    };
+
     struct GetDMChannelData {
         DiscordCoreInternal::HttpAgentResources agentResources;
         DiscordCoreInternal::ThreadContext threadContext;
@@ -860,20 +883,7 @@ namespace  DiscordCoreInternal {
         ThreadContext threadContext;
         string channelId;
         string messageId;
-    };
-
-    struct GetRoleData {
-        HttpAgentResources agentResources;
-        ThreadContext threadContext;
-        string guildId;
-        string roleId;
-    };
-
-    struct FetchRoleData {
-        HttpAgentResources agentResources;
-        ThreadContext threadContext;
-        string guildId;
-        string roleId;
+        string requesterId;
     };
 
     enum class GetUserDataType {
@@ -898,10 +908,9 @@ namespace  DiscordCoreInternal {
     struct PostMessageData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
-        HttpWorkloadType workloadType;
         string channelId;
         string content;
-        string userId;
+        string requesterId;
     };
 
     struct PatchMessageData {
@@ -910,6 +919,7 @@ namespace  DiscordCoreInternal {
         string content;
         string channelId;
         string messageId;
+        string requesterId;
     };
 
     struct DeleteMessageData {
@@ -972,10 +982,30 @@ namespace  DiscordCoreInternal {
         vector<string> roleIds;
     };
 
-    struct UpdateRoleDataInternal {
-        HttpAgentResources agentResources;
-        ThreadContext threadContext;
-        string content;
+    struct FetchRolesData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
+        string guildId;
+    };
+
+    struct GetRoleData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
+        string guildId;
+        string roleId;
+    };
+
+    struct DeleteRoleData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
+        string guildId;
+        string userId;
+        string roleId;
+    };
+
+    struct FetchRoleData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
         string guildId;
         string roleId;
     };
@@ -987,41 +1017,36 @@ namespace  DiscordCoreInternal {
         string guildId;
     };
 
+    struct PutRoleData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
+        string guildId;
+        string userId;
+        string roleId;
+    };
+
     struct UpdateRoleData {
+        string guildId;
+        string roleId;
         string name;
         string permissions;
-        int colorFirst[3];
-        int color;
+        string hexColorValue;
         bool hoist;
         bool mentionable;
-        void actualColor() {
-            if (this->colorFirst[0] > 255) {
-                this->colorFirst[0] = 255;
-            }
-            else if (this->colorFirst[0] < 0) {
-                this->colorFirst[0] = 0;
-            }
-            if (this->colorFirst[1] > 255) {
-                this->colorFirst[1] = 255;
-            }
-            else if (this->colorFirst[1] < 0) {
-                this->colorFirst[1] = 0;
-            }
-            if (this->colorFirst[2] > 255) {
-                this->colorFirst[2] = 255;
-            }
-            else if (this->colorFirst[2] < 0) {
-                this->colorFirst[2] = 0;
-            }
-            int colorValue = 65536 * this->colorFirst[0] + 256 * this->colorFirst[1] + this->colorFirst[2];
-            this->color = colorValue;
-        };
+    };
+
+    struct PatchRoleData {
+        DiscordCoreInternal::HttpAgentResources agentResources;
+        DiscordCoreInternal::ThreadContext threadContext;
+        string guildId;
+        string roleId;
+        string content;
     };
 
     struct CreateRoleData {
         string name;
-        string permissions;
-        string color;
+        __int64 permissions;
+        string hexColorValue;
         bool hoist;
         bool mentionable;
     };
@@ -1083,10 +1108,10 @@ namespace  DiscordCoreInternal {
     };
 
     struct ApplicationCommandInteractionDataResolved {
-        map<string, UserData> users;
-        map<string, GuildMemberData> members;
-        map<string, RoleData> roles;
-        map<string, ChannelData> channels;
+        map<string, UserData> users{};
+        map<string, GuildMemberData> members{};
+        map<string, RoleData> roles{};
+        map<string, ChannelData> channels{};
     };
 
     struct ApplicationCommandInteractionDataOption {
@@ -1120,6 +1145,19 @@ namespace  DiscordCoreInternal {
         int version;
         MessageData message;
         string customId;
+    };
+
+    struct ButtonInteractionData {
+        string token;
+        string id;
+        string applicationId;
+        InteractionType type;
+        string customId;
+        GuildMemberData member;
+        UserData user;
+        MessageData message;
+        string channelId;
+        string guildId;
     };
 
     struct InteractionResponseFullData {

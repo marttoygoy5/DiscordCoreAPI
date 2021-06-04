@@ -1,12 +1,12 @@
-// EventMachine.hpp - Header for the events class.
+// EventManager.hpp - Header for the event-manager class.
 // Apr 26, 2021
 // Chris M.
 // https://github.com/RealTimeChris
 
 #pragma once
 
-#ifndef _EVENT_MACHINE_
-#define _EVENT_MACHINE_
+#ifndef _EVENT_MANAGER_
+#define _EVENT_MANAGER_
 
 #include "pch.h"
 
@@ -38,7 +38,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreAPI::InteractionData interactionData;
 	};
 
-	class EventMachine  {
+	class EventManager  {
 	public:
 
 		winrt::event_token onInteractionCreate(winrt::delegate<OnInteractionCreateData> const& handler) {

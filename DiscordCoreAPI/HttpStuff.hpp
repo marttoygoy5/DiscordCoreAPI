@@ -23,15 +23,20 @@ namespace DiscordCoreInternal {
 			try {
 				this->baseURL = agentResources.baseURL;
 				this->botToken = agentResources.botToken;
-				this->getHttpClient = HttpClient();
+				Filters::HttpBaseProtocolFilter filter;
+				Filters::HttpCacheControl cacheControl{ nullptr };
+				cacheControl = filter.CacheControl();
+				cacheControl.ReadBehavior(Filters::HttpCacheReadBehavior::NoCache);
+				cacheControl.WriteBehavior(Filters::HttpCacheWriteBehavior::NoCache);
+				this->getHttpClient = HttpClient(filter);
 				this->getHeaders = this->getHttpClient.DefaultRequestHeaders();
-				this->putHttpClient = HttpClient();
+				this->putHttpClient = HttpClient(filter);
 				this->putHeaders = this->putHttpClient.DefaultRequestHeaders();
-				this->postHttpClient = HttpClient();
+				this->postHttpClient = HttpClient(filter);
 				this->postHeaders = this->postHttpClient.DefaultRequestHeaders();
-				this->patchHttpClient = HttpClient();
+				this->patchHttpClient = HttpClient(filter);
 				this->patchHeaders = this->patchHttpClient.DefaultRequestHeaders();
-				this->deleteHttpClient = HttpClient();
+				this->deleteHttpClient = HttpClient(filter);
 				this->deleteHeaders = this->deleteHttpClient.DefaultRequestHeaders();
 				hstring headerString = L"Bot ";
 				hstring headerString2 = headerString + this->botToken;
@@ -86,7 +91,7 @@ namespace DiscordCoreInternal {
 			}
 			return false;
 		}
-
+		
 		void run() {
 			try {
 				transformer<HttpWorkload, HttpData> completeHttpRequest([this](HttpWorkload workload) -> HttpData {
@@ -161,7 +166,7 @@ namespace DiscordCoreInternal {
 			string connectionPath = to_string(baseURL) + relativeURL;
 			Uri requestUri = Uri(to_hstring(connectionPath.c_str()));
 			HttpResponseMessage httpResponse;
-			httpResponse = getHttpClient.GetAsync(requestUri).get();
+			httpResponse = getHttpClient.TryGetAsync(requestUri).get().ResponseMessage();
 			unsigned int getsRemainingLocal;
 			float currentMSTimeLocal;
 			float msRemainLocal;
@@ -206,7 +211,7 @@ namespace DiscordCoreInternal {
 					HttpData returnData;
 					co_return returnData;
 				}
-				getData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
+				getData = httpGETObjectDataAsync(relativeURL, pRateLimitData).get();
 			}
 			if (returnMessage != "") {
 				if (jsonValue.contains("retry-after") && !jsonValue.at("retry-after").is_null()) {
@@ -274,7 +279,7 @@ namespace DiscordCoreInternal {
 					HttpData returnData;
 					co_return returnData;
 				}
-				putData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
+				putData = httpPUTObjectDataAsync(relativeURL, content, pRateLimitData).get();
 			}
 			if (returnMessage != "") {
 				if (jsonValue.contains("retry-after") && !jsonValue.at("retry-after").is_null()) {
@@ -342,7 +347,7 @@ namespace DiscordCoreInternal {
 					HttpData returnData;
 					co_return returnData;
 				}
-				postData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
+				postData = httpPOSTObjectDataAsync(relativeURL, content, pRateLimitData).get();
 			}
 			if (returnMessage != "") {
 				if (jsonValue.contains("retry-after") && !jsonValue.at("retry-after").is_null()) {
@@ -413,7 +418,7 @@ namespace DiscordCoreInternal {
 					HttpData returnData;
 					co_return returnData;
 				}
-				patchData = httpDELETEObjectDataAsync(relativeURL, pRateLimitData).get();
+				patchData = httpPATCHObjectDataAsync(relativeURL, content, pRateLimitData).get();
 			}
 			if (returnMessage != "") {
 				if (jsonValue.contains("retry-after") && !jsonValue.at("retry-after").is_null()) {

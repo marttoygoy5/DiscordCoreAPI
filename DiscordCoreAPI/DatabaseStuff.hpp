@@ -35,12 +35,13 @@ namespace DiscordCoreAPI {
     };
 
     class Deck {
+    public:
         vector<Card> cards;
 
         Deck() {
             this->cards.resize(52);
 
-            for (unsigned int x = 0; x < 52; x += 1) {
+            for (auto x= 0; x < 52; x += 1) {
                 this->cards[x].suit = "";
                 this->cards[x].type = "";
                 this->cards[x].value = 0;
@@ -123,7 +124,7 @@ namespace DiscordCoreAPI {
                 return voidCard;
             }
 
-            unsigned int cardIndex = (unsigned int)trunc((rand() / RAND_MAX) * this->cards.size());
+            unsigned int cardIndex = (unsigned int)trunc(((float)rand() / (float)RAND_MAX) * this->cards.size());
             Card currentCard = this->cards.at(cardIndex);
             this->cards.erase(this->cards.begin() + cardIndex);
             return currentCard;
@@ -177,7 +178,7 @@ namespace DiscordCoreAPI {
         string roleName = "";
     };
 
-    struct Shop {
+    struct GuildShop{
         vector<InventoryItem> items{};
         vector<InventoryRole> roles{};
     };
@@ -196,7 +197,7 @@ namespace DiscordCoreAPI {
         unsigned int borderColor[3] = { 254, 254, 254 };
         CasinoStats casinoStats{};
         vector<string> gameChannelIds{};
-        Shop guildShop{};
+        GuildShop guildShop{};
         Roulette rouletteGame{};
     };
 
