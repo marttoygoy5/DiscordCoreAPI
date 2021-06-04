@@ -295,6 +295,24 @@ namespace DiscordCoreAPI {
             return stream.str();
         }
 
+        static string computePermissions(GuildMember guildMember, Channel channel) {
+            string permissions;
+            permissions = computeBasePermissions(guildMember, *guildMember.coreClient->guilds, *guildMember.coreClient->roles);
+            permissions = computeOverwrites(permissions, guildMember, channel);
+            return permissions;
+        }
+
+        static bool checkForPermission(GuildMember guildMember, Channel channel, DiscordCoreInternal::Permissions permission) {
+            string permissionsString = computePermissions(guildMember, channel);
+            if ((stoll(permissionsString) & (__int64)permission) == (__int64)permission) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        protected:
         static string computeBasePermissions(GuildMember guildMember, GuildManager guilds, RoleManager roles) {
             Guild guild = guilds.getGuildAsync({ guildMember.data.guildId }).get();
 
@@ -326,13 +344,13 @@ namespace DiscordCoreAPI {
             }
 
             Guild guild = guildMember.coreClient->guilds->getGuildAsync({ .guildId = guildMember.data.guildId }).get();
-                
+
             DiscordCoreInternal::OverWriteData overwriteEveryone = channel.data.permissionOverwrites.at(guild.data.id);
 
             if (overwriteEveryone.id != "") {
                 permissionsInt &= ~stoll(overwriteEveryone.deny);
                 permissionsInt |= stoll(overwriteEveryone.allow);
-                }
+            }
 
             map<string, DiscordCoreInternal::OverWriteData> overWrites = channel.data.permissionOverwrites;
             __int64 allow = 0;
@@ -346,7 +364,7 @@ namespace DiscordCoreAPI {
             }
             permissionsInt &= ~deny;
             permissionsInt |= allow;
-            
+
             if (overWrites.contains(guildMember.data.user.id)) {
                 permissionsInt &= ~stoll(overWrites.at(guildMember.data.user.id).deny);
                 permissionsInt |= stoll(overWrites.at(guildMember.data.user.id).allow);
@@ -355,23 +373,6 @@ namespace DiscordCoreAPI {
             stringstream stream;
             stream << permissionsInt;
             return stream.str();
-        } 
-
-        static string computePermissions(GuildMember guildMember, Channel channel) {
-            string permissions;
-            permissions = computeBasePermissions(guildMember, *guildMember.coreClient->guilds, *guildMember.coreClient->roles);
-            permissions = computeOverwrites(permissions, guildMember, channel);
-            return permissions;
-        }
-
-        static bool checkForPermission(GuildMember guildMember, Channel channel, DiscordCoreInternal::Permissions permission) {
-            string permissionsString = computePermissions(guildMember, channel);
-            if ((stoll(permissionsString) & (__int64)permission) == (__int64)permission) {
-                return true;
-            }
-            else {
-                return false;
-            }
         }
 
     };

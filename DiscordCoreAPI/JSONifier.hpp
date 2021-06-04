@@ -410,7 +410,6 @@ namespace DiscordCoreInternal {
 				addOptionsData(createApplicationCommandData.options.at(x), &data.at("options"));
 			}
 		}
-		
 
 		return data.dump();
 	}
@@ -431,7 +430,6 @@ namespace DiscordCoreInternal {
 				addOptionsData(editApplicationCommandData.options.at(x), &data.at("options"));
 			}
 		}
-
 
 		return data.dump();
 	}
@@ -664,25 +662,20 @@ namespace DiscordCoreInternal {
 			};
 		 }
 
+		 string getCreateRolePayload(CreateRoleData createRoleData) {
+			 unsigned int roleColorInt = stol(createRoleData.color, 0, 16);
+			 stringstream stream;
+			 stream << setbase(10) << roleColorInt;
+			 string roleColorReal = stream.str();
 
+			 json data = { {"color", roleColorReal
 
-		
-
-		string getCreateRolePayload(CreateRoleData createRoleData) {
-			unsigned int roleColorInt = stol(createRoleData.color, 0, 16);
-			stringstream stream;
-			stream << setbase(10) << roleColorInt;
-			string roleColorReal = stream.str();
-
-			json data = { {"color", roleColorReal
-
-				},
-				{"hoist", createRoleData.hoist},{"permissions", createRoleData.permissions},
-				{"mentionable", createRoleData.mentionable},
-				{"name", createRoleData.name }
-			};
-			return data.dump();
-		};
-
+				 },
+				 {"hoist", createRoleData.hoist},{"permissions", createRoleData.permissions},
+				 {"mentionable", createRoleData.mentionable},
+				 {"name", createRoleData.name }
+			 };
+			 return data.dump();
+		 };
 }
 #endif

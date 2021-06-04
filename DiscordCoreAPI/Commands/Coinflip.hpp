@@ -43,8 +43,8 @@ namespace DiscordCoreAPI {
 					return;
 				}
 				GuildMember guildMember = args->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->message.data.author.id }).get();
-
-				if (!DiscordCoreAPI::PermissionsConverter::checkForPermission(guildMember, channel, DiscordCoreInternal::Permissions::MANAGE_MESSAGES)) {
+				GuildMember botMember = args->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->coreClient->discordUser->data.userId }).get();
+				if (!DiscordCoreAPI::PermissionsConverter::checkForPermission(botMember, channel, DiscordCoreInternal::Permissions::MANAGE_MESSAGES)) {
 					string msgString = "------\n**I need the Manage Messages permission in this channel, for this game!**\n------";
 					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
@@ -147,7 +147,7 @@ namespace DiscordCoreAPI {
 					msgEmbed2.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed2.setDescription(timeOutString);
 					vector<DiscordCoreInternal::EmbedData> embeds;
-					embeds.push_back(msgEmbed);
+					embeds.push_back(msgEmbed2);
 					args->coreClient->messages->editMessageAsync({ .embed = msgEmbed2,.originalMessage = message, .components = vector<DiscordCoreInternal::ActionRowData>() }, args->message.data.channelId, message.data.id).get();
 					return;
 				}

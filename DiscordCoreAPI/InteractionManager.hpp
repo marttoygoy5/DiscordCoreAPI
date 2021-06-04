@@ -24,8 +24,8 @@ namespace DiscordCoreAPI {
             finalCommandString += value + ", ";
         }
         return finalCommandString;
-    };
-    
+    };    
+
     struct InteractionResponseData {
         DiscordCoreInternal::InteractionCallbackType type;
         DiscordCoreInternal::InteractionApplicationCommandCallbackData data;
@@ -55,7 +55,6 @@ namespace DiscordCoreAPI {
 	class InteractionManager {
     public:
         static unbounded_buffer<InteractionData>* inputInteractionBuffer;
-        static DiscordCoreClient* pDiscordCoreClient;
         static map<string, Button> activeButtons;
         static bool areWeRunning;
 
@@ -63,10 +62,9 @@ namespace DiscordCoreAPI {
 
 		}
 
-        static void initialize(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* pDiscordCoreClientNew) {
+        static void initialize(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
             InteractionManager::agentResources = agentResourcesNew;
             InteractionManager::threads = threadsNew;
-            InteractionManager::pDiscordCoreClient = pDiscordCoreClientNew;
             InteractionManager::inputInteractionBuffer = new unbounded_buffer<InteractionData>;
         }
 
@@ -184,11 +182,10 @@ namespace DiscordCoreAPI {
         static DiscordCoreInternal::HttpAgentResources agentResources;
         static concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
 
-	};
-    DiscordCoreInternal::HttpAgentResources InteractionManager::agentResources;
+    };
     concurrent_vector<DiscordCoreInternal::ThreadContext>* InteractionManager::threads;
     unbounded_buffer<InteractionData>* InteractionManager::inputInteractionBuffer;
-    DiscordCoreClient* InteractionManager::pDiscordCoreClient;
+    DiscordCoreInternal::HttpAgentResources InteractionManager::agentResources;
     map<string, Button> InteractionManager::activeButtons;
     bool InteractionManager::areWeRunning;
 
@@ -198,8 +195,6 @@ namespace DiscordCoreAPI {
         string channelId;
         string messageId;
         string userId;
-        string interactionId;
-        string token;
 
         Button(DiscordCoreInternal::MessageData messageData, unsigned long long maxTimeInMsNew) {
             this->startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -207,7 +202,6 @@ namespace DiscordCoreAPI {
             this->messageId = messageData.id;
             this->userId = messageData.author.id;
             this->maxTimeInMs = maxTimeInMsNew;
-            this->token = messageData.interactionToken;
             InteractionManager::activeButtons.insert(make_pair(this->channelId + this->messageId + this->userId, *this));
         }
     protected:
@@ -217,8 +211,7 @@ namespace DiscordCoreAPI {
 
     bool checkIfButtonIsActive(string channelId, string messageId, string userId) {
         if (InteractionManager::activeButtons.contains(channelId + messageId + userId)) {
-            Button button = InteractionManager::activeButtons.at(channelId + messageId + userId);
-            InteractionManager::activeButtons.erase(button.channelId + button.messageId + button.userId);
+            InteractionManager::activeButtons.erase(channelId + messageId + userId);
             return true;
         }
         else {

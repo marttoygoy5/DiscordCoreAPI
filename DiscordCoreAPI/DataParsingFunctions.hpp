@@ -2448,55 +2448,50 @@ namespace DiscordCoreInternal {
 
     void parseObject(json jsonObjectData, ApplicationCommandInteractionDataResolved* pDataStructure) {
         ApplicationCommandInteractionDataResolved appCommandInteractionDataResolved = *pDataStructure;
-
+        /*
         if (jsonObjectData.contains("users") && !jsonObjectData.at("users").is_null()) {
-            json theMap = jsonObjectData.at("users");
-            cout << theMap << endl;
-            /*
-            for (const auto&  value : usersMap) {
+            auto theMap = jsonObjectData.at("users").get<map<string, json>>();
+            for (const auto& [key, value] : theMap) {
                 UserData userData;
                 parseObject(value, &userData);
                 appCommandInteractionDataResolved.users.insert(make_pair(key, userData));
             }
-            */
         }
-
+        
         if (jsonObjectData.contains("members") && !jsonObjectData.at("members").is_null()) {
-            json theMap = jsonObjectData.at("members");
-            cout << theMap << endl;
-            /*
-            for (const auto&  value : usersMap) {
-                UserData userData;
-                parseObject(value, &userData);
-                appCommandInteractionDataResolved.users.insert(make_pair(key, userData));
+            auto theMap = jsonObjectData.at("members").get<map<string, json>>();
+           
+            for (const auto& [key, value] : theMap) {
+                GuildMemberData guildMemberData;
+                parseObject(value, &guildMemberData);
+                appCommandInteractionDataResolved.members.insert(make_pair(key, guildMemberData));
             }
-            */
+        
         }
 
         if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
-            json theMap = jsonObjectData.at("roles");
-            cout << theMap << endl;
-            /*
-            for (const auto&  value : usersMap) {
-                UserData userData;
-                parseObject(value, &userData);
-                appCommandInteractionDataResolved.users.insert(make_pair(key, userData));
+            auto theMap = jsonObjectData.at("roles").get<map<string, json>>();
+           
+            for (const auto& [key, value] : theMap) {
+                RoleData roleData;
+                parseObject(value, &roleData);
+                appCommandInteractionDataResolved.roles.insert(make_pair(key, roleData));
             }
-            */
+        
         }
 
         if (jsonObjectData.contains("channels") && !jsonObjectData.at("channels").is_null()) {
-            json theMap = jsonObjectData.at("channels");
-            cout << theMap << endl;
+            auto  theMap = jsonObjectData.at("channels").get<map<string, json>>();
             /*
-            for (const auto&  value : usersMap) {
-                UserData userData;
-                parseObject(value, &userData);
-                appCommandInteractionDataResolved.users.insert(make_pair(key, userData));
+            for (const auto&  [key, value]: theMap) {
+                ChannelData channelData;
+                parseObject(value, &channelData);
+                appCommandInteractionDataResolved.channels.insert(make_pair(key, channelData));
             }
-            */
+        
+            
         }
-
+         */
         *pDataStructure = appCommandInteractionDataResolved;
     }
 
@@ -2527,16 +2522,18 @@ namespace DiscordCoreInternal {
                 appCommandInteractionDataOption.valueInt = theValue;
             }
         }
-
+        
         if (jsonObjectData.contains("options") && !jsonObjectData.at("options").is_null()) {
             json optionsArray = jsonObjectData.at("options");
-            for (const auto& value: optionsArray){
-                ApplicationCommandInteractionDataOption option;
-                parseObject(value, &option);
-                appCommandInteractionDataOption.options.push_back(option);
-            }
+            if (optionsArray.size() > 0){
+                for (const auto& value : optionsArray) {
+                    ApplicationCommandInteractionDataOption option;
+                    parseObject(value, &option);
+                    appCommandInteractionDataOption.options.push_back(option);
+                }
+            }            
         }
-
+        
         *pDataStructure = appCommandInteractionDataOption;
     }
 
@@ -2551,8 +2548,8 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("id") && !jsonObjectData.at("id").is_null()) {
             string theValue = jsonObjectData.at("id");
             appCommandInteractionData.id = theValue;
-        }
-        
+        }        
+
         if (jsonObjectData.contains("custom_id") && !jsonObjectData.at("custom_id").is_null()) {
             string theValue = jsonObjectData.at("custom_id");
             appCommandInteractionData.customId = theValue;
@@ -2562,40 +2559,42 @@ namespace DiscordCoreInternal {
             int theValue = jsonObjectData.at("component_type");
             appCommandInteractionData.componentType = theValue;
         }
-
+        
         if (jsonObjectData.contains("resolved") && !jsonObjectData.at("resolved").is_null()) {
             ApplicationCommandInteractionDataResolved theValue = appCommandInteractionData.resolved;
             parseObject(jsonObjectData.at("resovled"), &theValue);
             appCommandInteractionData.resolved = theValue;
         }
-
+        
         if (jsonObjectData.contains("options") && !jsonObjectData.at("options").is_null()) {
             json optionsArray = jsonObjectData.at("options");
-            for (auto& value : optionsArray) {
-                ApplicationCommandInteractionDataOption option;
-                parseObject(value, &option);
-                appCommandInteractionData.options.push_back(option);
-            }
+            if (optionsArray.size() > 0) {
+                for (auto& value : optionsArray) {
+                    ApplicationCommandInteractionDataOption option;
+                    parseObject(value, &option);
+                    appCommandInteractionData.options.push_back(option);
+                }
+            }            
         }
-
+        
         *pDataStructure = appCommandInteractionData;
     }
 
     void parseObject(json jsonObjectData, InteractionData* pDataStructure, CommandData* pDataStructure2) {
         InteractionData interactionData = *pDataStructure;
         CommandData commandData = *pDataStructure2;
-
+        
         if (jsonObjectData.contains("data") && !jsonObjectData.at("data").is_null()) {
             ApplicationCommandInteractionData theValue = interactionData.data;
             parseObject(jsonObjectData.at("data"), &theValue);
             interactionData.data = theValue;
         }
-
+        
         if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
             InteractionType theValue = jsonObjectData.at("type");
             interactionData.type = theValue;
         }
-
+        
         if (jsonObjectData.contains("token") && !jsonObjectData.at("token").is_null()) {
             string theValue = jsonObjectData.at("token");
             interactionData.token = theValue;
@@ -2613,7 +2612,7 @@ namespace DiscordCoreInternal {
                 interactionData.user = theValue;
             }
         }
-
+        
         if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
             string theValue = jsonObjectData.at("channel_id");
             interactionData.channelId = theValue;
@@ -2623,7 +2622,7 @@ namespace DiscordCoreInternal {
             string theValue = jsonObjectData.at("guild_id");
             interactionData.guildId = theValue;
         }
-
+        
         if (jsonObjectData.contains("data") && !jsonObjectData.at("data").is_null()) {
             if (jsonObjectData.at("data").contains("options") && !jsonObjectData.at("data").at("options").is_null()) {
                 json::array_t theValue = jsonObjectData.at("data").at("options");
@@ -2641,8 +2640,8 @@ namespace DiscordCoreInternal {
                 }
             }
         }
-
-        if (jsonObjectData.contains("data")) {
+        
+        if (jsonObjectData.contains("data") && !jsonObjectData.at("data").is_null()) {
             if (jsonObjectData.at("data").contains("name") && !jsonObjectData.at("data").at("name").is_null()) {
                 string theValue = jsonObjectData.at("data").at("name");
                 commandData.commandName = theValue;
@@ -2668,10 +2667,11 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("application_id") && !jsonObjectData.at("application_id").is_null()) {
             string theValue = jsonObjectData.at("application_id");
             interactionData.applicationId = theValue;
-
-            *pDataStructure = interactionData;
-            *pDataStructure2 = commandData;
+            
         }
+        
+        *pDataStructure = interactionData;
+        *pDataStructure2 = commandData;
     }
 };
 #endif

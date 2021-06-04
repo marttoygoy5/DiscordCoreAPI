@@ -898,8 +898,10 @@ namespace  DiscordCoreInternal {
     struct PostMessageData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
+        HttpWorkloadType workloadType;
         string channelId;
         string content;
+        string userId;
     };
 
     struct PatchMessageData {

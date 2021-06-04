@@ -247,10 +247,8 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestGetBuffer;
 		static unbounded_buffer<DiscordCoreInternal::PostMessageData>* requestPostBuffer;
-		static unbounded_buffer<DiscordCoreInternal::SendDMData>* requestPostDMBuffer;
 		static unbounded_buffer<DiscordCoreInternal::PatchMessageData>* requestPatchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* requestDeleteBuffer;
-		static overwrite_buffer<DiscordCoreInternal::MessageData>* requestInteractionBuffer;
 		static unbounded_buffer<Message>* outBuffer;
 		static concurrent_queue<Message> messagesToInsert;
 		static overwrite_buffer<map<string, Message>> cache;
@@ -271,10 +269,8 @@ namespace DiscordCoreAPI {
 			MessageManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::GetMessageData>;
 			MessageManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetMessageData>;
 			MessageManagerAgent::requestPostBuffer = new unbounded_buffer<DiscordCoreInternal::PostMessageData>;
-			MessageManagerAgent::requestPostDMBuffer = new unbounded_buffer<DiscordCoreInternal::SendDMData>;
 			MessageManagerAgent::requestPatchBuffer = new unbounded_buffer<DiscordCoreInternal::PatchMessageData>;
 			MessageManagerAgent::requestDeleteBuffer = new unbounded_buffer<DiscordCoreInternal::DeleteMessageData>;
-			MessageManagerAgent::requestInteractionBuffer = new overwrite_buffer<DiscordCoreInternal::MessageData>;
 			MessageManagerAgent::outBuffer = new unbounded_buffer<Message>;
 			return;
 		}
@@ -344,7 +340,7 @@ namespace DiscordCoreAPI {
 		task<Message> postObjectAsync(DiscordCoreInternal::PostMessageData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.content = dataPackage.content;
-			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_MESSAGE;
+			workload.workloadType = dataPackage.workloadType;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
 			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages";
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
@@ -359,34 +355,6 @@ namespace DiscordCoreAPI {
 			try_receive(requestAgent.workReturnBuffer, returnData);
 			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
 				cout << "MessageManagerAgent::postObjectAsync() Error 02: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
-			}
-			else {
-				cout << "MessageManagerAgent::postObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
-			}
-			DiscordCoreInternal::MessageData messageData;
-			DiscordCoreInternal::parseObject(returnData.data, &messageData);
-			Message messageNew(messageData, this->coreClient);
-			co_return messageNew;
-		}
-
-		task<Message> postObjectAsync(DiscordCoreInternal::SendDMData dataPackage) {
-			DiscordCoreInternal::HttpWorkload workload;
-			workload.content = dataPackage.content;
-			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_USER_DM;
-			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
-			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages";
-			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
-			send(requestAgent.workSubmissionBuffer, workload);
-			requestAgent.start();
-			agent::wait(&requestAgent);
-			exception error;
-			while (requestAgent.getError(error)) {
-				cout << "MessageManagerAgent::postObjectAsync() Error 03: " << error.what() << endl << endl;
-			}
-			DiscordCoreInternal::HttpData returnData;
-			try_receive(requestAgent.workReturnBuffer, returnData);
-			if (returnData.returnCode != 204 && returnData.returnCode != 201 && returnData.returnCode != 200) {
-				cout << "MessageManagerAgent::postObjectAsync() Error 04: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
 			else {
 				cout << "MessageManagerAgent::postObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
@@ -442,6 +410,7 @@ namespace DiscordCoreAPI {
 		void run() {
 			try {
 				DiscordCoreInternal::PostMessageData dataPackage;
+				dataPackage.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_MESSAGE;
 				if (try_receive(MessageManagerAgent::requestPostBuffer, dataPackage)) {
 					Message message = this->postObjectAsync(dataPackage).get();
 					map<string, Message> cacheTemp;
@@ -460,8 +429,9 @@ namespace DiscordCoreAPI {
 						}
 					}
 				};
-				DiscordCoreInternal::SendDMData dataPackageNewer;
-				if (try_receive(MessageManagerAgent::requestPostDMBuffer, dataPackageNewer)) {
+				DiscordCoreInternal::PostMessageData dataPackageNewer;
+				dataPackageNewer.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_USER_DM;
+				if (try_receive(MessageManagerAgent::requestPostBuffer, dataPackageNewer)) {
 					Message message = this->postObjectAsync(dataPackageNewer).get();
 					map<string, Message> cacheTemp;
 					try_receive(MessageManagerAgent::cache, cacheTemp);
@@ -652,7 +622,7 @@ namespace DiscordCoreAPI {
 		task<Message> sendDMAsync(SendDMData sendDMData) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::SendDMData dataPackage;
+			DiscordCoreInternal::PostMessageData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.userId = sendDMData.userId;
@@ -684,7 +654,7 @@ namespace DiscordCoreAPI {
 			createMessageDataNew.tts = sendDMData.messageData.tts;
 			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
 			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			send(MessageManagerAgent::requestPostDMBuffer, dataPackage);
+			send(MessageManagerAgent::requestPostBuffer, dataPackage);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
 			exception error;
@@ -913,10 +883,8 @@ namespace DiscordCoreAPI {
 	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestFetchBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestGetBuffer;
 	unbounded_buffer<DiscordCoreInternal::PostMessageData>* MessageManagerAgent::requestPostBuffer;
-	unbounded_buffer<DiscordCoreInternal::SendDMData>* MessageManagerAgent::requestPostDMBuffer;
 	unbounded_buffer<DiscordCoreInternal::PatchMessageData>* MessageManagerAgent::requestPatchBuffer;
 	unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* MessageManagerAgent::requestDeleteBuffer;
-	overwrite_buffer<DiscordCoreInternal::MessageData>* MessageManagerAgent::requestInteractionBuffer;
 	unbounded_buffer<Message>* MessageManagerAgent::outBuffer;
 	concurrent_queue<Message> MessageManagerAgent::messagesToInsert;
 }

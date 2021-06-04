@@ -145,7 +145,7 @@ namespace DiscordCoreAPI {
 			GuildMemberManagerAgent::initialize();
 			GuildManagerAgent::initialize();
 			ChannelManagerAgent::initialize();
-			InteractionManager::initialize(agentResources, this->pSystemThreads.get()->getThreads().get(), this);
+			InteractionManager::initialize(agentResources, this->pSystemThreads.get()->getThreads().get());
 			this->reactions = new ReactionManager(agentResources, this->pSystemThreads->getThreads().get(), this);
 			this->users = new UserManager(agentResources, this->pSystemThreads->getThreads().get(), this);
 			this->messages = new MessageManager(agentResources, this->pSystemThreads->getThreads().get(), this);
