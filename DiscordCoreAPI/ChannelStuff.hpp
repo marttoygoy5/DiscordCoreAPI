@@ -131,7 +131,7 @@ namespace DiscordCoreAPI {
 			else {
 				cout << "ChannelManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
-			DiscordCoreInternal::ChannelData channelData;
+			ChannelData channelData;
 			DiscordCoreInternal::parseObject(returnData.data, &channelData);
 			Channel channelNew(channelData, this->coreClient);
 			co_return channelNew;
@@ -160,7 +160,7 @@ namespace DiscordCoreAPI {
 			else {
 				cout << "ChannelManagerAgent::postObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
-			DiscordCoreInternal::ChannelData channelData;
+			ChannelData channelData;
 			DiscordCoreInternal::parseObject(returnData.data, &channelData);
 			Channel channelNew(channelData, this->coreClient);
 			co_return channelNew;

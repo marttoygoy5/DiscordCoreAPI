@@ -9,8 +9,11 @@
 #define _EVENT_MANAGER_
 
 #include "pch.h"
+#include "GuildMemberStuff.hpp"
 
 namespace DiscordCoreAPI {
+
+	class DiscordCoreClientBase;
 
 	struct OnGuildMemberAddData {
 		DiscordCoreAPI::GuildMember guildMember;
@@ -38,8 +41,20 @@ namespace DiscordCoreAPI {
 		DiscordCoreAPI::InteractionData interactionData;
 	};
 
+	struct OnEventCreateData {
+		DiscordCoreAPI::InputEventData eventData;
+	};
+
 	class EventManager  {
 	public:
+
+		winrt::event_token onEventCreate(winrt::delegate<OnEventCreateData> const& handler) {
+			return onEventCreationEvent.add(handler);
+		}
+
+		void onEventCreate(winrt::event_token const& token) {
+			onEventCreationEvent.remove(token);
+		}
 
 		winrt::event_token onInteractionCreate(winrt::delegate<OnInteractionCreateData> const& handler) {
 			return onInteractionCreateEvent.add(handler);
@@ -96,6 +111,8 @@ namespace DiscordCoreAPI {
 		winrt::event<winrt::delegate<OnInteractionCreateData>> onInteractionCreateEvent;
 
 		winrt::event<winrt::delegate<OnGuildCreationData>> onGuildCreationEvent;
+
+		winrt::event<winrt::delegate<OnEventCreateData>> onEventCreationEvent;
 
 		winrt::event <winrt::delegate<OnMessageCreationData>> onMessageCreationEvent;
 

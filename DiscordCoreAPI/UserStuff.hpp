@@ -135,7 +135,7 @@ namespace DiscordCoreAPI {
 			else {
 				cout << "UserManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
-			DiscordCoreInternal::UserData userData;
+			UserData userData;
 			DiscordCoreInternal::parseObject(returnData.data, &userData);
 			User userNew(userData, this->coreClient);
 			co_return userNew;
@@ -162,7 +162,7 @@ namespace DiscordCoreAPI {
 			else {
 				cout << "UserManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
-			DiscordCoreInternal::ApplicationData applicationData;
+			ApplicationData applicationData;
 			DiscordCoreInternal::parseObject(returnData.data, &applicationData);
 			Application application(applicationData);
 			co_return application;

@@ -9,16 +9,11 @@
 #define _THREAD_MANAGER_
 
 #include "pch.h"
+#include "FoundationEntities.hpp"
 
 namespace DiscordCoreInternal {
 
     class ThreadManager;
-
-    struct ThreadContext {
-        Scheduler* scheduler{ nullptr };
-        shared_ptr<task_group> taskGroup{ nullptr };
-        shared_ptr<DispatcherQueue> threadQueue{ nullptr };
-    };
 
     class ThreadManagerAgent :public agent {
     protected:

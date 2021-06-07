@@ -124,7 +124,7 @@ namespace DiscordCoreAPI {
 			else {
 				cout << "GuildMemberManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
-			DiscordCoreInternal::GuildMemberData guildMemberData = getData.oldGuildMemberData;
+			GuildMemberData guildMemberData;
 			DiscordCoreInternal::parseObject(returnData.data, &guildMemberData);
 			GuildMember guildMemberNew(guildMemberData, this->coreClient);
 			co_return guildMemberNew;

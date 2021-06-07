@@ -15,15 +15,9 @@ namespace DiscordCoreAPI {
 
 	class DiscordCoreClient;
 
-	struct CommandData {
-		Message message;
-		DiscordCoreClient* coreClient;
-	};
-
 	struct BaseFunctionArguments {
-		Message message;
+		InputEventData eventData;
 		vector<string> argumentsArray;
-		DiscordCoreAPI::DiscordCoreClient* coreClient;
 	};
 
 	class BaseFunction {
@@ -43,16 +37,36 @@ namespace DiscordCoreAPI {
 
 		static void checkForAndRunCommands(CommandData commandData) {
 			try {
-				BaseFunction* functionPointer = getCommand(convertToLowerCase(commandData.message.data.content));
+				BaseFunction* functionPointer{ nullptr };
+				bool messageOption = false;
+				if (commandData.eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+					functionPointer = getCommand(convertToLowerCase(commandData.eventData.messageData.content));
+					messageOption = true;
+				}
+				else if (commandData.eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+					DiscordCoreInternal::CommandData commandDataNew;
+
+					DiscordCoreInternal::parseObject(commandData.eventData.interactionData.dataRaw, &commandDataNew);
+					functionPointer = getCommand(convertToLowerCase(commandDataNew.commandName));
+					messageOption = false;
+				}
 
 				if (functionPointer == nullptr) {
 					return;
 				}
 
-				BaseFunctionArguments args(commandData.message);
-				args.argumentsArray = parseArguments(commandData.message.data.content);
-				args.coreClient = commandData.coreClient;
-				args.message = commandData.message;
+				BaseFunctionArguments args(commandData.eventData);
+
+				if (messageOption == true) {
+					args.argumentsArray = parseArguments(commandData.eventData.messageData.content);
+					args.eventData.messageData = commandData.eventData.messageData;
+				}
+				else if (messageOption == false) {
+					DiscordCoreInternal::CommandData commandDataNew;
+					DiscordCoreInternal::parseObject(commandData.eventData.interactionData.dataRaw, &commandDataNew);
+					args.argumentsArray = commandDataNew.optionsArgs;
+					args.eventData.interactionData = commandData.eventData.interactionData;
+				}
 
 				functionPointer->execute(&args).get();
 			}
@@ -68,15 +82,10 @@ namespace DiscordCoreAPI {
 
 		static BaseFunction* getCommand(string messageContents) {
 			try {
-				if (messageContents[0] == commandPrefix[0]) {
-					for (auto const& [key, value] : DiscordCoreAPI::CommandController::commands) {
-						if (messageContents.find(key) != string::npos) {
-							return value;
-						}
+				for (auto const& [key, value] : DiscordCoreAPI::CommandController::commands) {
+					if (messageContents.find(key) != string::npos) {
+						return value;
 					}
-				}
-				else {
-					return nullptr;
 				}
 				return nullptr;
 			}
@@ -87,9 +96,9 @@ namespace DiscordCoreAPI {
 		}
 
 		static vector<string >parseArguments(string messageContents) {
+			vector<string> args;
 			try {
 				size_t startingPosition = messageContents.find("=");
-				vector<string> args;
 				if (startingPosition == string::npos) {
 					return args;
 				}
@@ -148,8 +157,8 @@ namespace DiscordCoreAPI {
 			}
 			catch (exception& e) {
 				cout << "CommandController::parseArguments() Error: " << e.what() << endl << endl;
+				return args;
 			}
-			
 		}
 	};
 	map<string, BaseFunction*> CommandController::commands;

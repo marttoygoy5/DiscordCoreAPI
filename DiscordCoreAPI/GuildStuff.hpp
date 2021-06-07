@@ -27,7 +27,7 @@ namespace DiscordCoreAPI {
 	class Guild {
 	public:
 
-		DiscordCoreInternal::GuildData data;
+		GuildData data;
 		DiscordCoreClientBase* coreClientBase{ nullptr };
 		DiscordCoreClient* coreClient{ nullptr };
 		Guild() {};
@@ -40,7 +40,7 @@ namespace DiscordCoreAPI {
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 
-		Guild(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreInternal::GuildData dataNew,  DiscordCoreClient* coreClientNew, DiscordCoreClientBase* coreClientBaseNew) {
+		Guild(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, GuildData dataNew,  DiscordCoreClient* coreClientNew, DiscordCoreClientBase* coreClientBaseNew) {
 			this->threads = threadsNew;
 			this->agentResources = agentResourcesNew;
 			this->coreClient = coreClientNew;
@@ -70,7 +70,7 @@ namespace DiscordCoreAPI {
 				}
 				cout << "Caching roles for guild: " << this->data.name << endl;
 				for (auto const& [key, value] : data.roles) {
-					DiscordCoreInternal::RoleData roleData = value;
+					RoleData roleData = value;
 					Role role(roleData, this->coreClient);
 					this->coreClientBase->roles->insertRoleAsync(role).get();
 				}
@@ -84,7 +84,6 @@ namespace DiscordCoreAPI {
 			catch (exception error) {
 				cout << "Error: " << error.what() << endl;
 			}
-
 			return;
 		}
 	};
@@ -94,6 +93,9 @@ namespace DiscordCoreAPI {
 	};
 
 	struct FetchGuildData {
+		DiscordCoreInternal::HttpAgentResources agentResources;
+		DiscordCoreInternal::ThreadContext threadContext;
+		GuildData oldGuildData;
 		string guildId;
 	};
 
@@ -102,12 +104,12 @@ namespace DiscordCoreAPI {
 		friend class DiscordCoreClientExt;
 		friend class DiscordCoreClient;
 		friend class GuildManager;
-		static unbounded_buffer<DiscordCoreInternal::FetchGuildData>* requestFetchBuffer;
+		static unbounded_buffer<FetchGuildData>* requestFetchBuffer;
 		static unbounded_buffer<DiscordCoreInternal::GetGuildData>* requestGetBuffer;
 		static unbounded_buffer<Guild>* outBuffer;
 		static concurrent_queue<Guild>* guildsToInsert;
 		static overwrite_buffer<map<string, Guild>> cache;
-		unbounded_buffer<exception> errorBuffer;
+		static unbounded_buffer<exception>* errorBuffer;
 		
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
@@ -123,21 +125,22 @@ namespace DiscordCoreAPI {
 		}
 
 		static void initialize() {
-			GuildManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::FetchGuildData>;
+			GuildManagerAgent::requestFetchBuffer = new unbounded_buffer<FetchGuildData>;
 			GuildManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetGuildData>;
 			GuildManagerAgent::outBuffer = new unbounded_buffer<Guild>;
 			GuildManagerAgent::guildsToInsert = new concurrent_queue<Guild>;
+			GuildManagerAgent::errorBuffer = new unbounded_buffer<exception>;
 			return;
 		}
 
-		bool getError(exception& error) {
+		bool getError(exception error) {
 			if (try_receive(errorBuffer, error)) {
 				return true;
-			return false;
 			}
+			return false;
 		}
 
-		task<Guild> getObjectAsync(DiscordCoreInternal::FetchGuildData dataPackage) {
+		task<Guild> getObjectAsync(FetchGuildData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_GUILD;
@@ -158,7 +161,7 @@ namespace DiscordCoreAPI {
 			else {
 				cout << "GuildManagerAgent::getObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
-			DiscordCoreInternal::GuildData guildData = dataPackage.oldGuildData;
+			GuildData guildData = (DiscordCoreAPI::GuildData)dataPackage.oldGuildData;
 			DiscordCoreInternal::parseObject(returnData.data, &guildData);
 			Guild guildNew(this->agentResources, this->threads, guildData, this->coreClient, this->coreClientBase);
 			co_return guildNew;
@@ -176,22 +179,21 @@ namespace DiscordCoreAPI {
 						}
 					}
 				}
-				DiscordCoreInternal::FetchGuildData fetchData;
+				FetchGuildData fetchData;
 				if (try_receive(GuildManagerAgent::requestFetchBuffer, fetchData)) {
 					map<string, Guild> cacheTemp;
 					if (try_receive(GuildManagerAgent::cache, cacheTemp)) {
 						if (cacheTemp.contains(fetchData.guildId)) {
-							dataPackage.oldGuildData = cacheTemp.at(fetchData.guildId).data;
+							fetchData.oldGuildData = cacheTemp.at(fetchData.guildId).data;
 							cacheTemp.erase(fetchData.guildId);
 						}
 					}
-					fetchData.oldGuildData = dataPackage.oldGuildData;
 					Guild guild = getObjectAsync(fetchData).get();
 					cacheTemp.insert(make_pair(fetchData.guildId, guild));
 					send(GuildManagerAgent::outBuffer, guild);
 					asend(cache, cacheTemp);
 				}
-				DiscordCoreInternal::GuildData guildData;
+				GuildData guildData;
 				Guild guildNew(this->agentResources, this->threads, guildData, this->coreClient, this->coreClientBase);
 				while (GuildManagerAgent::guildsToInsert->try_pop(guildNew)) {
 					map<string, Guild> cacheTemp;
@@ -218,7 +220,7 @@ namespace DiscordCoreAPI {
 		task<Guild> fetchAsync(FetchGuildData getGuildData) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::FetchGuildData dataPackage;
+			FetchGuildData dataPackage;
 			dataPackage.agentResources = this->agentResources;
 			dataPackage.threadContext = this->threads->at(3);
 			dataPackage.guildId = getGuildData.guildId;
@@ -230,7 +232,7 @@ namespace DiscordCoreAPI {
 			while (guildManagerAgent.getError(error)) {
 				cout << "GuildManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
-			DiscordCoreInternal::GuildData guildData;
+			GuildData guildData;
 			Guild guild(this->agentResources, this->threads, guildData, this->coreClient, this->coreClientBase);
 			try_receive(GuildManagerAgent::outBuffer, guild);
 			co_await mainThread;
@@ -250,9 +252,9 @@ namespace DiscordCoreAPI {
 			agent::wait(&guildManagerAgent);
 			exception error;
 			while (guildManagerAgent.getError(error)) {
-				cout << "GuildManager::guildGuildAsync() Error: " << error.what() << endl << endl;
+				cout << "GuildManager::getGuildAsync() Error: " << error.what() << endl << endl;
 			}
-			DiscordCoreInternal::GuildData guildData;
+			GuildData guildData;
 			Guild guild(this->agentResources, this->threads, guildData, this->coreClient, this->coreClientBase);
 			try_receive(GuildManagerAgent::outBuffer, guild);
 			co_await mainThread;
@@ -289,9 +291,10 @@ namespace DiscordCoreAPI {
 
 	};
 	overwrite_buffer<map<string, Guild>> GuildManagerAgent::cache;
-	unbounded_buffer<DiscordCoreInternal::FetchGuildData>* GuildManagerAgent::requestFetchBuffer;
+	unbounded_buffer<FetchGuildData>* GuildManagerAgent::requestFetchBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetGuildData>* GuildManagerAgent::requestGetBuffer;
 	unbounded_buffer<Guild>* GuildManagerAgent::outBuffer;
 	concurrent_queue<Guild>* GuildManagerAgent::guildsToInsert;
+	unbounded_buffer<exception>* GuildManagerAgent::errorBuffer;
 }
 #endif

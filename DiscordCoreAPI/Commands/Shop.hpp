@@ -23,41 +23,61 @@ namespace DiscordCoreAPI {
 
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
-				Channel channel = args->coreClient->channels->getChannelAsync({ args->message.data.channelId }).get();
-				bool areWeInADm = areWeInADM(args->message, channel);
+				Channel channel = args->eventData.pDiscordCoreClient->channels->getChannelAsync({ args->eventData.getChannelId() }).get();
+				Guild guild = args->eventData.pDiscordCoreClient->guilds->getGuildAsync({ args->eventData.getGuildId() }).get();
+				DiscordGuild discordGuild(guild.data);
+
+				bool areWeInADm = areWeInADM(args->eventData, channel, discordGuild);
 
 				if (areWeInADm ==  true) {
 					co_return;
 				}
 
-				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
-					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
+				if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+					InputEventHandler::deleteInputEventResponse(args->eventData).get();
 				}
 
-				Guild guild = args->coreClient->guilds->getGuildAsync({ args->message.data.guildId }).get();
-				DiscordGuild discordGuild(guild.data);
-
-				bool areWeAllowed = checkIfAllowedGamingInChannel(args->message, discordGuild.data);
+				bool areWeAllowed = checkIfAllowedGamingInChannel(args->eventData, discordGuild);
 
 				if (areWeAllowed == false) {
 					co_return;
 				}
 
-				GuildMember botMember = args->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->coreClient->currentUser->data.id }).get();
-				if (!(DiscordCoreAPI::PermissionsConverter::checkForPermission(botMember, channel, DiscordCoreInternal::Permissions::MANAGE_MESSAGES))) {
+				InputEventData event01;
+				GuildMember botMember = args->eventData.pDiscordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->eventData.getGuildId(), .guildMemberId = args->eventData.pDiscordCoreClient->currentUser->data.id }).get();
+				if (!(DiscordCoreAPI::PermissionsConverter::checkForPermission(botMember, channel, Permissions::MANAGE_MESSAGES))) {
 					string msgString = "------\n**I need the Manage Messages permission in this channel, for this command!**\n------";
 					EmbedData msgEmbed;
-					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Permissions Issue:**__");
-					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
-					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
+					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+						responseData.channelId = args->eventData.messageData.channelId;
+						responseData.messageId = args->eventData.messageData.id;
+						responseData.embeds.push_back(msgEmbed);
+						event01 = InputEventHandler::respondToEvent(responseData).get();
+						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+					}
+					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+						InputEventData event;
+						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+						responseData.applicationId = args->eventData.interactionData.applicationId;
+						responseData.embeds.push_back(msgEmbed);
+						responseData.interactionId = args->eventData.interactionData.id;
+						responseData.interactionToken = args->eventData.interactionData.token;
+						responseData.type = InteractionCallbackType::ChannelMessage;
+						event = InputEventHandler::respondToEvent(responseData).get();
+						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
+						event.interactionData.token = args->eventData.interactionData.token;
+						InputEventHandler::deleteInputEventResponse(event, 20000).get();
+					}
 					co_return;
 				}
 
-				vector<Role> rolesArray = args->coreClient->roles->getGuildRolesAsync({ .guildId = args->message.data.guildId }).get();
+				vector<Role> rolesArray = args->eventData.pDiscordCoreClient->roles->getGuildRolesAsync({ .guildId = args->eventData.getGuildId() }).get();
 
 				for (unsigned int x = 0; x < discordGuild.data.guildShop.roles.size(); x+=1) {
 					bool isRoleFound = false;
@@ -68,24 +88,43 @@ namespace DiscordCoreAPI {
 							break;
 						}
 					}
-					if (isRoleFound ==  false) {
+					if (isRoleFound == false) {
 						for (unsigned int z = 0; z < discordGuild.data.guildShop.roles.size(); z += 1) {
 							if (shopRole.roleId == discordGuild.data.guildShop.roles.at(z).roleId) {
 								discordGuild.data.guildShop.roles.erase(discordGuild.data.guildShop.roles.begin() + z);
+								discordGuild.writeDataToDB();
 							}
 						}
 						string msgString = "------\n**Removing guild role " + shopRole.roleName + " from guild cache!**\n------";
 						EmbedData msgEmbed;
-						msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-						msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+						msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+						msgEmbed.setColor(discordGuild.data.borderColor);
 						msgEmbed.setDescription(msgString);
 						msgEmbed.setTimeStamp(getTimeAndDate());
 						msgEmbed.setTitle("__**Removed Guild Role:**__");
-						Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
-						args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 }).get();
+						if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+							InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+							responseData.channelId = args->eventData.messageData.channelId;
+							responseData.messageId = args->eventData.messageData.id;
+							responseData.embeds.push_back(msgEmbed);
+							event01 = InputEventHandler::respondToEvent(responseData).get();
+							InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+						}
+						else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+							InputEventData event;
+							InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+							responseData.applicationId = args->eventData.interactionData.applicationId;
+							responseData.embeds.push_back(msgEmbed);
+							responseData.interactionId = args->eventData.interactionData.id;
+							responseData.interactionToken = args->eventData.interactionData.token;
+							responseData.type = InteractionCallbackType::ChannelMessage;
+							event = InputEventHandler::respondToEvent(responseData).get();
+							event.interactionData.applicationId = args->eventData.interactionData.applicationId;
+							event.interactionData.token = args->eventData.interactionData.token;
+							InputEventHandler::deleteInputEventResponse(event, 20000).get();
+						}
 						x -= 1;
 					}
-					discordGuild.writeDataToDB();
 				}
 				
 				unsigned int maxIdx = 0;
@@ -168,16 +207,16 @@ namespace DiscordCoreAPI {
 					rolesMsgEmbeds[x].setTimeStamp(getTimeAndDate());
 					rolesMsgEmbeds[x].setTitle("__**Shop Inventory(Roles) Page " + to_string(x + 1) + " of " + to_string(itemsMessageEmbeds.size() + rolesMsgEmbeds.size()) + "**__");
 					rolesMsgEmbeds[x].setDescription(rolesMsgStrings[x]);
-					rolesMsgEmbeds[x].setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
-					rolesMsgEmbeds[x].setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+					rolesMsgEmbeds[x].setColor(discordGuild.data.borderColor);
+					rolesMsgEmbeds[x].setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
 				}
 
 				for (auto x = 0; x < itemsMessageEmbeds.size(); x += 1) {
 					itemsMessageEmbeds[x].setTimeStamp(getTimeAndDate());
 					itemsMessageEmbeds[x].setTitle("__**Shop Inventory(Items) Page " + to_string(rolesMsgEmbeds.size() + x + 1) + " of " + to_string(itemsMessageEmbeds.size() + rolesMsgEmbeds.size()) + "**__:");
 					itemsMessageEmbeds[x].setDescription(itemsMsgStrings[x]);
-					itemsMessageEmbeds[x].setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
-					itemsMessageEmbeds[x].setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+					itemsMessageEmbeds[x].setColor(discordGuild.data.borderColor);
+					itemsMessageEmbeds[x].setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
 				}
 
 				vector<EmbedData> finalMsgEmbedsArray;
@@ -188,7 +227,7 @@ namespace DiscordCoreAPI {
 
 				for (auto x = 0; x < itemsMessageEmbeds.size(); x += 1) {
 					finalMsgEmbedsArray.push_back(itemsMessageEmbeds[x]);
-				}				
+				}
 
 				if (rolesMsgEmbeds.size()==  0 && itemsMessageEmbeds.size()== 0) {
 					string msgString = "Sorry, but we are all out of inventory!";
@@ -196,20 +235,48 @@ namespace DiscordCoreAPI {
 					messageEmbed.setDescription(msgString);
 					messageEmbed.setTimeStamp(getTimeAndDate());
 					messageEmbed.setTitle("__**Empty Inventory:**__");
-					messageEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
-					messageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = messageEmbed }).get();
+					messageEmbed.setColor(discordGuild.data.borderColor);
+					messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+						responseData.channelId = args->eventData.messageData.channelId;
+						responseData.messageId = args->eventData.messageData.id;
+						responseData.embeds.push_back(messageEmbed);
+						event01 = InputEventHandler::respondToEvent(responseData).get();
+						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+					}
+					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+						responseData.applicationId = args->eventData.interactionData.applicationId;
+						responseData.embeds.push_back(messageEmbed);
+						responseData.interactionId = args->eventData.interactionData.id;
+						responseData.interactionToken = args->eventData.interactionData.token;
+						responseData.type = InteractionCallbackType::ChannelMessage;
+						event01 = InputEventHandler::respondToEvent(responseData).get();
+						event01.interactionData.applicationId = args->eventData.interactionData.applicationId;
+						event01.interactionData.token = args->eventData.interactionData.token;
+						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+					}
 					co_return;
 				}
 
 				unsigned int currentPageIndex = 0;
-				string userID = args->message.data.author.id;
-				ReplyMessageData replyMessageData;
-				replyMessageData.embed = finalMsgEmbedsArray[currentPageIndex];
-				replyMessageData.replyingToMessageData = args->message.data;
-				Message newMessage = args->coreClient->messages->replyAsync(replyMessageData).get();
-				
-				recurseThroughMessagePages(userID, newMessage, args->coreClient, currentPageIndex, finalMsgEmbedsArray, true).get();
+				string userID = args->eventData.messageData.author.id;
+				if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+					event01.eventType = args->eventData.eventType;
+					event01.messageData = args->eventData.messageData;
+					event01.pDiscordCoreClient = args->eventData.pDiscordCoreClient;
+					event01.requesterId = args->eventData.requesterId;
+					recurseThroughMessagePages(userID, event01,  currentPageIndex, finalMsgEmbedsArray, true).get();
+				}
+				else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+					event01.eventType = args->eventData.eventType;
+					event01.interactionData = args->eventData.interactionData;
+					event01.pDiscordCoreClient = args->eventData.pDiscordCoreClient;
+					event01.requesterId = args->eventData.requesterId;
+					event01.messageData = args->eventData.messageData;
+					recurseThroughMessagePages(userID, event01, currentPageIndex, finalMsgEmbedsArray, true).get();
+				}
 
 				discordGuild.writeDataToDB().get();
 				co_return;

@@ -22,63 +22,131 @@ namespace DiscordCoreAPI {
 		}
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
-				Channel channel = args->coreClient->channels->getChannelAsync({ .channelId = args->message.data.channelId }).get();
-				bool areWeInADm = areWeInADM(args->message, channel);
+				Channel channel = args->eventData.pDiscordCoreClient->channels->getChannelAsync({ .channelId = args->eventData.getChannelId() }).get();
+
+				Guild guild = args->eventData.pDiscordCoreClient->guilds->getGuildAsync({ .guildId = args->eventData.getGuildId() }).get();
+				DiscordGuild discordGuild(guild.data);
+
+				GuildMember guildMember = args->eventData.pDiscordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->eventData.getGuildId(), .guildMemberId = args->eventData.getAuthorId() }).get();
+
+				bool areWeInADm = areWeInADM(args->eventData, channel, discordGuild);
 
 				if (areWeInADm == true) {
 					co_return;
 				}
 
-				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
-					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
+				if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+					InputEventHandler::deleteInputEventResponse(args->eventData).get();
 				}
 
-				bool doWeHaveAdmin = doWeHaveAdminPermissions(args->message);
+				bool doWeHaveAdmin = doWeHaveAdminPermissions(args->eventData, discordGuild, channel, guildMember);
 
 				if (doWeHaveAdmin == false) {
 					co_return;
 				}
-				Guild guild = args->coreClient->guilds->getGuildAsync({ .guildId = args->message.data.guildId }).get();
+				
+				bool areWeAllowed = checkIfAllowedGamingInChannel(args->eventData,  discordGuild);
 
-				DiscordGuild discordGuild(guild.data);
+				if (areWeAllowed == false) {
+					co_return;
+				}
 
+				InputEventData event01;
 				regex nameRegExp("\.{1,36}");
 				regex hexColorRegExp("\.{1,24}");
 				regex costRegExp("\\d{1,8}");
 				if (args->argumentsArray.size() == 0 || !regex_search(args->argumentsArray.at(0), nameRegExp)) {
 					string msgString = "------\n**Please enter a proper role name! (!addshoprole = NAME, HEXCOLORVALIE, COST)**\n------";
 					EmbedData msgEmbed;
-					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
-					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
-					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
+					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+						responseData.channelId = args->eventData.messageData.channelId;
+						responseData.messageId = args->eventData.messageData.id;
+						responseData.embeds.push_back(msgEmbed);
+						event01 = InputEventHandler::respondToEvent(responseData).get();
+						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+					}
+					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+						InputEventData event;
+						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+						responseData.applicationId = args->eventData.interactionData.applicationId;
+						responseData.embeds.push_back(msgEmbed);
+						responseData.interactionId = args->eventData.interactionData.id;
+						responseData.interactionToken = args->eventData.interactionData.token;
+						responseData.type = InteractionCallbackType::ChannelMessage;
+						event = InputEventHandler::respondToEvent(responseData).get();
+						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
+						event.interactionData.token = args->eventData.interactionData.token;
+						InputEventHandler::deleteInputEventResponse(event, 20000).get();
+					}
 					co_return;
 				}
 				if (args->argumentsArray.size() < 2 || !regex_search(args->argumentsArray.at(1), hexColorRegExp)) {
 					string msgString = "------\n**Please enter a valid hex color value! (!addshoprole = NAME, HEXCOLORVALIE, COST)**\n------";
 					EmbedData msgEmbed;
-					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
-					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
-					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
+					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+						responseData.channelId = args->eventData.messageData.channelId;
+						responseData.messageId = args->eventData.messageData.id;
+						responseData.embeds.push_back(msgEmbed);
+						event01 = InputEventHandler::respondToEvent(responseData).get();
+						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+					}
+					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+						InputEventData event;
+						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+						responseData.applicationId = args->eventData.interactionData.applicationId;
+						responseData.embeds.push_back(msgEmbed);
+						responseData.interactionId = args->eventData.interactionData.id;
+						responseData.interactionToken = args->eventData.interactionData.token;
+						responseData.type = InteractionCallbackType::ChannelMessage;
+						event = InputEventHandler::respondToEvent(responseData).get();
+						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
+						event.interactionData.token = args->eventData.interactionData.token;
+						InputEventHandler::deleteInputEventResponse(event, 20000).get();
+					}
 					co_return;
 				}
 				if (args->argumentsArray.size() < 3 || !regex_search(args->argumentsArray.at(2), costRegExp) || stoll(args->argumentsArray.at(2)) <= 0) {
 					string msgString = "------\n**Please enter a valid cost value! (!addshoprole = NAME, HEXCOLORVALIE, COST)**\n------";
 					EmbedData msgEmbed;
-					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
-					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
-					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
+					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+						responseData.channelId = args->eventData.messageData.channelId;
+						responseData.messageId = args->eventData.messageData.id;
+						responseData.embeds.push_back(msgEmbed);
+						responseData.inputEventResponseType = InputEventResponseType::REGULAR_MESSAGE_RESPONSE;
+						event01 = InputEventHandler::respondToEvent(responseData).get();
+						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+					}
+					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+						InputEventData event02;
+						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+						responseData.applicationId = args->eventData.interactionData.applicationId;
+						responseData.embeds.push_back(msgEmbed);
+						responseData.interactionId = args->eventData.interactionData.id;
+						responseData.interactionToken = args->eventData.interactionData.token;
+						responseData.type = InteractionCallbackType::ChannelMessage;
+						event02 = InputEventHandler::respondToEvent(responseData).get();
+						event02.interactionData.applicationId = args->eventData.interactionData.applicationId;
+						event02.interactionData.token = args->eventData.interactionData.token;
+						InputEventHandler::deleteInputEventResponse(event02, 20000).get();
+					}
 					co_return;
 				}
 
@@ -94,47 +162,68 @@ namespace DiscordCoreAPI {
 					if (roleName == value.roleName) {
 						string msgString = "------\n**Sorry, but a role by that name already exists!**\n------";
 						EmbedData msgEmbed;
-						msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-						msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+						msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+						msgEmbed.setColor(discordGuild.data.borderColor);
 						msgEmbed.setDescription(msgString);
 						msgEmbed.setTimeStamp(getTimeAndDate());
 						msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
-						Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
-						args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 });
+						
+						if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+							InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+							responseData.channelId = args->eventData.messageData.channelId;
+							responseData.messageId = args->eventData.messageData.id;
+							responseData.embeds.push_back(msgEmbed);
+							event01 = InputEventHandler::respondToEvent(responseData).get();
+							InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+						}
+						else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+							InputEventData event;
+							InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+							responseData.applicationId = args->eventData.interactionData.applicationId;
+							responseData.embeds.push_back(msgEmbed);
+							responseData.interactionId = args->eventData.interactionData.id;
+							responseData.interactionToken = args->eventData.interactionData.token;
+							responseData.type = InteractionCallbackType::ChannelMessage;
+							event = InputEventHandler::respondToEvent(responseData).get();
+							event.interactionData.applicationId = args->eventData.interactionData.applicationId;
+							event.interactionData.token = args->eventData.interactionData.token;
+							InputEventHandler::deleteInputEventResponse(event, 20000).get();
+						}
+						
 						co_return;
 					}
 				}
 
 				string rolePermsString;
-				vector<DiscordCoreInternal::Permissions> permissions;
-				permissions.push_back(DiscordCoreInternal::Permissions::CREATE_INSTANT_INVITE);
-				permissions.push_back(DiscordCoreInternal::Permissions::ADD_REACTIONS);
-				permissions.push_back(DiscordCoreInternal::Permissions::VIEW_CHANNEL);
-				permissions.push_back(DiscordCoreInternal::Permissions::SEND_MESSAGES);
-				permissions.push_back(DiscordCoreInternal::Permissions::CHANGE_NICKNAME);
-				permissions.push_back(DiscordCoreInternal::Permissions::USE_EXTERNAL_EMOJIS);
-				permissions.push_back(DiscordCoreInternal::Permissions::CONNECT);
-				permissions.push_back(DiscordCoreInternal::Permissions::EMBED_LINKS);
-				permissions.push_back(DiscordCoreInternal::Permissions::ATTACH_FILES);
-				permissions.push_back(DiscordCoreInternal::Permissions::SPEAK);
-				permissions.push_back(DiscordCoreInternal::Permissions::USE_SLASH_COMMANDS);
-				permissions.push_back(DiscordCoreInternal::Permissions::READ_MESSAGE_HISTORY);
-				permissions.push_back(DiscordCoreInternal::Permissions::STREAM);
-				permissions.push_back(DiscordCoreInternal::Permissions::REQUEST_TO_SPEAK);
-				permissions.push_back(DiscordCoreInternal::Permissions::SEND_TTS_MESSAGES);
-				permissions.push_back(DiscordCoreInternal::Permissions::USE_PRIVATE_THREADS);
-				permissions.push_back(DiscordCoreInternal::Permissions::USE_VAD);
+				vector<Permissions> permissions;
+				permissions.push_back(Permissions::CREATE_INSTANT_INVITE);
+				permissions.push_back(Permissions::ADD_REACTIONS);
+				permissions.push_back(Permissions::VIEW_CHANNEL);
+				permissions.push_back(Permissions::SEND_MESSAGES);
+				permissions.push_back(Permissions::CHANGE_NICKNAME);
+				permissions.push_back(Permissions::USE_EXTERNAL_EMOJIS);
+				permissions.push_back(Permissions::CONNECT);
+				permissions.push_back(Permissions::EMBED_LINKS);
+				permissions.push_back(Permissions::ATTACH_FILES);
+				permissions.push_back(Permissions::SPEAK);
+				permissions.push_back(Permissions::USE_SLASH_COMMANDS);
+				permissions.push_back(Permissions::READ_MESSAGE_HISTORY);
+				permissions.push_back(Permissions::STREAM);
+				permissions.push_back(Permissions::REQUEST_TO_SPEAK);
+				permissions.push_back(Permissions::SEND_TTS_MESSAGES);
+				permissions.push_back(Permissions::USE_PRIVATE_THREADS);
+				permissions.push_back(Permissions::USE_VAD);
 
 				rolePermsString = DiscordCoreAPI::PermissionsConverter::addPermissionsToString(rolePermsString, permissions);
 
 				CreateRoleData createRoleData;
 				createRoleData.hexColorValue = roleColor;
-				createRoleData.guildId = args->message.data.guildId;
+				createRoleData.guildId = args->eventData.getGuildId();
 				createRoleData.hoist = true;
 				createRoleData.mentionable = true;
 				createRoleData.name = roleName;
 				createRoleData.permissions = rolePermsString;
-				Role role = args->coreClient->roles->createRoleAsync(createRoleData).get();
+				Role role =  args->eventData.pDiscordCoreClient->roles->createRoleAsync(createRoleData).get();
 				if (role.data.id == "") {
 					throw exception("Role not initialized!");
 				}
@@ -145,17 +234,36 @@ namespace DiscordCoreAPI {
 
 				discordGuild.data.guildShop.roles.push_back(currentRole);
 				discordGuild.writeDataToDB().get();
-
 				string msgString = "";
-				msgString = "Nicely done! You've added a new role to the store's inventory, giving the server access to it!\nIt is as follows:\n------\n__**Role:**__ <@&" + currentRole.roleId + ">__**Cost**__ : " + to_string(roleCost) + " "
-					+ args->coreClient->discordUser->data.currencyName + "\n------";
+				msgString = "Nicely done! You've added a new role to the store's inventory, giving the server access to it!\nIt is as follows:\n------\n__**Role:**__ <@&" + currentRole.roleId + "> __**Cost**__ : " + to_string(roleCost) + " "
+					+  args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 				EmbedData msgEmbed;
-				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-				msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+				msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+				msgEmbed.setColor(discordGuild.data.borderColor);
 				msgEmbed.setDescription(msgString);
 				msgEmbed.setTimeStamp(getTimeAndDate());
 				msgEmbed.setTitle("__**New Role Added:**__");
-				args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
+				InputEventData event;
+				if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+					InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+					responseData.applicationId = args->eventData.messageData.application.id;
+					responseData.channelId = args->eventData.messageData.channelId;
+					responseData.messageId = args->eventData.messageData.id;
+					responseData.embeds.push_back(msgEmbed);
+					responseData.inputEventResponseType = InputEventResponseType::REGULAR_MESSAGE_RESPONSE;
+					event = InputEventHandler::respondToEvent(responseData).get();
+				}
+				else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+					InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+					responseData.tts = true;
+					responseData.applicationId = args->eventData.interactionData.applicationId;
+					responseData.interactionToken = args->eventData.interactionData.token;
+					responseData.interactionId = args->eventData.interactionData.id;
+					responseData.embeds.push_back(msgEmbed);
+					responseData.type = InteractionCallbackType::ChannelMessageWithSource;
+					responseData.interactionId = args->eventData.interactionData.id;
+					event = InputEventHandler::respondToEvent(responseData).get();
+				}
 				co_return;
 			}
 			catch (exception& e) {

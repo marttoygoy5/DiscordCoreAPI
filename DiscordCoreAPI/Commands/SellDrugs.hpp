@@ -22,15 +22,15 @@ namespace DiscordCoreAPI {
 		}
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
-				Channel channel = args->coreClient->channels->getChannelAsync({ args->message.data.channelId }).get();
+				Channel channel = args->coreClient->channels->getChannelAsync({ args->eventData.getChannelId() }).get();
 				
-				bool areWeInADm = areWeInADM(args->message, channel);
+				bool areWeInADm = areWeInADM(args->eventData.messageData, args->coreClient, channel);
 
 				if (areWeInADm == true) {
 					co_return;
 				}
 
-				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
+				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::SLASH_COMMAND_INTERACTION) {
 					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 }).get();
 				}
 
@@ -70,7 +70,7 @@ namespace DiscordCoreAPI {
 					messageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					messageEmbed.setDescription(msgString);
 					messageEmbed.setTitle("__**Drug Dealing:**__");
-					messageEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					messageEmbed.setColor(discordGuild.data.borderColor);
 					messageEmbed.setTimeStamp(getTimeAndDate());
 					ReplyMessageData replyMessageData;
 					replyMessageData.embed = messageEmbed;
@@ -100,7 +100,7 @@ namespace DiscordCoreAPI {
 				messageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				messageEmbed.setDescription(msgString);
 				messageEmbed.setTitle("__**Drug Dealing:**__");
-				messageEmbed.setColor(254, 254, 254);
+				messageEmbed.setColor(discordGuild.data.borderColor);
 				messageEmbed.setTimeStamp(getTimeAndDate());
 				ReplyMessageData replyMessageData;
 				replyMessageData.embed = messageEmbed;

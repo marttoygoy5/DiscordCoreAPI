@@ -18,6 +18,7 @@
 #include "EventManager.hpp"
 #include "SlashCommandStuff.hpp"
 #include "DatabaseStuff.hpp"
+#include "InputEventHandler.hpp"
 
 void myPurecallHandler(void) {
 	cout << "CURRENT THREAD: " << this_thread::get_id() << endl;
@@ -27,6 +28,10 @@ void myPurecallHandler(void) {
 namespace DiscordCoreAPI {
 
 	static string commandPrefix;
+
+	struct CommandData {
+		InputEventData eventData;
+	};
 
 	class DiscordCoreClient :public DiscordCoreClientBase,  protected agent {
 	public:
@@ -42,7 +47,7 @@ namespace DiscordCoreAPI {
 			this->botToken = botTokenNew;
 		}
 
-		DiscordGuild getDiscordGuild(DiscordCoreInternal::GuildData guildData) {
+		DiscordGuild getDiscordGuild(GuildData guildData) {
 			auto guildCursor = DiscordCoreClient::guildMap.find(guildData.id);
 			if (guildCursor == DiscordCoreClient::guildMap.end()) {
 				DiscordGuild discordGuild(guildData);
@@ -146,7 +151,7 @@ namespace DiscordCoreAPI {
 			GuildManagerAgent::initialize();
 			ChannelManagerAgent::initialize();
 			InteractionManager::initialize(agentResources, this->pThreadManager.get()->getThreads().get());
-			InteractionManagerAgent::initialize();
+			InteractionManagerAgent::initialize(this->pThreadManager.get()->getThreads().get());
 			this->reactions = new ReactionManager(agentResources, this->pThreadManager->getThreads().get(), this);
 			this->users = new UserManager(agentResources, this->pThreadManager->getThreads().get(), this);
 			this->messages = new MessageManager(agentResources, this->pThreadManager->getThreads().get(), this);
@@ -157,13 +162,15 @@ namespace DiscordCoreAPI {
 			this->currentUser = new User(this->users->fetchCurrentUserAsync().get().data, this);
 			this->slashCommands = new SlashCommandManager(agentResources, this->pThreadManager->getThreads().get(), this->currentUser->data.id);
 			DatabaseManagerAgent::initialize(this->currentUser->data.id, this->pThreadManager->getThreads().get()->at(10).scheduler);
+			Button::initialize(this);
 			this->discordUser = new DiscordUser(this->currentUser->data.username, this->currentUser->data.id);
 			DiscordCoreAPI::commandPrefix = this->discordUser->data.prefix;
+			InputEventHandler::initialize(this->messages, this, agentResources, this->pThreadManager->getThreads().get()->at(9));
 			this->discordUser->writeDataToDB();
 			co_await mainThread;
 		}
 
-		task<OnGuildCreationData> createGuild(DiscordCoreInternal::GuildData guildData) {
+		task<OnGuildCreationData> createGuild(GuildData guildData) {
 			try {
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.baseURL = this->baseURL;
@@ -183,7 +190,7 @@ namespace DiscordCoreAPI {
 			}
 		}
 
-		task<OnMessageCreationData> createMessage(DiscordCoreInternal::MessageData messageData) {
+		task<OnMessageCreationData> createMessage(MessageData messageData) {
 			try {
 				Message message(messageData, this);
 				OnMessageCreationData messageCreationData(message);
@@ -213,73 +220,51 @@ namespace DiscordCoreAPI {
 					DiscordCoreInternal::WebSocketWorkload workload;
 					if (try_receive(this->webSocketWorkCollectionBuffer, workload)) {
 						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
-							DiscordCoreInternal::GuildData guildData;
+							GuildData guildData;
 							DiscordCoreInternal::parseObject(workload.payLoad, &guildData);
-							OnGuildCreationData guildCreationData = createGuild(guildData).get();
+							DiscordCoreAPI::OnGuildCreationData guildCreationData = createGuild(guildData).get();
 							this->EventManager->onGuildCreationEvent(guildCreationData);
 						}
 						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
-							DiscordCoreInternal::MessageData messageData;
+							MessageData messageData;
 							DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
-							OnMessageCreationData messageCreationData = createMessage(messageData).get();
-							messageData.requesterId = messageData.author.id;
-							this->EventManager->onMessageCreationEvent(messageCreationData);
+							InputEventData eventData;
+							eventData.eventType = InputEventType::REGULAR_MESSAGE;
+							eventData.messageData = messageData;
+							eventData.requesterId = messageData.author.id;
+							eventData.pDiscordCoreClient = this;
+							OnEventCreateData eventCreationData;
+							eventCreationData.eventData = eventData;
+							this->EventManager->onEventCreationEvent(eventCreationData);
 						}
 						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::REACTION_ADD) {
-							DiscordCoreInternal::ReactionData reactionData;
+							ReactionData reactionData;
 							DiscordCoreInternal::parseObject(workload.payLoad, &reactionData);
 							OnReactionAddData reactionAddData = createReaction(reactionData).get();
 							this->EventManager->onReactionAddEvent(reactionAddData);
 						}
 						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::INTERACTION_CREATE) {
-							DiscordCoreInternal::InteractionData interactionData;
-							DiscordCoreInternal::CommandData commandData;
-							DiscordCoreInternal::parseObject(workload.payLoad, &interactionData, &commandData);
-							DiscordCoreInternal::MessageData messageData;
-							messageData.messageType = DiscordCoreInternal::MessageTypeReal::INTERACTION;
-							messageData.guildId = interactionData.guildId;
-							messageData.channelId = interactionData.channelId;
-							messageData.author = this->users->getUserAsync({ .userId = interactionData.member.user.id }).get().data;
-							messageData.interactionId = interactionData.id;
-							messageData.applicationId = interactionData.applicationId;
-							messageData.interactionToken = interactionData.token;
-							messageData.content = this->discordUser->data.prefix + constructStringContent(commandData);
-							messageData.id = interactionData.message.id;
-							messageData.requesterId = interactionData.user.id;
-							messageData.member = interactionData.member;
-							if (interactionData.type == DiscordCoreInternal::InteractionType::ApplicationCommand) {
-								messageData.requesterId = interactionData.member.user.id;
+							InteractionData interactionData;
+							CommandData commandData;
+							DiscordCoreInternal::parseObject(workload.payLoad, &interactionData);
+							InputEventData eventData;
+							if (interactionData.type == InteractionType::ApplicationCommand) {
+								eventData.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
+								eventData.interactionData = interactionData;
+								eventData.pDiscordCoreClient = this;
+								eventData.requesterId = interactionData.member.user.id;
+								OnEventCreateData eventCreationData;
+								eventCreationData.eventData = eventData;
+								this->EventManager->onEventCreationEvent(eventCreationData);
 							}
-							InteractionResponseData interactionResponseData;
-							interactionResponseData.token = messageData.interactionToken;
-							interactionResponseData.guildId = messageData.guildId;
-							interactionResponseData.interactionId = messageData.interactionId;
-							interactionResponseData.applicationId = messageData.applicationId;
-							interactionResponseData.channelId = messageData.channelId;
-							interactionResponseData.userId = messageData.member.user.id;
-							if (interactionData.type == DiscordCoreInternal::InteractionType::ApplicationCommand){
-								interactionResponseData.type = DiscordCoreInternal::InteractionCallbackType::DeferredChannelMessageWithSource;
-								InteractionManager::createInteractionResponseAsync(interactionResponseData).get();
-								OnMessageCreationData messageCreationData = createMessage(messageData).get();
-								this->EventManager->onMessageCreationEvent(messageCreationData);
-							}
-							else if (interactionData.type == DiscordCoreInternal::InteractionType::MessageComponent) {
-								interactionResponseData.type = DiscordCoreInternal::InteractionCallbackType::DeferredUpdateMessage;
-								DiscordCoreInternal::ButtonInteractionData buttonInteractionData;
-								parseObject(workload.payLoad, &buttonInteractionData);
-								ButtonInteractionData buttonInteractionDataNew;
-								buttonInteractionDataNew.applicationId = buttonInteractionData.applicationId;
-								buttonInteractionDataNew.channelId = buttonInteractionData.channelId;
-								buttonInteractionDataNew.customId = buttonInteractionData.customId;
-								buttonInteractionDataNew.guildId = buttonInteractionData.guildId;
-								buttonInteractionDataNew.id= buttonInteractionData.id;
-								buttonInteractionDataNew.member = buttonInteractionData.member;
-								buttonInteractionDataNew.message = buttonInteractionData.message;
-								buttonInteractionDataNew.token = buttonInteractionData.token;
-								buttonInteractionDataNew.type = buttonInteractionData.type;
-								buttonInteractionDataNew.user = buttonInteractionData.user;
-								InteractionManager::createInteractionResponseAsync(interactionResponseData).get();
-								send(InteractionManager::buttonInteractionBuffer, buttonInteractionDataNew);
+							else if (interactionData.type == InteractionType::MessageComponent) {
+								eventData.eventType = InputEventType::BUTTON_INTERACTION;
+								eventData.interactionData = interactionData;
+								eventData.pDiscordCoreClient = this;
+								eventData.requesterId = interactionData.member.user.id;
+								OnEventCreateData eventCreationData;
+								eventCreationData.eventData = eventData;
+								this->EventManager->onEventCreationEvent(eventCreationData);
 							}
 						}
 					}
@@ -295,4 +280,5 @@ namespace DiscordCoreAPI {
 	map<string, DiscordGuild> DiscordCoreClientBase::guildMap;
 	map<string, DiscordGuildMember> DiscordCoreClientBase::guildMemberMap;
 }
+#include "Commands/CommandsList.hpp"
 #endif

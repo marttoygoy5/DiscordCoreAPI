@@ -138,7 +138,7 @@ namespace DiscordCoreAPI {
 			else {
 				cout << "ReactionManagerAgent::putObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
-			DiscordCoreInternal::ReactionData reactionData;
+			ReactionData reactionData;
 			DiscordCoreInternal::parseObject(returnData.data, &reactionData);
 			Reaction reaction(reactionData, this->coreClient);
 			co_return reaction;

@@ -33,7 +33,7 @@ namespace DiscordCoreAPI {
             Guild guild = args->coreClient->guilds->getGuildAsync({ .guildId = args->message.data.guildId }).get();
             DiscordGuild discordGuild(guild.data);
 
-            if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
+            if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::SLASH_COMMAND_INTERACTION) {
                 args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
             }
 
@@ -41,7 +41,7 @@ namespace DiscordCoreAPI {
                 string msgString = "------\n**Please, enter the name of a bot as the first argument! (!displayguildsdata = BOTNAME)**\n------";
                 EmbedData msgEmbed;
                 msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-                msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+                msgEmbed.setColor(discordGuild.data.borderColor);
                 msgEmbed.setDescription(msgString);
                 msgEmbed.setTimeStamp(getTimeAndDate());
                 msgEmbed.setTitle("__**Invalid Or Missing Arguments:**__");
@@ -65,7 +65,7 @@ namespace DiscordCoreAPI {
 
             EmbedData msgEmbed2;
             msgEmbed2.setImage(args->coreClient->currentUser->data.getAvatarURL());
-            msgEmbed2.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+            msgEmbed2.setColor(discordGuild.data.borderColor);
             msgEmbed2.setTitle("__**Bot Info:**__");
             msgEmbed2.setTimeStamp(getTimeAndDate());
             msgEmbed2.fields = fields;

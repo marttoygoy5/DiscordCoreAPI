@@ -23,7 +23,7 @@ namespace DiscordCoreAPI {
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			ReplyMessageData createMessageData;
 			createMessageData.embed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-			createMessageData.embed.setColor(254, 2542, 254);
+			createMessageData.embed.setColor("FFFFFF");
 			createMessageData.embed.setTimeStamp(getTimeAndDate());
 			createMessageData.embed.setDescription("Testing the buttons!");
 			createMessageData.embed.setTitle("Time to test buttons!");

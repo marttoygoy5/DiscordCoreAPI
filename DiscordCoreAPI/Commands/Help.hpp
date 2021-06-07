@@ -28,6 +28,9 @@ namespace DiscordCoreAPI {
 		virtual  task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
 
+				args->eventData.pDiscordCoreClient->messages->deleteMessasgeBulkAsync({ .channelId = args->eventData.getChannelId(), .limit = 25, .beforeThisId = args->eventData.getMessageId() }).get();
+
+				/*
 				vector<Role> guildRoles = args->coreClient->roles->getGuildRolesAsync({ .guildId = args->message.data.guildId }).get();
 				for (auto role : guildRoles) {
 					cout << "ROLE NAME: " << role.data.name << endl;

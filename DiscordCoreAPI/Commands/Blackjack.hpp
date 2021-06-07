@@ -76,12 +76,12 @@ task<void> executeCrossResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 	discordGuildMember.getDataFromDB().get();
 	unsigned int fineAmount = 0;
 	fineAmount = 1 * betAmount;
-	if (fineAmount > discordGuildMember.data.currency.wallet) {
+	if (fineAmount > discordGuildMember.data.currency.wallet){
 		string inPlayFooterString = "------\n__***Sorry, but you have insufficient funds for placing that wager now!***__\n------";
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
-		msgEmbed.setColor(255, 0, 0);
+		msgEmbed.setColor("FF0000");
 		msgEmbed.setTitle("__**Blackjack Fail:**__");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		msgEmbed.setDescription(newMessage.data.embeds[0].description);
@@ -91,7 +91,7 @@ task<void> executeCrossResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		DiscordCoreAPI::EditMessageData editData;
 		editData.originalMessageData = newMessage.data;
 		editData.embed = msgEmbed;
-		args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
 		co_return;
 	}
 
@@ -148,14 +148,14 @@ task<void> executeCrossResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		discordGuildMember.data.currency.wallet += payAmount;
 		discordGuildMember.writeDataToDB().get();
 
-		string winFooterString = "------\n__**Payout Amount:**__ " + to_string(payAmount) + " " + args->coreClient->discordUser->data.currencyName + "\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " +
-			args->coreClient->discordUser->data.currencyName + "\n------";
+		string winFooterString = "------\n__**Payout Amount:**__ " + to_string(payAmount) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " +
+			args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 		msgEmbed.setTitle("__**Blackjack Win:**__");
-		msgEmbed.setColor(0, 255, 0);
+		msgEmbed.setColor("00FF00");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		if (newMessage.data.embeds.at(0).description[0] != (char)0x40) {
 			msgEmbed.setDescription(newMessage.data.embeds[0].description);
@@ -166,18 +166,18 @@ task<void> executeCrossResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		DiscordCoreAPI::EditMessageData editData;
 		editData.embed = msgEmbed;
 		editData.originalMessageData = newMessage.data;
-		args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
 		co_return;
 	}
 	else if (newUserHandScore == newDealerHandScore) {
 
-		string tieFooterString = "------\n__**Your Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
+		string tieFooterString = "------\n__**Your Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 		msgEmbed.setTitle("__**Blackjack Tie:**__");
-		msgEmbed.setColor(0, 0, 255);
+		msgEmbed.setColor("0000FF");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		msgEmbed.setDescription(newMessage.data.embeds[0].description);
 		msgEmbed.addField("Dealer's Hand: " + to_string(newDealerHandScore), dealerHandString, true);
@@ -186,7 +186,7 @@ task<void> executeCrossResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		DiscordCoreAPI::EditMessageData editData;
 		editData.originalMessageData = newMessage.data;
 		editData.embed = msgEmbed;
-		args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
 		co_return;
 	}
 	else {
@@ -204,13 +204,13 @@ task<void> executeCrossResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		discordGuild.data.casinoStats.totalBlackjackPayout += payAmount;
 		discordGuild.data.casinoStats.totalPayout += payAmount;
 		discordGuild.writeDataToDB().get();
-		string bustFooterString = "------\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
+		string bustFooterString = "------\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 		msgEmbed.setTitle("__**Blackjack Loss:**__");
-		msgEmbed.setColor(255, 0, 0);
+		msgEmbed.setColor("FF0000");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		msgEmbed.setDescription(newMessage.data.embeds[0].description);
 		msgEmbed.addField("Dealer's Hand: " + to_string(newDealerHandScore), dealerHandString, true);
@@ -219,14 +219,14 @@ task<void> executeCrossResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		DiscordCoreAPI::EditMessageData editData;
 		editData.embed = msgEmbed;
 		editData.originalMessageData = newMessage.data;
-		args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
 		co_return;
 
 	}
 }
 
-task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::DiscordGuildMember discordGuildMember, unsigned int betAmount, DiscordCoreAPI::GuildMember guildMember, DiscordCoreAPI::DiscordGuild discordGuild, DiscordCoreAPI::Message newMessage, DiscordCoreAPI::BaseFunctionArguments* args,
-	unsigned int newCardCount, vector<DiscordCoreAPI::Card> userHand, vector<unsigned int>* userAceIndices, vector<unsigned int>* dealerAceIndices, string userID, vector<DiscordCoreAPI::Card> dealerHand, DiscordCoreAPI::ActionRowData actionRowData2) {
+task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::DiscordGuildMember discordGuildMember, unsigned int betAmount, DiscordCoreAPI::GuildMember guildMember, DiscordCoreAPI::DiscordGuild discordGuild, DiscordCoreInternal::InputEventData newEvent, DiscordCoreAPI::BaseFunctionArguments* args,
+	unsigned int newCardCount, vector<DiscordCoreAPI::Card> userHand, vector<unsigned int>* userAceIndices, vector<unsigned int>* dealerAceIndices, string userID, vector<DiscordCoreAPI::Card> dealerHand, DiscordCoreInternal::ActionRowData actionRowData2) {
 	
 	discordGuildMember.getDataFromDB().get();
 	unsigned int fineAmount = 0;
@@ -235,20 +235,24 @@ task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		string inPlayFooterString;
 		inPlayFooterString = "------\n__***Sorry, but you have insufficient funds for placing that wager now!***__\n------";
 
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
-		msgEmbed.setColor(255, 0, 0);
+		msgEmbed.setColor("FF0000");
 		msgEmbed.setTitle("__**Blackjack Fail:**__");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
-		msgEmbed.setDescription(newMessage.data.embeds[0].description);
-		msgEmbed.addField(newMessage.data.embeds.at(0).fields.at(0).name, newMessage.data.embeds.at(0).fields.at(0).value, newMessage.data.embeds.at(0).fields.at(0).Inline);
-		msgEmbed.addField(newMessage.data.embeds.at(0).fields.at(1).name, newMessage.data.embeds.at(0).fields.at(1).value, newMessage.data.embeds.at(0).fields.at(1).Inline);
 		msgEmbed.addField("__**Game Status: Failed Wager**__", inPlayFooterString, false);
-		DiscordCoreAPI::EditMessageData editMessageData;
-		editMessageData.embed = msgEmbed;
-		editMessageData.originalMessageData = newMessage.data;
-		args->coreClient->messages->editMessageAsync(editMessageData, newMessage.data.channelId, newMessage.data.id).get();
+		if (newEvent.eventType == DiscordCoreInternal::InputEventType::REGULAR_MESSAGE) {
+			msgEmbed.setDescription(newEvent.messageData.embeds[0].description);
+			msgEmbed.addField(newEvent.messageData.embeds.at(0).fields.at(0).name, newEvent.messageData.embeds.at(0).fields.at(0).value, newEvent.messageData.embeds.at(0).fields.at(0).Inline);
+			msgEmbed.addField(newEvent.messageData.embeds.at(0).fields.at(1).name, newEvent.messageData.embeds.at(0).fields.at(1).value, newEvent.messageData.embeds.at(0).fields.at(1).Inline);
+		}
+		
+		
+		DiscordCoreInternal::InputEventResponseData responseData(DiscordCoreInternal::InputEventResponseType::REGULAR_MESSAGE_EDIT);
+		responseData.embeds.push_back(msgEmbed);
+		responseData.editMessageData.originalMessageData = newMessage.data;
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editMessageData, newMessage.data.channelId, newMessage.data.id).get();
 		co_return;
 	}
 
@@ -296,13 +300,13 @@ task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		}
 
 		string bustFooterString;
-		bustFooterString = "------\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
+		bustFooterString = "------\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 		msgEmbed.setTitle("__**Blackjack Loss:**__");
-		msgEmbed.setColor(255, 0, 0);
+		msgEmbed.setColor("FF0000");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		msgEmbed.setDescription(newMessage.data.embeds[0].description);
 		msgEmbed.addField("Dealer's Hand: " + to_string(newDealerHandScore), dealerHandString, true);
@@ -311,7 +315,7 @@ task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		DiscordCoreAPI::EditMessageData editMessageData;
 		editMessageData.embed = msgEmbed;
 		editMessageData.originalMessageData = newMessage.data;
-		args->coreClient->messages->editMessageAsync(editMessageData, newMessage.data.channelId, newMessage.data.id).get();
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editMessageData, newMessage.data.channelId, newMessage.data.id).get();
 		co_return;
 	}
 	else if (newUserHandScore == 21) {
@@ -346,13 +350,13 @@ task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 				userHandString += userHand[x].suit + userHand[x].type;
 			}
 
-			string tieFooterString = "------\n__**Your Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
+			string tieFooterString = "------\n__**Your Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-			DiscordCoreAPI::EmbedData msgEmbed;
+			DiscordCoreInternal::EmbedData msgEmbed;
 			msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 			msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 			msgEmbed.setTitle("__**Blackjack Tie:**__");
-			msgEmbed.setColor(0, 0, 255);
+			msgEmbed.setColor("0000FF");
 			msgEmbed.setFooter("Cards Remaining: " + discordGuild.data.blackjackStack.size());
 			msgEmbed.setDescription(newMessage.data.embeds[0].description);
 			msgEmbed.addField("Dealer's Hand: " + to_string(newDealerHandScore), dealerHandString, true);
@@ -361,7 +365,7 @@ task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 			DiscordCoreAPI::EditMessageData editMessageData;
 			editMessageData.embed = msgEmbed;
 			editMessageData.originalMessageData = newMessage.data;
-			args->coreClient->messages->editMessageAsync(editMessageData, newMessage.data.channelId, newMessage.data.id).get();
+			args->eventData.pDiscordCoreClient->messages->editMessageAsync(editMessageData, newMessage.data.channelId, newMessage.data.id).get();
 			co_return;
 		}
 		else {
@@ -391,14 +395,14 @@ task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 			}
 
 			string winFooterString;
-			winFooterString = "------\n__**Payout Amount:**__ " + to_string(payAmount) + " " + args->coreClient->discordUser->data.currencyName + "\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " +
-				args->coreClient->discordUser->data.currencyName + "\n------";
+			winFooterString = "------\n__**Payout Amount:**__ " + to_string(payAmount) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " +
+				args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-			DiscordCoreAPI::EmbedData msgEmbed;
+			DiscordCoreInternal::EmbedData msgEmbed;
 			msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 			msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 			msgEmbed.setTitle("__**Blackjack Win:**__");
-			msgEmbed.setColor(0, 255, 0);
+			msgEmbed.setColor("00FF00");
 			msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 			msgEmbed.setDescription(newMessage.data.embeds[0].description);
 			msgEmbed.addField("Dealer's Hand: " + to_string(newDealerHandScore), dealerHandString, true);
@@ -407,7 +411,7 @@ task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 			DiscordCoreAPI::EditMessageData editData;
 			editData.embed = msgEmbed;
 			editData.originalMessageData = newMessage.data;
-			args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+			args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
 			co_return;
 		}
 	}
@@ -424,11 +428,11 @@ task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 
 		string inPlayFooterString;
 		inPlayFooterString = "------\n------";
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 		msgEmbed.setTitle("__**Blackjack:**__");
-		msgEmbed.setColor(0, 255, 0);
+		msgEmbed.setColor("00FF00");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		if(newMessage.data.embeds.at(0).description[0] != (char)0x40){
 			msgEmbed.setDescription(newMessage.data.embeds[0].description);
@@ -437,26 +441,27 @@ task<void> executeCheckResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::D
 		msgEmbed.addField("Dealer's Hand: " + to_string(newDealerHandScore), dealerHandString, true);
 		msgEmbed.addField("Player's Hand: " + to_string(newUserHandScore), userHandString, true);
 		msgEmbed.addField("__**Game Status: In Play**__", inPlayFooterString, false);
+		DiscordCoreInternal::InputEventResponseData responseData(DiscordCoreInternal::InputEventResponseType::REGULAR_MESSAGE_EDIT);
 		DiscordCoreAPI::EditMessageData editData;
 		editData.embed = msgEmbed;
 		editData.originalMessageData = newMessage.data;
 		editData.components.push_back(actionRowData2);
-		DiscordCoreAPI::Message newerMessage = args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
-		DiscordCoreAPI::Button button2(newMessage.data);
+		DiscordCoreAPI::Message newerMessage = args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+		DiscordCoreAPI::Button button2();
 		DiscordCoreAPI::ButtonInteractionData buttonInteractionData = button2.getOurButtonData(60000);
 		if (buttonInteractionData.customId == "") {
 			string timeOutString = "------\nSorry, but you ran out of time to select an option.\n------";
-			DiscordCoreAPI::EmbedData msgEmbed2;
-			msgEmbed2.setColor(255, 0, 0);
+			DiscordCoreInternal::EmbedData msgEmbed2;
+			msgEmbed2.setColor("FF0000");
 			msgEmbed2.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 			msgEmbed2.setTitle("__**Blackjack Game:**__");
 			msgEmbed2.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 			msgEmbed2.setDescription(timeOutString);
-			vector<DiscordCoreAPI::EmbedData> embeds;
+			vector<DiscordCoreInternal::EmbedData> embeds;
 			embeds.push_back(msgEmbed2);
 			newMessage.data.author = args->message.data.author;
-			DiscordCoreAPI::Message newestMessage = args->coreClient->messages->editMessageAsync({ .embed = msgEmbed2,.originalMessageData = newMessage.data, .components = vector<DiscordCoreAPI::ActionRowData>() }, args->message.data.channelId, newMessage.data.id).get();
-			args->coreClient->messages->deleteMessageAsync({ .channelId = newestMessage.data.channelId, .messageId = newestMessage.data.id, .timeDelay = 20000 }).get();
+			DiscordCoreAPI::Message newestMessage = args->eventData.pDiscordCoreClient->messages->editMessageAsync({ .embed = msgEmbed2,.originalMessageData = newMessage.data, .components = vector<DiscordCoreAPI::ActionRowData>() }, args->message.data.channelId, newMessage.data.id).get();
+			args->eventData.pDiscordCoreClient->messages->deleteMessageAsync({ .channelId = newestMessage.data.channelId, .messageId = newestMessage.data.id, .timeDelay = 20000 }).get();
 			co_return;
 		}
 		if (button2.getButtonId()== "check") {
@@ -482,10 +487,10 @@ task<void> executeDoubleResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::
 			failedFooterString = "__***Sorry, but you have insufficient funds for placing that wager now!***__\n------\n✅ to Hit, ❎ to Stand.\n------";
 		}
 
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
-		msgEmbed.setColor(0, 0, 255);
+		msgEmbed.setColor("0000FF");
 		msgEmbed.setTitle("__**Blackjack:**__");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		msgEmbed.setDescription(newMessage.data.embeds[0].description);
@@ -495,7 +500,7 @@ task<void> executeDoubleResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::
 		DiscordCoreAPI::EditMessageData editData;
 		editData.originalMessageData = newMessage.data;
 		editData.embed = msgEmbed;
-		args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
 		executeCheckResponse(button, discordGuildMember, betAmount, guildMember, discordGuild, newMessage, args, newCardCount, userHand, userAceIndices, dealerAceIndices, userID, dealerHand, actionRowData2);
 	};
 
@@ -558,14 +563,14 @@ task<void> executeDoubleResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::
 		discordGuild.data.casinoStats.totalPayout += payAmount;
 		discordGuild.writeDataToDB().get();
 
-		string winFooterString = "------\n__**Payout Amount:**__ " + to_string(payAmount) + " " + args->coreClient->discordUser->data.currencyName + "\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " "
-			+ args->coreClient->currentUser->coreClient->discordUser->data.currencyName + "\n------";
+		string winFooterString = "------\n__**Payout Amount:**__ " + to_string(payAmount) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " "
+			+ args->eventData.pDiscordCoreClient->currentUser->coreClient->discordUser->data.currencyName + "\n------";
 
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 		msgEmbed.setTitle("__**Blackjack Win:**__");
-		msgEmbed.setColor(0, 255, 0);
+		msgEmbed.setColor("00FF00");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		msgEmbed.setDescription(newMessage.data.embeds[0].description);
 		msgEmbed.addField("Dealer's Hand: " + to_string(newDealerHandScore), dealerHandString, true);
@@ -574,17 +579,17 @@ task<void> executeDoubleResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::
 		DiscordCoreAPI::EditMessageData editData;
 		editData.originalMessageData = newMessage.data;
 		editData.embed = msgEmbed;
-		args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
 		co_return;
 	}
 	else if (newUserHandScore == newDealerHandScore) {
-		string tieFooterString = "------\n__**Your Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
+		string tieFooterString = "------\n__**Your Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 		msgEmbed.setTitle("__**Blackjack Tie:**__");
-		msgEmbed.setColor(0, 0, 255);
+		msgEmbed.setColor("0000FF");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		msgEmbed.setDescription(newMessage.data.embeds[0].description);
 		msgEmbed.addField("Dealer's Hand: " + to_string(newDealerHandScore), dealerHandString, true);
@@ -593,7 +598,7 @@ task<void> executeDoubleResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::
 		DiscordCoreAPI::EditMessageData editData;
 		editData.originalMessageData = newMessage.data;
 		editData.embed = msgEmbed;
-		args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
 		co_return;
 	}
 	else {
@@ -612,13 +617,13 @@ task<void> executeDoubleResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::
 		discordGuild.data.casinoStats.totalPayout += payAmount;
 		discordGuild.writeDataToDB().get();
 
-		string bustFooterString = "------\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
+		string bustFooterString = "------\n__**Your New Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-		DiscordCoreAPI::EmbedData msgEmbed;
+		DiscordCoreInternal::EmbedData msgEmbed;
 		msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
 		msgEmbed.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
 		msgEmbed.setTitle("__**Blackjack Loss:**__");
-		msgEmbed.setColor(255, 0, 0);
+		msgEmbed.setColor("FF0000");
 		msgEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 		msgEmbed.setDescription(newMessage.data.embeds[0].description);
 		msgEmbed.addField("Dealer's Hand: " + to_string(newDealerHandScore), dealerHandString, true);
@@ -627,7 +632,7 @@ task<void> executeDoubleResponse(DiscordCoreAPI::Button button, DiscordCoreAPI::
 		DiscordCoreAPI::EditMessageData editData;
 		editData.originalMessageData = newMessage.data;
 		editData.embed = msgEmbed;
-		args->coreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
+		args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, newMessage.data.channelId, newMessage.data.id).get();
 		co_return;
 	}
 }
@@ -642,23 +647,19 @@ namespace DiscordCoreAPI {
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
 
-				Channel channel = args->coreClient->channels->getChannelAsync({ args->message.data.channelId }).get();
+				Channel channel = args->eventData.pDiscordCoreClient->channels->getChannelAsync({ args->eventData.getChannelId() }).get();
 
-				bool areWeInADm = areWeInADM(args->message, channel);
-
-				if (areWeInADm == true) {
-					co_return;
-				}
+				bool areWeInADm = areWeInADM(args->eventData.messageData, args->eventData.pDiscordCoreClient, channel);
 
 				if (areWeInADm == true) {
 					co_return;
 				}
 
-				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
-					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
+				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::SLASH_COMMAND_INTERACTION) {
+					args->eventData.pDiscordCoreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
 				}
 
-				Guild guild = args->coreClient->guilds->getGuildAsync({ args->message.data.guildId }).get();
+				Guild guild = args->eventData.pDiscordCoreClient->guilds->getGuildAsync({ args->message.data.guildId }).get();
 				DiscordGuild discordGuild(guild.data);
 
 				bool areWeAllowed = checkIfAllowedGamingInChannel(args->message, discordGuild.data);
@@ -667,32 +668,32 @@ namespace DiscordCoreAPI {
 					co_return;
 				}
 
-				GuildMember guildMember = args->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->message.data.author.id }).get();
-				GuildMember botMember = args->coreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->coreClient->discordUser->data.userId }).get();
+				GuildMember guildMember = args->eventData.pDiscordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->message.data.author.id }).get();
+				GuildMember botMember = args->eventData.pDiscordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->message.data.guildId, .guildMemberId = args->eventData.pDiscordCoreClient->discordUser->data.userId }).get();
 				if (!DiscordCoreAPI::PermissionsConverter::checkForPermission(botMember, channel, DiscordCoreInternal::Permissions::MANAGE_MESSAGES)) {
 					string msgString = "------\n**I need the Manage Messages permission in this channel, for this game!**\n------";
-					DiscordCoreAPI::EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Permissions Issue:**__");
-					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
-					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 200000 }).get();
+					Message msg = args->eventData.pDiscordCoreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
+					args->eventData.pDiscordCoreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 200000 }).get();
 					co_return;
 				}
 
 				regex betRegExp("\\d{1,18}");
 				if (args->argumentsArray.size() == 0 || !regex_search(args->argumentsArray.at(0), betRegExp) || stoll(args->argumentsArray.at(0)) < 1) {
 					string msgString = "------\n**Please enter a valid bet amount!(!blackjack = BETAMOUNT)**\n------";
-					DiscordCoreAPI::EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
-					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
-					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 200000 }).get();
+					Message msg = args->eventData.pDiscordCoreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
+					args->eventData.pDiscordCoreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 200000 }).get();
 					co_return;
 				}
 
@@ -707,19 +708,19 @@ namespace DiscordCoreAPI {
 
 				if (betAmount > discordGuildMember.data.currency.wallet) {
 					string msgString = "------\n**Sorry, but you have insufficient funds for placing that wager!**\n------";
-					DiscordCoreAPI::EmbedData msgEmbed;
+					DiscordCoreInternal::EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Missing Funds:**__");
-					Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
-					args->coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 200000 }).get();
+					Message msg = args->eventData.pDiscordCoreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
+					args->eventData.pDiscordCoreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 200000 }).get();
 					co_return;
 				}
 
 				string finalMsgString;
-				finalMsgString = "__**Your Bet Amount:**__ " + to_string(betAmount) + " " + args->coreClient->discordUser->data.currencyName + "\n";
+				finalMsgString = "__**Your Bet Amount:**__ " + to_string(betAmount) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n";
 
 				string footerMsgStringOld = "------\n------";
 
@@ -754,12 +755,12 @@ namespace DiscordCoreAPI {
 					newDealerHandScore = dealerHand[0].value + dealerHand[1].value;
 					string footerMsgString2;
 					if (newDealerHandScore == 21) {
-						footerMsgString2 = "\n------\n__**Your Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
+						footerMsgString2 = "\n------\n__**Your Wallet Balance:**__ " + to_string(discordGuildMember.data.currency.wallet) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-						DiscordCoreAPI::EmbedData finalMessageEmbed;
+						DiscordCoreInternal::EmbedData finalMessageEmbed;
 						finalMessageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 						finalMessageEmbed.setTimeStamp(getTimeAndDate());
-						finalMessageEmbed.setColor(0, 0, 255);
+						finalMessageEmbed.setColor("0000FF");
 						finalMessageEmbed.setDescription(finalMsgString);
 						finalMessageEmbed.setTitle("__**Blackjack Tie:**__");
 						finalMessageEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
@@ -779,7 +780,7 @@ namespace DiscordCoreAPI {
 						field03.Inline = false;
 						finalMessageEmbed.fields.push_back(field03);
 
-						newMessage = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = finalMessageEmbed }).get();
+						newMessage = args->eventData.pDiscordCoreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = finalMessageEmbed }).get();
 						co_return;
 					}
 
@@ -798,30 +799,30 @@ namespace DiscordCoreAPI {
 					discordGuild.data.casinoStats.totalPayout += payAmount;
 					discordGuild.writeDataToDB().get();
 
-					footerMsgString2 = "\n------\n__**Payout Amount:**__ " + to_string(payAmount) + " " + args->coreClient->discordUser->data.currencyName + "\n__**Your New Wallet Balance:**__ " +
-						to_string(discordGuildMember.data.currency.wallet) + " " + args->coreClient->discordUser->data.currencyName + "\n------";
+					footerMsgString2 = "\n------\n__**Payout Amount:**__ " + to_string(payAmount) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n__**Your New Wallet Balance:**__ " +
+						to_string(discordGuildMember.data.currency.wallet) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
 
-					DiscordCoreAPI::EmbedData finalMessageEmbed;
+					DiscordCoreInternal::EmbedData finalMessageEmbed;
 					finalMessageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					finalMessageEmbed.setTimeStamp(getTimeAndDate());
-					finalMessageEmbed.setColor(0, 255, 0);
+					finalMessageEmbed.setColor("00FF00");
 					finalMessageEmbed.setDescription(finalMsgString);
 					finalMessageEmbed.setTitle("__**Blackjack Win:**__");
 					finalMessageEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
 					finalMessageEmbed.addField("Dealer's Hand: ", dealerHand[0].suit + dealerHand[0].type + dealerHand[1].suit + dealerHand[1].type, true);
 					finalMessageEmbed.addField("Player's Hand: ", userHand[0].suit + userHand[0].type + userHand[1].suit + userHand[1].type, true);
 					finalMessageEmbed.addField("__**Game Status: Player Wins**__", footerMsgString2, false);
-					newMessage = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = finalMessageEmbed }).get();
+					newMessage = args->eventData.pDiscordCoreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = finalMessageEmbed }).get();
 					co_return;
 				}
 				bool canWeDoubleDown = false;
 				if ((userHandScore == 9) || (userHandScore == 10) || (userHandScore == 11)) {
 					canWeDoubleDown = true;
 				}
-				DiscordCoreAPI::EmbedData finalMessageEmbed;
+				DiscordCoreInternal::EmbedData finalMessageEmbed;
 				finalMessageEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 				finalMessageEmbed.setTimeStamp(getTimeAndDate());
-				finalMessageEmbed.setColor(0, 255, 0);
+				finalMessageEmbed.setColor("00FF00");
 				finalMessageEmbed.setDescription(finalMsgString);
 				finalMessageEmbed.setTitle("__**Blackjack:**__");
 				finalMessageEmbed.setFooter("Cards Remaining: " + to_string(discordGuild.data.blackjackStack.size()));
@@ -877,22 +878,22 @@ namespace DiscordCoreAPI {
 				}
 				actionRows.push_back(actionRowData);
 				replyMessageData.components = actionRows;
-				newMessage = args->coreClient->messages->replyAsync(replyMessageData).get();
+				newMessage = args->eventData.pDiscordCoreClient->messages->replyAsync(replyMessageData).get();
 				Button button(newMessage.data);
 				DiscordCoreAPI::ButtonInteractionData buttonInteractionData = button.getOurButtonData(60000);
 				if (buttonInteractionData.customId == "") {
 					string timeOutString = "------\nSorry, but you ran out of time to select an option.\n------";
-					DiscordCoreAPI::EmbedData msgEmbed2;
-					msgEmbed2.setColor(255, 0, 0);
+					DiscordCoreInternal::EmbedData msgEmbed2;
+					msgEmbed2.setColor("FF0000");
 					msgEmbed2.setTimeStamp(getTimeAndDate());
 					msgEmbed2.setTitle("__**Blackjack Game:**__");
 					msgEmbed2.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
 					msgEmbed2.setDescription(timeOutString);
-					vector<DiscordCoreAPI::EmbedData> embeds;
+					vector<DiscordCoreInternal::EmbedData> embeds;
 					embeds.push_back(msgEmbed2);
 					newMessage.data.author = args->message.data.author;
-					DiscordCoreAPI::Message newerMessage = args->coreClient->messages->editMessageAsync({ .embed = msgEmbed2,.originalMessageData = newMessage.data, .components = vector<DiscordCoreAPI::ActionRowData>() }, args->message.data.channelId, newMessage.data.id).get();
-					args->coreClient->messages->deleteMessageAsync({ .channelId = newerMessage.data.channelId, .messageId = newerMessage.data.id, .timeDelay = 20000 }).get();
+					DiscordCoreAPI::Message newerMessage = args->eventData.pDiscordCoreClient->messages->editMessageAsync({ .embed = msgEmbed2,.originalMessageData = newMessage.data, .components = vector<DiscordCoreAPI::ActionRowData>() }, args->message.data.channelId, newMessage.data.id).get();
+					args->eventData.pDiscordCoreClient->messages->deleteMessageAsync({ .channelId = newerMessage.data.channelId, .messageId = newerMessage.data.id, .timeDelay = 20000 }).get();
 					co_return;
 				}
 
@@ -901,7 +902,7 @@ namespace DiscordCoreAPI {
 				editData.originalMessageData = newMessage.data;
 				editData.components.push_back(actionRowDataOld);
 				finalMessageEmbed.fields.at(2).value = footerMsgStringOld;
-				newMessage = args->coreClient->messages->editMessageAsync(editData, args->message.data.channelId, newMessage.data.id).get();
+				newMessage = args->eventData.pDiscordCoreClient->messages->editMessageAsync(editData, args->message.data.channelId, newMessage.data.id).get();
 				if (button.getButtonId()== "check") {
 					cout << "CHECK CHECK CHECK:" << endl;
 					executeCheckResponse(button, discordGuildMember, betAmount, guildMember, discordGuild, newMessage, args, newCardCount, userHand, &userAceIndices, &dealerAceIndices, userID, dealerHand, actionRowDataOld).get();

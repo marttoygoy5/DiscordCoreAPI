@@ -194,7 +194,7 @@ namespace DiscordCoreAPI {
         string guildName = "";
         unsigned int memberCount = 0;
         vector<Card> blackjackStack{};
-        unsigned int borderColor[3] = { 254, 254, 254 };
+        string  borderColor = "FEFEFE";
         CasinoStats casinoStats{};
         vector<string> gameChannelIds{};
         GuildShop guildShop{};
@@ -208,8 +208,8 @@ namespace DiscordCoreAPI {
         string globalId = "";
         string userName = "";
         Currency currency{};
-        map<string, InventoryItem> items{};
-        map<string, InventoryRole> roles{};
+        vector<InventoryItem> items{};
+        vector<InventoryRole> roles{};
         unsigned int lastTimeRobbed = 0;
         unsigned int lastTimeWorked = 0;
     };
@@ -274,8 +274,8 @@ namespace DiscordCoreAPI {
         }
 
         static bsoncxx::builder::basic::document convertUserDataToDBDoc(DiscordUserData discordUserData) {
-            try {
-                bsoncxx::builder::basic::document buildDoc;
+            bsoncxx::builder::basic::document buildDoc;
+            try {                
                 using bsoncxx::builder::basic::kvp;
                 buildDoc.append(kvp("_id", discordUserData.userId));
                 buildDoc.append(kvp("userId", discordUserData.userId));
@@ -295,13 +295,14 @@ namespace DiscordCoreAPI {
             }
             catch (bsoncxx::v_noabi::exception& e) {
                 cout << "DatabaseManagerAgent::convertUserDataToDBDoc() Error: " << e.what() << endl;
+                return buildDoc;
             }
 
         }
 
         static DiscordUserData parseUserData(bsoncxx::document::value docValue) {
-            try {
-                DiscordUserData userData;
+            DiscordUserData userData;
+            try {                
                 userData.userName = docValue.view()["userName"].get_utf8().value.to_string();
                 userData.currencyName = docValue.view()["currencyName"].get_utf8().value.to_string();
                 userData.guildCount = docValue.view()["guildCount"].get_int32();
@@ -320,12 +321,13 @@ namespace DiscordCoreAPI {
             }
             catch (bsoncxx::v_noabi::exception& e) {
                 cout << "DatabaseManagerAgent::parseUserData() Error: " << e.what() << endl;
+                return userData;
             }
         }
 
         static bsoncxx::builder::basic::document convertGuildDataToDBDoc(DiscordGuildData discordGuildData) {
-            try {
-                bsoncxx::builder::basic::document buildDoc;
+            bsoncxx::builder::basic::document buildDoc;
+            try {                
                 using bsoncxx::builder::basic::kvp;
                 buildDoc.append(kvp("_id", discordGuildData.guildId));
                 buildDoc.append(kvp("guildId", discordGuildData.guildId));
@@ -341,11 +343,7 @@ namespace DiscordCoreAPI {
                                 });
                         }
                     }));
-                buildDoc.append(kvp("borderColor", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
-                    for (auto& value : discordGuildData.borderColor) {
-                        subArray.append(bsoncxx::types::b_int32(value));
-                    }
-                    }));
+                buildDoc.append(kvp("borderColor", discordGuildData.borderColor));
                 buildDoc.append(kvp("gameChannelIds", [discordGuildData](bsoncxx::builder::basic::sub_array subArray) {
                     for (auto& value : discordGuildData.gameChannelIds) {
                         subArray.append(value);
@@ -427,12 +425,13 @@ namespace DiscordCoreAPI {
             }
             catch (bsoncxx::v_noabi::exception& e) {
                 cout << "DatabaseManagerAgent::convertGuildDataToDBDoc() Error: " << e.what() << endl;
+                return buildDoc;
             }
         };
 
         DiscordGuildData parseGuildData(bsoncxx::document::value docValue) {
-            try {
-                DiscordGuildData guildData;
+            DiscordGuildData guildData;
+            try {                
                 guildData.guildId = docValue.view()["guildId"].get_utf8().value.to_string();
                 guildData.guildName = docValue.view()["guildName"].get_utf8().value.to_string();
                 guildData.memberCount = docValue.view()["memberCount"].get_int32().value;
@@ -443,9 +442,7 @@ namespace DiscordCoreAPI {
                     blackjackCard.value = value.get_document().view()["value"].get_int32().value;
                     guildData.blackjackStack.push_back(blackjackCard);
                 }
-                for (unsigned int x = 0; x < 3; x += 1) {
-                    guildData.borderColor[x] = docValue.view()["borderColor"].get_array().value[x].get_int32().value;
-                }
+                guildData.borderColor = docValue.view()["borderColor"].get_utf8().value.to_string();
                 for (auto& value : docValue.view()["gameChannelIds"].get_array().value) {
                     guildData.gameChannelIds.push_back(value.get_utf8().value.to_string());
                 }
@@ -503,12 +500,13 @@ namespace DiscordCoreAPI {
             }
             catch (bsoncxx::v_noabi::exception& e) {
                 cout << "DatabaseManagerAgent::parseGuildData() Error: " << e.what() << endl;
+                return guildData;
             }
         };
 
         static bsoncxx::builder::basic::document convertGuildMemberDataToDBDoc(DiscordGuildMemberData discordGuildMemberData) {
+            bsoncxx::builder::basic::document buildDoc;
             try {
-                bsoncxx::builder::basic::document buildDoc;
                 using bsoncxx::builder::basic::kvp;
                 buildDoc.append(kvp("_id", discordGuildMemberData.globalId));
                 buildDoc.append(kvp("guildId", discordGuildMemberData.guildId));
@@ -524,24 +522,23 @@ namespace DiscordCoreAPI {
                         kvp("timeOfLastDeposit", bsoncxx::types::b_int32(discordGuildMemberData.currency.timeOfLastDeposit)));
                     }));
                 buildDoc.append(kvp("items", [discordGuildMemberData](bsoncxx::builder::basic::sub_array subArray) {
-                    for (auto& [key, value] : discordGuildMemberData.items) {
-                        subArray.append([value](bsoncxx::builder::basic::sub_document subDocument) {
-                            subDocument.append(kvp("itemName", value.itemName),
-                                kvp("itemCost", bsoncxx::types::b_int32(value.itemCost)),
-                                kvp("selfMod", bsoncxx::types::b_int32(value.selfMod)),
-                                kvp("oppMod", bsoncxx::types::b_int32(value.oppMod)),
-                                kvp("emoji", value.emoji));
+                    for (unsigned int x = 0; x < discordGuildMemberData.items.size(); x += 1) {
+                        subArray.append([discordGuildMemberData, x](bsoncxx::builder::basic::sub_document subDocument) {
+                            subDocument.append(kvp("itemName", discordGuildMemberData.items.at(x).itemName),
+                                kvp("itemCost", bsoncxx::types::b_int32(discordGuildMemberData.items.at(x).itemCost)),
+                                kvp("selfMod", bsoncxx::types::b_int32(discordGuildMemberData.items.at(x).selfMod)),
+                                kvp("oppMod", bsoncxx::types::b_int32(discordGuildMemberData.items.at(x).oppMod)),
+                                kvp("emoji", discordGuildMemberData.items.at(x).emoji));
 
                             });
                     }
-
                     })),
                     buildDoc.append(kvp("roles", [discordGuildMemberData](bsoncxx::builder::basic::sub_array subArray) {
-                        for (auto& [key, value] : discordGuildMemberData.roles) {
-                            subArray.append([value](bsoncxx::builder::basic::sub_document subDocument) {
-                                subDocument.append(kvp("roleName", value.roleName),
-                                    kvp("roleId", value.roleId),
-                                    kvp("roleCost", bsoncxx::types::b_int32(value.roleCost)));
+                        for (unsigned int x = 0; x < discordGuildMemberData.roles.size(); x+=1){
+                            subArray.append([discordGuildMemberData, x](bsoncxx::builder::basic::sub_document subDocument) {
+                                subDocument.append(kvp("roleName", discordGuildMemberData.roles.at(x).roleName),
+                                    kvp("roleId", discordGuildMemberData.roles.at(x).roleId),
+                                    kvp("roleCost", bsoncxx::types::b_int32(discordGuildMemberData.roles.at(x).roleCost)));
                                 });
                         }
                         }));
@@ -550,12 +547,13 @@ namespace DiscordCoreAPI {
             }
             catch (bsoncxx::v_noabi::exception& e) {
                 cout << "DatabaseManagerAgent::convertGuildDataToDBDoc() Error: " << e.what() << endl;
+                return buildDoc;
             }
         };
 
         DiscordGuildMemberData parseGuildMemberData(bsoncxx::document::value docValue) {
+            DiscordGuildMemberData guildMemberData;
             try {
-                DiscordGuildMemberData guildMemberData;
                 guildMemberData.guildId = docValue.view()["guildId"].get_utf8().value.to_string();
                 guildMemberData.displayName = docValue.view()["displayName"].get_utf8().value.to_string();
                 guildMemberData.globalId = docValue.view()["globalId"].get_utf8().value.to_string();
@@ -573,19 +571,20 @@ namespace DiscordCoreAPI {
                     item.itemCost = value["itemCost"].get_int32().value;
                     item.oppMod = value["oppMod"].get_int32().value;
                     item.selfMod = value["selfMod"].get_int32().value;
-                    guildMemberData.items.insert(make_pair(item.itemName, item));
+                    guildMemberData.items.push_back(item);
                 }
                 for (auto& value : docValue.view()["roles"].get_array().value) {
                     InventoryRole role;
                     role.roleCost = value["roleCost"].get_int32().value;
                     role.roleId = value["roleId"].get_utf8().value.to_string();
                     role.roleName = value["roleName"].get_utf8().value.to_string();
-                    guildMemberData.roles.insert(make_pair(role.roleName, role));
+                    guildMemberData.roles.push_back(role);
                 }
                 return guildMemberData;
             }
             catch (bsoncxx::v_noabi::exception& e) {
                 cout << "DatabaseManagerAgent::parseGuildData() Error: " << e.what() << endl;
+                return guildMemberData;
             }
         };
 
@@ -724,7 +723,7 @@ namespace DiscordCoreAPI {
     class DiscordGuild {
     public:
         DiscordGuildData data;
-        DiscordGuild(DiscordCoreInternal::GuildData guildData) {
+        DiscordGuild(GuildData guildData) {
             this->data.guildId = guildData.id;
             this->getDataFromDB().get();
             this->data.guildName = guildData.name;

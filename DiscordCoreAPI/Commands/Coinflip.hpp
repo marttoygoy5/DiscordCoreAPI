@@ -25,12 +25,12 @@ namespace DiscordCoreAPI {
 				Channel channel = args->coreClient->channels->getChannelAsync({ args->message.data.channelId }).get();
 
 				bool areWeInADm = areWeInADM(args->message, channel);
-
+				
 				if (areWeInADm == true) {
 					co_return;
 				}
 
-				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::INTERACTION) {
+				if (args->message.data.messageType != DiscordCoreInternal::MessageTypeReal::SLASH_COMMAND_INTERACTION) {
 					args->coreClient->messages->deleteMessageAsync({ .channelId = args->message.data.channelId, .messageId = args->message.data.id, .timeDelay = 0 });
 				}
 
@@ -48,7 +48,7 @@ namespace DiscordCoreAPI {
 					string msgString = "------\n**I need the Manage Messages permission in this channel, for this game!**\n------";
 					EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Permissions Issue:**__");
@@ -63,7 +63,7 @@ namespace DiscordCoreAPI {
 					string msgString = "------\n**Please enter a valid amount to bet! 1 " + args->coreClient->discordUser->data.currencyName + " or more! (!coinflip = BETAMOUNT)**\n------";
 					EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
@@ -83,7 +83,7 @@ namespace DiscordCoreAPI {
 					string msgString = "------\n**Sorry, but you have insufficient funds in your wallet to place that wager!**\n------";
 					EmbedData msgEmbed;
 					msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-					msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Insufficient Funds:**__");
@@ -98,7 +98,7 @@ namespace DiscordCoreAPI {
 
 				EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
-				msgEmbed.setColor(0, 0, 255);
+				msgEmbed.setColor("0000FF");
 				msgEmbed.setDescription(newBetString);
 				msgEmbed.setTimeStamp(getTimeAndDate());
 				msgEmbed.setTitle("__**Heads, or Tails!?**__");
@@ -123,6 +123,7 @@ namespace DiscordCoreAPI {
 				componentData02.type = ComponentType::Button;
 				actionRowData.components.push_back(componentData02);
 				replyMessageData.components.push_back(actionRowData);
+				replyMessageData.sendEphemeral = true;
 				Message message = args->coreClient->messages->replyAsync(replyMessageData).get();
 				vector<string> buttonIds;
 				buttonIds.push_back("Heads");
@@ -133,7 +134,7 @@ namespace DiscordCoreAPI {
 				if (buttonInteractionData.customId == ""){
 					string timeOutString = "------\nSorry, but you ran out of time to select an option.\n------";
 					EmbedData msgEmbed2;
-					msgEmbed2.setColor(255, 0, 0);
+					msgEmbed2.setColor("FF0000");
 					msgEmbed2.setTimeStamp(getTimeAndDate());
 					msgEmbed2.setTitle("__**Blackjack Game:**__");
 					msgEmbed2.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
@@ -157,7 +158,7 @@ namespace DiscordCoreAPI {
 				if (betAmount > currencyAmount) {
 					string completionString = "------\nSorry, but you have insufficient funds in your wallet to place that wager.\n------";
 					EmbedData msgEmbed3;
-					msgEmbed3.setColor(255, 0, 0);
+					msgEmbed3.setColor("FF0000");
 					msgEmbed3.setDescription(completionString);
 					msgEmbed3.setTimeStamp(getTimeAndDate());
 					msgEmbed3.setTitle("__**Heads, or Tails**__");
@@ -181,7 +182,7 @@ namespace DiscordCoreAPI {
 					}
 					newBalance = discordGuildMember.data.currency.wallet;
 					string completionString = "------\nNICELY DONE FAGGOT! YOU WON!\nYour new wallet balance is: " + to_string(newBalance) + " " + args->coreClient->discordUser->data.currencyName + ".\n------";
-					msgEmbed4.setColor(0, 255, 0);
+					msgEmbed4.setColor("00FF00");
 					msgEmbed4.setDescription(completionString);
 					msgEmbed4.setTimeStamp(getTimeAndDate());
 					msgEmbed4.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
@@ -196,7 +197,7 @@ namespace DiscordCoreAPI {
 					discordGuild.writeDataToDB();
 					newBalance = discordGuildMember.data.currency.wallet;
 					string completionString = "------\nOWNED FUCK FACE! YOU LOST!\nYour new wallet balance is: " + to_string(newBalance) + " " + args->coreClient->discordUser->data.currencyName + ".\n------";
-					msgEmbed4.setColor(255, 0, 0);
+					msgEmbed4.setColor("FF0000");
 					msgEmbed4.setDescription(completionString);
 					msgEmbed4.setTimeStamp(getTimeAndDate());
 					msgEmbed4.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());

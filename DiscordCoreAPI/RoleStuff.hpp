@@ -162,7 +162,7 @@ namespace DiscordCoreAPI {
 			}
 			vector<Role> roleVector;
 			for (unsigned int x = 0; x < returnData.data.size(); x += 1) {
-				DiscordCoreInternal::RoleData roleData;
+				RoleData roleData;
 				DiscordCoreInternal::parseObject(returnData.data.at(x), &roleData);
 				Role newRole(roleData, this->coreClient);
 				roleVector.push_back(newRole);
@@ -193,11 +193,7 @@ namespace DiscordCoreAPI {
 			}
 			map<string, Role> cacheTemp = receive(RoleManagerAgent::cache, 1U);
 			for (unsigned int x = 0; x < returnData.data.size(); x += 1) {
-				DiscordCoreInternal::RoleData roleData;
-				if (cacheTemp.contains(returnData.data.at(x).at("id"))) {
-					roleData = cacheTemp.at(returnData.data.at(x).at("id")).data;
-					cacheTemp.erase(returnData.data.at(x).at("id"));
-				}
+				RoleData roleData;
 				DiscordCoreInternal::parseObject(returnData.data.at(x), &roleData);
 				Role newRole(roleData, this->coreClient);
 				cacheTemp.insert(make_pair(newRole.data.id, newRole));
@@ -234,7 +230,7 @@ namespace DiscordCoreAPI {
 			else {
 				cout << "RoleManagerAgent::patchObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
-			DiscordCoreInternal::RoleData roleData;
+			RoleData roleData;
 			DiscordCoreInternal::parseObject(returnData.data, &roleData);
 			Role newRole(roleData, this->coreClient);
 			co_return newRole;
@@ -262,7 +258,7 @@ namespace DiscordCoreAPI {
 			else {
 				cout << "RoleManagerAgent::postObjectAsync() Success: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
 			}
-			DiscordCoreInternal::RoleData roleData;
+			RoleData roleData;
 			DiscordCoreInternal::parseObject(returnData.data, &roleData);
 			Role newRole(roleData, this->coreClient);
 			co_return newRole;
@@ -490,10 +486,14 @@ namespace DiscordCoreAPI {
 		task<vector<Role>> getGuildMemberRolesAsync(GetGuildMemberRolesData getGuildMemberRolesData) {
 			apartment_context mainThread;
 			co_await resume_background();
+			vector<Role> rolesVectorNew = getGuildRolesAsync({ .guildId = getGuildMemberRolesData.guildId }).get();
 			vector<Role> rolesVector;
-			for (unsigned int x = 0; x < getGuildMemberRolesData.guildMember.data.roles.size(); x += 1) {
-				Role newRole = getRoleAsync({ .guildId = getGuildMemberRolesData.guildId, .roleId = getGuildMemberRolesData.guildMember.data.roles.at(x) }).get();
-				rolesVector.push_back(newRole);
+			for (auto value : rolesVectorNew) {
+				for (auto value2:getGuildMemberRolesData.guildMember.data.roles) {
+					if (value2 == value.data.id) {
+						rolesVector.push_back(value);
+					}
+				}
 			}
 			co_await mainThread;
 			co_return rolesVector;

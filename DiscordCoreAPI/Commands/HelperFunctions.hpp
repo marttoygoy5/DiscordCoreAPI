@@ -26,44 +26,49 @@ namespace DiscordCoreAPI {
         return newString;
     }
 
-    string getTimeAndDate() {
-        const std::time_t now = std::time(nullptr);
-        char charArray[32];
-        std::tm time;
-        localtime_s(&time, &now);
-        strftime(charArray, 32, "%F %R", &time);
-        return charArray;
-    }
-
-    bool areWeInADM(Message message, Channel channel) {
+    bool areWeInADM(InputEventData eventData, Channel channel, DiscordGuild discordGuild) {
         auto currentChannelType = channel.data.type;
 
         if (currentChannelType == DiscordCoreInternal::ChannelType::DM) {
             string msgString = "------\n**Sorry, but we can't do that in a direct message!**\n------";
             EmbedData msgEmbed;
-            msgEmbed.setAuthor(message.data.interaction.user.username, message.data.interaction.user.getAvatarURL());
-            msgEmbed.setColor(254, 254, 254);
+            msgEmbed.setAuthor(eventData.messageData.interaction.user.username, eventData.messageData.author.getAvatarURL());
+            msgEmbed.setColor(discordGuild.data.borderColor);
             msgEmbed.setDescription(msgString);
             msgEmbed.setTimeStamp(getTimeAndDate());
             msgEmbed.setTitle("__**Direct Message Issue:**__");
-            ReplyMessageData messageReplyData;
-            messageReplyData.replyingToMessageData = message.data;
-            messageReplyData.embed = msgEmbed;
-            Message msg = message.coreClient->messages->replyAsync(messageReplyData).get();
-            message.coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id, .timeDelay = 20000 }).get();
+            if (eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+                InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+                responseData.channelId = eventData.getChannelId();
+                responseData.messageId = eventData.getMessageId();
+                responseData.embeds.push_back(msgEmbed);
+                InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
+                InputEventHandler::deleteInputEventResponse(event01,20000).get();
+            }
+            else if (eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+                InputEventData event(eventData.messageData, eventData.interactionData, InputEventType::SLASH_COMMAND_INTERACTION);
+                InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+                responseData.applicationId = eventData.interactionData.applicationId;
+                responseData.embeds.push_back(msgEmbed);
+                responseData.interactionId = eventData.interactionData.id;
+                responseData.interactionToken = eventData.interactionData.token;
+                responseData.type = InteractionCallbackType::ChannelMessage;
+                InputEventHandler::respondToEvent(responseData).get();
+                InputEventHandler::deleteInputEventResponse(eventData, 20000).get();
+            }
             return true;
         }
         return false;
     }
 
-    bool checkIfAllowedGamingInChannel(Message message, DiscordGuildData guildData) {
+    bool checkIfAllowedGamingInChannel(DiscordCoreAPI::InputEventData eventData,  DiscordGuild discordGuild) {
         bool isItFound = true;
-        if (guildData.gameChannelIds.size() > 0) {
+        if (discordGuild.data.gameChannelIds.size() > 0) {
             isItFound = false;
             string msgString = "------\n**Sorry, but please do that in one of the following channels:**\n------\n";
             EmbedData msgEmbed;
-            for (auto& value : guildData.gameChannelIds) {
-                if (message.data.channelId == value) {
+            for (auto& value : discordGuild.data.gameChannelIds) {
+                if (eventData.getChannelId() == value) {
                     isItFound = true;
                     break;
                 }
@@ -73,21 +78,33 @@ namespace DiscordCoreAPI {
             }
             msgString += "------";
             if (isItFound == false) {
-                msgEmbed.setAuthor(message.data.author.username, message.data.author.getAvatarURL());
-                msgEmbed.setColor(254, 254, 254);
+                msgEmbed.setAuthor(eventData.messageData.author.username, eventData.messageData.author.getAvatarURL());
+                msgEmbed.setColor(discordGuild.data.borderColor);
                 msgEmbed.setDescription(msgString);
                 msgEmbed.setTitle("__**Permissions Issue:**__");
-                ReplyMessageData replyMessageData;
-                replyMessageData.replyingToMessageData = message.data;
+                DiscordCoreInternal::ReplyMessageData replyMessageData;
+                replyMessageData.replyingToMessageData = eventData.messageData;
                 replyMessageData.embed = msgEmbed;
-                Message messageNew = message.coreClient->messages->replyAsync(replyMessageData).get();
-                DeleteMessageData deleteMsgData;
-                deleteMsgData.channelId = messageNew.data.channelId;
-                deleteMsgData.messageId = messageNew.data.id;
-                deleteMsgData.timeDelay = 20000;
-                message.coreClient->messages->deleteMessageAsync(deleteMsgData).get();
-                return isItFound;
+                if (eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+                    InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+                    responseData.channelId = eventData.messageData.channelId;
+                    responseData.messageId = eventData.messageData.id;
+                    responseData.embeds.push_back(msgEmbed);
+                    InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
+                    InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+                }
+                else if (eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+                    InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+                    responseData.applicationId = eventData.interactionData.applicationId;
+                    responseData.embeds.push_back(msgEmbed);
+                    responseData.interactionId = eventData.interactionData.id;
+                    responseData.interactionToken = eventData.interactionData.token;
+                    responseData.type = InteractionCallbackType::ChannelMessage;
+                    InputEventHandler::respondToEvent(responseData).get();
+                    InputEventHandler::deleteInputEventResponse(eventData, 20000).get();
+                }
             }
+            
         }
         return isItFound;
     }
@@ -108,7 +125,7 @@ namespace DiscordCoreAPI {
             }
         }
 
-        static string addPermissionsToString(string originalPermissionString, vector<DiscordCoreInternal::Permissions> permissionsToAdd) {
+        static string addPermissionsToString(string originalPermissionString, vector<Permissions> permissionsToAdd) {
             if (originalPermissionString == "") {
                 originalPermissionString = "0";
             }
@@ -363,7 +380,7 @@ namespace DiscordCoreAPI {
             return permissions;
         }
 
-        static bool checkForPermission(GuildMember guildMember, Channel channel, DiscordCoreInternal::Permissions permission) {
+        static bool checkForPermission(GuildMember guildMember, Channel channel, Permissions permission) {
             string permissionsString = computePermissions(guildMember, channel);
             if ((stoll(permissionsString) & (__int64)permission) == (__int64)permission) {
                 return true;
@@ -387,21 +404,14 @@ namespace DiscordCoreAPI {
         return false;
     }
 
-    bool doWeHaveAdminPermissions(Message message) {
-        Guild guild = message.coreClient->guilds->getGuildAsync({ .guildId = message.data.guildId }).get();
-        DiscordGuild discordGuild = message.coreClient->getDiscordGuild(guild.data);
-
-        GuildMember guildMember = message.coreClient->guildMembers->getGuildMemberAsync({ .guildId = message.data.guildId, .guildMemberId = message.data.author.id }).get();
-
-        Channel channel = message.coreClient->channels->getChannelAsync({ message.data.channelId }).get();
-
-        bool doWeHaveAdmin = PermissionsConverter::checkForPermission(guildMember, channel, DiscordCoreInternal::Permissions::ADMINISTRATOR);
+    bool doWeHaveAdminPermissions(InputEventData eventData,DiscordGuild discordGuild, Channel channel, GuildMember guildMember) {
+        bool doWeHaveAdmin = PermissionsConverter::checkForPermission(guildMember, channel, Permissions::ADMINISTRATOR);
 
         if (doWeHaveAdmin) {
             return true;
         }
 
-        bool areWeACommander = checkForBotCommanderStatus(guildMember, *message.coreClient->discordUser);
+        bool areWeACommander = checkForBotCommanderStatus(guildMember, *eventData.pDiscordCoreClient->discordUser);
 
         if (areWeACommander) {
             return true;
@@ -410,19 +420,38 @@ namespace DiscordCoreAPI {
         string msgString = "------\n**Sorry, but you don't have the permissions required for that!**\n------";
         EmbedData msgEmbed;
         msgEmbed.setAuthor(guildMember.data.user.username, guildMember.data.user.getAvatarURL());
-        msgEmbed.setColor(discordGuild.data.borderColor[0], discordGuild.data.borderColor[1], discordGuild.data.borderColor[2]);
+        msgEmbed.setColor(discordGuild.data.borderColor);
         msgEmbed.setDescription(msgString);
         msgEmbed.setTimeStamp(getTimeAndDate());
         msgEmbed.setTitle("__**Permissions Issue:**__");
-        Message msg = message.coreClient->messages->replyAsync({ .replyingToMessageData = message.data, .embed = msgEmbed }).get();
-        message.coreClient->messages->deleteMessageAsync({ .channelId = msg.data.channelId, .messageId = msg.data.id,.timeDelay = 20000 }).get();
+        if (eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+            InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+            responseData.channelId = eventData.messageData.channelId;
+            responseData.messageId = eventData.messageData.id;
+            responseData.embeds.push_back(msgEmbed);
+            InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
+            InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+        }
+        else if (eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+            InputEventData event(eventData.messageData, eventData.interactionData, InputEventType::SLASH_COMMAND_INTERACTION);
+            InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+            responseData.applicationId = eventData.interactionData.applicationId;
+            responseData.embeds.push_back(msgEmbed);
+            responseData.interactionId = eventData.interactionData.id;
+            responseData.interactionToken = eventData.interactionData.token;
+            responseData.type = InteractionCallbackType::ChannelMessage;
+            event = InputEventHandler::respondToEvent(responseData).get();
+            event.interactionData.applicationId = eventData.interactionData.applicationId;
+            event.interactionData.token = eventData.interactionData.token;
+            InputEventHandler::deleteInputEventResponse(event, 20000).get();
+        }
         return false;
     }
 
     /**
     * Recurses through a succession of messages.
     */
-    task<void> recurseThroughMessagePages(string userID, Message originalMessage, DiscordCoreClient* pDiscordCoreClient, unsigned int currentPageIndex, vector<EmbedData> messageEmbeds, bool deleteAfter) {
+    task<void> recurseThroughMessagePages(string userID, InputEventData originalEvent, unsigned int currentPageIndex, vector<EmbedData> messageEmbeds, bool deleteAfter) {
         unsigned int newCurrentPageIndex = currentPageIndex;
         try {
 
@@ -450,45 +479,171 @@ namespace DiscordCoreAPI {
             component03.disabled = false;
             component03.emoji.name = "❌";
             component03.label = "Exit";
-            component03.style = ButtonStyle::Primary;
             component03.type = ComponentType::Button;
+            component03.style = ButtonStyle::Primary;
             actionRowData.components.push_back(component03);
             actionRowDataVector.push_back(actionRowData);
-            EditMessageData editMessageData;
-            editMessageData.embed = messageEmbeds.at(0);
-            editMessageData.components = actionRowDataVector;
-            editMessageData.originalMessageData = originalMessage.data;
             bool doWeQuit = false;
-            Message newMessage = pDiscordCoreClient->messages->editMessageAsync(editMessageData, originalMessage.data.channelId, originalMessage.data.id).get();
-            Button button(newMessage.data);
+            InputEventData event01;
+            InputEventResponseData responseDataRegularMessage(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+            InputEventResponseData responseDataInteraction(InputEventResponseType::INTERACTION_RESPONSE);
+            if (originalEvent.eventType == InputEventType::REGULAR_MESSAGE) {
+                responseDataRegularMessage.channelId = originalEvent.messageData.channelId;
+                responseDataRegularMessage.messageId = originalEvent.messageData.id;
+                responseDataRegularMessage.embeds.push_back(messageEmbeds[currentPageIndex]);
+                responseDataRegularMessage.components = actionRowDataVector;
+                responseDataRegularMessage.requesterId = originalEvent.requesterId;
+                responseDataRegularMessage.inputEventResponseType = InputEventResponseType::REGULAR_MESSAGE_RESPONSE;
+                event01 = InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+            }
+            else if (originalEvent.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+                responseDataInteraction.applicationId = originalEvent.interactionData.applicationId;
+                responseDataInteraction.interactionId = originalEvent.interactionData.id;
+                responseDataInteraction.interactionToken = originalEvent.interactionData.token;
+                responseDataInteraction.embeds.push_back(messageEmbeds[currentPageIndex]);
+                responseDataInteraction.components = actionRowDataVector;
+                responseDataInteraction.requesterId = originalEvent.requesterId;
+                responseDataInteraction.inputEventResponseType = InputEventResponseType::INTERACTION_RESPONSE;
+                InputEventHandler::respondToEvent(responseDataInteraction).get();
+                event01.messageData.channelId = originalEvent.getChannelId();
+                event01.messageData.id = originalEvent.getMessageId();
+                responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
+                event01 = InputEventHandler::respondToEvent(responseDataInteraction).get();
+                event01.interactionData.applicationId = originalEvent.interactionData.applicationId;
+                event01.interactionData.token = originalEvent.interactionData.token;
+            }
+
             while (doWeQuit == false) {
+                Button button(event01);
                 ButtonInteractionData buttonIntData = button.getOurButtonData(60000);
+                InputEventData newEvent;
                 if (button.getButtonId() == "forwards" && (newCurrentPageIndex == (messageEmbeds.size() - 1))) {
                     newCurrentPageIndex = 0;
                     EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
-                    Message newerMessage = pDiscordCoreClient->messages->editMessageAsync({ .embed = messageEmbed, .originalMessageData = newMessage.data,.components = actionRowDataVector }, newMessage.data.channelId, newMessage.data.id).get();
+                    if (event01.eventType == InputEventType::REGULAR_MESSAGE) {
+                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::REGULAR_MESSAGE_EDIT;
+                        vector<EmbedData> embeds;
+                        embeds.push_back(messageEmbed);
+                        responseDataRegularMessage.embeds = embeds;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        responseDataRegularMessage.channelId = event01.getChannelId();
+                        responseDataRegularMessage.messageId = event01.getMessageId();
+                        InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::DEFER_BUTTON_RESPONSE;
+                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
+                        responseDataRegularMessage.interactionId = buttonIntData.id;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        newEvent = InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                    }
+                    else {
+                        responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
+                        vector<EmbedData> embeds;
+                        embeds.push_back(messageEmbed);
+                        responseDataInteraction.embeds = embeds;
+                        InputEventHandler::respondToEvent(responseDataInteraction).get();
+                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
+                        responseData.interactionToken = buttonIntData.token;
+                        responseData.interactionId = buttonIntData.id;
+                        InputEventHandler::respondToEvent(responseData).get();
+                    }
                 }
                 else if (button.getButtonId() == "forwards" && (newCurrentPageIndex < messageEmbeds.size())) {
                     newCurrentPageIndex += 1;
                     EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
-                    Message newerMessage = pDiscordCoreClient->messages->editMessageAsync({ .embed = messageEmbed, .originalMessageData = newMessage.data,.components = actionRowDataVector }, newMessage.data.channelId, newMessage.data.id).get();
+                    if (event01.eventType == InputEventType::REGULAR_MESSAGE) {
+                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::REGULAR_MESSAGE_EDIT;
+                        vector<EmbedData> embeds;
+                        embeds.push_back(messageEmbed);
+                        responseDataRegularMessage.embeds = embeds;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        responseDataRegularMessage.channelId = event01.getChannelId();
+                        responseDataRegularMessage.messageId = event01.getMessageId();
+                        InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::DEFER_BUTTON_RESPONSE;
+                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
+                        responseDataRegularMessage.interactionId = buttonIntData.id;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        newEvent = InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                    }
+                    else {
+                        responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
+                        vector<EmbedData> embeds;
+                        embeds.push_back(messageEmbed);
+                        responseDataInteraction.embeds = embeds;
+                        InputEventHandler::respondToEvent(responseDataInteraction).get();
+                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
+                        responseData.interactionToken = buttonIntData.token;
+                        responseData.interactionId = buttonIntData.id;
+                        InputEventHandler::respondToEvent(responseData).get();
+                    }
                 }
                 else if (button.getButtonId() == "backwards" && (newCurrentPageIndex > 0)) {
                     newCurrentPageIndex -= 1;
                     EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
-                    Message newerMessage = pDiscordCoreClient->messages->editMessageAsync({ .embed = messageEmbed, .originalMessageData = newMessage.data,.components = actionRowDataVector }, newMessage.data.channelId, newMessage.data.id).get();
+                    if (event01.eventType == InputEventType::REGULAR_MESSAGE) {
+                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::REGULAR_MESSAGE_EDIT;
+                        vector<EmbedData> embeds;
+                        embeds.push_back(messageEmbed);
+                        responseDataRegularMessage.embeds = embeds;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        responseDataRegularMessage.channelId = event01.getChannelId();
+                        responseDataRegularMessage.messageId = event01.getMessageId();
+                        InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::DEFER_BUTTON_RESPONSE;
+                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
+                        responseDataRegularMessage.interactionId = buttonIntData.id;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        newEvent = InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                    }
+                    else {
+                        responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
+                        vector<EmbedData> embeds;
+                        embeds.push_back(messageEmbed);
+                        responseDataInteraction.embeds = embeds;
+                        newEvent = InputEventHandler::respondToEvent(responseDataInteraction).get();
+                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
+                        responseData.interactionToken = buttonIntData.token;
+                        responseData.interactionId = buttonIntData.id;
+                        InputEventHandler::respondToEvent(responseData).get();
+                    }
                 }
                 else if (button.getButtonId() == "backwards" && (newCurrentPageIndex == 0)) {
                     newCurrentPageIndex = (unsigned int)messageEmbeds.size() - 1;
                     EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
-                    Message newerMessage = pDiscordCoreClient->messages->editMessageAsync({ .embed = messageEmbed, .originalMessageData = newMessage.data,.components = actionRowDataVector }, newMessage.data.channelId, newMessage.data.id).get();
+                    if(event01.eventType == InputEventType::REGULAR_MESSAGE) {
+                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::REGULAR_MESSAGE_EDIT;
+                        vector<EmbedData> embeds;
+                        embeds.push_back(messageEmbed);
+                        responseDataRegularMessage.embeds = embeds;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        responseDataRegularMessage.channelId = event01.getChannelId();
+                        responseDataRegularMessage.messageId = event01.getMessageId();
+                        InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::DEFER_BUTTON_RESPONSE;
+                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
+                        responseDataRegularMessage.interactionId = buttonIntData.id;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        newEvent = InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                    }
+                    else {
+                        responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
+                        vector<EmbedData> embeds;
+                        embeds.push_back(messageEmbed);
+                        responseDataInteraction.embeds = embeds;
+                        InputEventHandler::respondToEvent(responseDataInteraction).get();
+                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
+                        responseData.interactionToken = buttonIntData.token;
+                        responseData.interactionId = buttonIntData.id;
+                        InputEventHandler::respondToEvent(responseData).get();
+                    }
                 }
                 else if (button.getButtonId() == "exit" || button.getButtonId() == "") {
                     if (deleteAfter == true) {
-                        pDiscordCoreClient->messages->deleteMessageAsync({ .channelId = newMessage.data.channelId, .messageId = newMessage.data.id, .timeDelay = 0 }).get();
+                        InputEventHandler::deleteInputEventResponse(event01);
                     }
                     doWeQuit = true;
                 }
+
             }
 
             co_return;
