@@ -13,9 +13,9 @@ If you have any suggestions, feel free to let me know and I will consider taking
 
 ## Dependencies
 
-NOTE: I installed these using the [vcpkg](https://github.com/microsoft/vcpkg) installer!
-
 [WinRT](https://docs.microsoft.com/en-us/windows/uwp/cpp-and-winrt-apis/intro-to-using-cpp-with-winrt)  
+
+NOTE: I installed these using the [vcpkg](https://github.com/microsoft/vcpkg) installer!
 
 [Nlohmann Json](https://github.com/nlohmann/json)
 
