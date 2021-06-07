@@ -1,5 +1,5 @@
 # DiscordCoreAPI
-My bot framework, written in C++ using WinRT!
+My bot library/framework, written in C++ using WinRT!
 ## Roadmap
 Alright, so I'm currently working on getting this thing to be "useful", and here are some of the things I plan on implementing:
 
