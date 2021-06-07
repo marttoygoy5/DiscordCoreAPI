@@ -12,6 +12,9 @@ Alright, so I'm currently working on getting this thing to be "useful", and here
 If you have any suggestions, feel free to let me know and I will consider taking you up on it! Thanks!
 
 ## Dependencies
+
+NOTE: I installed these using the [vcpkg](https://github.com/microsoft/vcpkg) installer!
+
 [WinRT](https://docs.microsoft.com/en-us/windows/uwp/cpp-and-winrt-apis/intro-to-using-cpp-with-winrt)  
 
 [Nlohmann Json](https://github.com/nlohmann/json)
