@@ -55,17 +55,17 @@ namespace DiscordCoreInternal {
 		return data.dump();
 	};
 
-	string parseSocketPath(hstring initialPayload) {
+	string getSocketPath(hstring initialPayload) {
 		string finalString = "";
 		json jsonVal;
 		jsonVal = jsonVal.parse(to_string(initialPayload));
-		if (jsonVal.contains("url")) {
+		if (jsonVal.contains("url")){
 			finalString = jsonVal.at("url");
 		}
 		return finalString;
 	};
 
-	int parseHeartBeatInterval(hstring initialPayload) {
+	int getHeartBeatInterval(hstring initialPayload) {
 		json jsonVal;
 		int finalValue = 0;
 		jsonVal = jsonVal.parse(to_string(initialPayload));
@@ -75,11 +75,11 @@ namespace DiscordCoreInternal {
 		return finalValue;
 	};
 
-	string getCreateMessagePayload(CreateMessageData createMessageData) {
+	string getCreateMessagePayload(PostMessageData dataPackage) {
 		
 		auto componentsActionRow = json::array();
 
-		for (auto& value : createMessageData.components) {
+		for (auto& value : dataPackage.components) {
 			auto components = json::array();
 
 			for (auto& valueNew : value.components) {
@@ -120,68 +120,68 @@ namespace DiscordCoreInternal {
 		
 		auto fields = json::array();
 
-		for (unsigned int x = 0; x < createMessageData.embed.fields.size(); x += 1) {
-			json field = { {"inline", createMessageData.embed.fields.at(x).Inline},
-							{"value", createMessageData.embed.fields.at(x).value},
-							{"name", createMessageData.embed.fields.at(x).name} };
+		for (unsigned int x = 0; x < dataPackage.embed.fields.size(); x += 1) {
+			json field = { {"inline", dataPackage.embed.fields.at(x).Inline},
+							{"value", dataPackage.embed.fields.at(x).value},
+							{"name", dataPackage.embed.fields.at(x).name} };
 			fields.push_back(field);
 		}
 
-		unsigned int colorValInt = stol(createMessageData.embed.hexColorValue, 0, 16);
+		unsigned int colorValInt = stol(dataPackage.embed.hexColorValue, 0, 16);
 		stringstream stream;
 		stream << setbase(10) << colorValInt;
 		string realColorVal = stream.str();
 
-		if (createMessageData.embed.description != "" || createMessageData.embed.fields.size() != 0){
-			if (createMessageData.messageReference.guildId != "") {
+		if (dataPackage.embed.description != "" || dataPackage.embed.fields.size() != 0){
+			if (dataPackage.messageReference.guildId != "") {
 				json data = {
 		{"allowed_mentions", {
-			{"parse", createMessageData.allowedMentions.parse},
-			{"replied_user", createMessageData.allowedMentions.repliedUser},
-			{"roles", createMessageData.allowedMentions.roles},
-			{"users", createMessageData.allowedMentions.users}
+			{"parse", dataPackage.allowedMentions.parse},
+			{"replied_user", dataPackage.allowedMentions.repliedUser},
+			{"roles", dataPackage.allowedMentions.roles},
+			{"users", dataPackage.allowedMentions.users}
 			}},
-			{"message_reference",{{"message_id", createMessageData.messageReference.messageId},
-			{"channel_id", createMessageData.messageReference.channelId},
-			{"guild_id", createMessageData.messageReference.guildId},
-			{"fail_if_not_exists", createMessageData.messageReference.failIfNotExists}
+			{"message_reference",{{"message_id", dataPackage.messageReference.messageId},
+			{"channel_id", dataPackage.messageReference.channelId},
+			{"guild_id", dataPackage.messageReference.guildId},
+			{"fail_if_not_exists", dataPackage.messageReference.failIfNotExists}
 				}},
-		{"content", createMessageData.content},
-		{"tts" , createMessageData.tts},
+		{"content", dataPackage.content},
+		{"tts" , dataPackage.tts},
 		{"embed" ,
 					{{"author", {
-					{"icon_url", createMessageData.embed.author.iconUrl},
-					{"name", createMessageData.embed.author.name},
-					{"url", createMessageData.embed.author.url },
-					{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
+					{"icon_url", dataPackage.embed.author.iconUrl},
+					{"name", dataPackage.embed.author.name},
+					{"url", dataPackage.embed.author.url },
+					{"proxy_icon_url", dataPackage.embed.author.proxyIconUrl}
 			}},
 			{"image", {
-				{"height", createMessageData.embed.image.height},
-				{"width", createMessageData.embed.image.width},
-				{"url", createMessageData.embed.image.url},
-				{"proxy_url",createMessageData.embed.image.proxyUrl}
+				{"height", dataPackage.embed.image.height},
+				{"width", dataPackage.embed.image.width},
+				{"url", dataPackage.embed.image.url},
+				{"proxy_url",dataPackage.embed.image.proxyUrl}
 		}},
 			{ "provider" , {
-				{"name", createMessageData.embed.provider.name},
-				{"url", createMessageData.embed.provider.url}
+				{"name", dataPackage.embed.provider.name},
+				{"url", dataPackage.embed.provider.url}
 
 		}},
 			{"thumbnail", {
-				{"height", createMessageData.embed.thumbnail.height},
-				{"width", createMessageData.embed.thumbnail.width},
-				{"url", createMessageData.embed.thumbnail.url},
-				{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
+				{"height", dataPackage.embed.thumbnail.height},
+				{"width", dataPackage.embed.thumbnail.width},
+				{"url", dataPackage.embed.thumbnail.url},
+				{"proxy_url", dataPackage.embed.thumbnail.proxyUrl}
 			}},
 				{"footer", {
-					{"icon_url", createMessageData.embed.footer.iconUrl},
-					{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
-					{"text", createMessageData.embed.footer.text}
+					{"icon_url", dataPackage.embed.footer.iconUrl},
+					{"proxy_icon_url", dataPackage.embed.footer.proxyIconUrl},
+					{"text", dataPackage.embed.footer.text}
 		}},
-				{"title", createMessageData.embed.title},
-				{"description" , createMessageData.embed.description},
+				{"title", dataPackage.embed.title},
+				{"description" , dataPackage.embed.description},
 				{"fields", fields},
 				{"color",realColorVal},
-					{"timestamp", createMessageData.embed.timestamp},
+					{"timestamp", dataPackage.embed.timestamp},
 		}},{"components", componentsActionRow}
 				};
 				return data.dump();
@@ -189,47 +189,47 @@ namespace DiscordCoreInternal {
 				else {
 				json data = {
 	{"allowed_mentions", {
-		{"parse", createMessageData.allowedMentions.parse},
-		{"replied_user", createMessageData.allowedMentions.repliedUser},
-		{"roles", createMessageData.allowedMentions.roles},
-		{"users", createMessageData.allowedMentions.users}
+		{"parse", dataPackage.allowedMentions.parse},
+		{"replied_user", dataPackage.allowedMentions.repliedUser},
+		{"roles", dataPackage.allowedMentions.roles},
+		{"users", dataPackage.allowedMentions.users}
 		}},
-	{"content", createMessageData.content},
-	{"tts" , createMessageData.tts},
+	{"content", dataPackage.content},
+	{"tts" , dataPackage.tts},
 	{"embed" ,
 				{{"author", {
-				{"icon_url", createMessageData.embed.author.iconUrl},
-				{"name", createMessageData.embed.author.name},
-				{"url", createMessageData.embed.author.url },
-				{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
+				{"icon_url", dataPackage.embed.author.iconUrl},
+				{"name", dataPackage.embed.author.name},
+				{"url", dataPackage.embed.author.url },
+				{"proxy_icon_url", dataPackage.embed.author.proxyIconUrl}
 		}},
 		{"image", {
-			{"height", createMessageData.embed.image.height},
-			{"width", createMessageData.embed.image.width},
-			{"url", createMessageData.embed.image.url},
-			{"proxy_url",createMessageData.embed.image.proxyUrl}
+			{"height", dataPackage.embed.image.height},
+			{"width", dataPackage.embed.image.width},
+			{"url", dataPackage.embed.image.url},
+			{"proxy_url",dataPackage.embed.image.proxyUrl}
 	}},
 		{ "provider" , {
-			{"name", createMessageData.embed.provider.name},
-			{"url", createMessageData.embed.provider.url}
+			{"name", dataPackage.embed.provider.name},
+			{"url", dataPackage.embed.provider.url}
 
 	}},
 		{"thumbnail", {
-			{"height", createMessageData.embed.thumbnail.height},
-			{"width", createMessageData.embed.thumbnail.width},
-			{"url", createMessageData.embed.thumbnail.url},
-			{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
+			{"height", dataPackage.embed.thumbnail.height},
+			{"width", dataPackage.embed.thumbnail.width},
+			{"url", dataPackage.embed.thumbnail.url},
+			{"proxy_url", dataPackage.embed.thumbnail.proxyUrl}
 		}},
 			{"footer", {
-				{"icon_url", createMessageData.embed.footer.iconUrl},
-				{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
-				{"text", createMessageData.embed.footer.text}
+				{"icon_url", dataPackage.embed.footer.iconUrl},
+				{"proxy_icon_url", dataPackage.embed.footer.proxyIconUrl},
+				{"text", dataPackage.embed.footer.text}
 	}},
-			{"title", createMessageData.embed.title},
-			{"description" , createMessageData.embed.description},
+			{"title", dataPackage.embed.title},
+			{"description" , dataPackage.embed.description},
 			{"fields", fields},
 			{"color",realColorVal},
-					{"timestamp", createMessageData.embed.timestamp},
+					{"timestamp", dataPackage.embed.timestamp},
 
 	}},{"components", componentsActionRow}
 				};
@@ -237,21 +237,21 @@ namespace DiscordCoreInternal {
 			}
 		}
 		else {
-			if (createMessageData.messageReference.guildId != "") {
+			if (dataPackage.messageReference.guildId != "") {
 				json data = {
 			{"allowed_mentions", {
-				{"parse", createMessageData.allowedMentions.parse},
-				{"replied_user", createMessageData.allowedMentions.repliedUser},
-				{"roles", createMessageData.allowedMentions.roles},
-				{"users", createMessageData.allowedMentions.users}
+				{"parse", dataPackage.allowedMentions.parse},
+				{"replied_user", dataPackage.allowedMentions.repliedUser},
+				{"roles", dataPackage.allowedMentions.roles},
+				{"users", dataPackage.allowedMentions.users}
 				}},
-				{"message_reference",{{"message_id", createMessageData.messageReference.messageId},
-				{"channel_id", createMessageData.messageReference.channelId},
-				{"guild_id", createMessageData.messageReference.guildId},
-				{"fail_if_not_exists", createMessageData.messageReference.failIfNotExists}
+				{"message_reference",{{"message_id", dataPackage.messageReference.messageId},
+				{"channel_id", dataPackage.messageReference.channelId},
+				{"guild_id", dataPackage.messageReference.guildId},
+				{"fail_if_not_exists", dataPackage.messageReference.failIfNotExists}
 					}},
-			{"content", createMessageData.content},
-			{"tts" , createMessageData.tts},
+			{"content", dataPackage.content},
+			{"tts" , dataPackage.tts},
 					{"components", componentsActionRow}
 				};
 				return data.dump();
@@ -259,13 +259,13 @@ namespace DiscordCoreInternal {
 			else {
 				json data = {
 			{"allowed_mentions", {
-				{"parse", createMessageData.allowedMentions.parse},
-				{"replied_user", createMessageData.allowedMentions.repliedUser},
-				{"roles", createMessageData.allowedMentions.roles},
-				{"users", createMessageData.allowedMentions.users}
+				{"parse", dataPackage.allowedMentions.parse},
+				{"replied_user", dataPackage.allowedMentions.repliedUser},
+				{"roles", dataPackage.allowedMentions.roles},
+				{"users", dataPackage.allowedMentions.users}
 				}},
-			{"content", createMessageData.content},
-			{"tts" , createMessageData.tts},
+			{"content", dataPackage.content},
+			{"tts" , dataPackage.tts},
 				{"components", componentsActionRow}
 				};
 				return data.dump();
@@ -275,11 +275,11 @@ namespace DiscordCoreInternal {
 		
 	}
 
-	string getReplyMessagePayload(ReplyMessageData createMessageData) {
+	string getCreateMessagePayload(SendDMData dataPackage) {
 
 		auto componentsActionRow = json::array();
 
-		for (auto& value : createMessageData.components) {
+		for (auto& value : dataPackage.components) {
 			auto components = json::array();
 
 			for (auto& valueNew : value.components) {
@@ -320,68 +320,268 @@ namespace DiscordCoreInternal {
 
 		auto fields = json::array();
 
-		for (unsigned int x = 0; x < createMessageData.embed.fields.size(); x += 1) {
-			json field = { {"inline", createMessageData.embed.fields.at(x).Inline},
-							{"value", createMessageData.embed.fields.at(x).value},
-							{"name", createMessageData.embed.fields.at(x).name} };
+		for (unsigned int x = 0; x < dataPackage.embed.fields.size(); x += 1) {
+			json field = { {"inline", dataPackage.embed.fields.at(x).Inline},
+							{"value", dataPackage.embed.fields.at(x).value},
+							{"name", dataPackage.embed.fields.at(x).name} };
 			fields.push_back(field);
 		}
 
-		unsigned int colorValInt = stol(createMessageData.embed.hexColorValue, 0, 16);
+		unsigned int colorValInt = stol(dataPackage.embed.hexColorValue, 0, 16);
 		stringstream stream;
 		stream << setbase(10) << colorValInt;
 		string realColorVal = stream.str();
 
-		if (createMessageData.embed.description != "" || createMessageData.embed.fields.size() != 0) {
-			if (createMessageData.messageReference.guildId != "") {
+		if (dataPackage.embed.description != "" || dataPackage.embed.fields.size() != 0) {
+			if (dataPackage.messageReference.guildId != "") {
 				json data = {
 		{"allowed_mentions", {
-			{"parse", createMessageData.allowedMentions.parse},
-			{"replied_user", createMessageData.allowedMentions.repliedUser},
-			{"roles", createMessageData.allowedMentions.roles},
-			{"users", createMessageData.allowedMentions.users}
+			{"parse", dataPackage.allowedMentions.parse},
+			{"replied_user", dataPackage.allowedMentions.repliedUser},
+			{"roles", dataPackage.allowedMentions.roles},
+			{"users", dataPackage.allowedMentions.users}
 			}},
-			{"message_reference",{{"message_id", createMessageData.messageReference.messageId},
-			{"channel_id", createMessageData.messageReference.channelId},
-			{"guild_id", createMessageData.messageReference.guildId},
-			{"fail_if_not_exists", createMessageData.messageReference.failIfNotExists}
+			{"message_reference",{{"message_id", dataPackage.messageReference.messageId},
+			{"channel_id", dataPackage.messageReference.channelId},
+			{"guild_id", dataPackage.messageReference.guildId},
+			{"fail_if_not_exists", dataPackage.messageReference.failIfNotExists}
 				}},
-		{"content", createMessageData.content},
-		{"tts" , createMessageData.tts},
+		{"content", dataPackage.content},
+		{"tts" , dataPackage.tts},
 		{"embed" ,
 					{{"author", {
-					{"icon_url", createMessageData.embed.author.iconUrl},
-					{"name", createMessageData.embed.author.name},
-					{"url", createMessageData.embed.author.url },
-					{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
+					{"icon_url", dataPackage.embed.author.iconUrl},
+					{"name", dataPackage.embed.author.name},
+					{"url", dataPackage.embed.author.url },
+					{"proxy_icon_url", dataPackage.embed.author.proxyIconUrl}
 			}},
 			{"image", {
-				{"height", createMessageData.embed.image.height},
-				{"width", createMessageData.embed.image.width},
-				{"url", createMessageData.embed.image.url},
-				{"proxy_url",createMessageData.embed.image.proxyUrl}
+				{"height", dataPackage.embed.image.height},
+				{"width", dataPackage.embed.image.width},
+				{"url", dataPackage.embed.image.url},
+				{"proxy_url",dataPackage.embed.image.proxyUrl}
 		}},
 			{ "provider" , {
-				{"name", createMessageData.embed.provider.name},
-				{"url", createMessageData.embed.provider.url}
+				{"name", dataPackage.embed.provider.name},
+				{"url", dataPackage.embed.provider.url}
 
 		}},
 			{"thumbnail", {
-				{"height", createMessageData.embed.thumbnail.height},
-				{"width", createMessageData.embed.thumbnail.width},
-				{"url", createMessageData.embed.thumbnail.url},
-				{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
+				{"height", dataPackage.embed.thumbnail.height},
+				{"width", dataPackage.embed.thumbnail.width},
+				{"url", dataPackage.embed.thumbnail.url},
+				{"proxy_url", dataPackage.embed.thumbnail.proxyUrl}
 			}},
 				{"footer", {
-					{"icon_url", createMessageData.embed.footer.iconUrl},
-					{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
-					{"text", createMessageData.embed.footer.text}
+					{"icon_url", dataPackage.embed.footer.iconUrl},
+					{"proxy_icon_url", dataPackage.embed.footer.proxyIconUrl},
+					{"text", dataPackage.embed.footer.text}
 		}},
-				{"title", createMessageData.embed.title},
-				{"description" , createMessageData.embed.description},
+				{"title", dataPackage.embed.title},
+				{"description" , dataPackage.embed.description},
 				{"fields", fields},
 				{"color",realColorVal},
-					{"timestamp", createMessageData.embed.timestamp},
+					{"timestamp", dataPackage.embed.timestamp},
+		}},{"components", componentsActionRow}
+				};
+				return data.dump();
+			}
+			else {
+				json data = {
+	{"allowed_mentions", {
+		{"parse", dataPackage.allowedMentions.parse},
+		{"replied_user", dataPackage.allowedMentions.repliedUser},
+		{"roles", dataPackage.allowedMentions.roles},
+		{"users", dataPackage.allowedMentions.users}
+		}},
+	{"content", dataPackage.content},
+	{"tts" , dataPackage.tts},
+	{"embed" ,
+				{{"author", {
+				{"icon_url", dataPackage.embed.author.iconUrl},
+				{"name", dataPackage.embed.author.name},
+				{"url", dataPackage.embed.author.url },
+				{"proxy_icon_url", dataPackage.embed.author.proxyIconUrl}
+		}},
+		{"image", {
+			{"height", dataPackage.embed.image.height},
+			{"width", dataPackage.embed.image.width},
+			{"url", dataPackage.embed.image.url},
+			{"proxy_url",dataPackage.embed.image.proxyUrl}
+	}},
+		{ "provider" , {
+			{"name", dataPackage.embed.provider.name},
+			{"url", dataPackage.embed.provider.url}
+
+	}},
+		{"thumbnail", {
+			{"height", dataPackage.embed.thumbnail.height},
+			{"width", dataPackage.embed.thumbnail.width},
+			{"url", dataPackage.embed.thumbnail.url},
+			{"proxy_url", dataPackage.embed.thumbnail.proxyUrl}
+		}},
+			{"footer", {
+				{"icon_url", dataPackage.embed.footer.iconUrl},
+				{"proxy_icon_url", dataPackage.embed.footer.proxyIconUrl},
+				{"text", dataPackage.embed.footer.text}
+	}},
+			{"title", dataPackage.embed.title},
+			{"description" , dataPackage.embed.description},
+			{"fields", fields},
+			{"color",realColorVal},
+					{"timestamp", dataPackage.embed.timestamp},
+
+	}},{"components", componentsActionRow}
+				};
+				return data.dump();
+			}
+		}
+		else {
+			if (dataPackage.messageReference.guildId != "") {
+				json data = {
+			{"allowed_mentions", {
+				{"parse", dataPackage.allowedMentions.parse},
+				{"replied_user", dataPackage.allowedMentions.repliedUser},
+				{"roles", dataPackage.allowedMentions.roles},
+				{"users", dataPackage.allowedMentions.users}
+				}},
+				{"message_reference",{{"message_id", dataPackage.messageReference.messageId},
+				{"channel_id", dataPackage.messageReference.channelId},
+				{"guild_id", dataPackage.messageReference.guildId},
+				{"fail_if_not_exists", dataPackage.messageReference.failIfNotExists}
+					}},
+			{"content", dataPackage.content},
+			{"tts" , dataPackage.tts},
+					{"components", componentsActionRow}
+				};
+				return data.dump();
+			}
+			else {
+				json data = {
+			{"allowed_mentions", {
+				{"parse", dataPackage.allowedMentions.parse},
+				{"replied_user", dataPackage.allowedMentions.repliedUser},
+				{"roles", dataPackage.allowedMentions.roles},
+				{"users", dataPackage.allowedMentions.users}
+				}},
+			{"content", dataPackage.content},
+			{"tts" , dataPackage.tts},
+				{"components", componentsActionRow}
+				};
+				return data.dump();
+			}
+
+		}
+
+	}
+
+	string getReplyMessagePayload(PostMessageData dataPackage) {
+
+		auto componentsActionRow = json::array();
+
+		for (auto& value : dataPackage.components) {
+			auto components = json::array();
+
+			for (auto& valueNew : value.components) {
+				if (valueNew.emoji.id == "") {
+					json component = { {"custom_id", valueNew.customId},
+					{"disabled", valueNew.disabled},
+					{"emoji",{
+						{"name", valueNew.emoji.name},
+					{"animated", valueNew.emoji.animated}
+				} },
+					{"label", valueNew.label},
+					{"style", valueNew.style},
+					{"type", valueNew.type},
+					{"url", valueNew.url}
+					};
+					components.push_back(component);
+				}
+				else {
+					json component = { {"custom_id", valueNew.customId},
+					{"disabled", valueNew.disabled},
+					{"emoji",{
+						{"name", valueNew.emoji.name},
+						{"id", valueNew.emoji.id},
+					{"animated", valueNew.emoji.animated}
+				} },
+					{"label", valueNew.label},
+					{"style", valueNew.style},
+					{"type", valueNew.type},
+					{"url", valueNew.url}
+					};
+					components.push_back(component);
+				}
+			}
+			json componentActionRow = { {"type", 1},{
+				"components", components} };
+			componentsActionRow.push_back(componentActionRow);
+		}
+
+		auto fields = json::array();
+
+		for (unsigned int x = 0; x < dataPackage.embed.fields.size(); x += 1) {
+			json field = { {"inline", dataPackage.embed.fields.at(x).Inline},
+							{"value", dataPackage.embed.fields.at(x).value},
+							{"name", dataPackage.embed.fields.at(x).name} };
+			fields.push_back(field);
+		}
+
+		unsigned int colorValInt = stol(dataPackage.embed.hexColorValue, 0, 16);
+		stringstream stream;
+		stream << setbase(10) << colorValInt;
+		string realColorVal = stream.str();
+
+		if (dataPackage.embed.description != "" || dataPackage.embed.fields.size() != 0) {
+			if (dataPackage.messageReference.guildId != "") {
+				json data = {
+		{"allowed_mentions", {
+			{"parse", dataPackage.allowedMentions.parse},
+			{"replied_user", dataPackage.allowedMentions.repliedUser},
+			{"roles", dataPackage.allowedMentions.roles},
+			{"users", dataPackage.allowedMentions.users}
+			}},
+			{"message_reference",{{"message_id", dataPackage.messageReference.messageId},
+			{"channel_id", dataPackage.messageReference.channelId},
+			{"guild_id", dataPackage.messageReference.guildId},
+			{"fail_if_not_exists", dataPackage.messageReference.failIfNotExists}
+				}},
+		{"content", dataPackage.content},
+		{"tts" , dataPackage.tts},
+		{"embed" ,
+					{{"author", {
+					{"icon_url", dataPackage.embed.author.iconUrl},
+					{"name", dataPackage.embed.author.name},
+					{"url", dataPackage.embed.author.url },
+					{"proxy_icon_url", dataPackage.embed.author.proxyIconUrl}
+			}},
+			{"image", {
+				{"height", dataPackage.embed.image.height},
+				{"width", dataPackage.embed.image.width},
+				{"url", dataPackage.embed.image.url},
+				{"proxy_url",dataPackage.embed.image.proxyUrl}
+		}},
+			{ "provider" , {
+				{"name", dataPackage.embed.provider.name},
+				{"url", dataPackage.embed.provider.url}
+
+		}},
+			{"thumbnail", {
+				{"height", dataPackage.embed.thumbnail.height},
+				{"width", dataPackage.embed.thumbnail.width},
+				{"url", dataPackage.embed.thumbnail.url},
+				{"proxy_url", dataPackage.embed.thumbnail.proxyUrl}
+			}},
+				{"footer", {
+					{"icon_url", dataPackage.embed.footer.iconUrl},
+					{"proxy_icon_url", dataPackage.embed.footer.proxyIconUrl},
+					{"text", dataPackage.embed.footer.text}
+		}},
+				{"title", dataPackage.embed.title},
+				{"description" , dataPackage.embed.description},
+				{"fields", fields},
+				{"color",realColorVal},
+					{"timestamp", dataPackage.embed.timestamp},
 		}},{"components", componentsActionRow}
 				};
 
@@ -390,47 +590,47 @@ namespace DiscordCoreInternal {
 			else {
 				json data = {
 	{"allowed_mentions", {
-		{"parse", createMessageData.allowedMentions.parse},
-		{"replied_user", createMessageData.allowedMentions.repliedUser},
-		{"roles", createMessageData.allowedMentions.roles},
-		{"users", createMessageData.allowedMentions.users}
+		{"parse", dataPackage.allowedMentions.parse},
+		{"replied_user", dataPackage.allowedMentions.repliedUser},
+		{"roles", dataPackage.allowedMentions.roles},
+		{"users", dataPackage.allowedMentions.users}
 		}},
-	{"content", createMessageData.content},
-	{"tts" , createMessageData.tts},
+	{"content", dataPackage.content},
+	{"tts" , dataPackage.tts},
 	{"embed" ,
 				{{"author", {
-				{"icon_url", createMessageData.embed.author.iconUrl},
-				{"name", createMessageData.embed.author.name},
-				{"url", createMessageData.embed.author.url },
-				{"proxy_icon_url", createMessageData.embed.author.proxyIconUrl}
+				{"icon_url", dataPackage.embed.author.iconUrl},
+				{"name", dataPackage.embed.author.name},
+				{"url", dataPackage.embed.author.url },
+				{"proxy_icon_url", dataPackage.embed.author.proxyIconUrl}
 		}},
 		{"image", {
-			{"height", createMessageData.embed.image.height},
-			{"width", createMessageData.embed.image.width},
-			{"url", createMessageData.embed.image.url},
-			{"proxy_url",createMessageData.embed.image.proxyUrl}
+			{"height", dataPackage.embed.image.height},
+			{"width", dataPackage.embed.image.width},
+			{"url", dataPackage.embed.image.url},
+			{"proxy_url",dataPackage.embed.image.proxyUrl}
 	}},
 		{ "provider" , {
-			{"name", createMessageData.embed.provider.name},
-			{"url", createMessageData.embed.provider.url}
+			{"name", dataPackage.embed.provider.name},
+			{"url", dataPackage.embed.provider.url}
 
 	}},
 		{"thumbnail", {
-			{"height", createMessageData.embed.thumbnail.height},
-			{"width", createMessageData.embed.thumbnail.width},
-			{"url", createMessageData.embed.thumbnail.url},
-			{"proxy_url", createMessageData.embed.thumbnail.proxyUrl}
+			{"height", dataPackage.embed.thumbnail.height},
+			{"width", dataPackage.embed.thumbnail.width},
+			{"url", dataPackage.embed.thumbnail.url},
+			{"proxy_url", dataPackage.embed.thumbnail.proxyUrl}
 		}},
 			{"footer", {
-				{"icon_url", createMessageData.embed.footer.iconUrl},
-				{"proxy_icon_url", createMessageData.embed.footer.proxyIconUrl},
-				{"text", createMessageData.embed.footer.text}
+				{"icon_url", dataPackage.embed.footer.iconUrl},
+				{"proxy_icon_url", dataPackage.embed.footer.proxyIconUrl},
+				{"text", dataPackage.embed.footer.text}
 	}},
-			{"title", createMessageData.embed.title},
-			{"description" , createMessageData.embed.description},
+			{"title", dataPackage.embed.title},
+			{"description" , dataPackage.embed.description},
 			{"fields", fields},
 			{"color",realColorVal},
-					{"timestamp", createMessageData.embed.timestamp},
+					{"timestamp", dataPackage.embed.timestamp},
 
 	}},{"components", componentsActionRow}
 				};
@@ -439,21 +639,21 @@ namespace DiscordCoreInternal {
 			}
 		}
 		else {
-			if (createMessageData.messageReference.guildId != "") {
+			if (dataPackage.messageReference.guildId != "") {
 				json data = {
 			{"allowed_mentions", {
-				{"parse", createMessageData.allowedMentions.parse},
-				{"replied_user", createMessageData.allowedMentions.repliedUser},
-				{"roles", createMessageData.allowedMentions.roles},
-				{"users", createMessageData.allowedMentions.users}
+				{"parse", dataPackage.allowedMentions.parse},
+				{"replied_user", dataPackage.allowedMentions.repliedUser},
+				{"roles", dataPackage.allowedMentions.roles},
+				{"users", dataPackage.allowedMentions.users}
 				}},
-				{"message_reference",{{"message_id", createMessageData.messageReference.messageId},
-				{"channel_id", createMessageData.messageReference.channelId},
-				{"guild_id", createMessageData.messageReference.guildId},
-				{"fail_if_not_exists", createMessageData.messageReference.failIfNotExists}
+				{"message_reference",{{"message_id", dataPackage.messageReference.messageId},
+				{"channel_id", dataPackage.messageReference.channelId},
+				{"guild_id", dataPackage.messageReference.guildId},
+				{"fail_if_not_exists", dataPackage.messageReference.failIfNotExists}
 					}},
-			{"content", createMessageData.content},
-			{"tts" , createMessageData.tts},
+			{"content", dataPackage.content},
+			{"tts" , dataPackage.tts},
 					{"components", componentsActionRow}
 				};
 
@@ -462,13 +662,13 @@ namespace DiscordCoreInternal {
 			else {
 				json data = {
 			{"allowed_mentions", {
-				{"parse", createMessageData.allowedMentions.parse},
-				{"replied_user", createMessageData.allowedMentions.repliedUser},
-				{"roles", createMessageData.allowedMentions.roles},
-				{"users", createMessageData.allowedMentions.users}
+				{"parse", dataPackage.allowedMentions.parse},
+				{"replied_user", dataPackage.allowedMentions.repliedUser},
+				{"roles", dataPackage.allowedMentions.roles},
+				{"users", dataPackage.allowedMentions.users}
 				}},
-			{"content", createMessageData.content},
-			{"tts" , createMessageData.tts},
+			{"content", dataPackage.content},
+			{"tts" , dataPackage.tts},
 				{"components", componentsActionRow}
 				};
 
@@ -479,33 +679,33 @@ namespace DiscordCoreInternal {
 
 	}
 
-	string getEditMessagePayload(EditMessageData editMessageData) {
+	string getEditMessagePayload(PatchMessageData dataPackage) {
 		auto fields = json::array();
 
-		for (unsigned int x = 0; x < editMessageData.embed.fields.size(); x += 1) {
-			json field = { {"inline", editMessageData.embed.fields.at(x).Inline},
-							{"value", editMessageData.embed.fields.at(x).value},
-							{"name", editMessageData.embed.fields.at(x).name} };
+		for (unsigned int x = 0; x < dataPackage.embed.fields.size(); x += 1) {
+			json field = { {"inline", dataPackage.embed.fields.at(x).Inline},
+							{"value", dataPackage.embed.fields.at(x).value},
+							{"name", dataPackage.embed.fields.at(x).name} };
 			fields.push_back(field);
 		}
 
 		auto attachments = json::array();
 
-		for (unsigned int x = 0; x < editMessageData.attachments.size(); x += 1) {
-			json attachment = { {"content_type", editMessageData.attachments.at(x).contentType},
-				{"file_name",editMessageData.attachments.at(x).filename},
-				{"height",editMessageData.attachments.at(x).height},
-				{"id",editMessageData.attachments.at(x).id},
-				{"proxy_url",editMessageData.attachments.at(x).proxyUrl},
-				{"size",editMessageData.attachments.at(x).size},
-				{"url",editMessageData.attachments.at(x).url},
-				{"width",editMessageData.attachments.at(x).width} };
+		for (unsigned int x = 0; x < dataPackage.attachments.size(); x += 1) {
+			json attachment = { {"content_type", dataPackage.attachments.at(x).contentType},
+				{"file_name",dataPackage.attachments.at(x).filename},
+				{"height",dataPackage.attachments.at(x).height},
+				{"id",dataPackage.attachments.at(x).id},
+				{"proxy_url",dataPackage.attachments.at(x).proxyUrl},
+				{"size",dataPackage.attachments.at(x).size},
+				{"url",dataPackage.attachments.at(x).url},
+				{"width",dataPackage.attachments.at(x).width} };
 			attachments.push_back(attachment);
 		}
 
 		auto componentsActionRow = json::array();
 
-		for (auto& value : editMessageData.components) {
+		for (auto& value : dataPackage.components) {
 			auto components = json::array();
 
 			for (auto& valueNew : value.components) {
@@ -544,156 +744,156 @@ namespace DiscordCoreInternal {
 			componentsActionRow.push_back(componentActionRow);
 		}
 
-		unsigned int colorValInt= stol(editMessageData.embed.hexColorValue, 0, 16);
+		unsigned int colorValInt= stol(dataPackage.embed.hexColorValue, 0, 16);
 		stringstream stream;
 		stream << setbase(10) << colorValInt;
 		string realColorVal = stream.str();
 
 		json data = {
-			{"flags", editMessageData.flags},
+			{"flags", dataPackage.flags},
 			{"attachments", attachments},
 			{"components", componentsActionRow},
 			{"allowed_mentions", {
-				{"parse", editMessageData.allowedMentions.parse},
-				{"replied_user", editMessageData.allowedMentions.repliedUser},
-				{"roles", editMessageData.allowedMentions.roles},
-				{"users", editMessageData.allowedMentions.users}
+				{"parse", dataPackage.allowedMentions.parse},
+				{"replied_user", dataPackage.allowedMentions.repliedUser},
+				{"roles", dataPackage.allowedMentions.roles},
+				{"users", dataPackage.allowedMentions.users}
 				}},
-			{"content", editMessageData.content},
+			{"content", dataPackage.content},
 			{"embed" ,
 						{{"author", {
-						{"icon_url", editMessageData.embed.author.iconUrl},
-						{"name", editMessageData.embed.author.name},
-						{"url", editMessageData.embed.author.url },
-						{"proxy_icon_url", editMessageData.embed.author.proxyIconUrl}
+						{"icon_url", dataPackage.embed.author.iconUrl},
+						{"name", dataPackage.embed.author.name},
+						{"url", dataPackage.embed.author.url },
+						{"proxy_icon_url", dataPackage.embed.author.proxyIconUrl}
 				}},
 				{"image", {
-					{"height", editMessageData.embed.image.height},
-					{"width", editMessageData.embed.image.width},
-					{"url", editMessageData.embed.image.url},
-					{"proxy_url",editMessageData.embed.image.proxyUrl}
+					{"height", dataPackage.embed.image.height},
+					{"width", dataPackage.embed.image.width},
+					{"url", dataPackage.embed.image.url},
+					{"proxy_url",dataPackage.embed.image.proxyUrl}
 		}},
 			{ "provider" , {
-				{"name", editMessageData.embed.provider.name},
-				{"url", editMessageData.embed.provider.url}
+				{"name", dataPackage.embed.provider.name},
+				{"url", dataPackage.embed.provider.url}
 
 		}},
 			{"thumbnail", {
-				{"height", editMessageData.embed.thumbnail.height},
-				{"width", editMessageData.embed.thumbnail.width},
-				{"url", editMessageData.embed.thumbnail.url},
-				{"proxy_url", editMessageData.embed.thumbnail.proxyUrl}
+				{"height", dataPackage.embed.thumbnail.height},
+				{"width", dataPackage.embed.thumbnail.width},
+				{"url", dataPackage.embed.thumbnail.url},
+				{"proxy_url", dataPackage.embed.thumbnail.proxyUrl}
 			}},
 
 
 				{"footer", {
-					{"icon_url", editMessageData.embed.footer.iconUrl},
-					{"proxy_icon_url", editMessageData.embed.footer.proxyIconUrl},
-					{"text", editMessageData.embed.footer.text}
+					{"icon_url", dataPackage.embed.footer.iconUrl},
+					{"proxy_icon_url", dataPackage.embed.footer.proxyIconUrl},
+					{"text", dataPackage.embed.footer.text}
 		}},
-				{"description" , editMessageData.embed.description},
-				{"title", editMessageData.embed.title},
+				{"description" , dataPackage.embed.description},
+				{"title", dataPackage.embed.title},
 				{"fields", fields},
 				{"color",realColorVal},
-			{"timestamp", editMessageData.embed.timestamp}
+			{"timestamp", dataPackage.embed.timestamp}
 		}}
 		};
 
 		return data.dump();
 	}
 
-	string getModifyRolePayload(UpdateRoleData modifyRoleData) {
-		unsigned int roleColorInt = stol(modifyRoleData.hexColorValue, 0, 16);
+	string getModifyRolePayload(PatchRoleData dataPackage) {
+		unsigned int roleColorInt = stol(dataPackage.hexColorValue, 0, 16);
 		stringstream stream;
 		stream << setbase(10) << roleColorInt;
 		string roleColorReal = stream.str();
 
 		json data = {
 			{"color", roleColorReal},
-			{"hoist", modifyRoleData.hoist},
-			{"mendtionable", modifyRoleData.mentionable},
-			{"name", modifyRoleData.name},
-			{"permissions", modifyRoleData.permissions}
+			{"hoist", dataPackage.hoist},
+			{"mendtionable", dataPackage.mentionable},
+			{"name", dataPackage.name},
+			{"permissions", dataPackage.permissions}
 		};
 
 		return data.dump();
 	}
 
-	void addOptionsData(ApplicationCommandOptionData appCommandOptionData, json* pJSONData) {
+	void addOptionsData(ApplicationCommandOptionData dataPackage, json* pJSONData) {
 		json newOption;
-		newOption.emplace(make_pair("description", appCommandOptionData.description));
-		newOption.emplace(make_pair("name", appCommandOptionData.name));
-		newOption.emplace(make_pair("required", appCommandOptionData.required));
-		newOption.emplace(make_pair("type", appCommandOptionData.type));
+		newOption.emplace(make_pair("description", dataPackage.description));
+		newOption.emplace(make_pair("name", dataPackage.name));
+		newOption.emplace(make_pair("required", dataPackage.required));
+		newOption.emplace(make_pair("type", dataPackage.type));
 		json dataArray;
 		newOption.emplace(make_pair("options", dataArray));
 		newOption.emplace(make_pair("choices", dataArray));
-		if (appCommandOptionData.choices.size() > 0) {
-			for (unsigned int y = 0; y < appCommandOptionData.choices.size(); y += 1) {
+		if (dataPackage.choices.size() > 0) {
+			for (unsigned int y = 0; y < dataPackage.choices.size(); y += 1) {
 				ApplicationCommandOptionChoiceData choiceData;
-				choiceData.name = appCommandOptionData.choices.at(y).name;
-				if (appCommandOptionData.choices.at(y).valueString != "") {
-					choiceData.valueString = appCommandOptionData.choices.at(y).valueString;
+				choiceData.name = dataPackage.choices.at(y).name;
+				if (dataPackage.choices.at(y).valueString != "") {
+					choiceData.valueString = dataPackage.choices.at(y).valueString;
 					json jsonValue = { {"name", choiceData.name},{"value", choiceData.valueString} };
 					newOption.at("choices").emplace_back(jsonValue);
 				}
-				else if (appCommandOptionData.choices.at(y).valueInt != 0) {
-					choiceData.valueInt = appCommandOptionData.choices.at(y).valueInt;
+				else if (dataPackage.choices.at(y).valueInt != 0) {
+					choiceData.valueInt = dataPackage.choices.at(y).valueInt;
 					json jsonValue = { {"name", choiceData.name},{"value", choiceData.valueInt} };
 					newOption.at("choices").emplace_back(jsonValue);
 				}
 			}
 		}
-		if (appCommandOptionData.options.size() > 0) {
-			addOptionsData(appCommandOptionData.options.at(0), &newOption.at("options"));
+		if (dataPackage.options.size() > 0) {
+			addOptionsData(dataPackage.options.at(0), &newOption.at("options"));
 		}
 		pJSONData->emplace_back(newOption);
 	}
 
-	string getCreateApplicationCommandPayload(CreateApplicationCommandData createApplicationCommandData) {
+	string getCreateApplicationCommandPayload(CreateApplicationCommandData dataPackage) {
 		json data = {
-			{"name",createApplicationCommandData.name },
-			{"description", createApplicationCommandData.description},
-			{"default_permission", createApplicationCommandData.defaultPermission}
+			{"name",dataPackage.name },
+			{"description", dataPackage.description},
+			{"default_permission", dataPackage.defaultPermission}
 		};
 
 		json arrayValue;
 
 		data.emplace(make_pair("options", arrayValue));
 
-		if (createApplicationCommandData.options.size() > 0) {
-			for (unsigned int x = 0; x < createApplicationCommandData.options.size(); x += 1) {
-				addOptionsData(createApplicationCommandData.options.at(x), &data.at("options"));
+		if (dataPackage.options.size() > 0) {
+			for (unsigned int x = 0; x < dataPackage.options.size(); x += 1) {
+				addOptionsData(dataPackage.options.at(x), &data.at("options"));
 			}
 		}
 
 		return data.dump();
 	}
 
-	string getEditApplicationCommandPayload(EditApplicationCommandData editApplicationCommandData) {
+	string getEditApplicationCommandPayload(EditApplicationCommandData dataPackage) {
 		json data = {
-			{"name",editApplicationCommandData.name },
-			{"description", editApplicationCommandData.description},
-			{"default_permission", editApplicationCommandData.defaultPermission}
+			{"name",dataPackage.name },
+			{"description", dataPackage.description},
+			{"default_permission", dataPackage.defaultPermission}
 		};
 
 		json arrayValue;
 
 		data.emplace(make_pair("options", arrayValue));
 
-		if (editApplicationCommandData.options.size() > 0) {
-			for (unsigned int x = 0; x < editApplicationCommandData.options.size(); x += 1) {
-				addOptionsData(editApplicationCommandData.options.at(x), &data.at("options"));
+		if (dataPackage.options.size() > 0) {
+			for (unsigned int x = 0; x < dataPackage.options.size(); x += 1) {
+				addOptionsData(dataPackage.options.at(x), &data.at("options"));
 			}
 		}
 
 		return data.dump();
 	}
 	
-	string	getEditFollowUpMessagePayload(EditFollowUpMessageData interactionData) {
+	string	getEditFollowUpMessagePayload(EditFollowUpMessageData dataPackage) {
 		auto embedsArray = json::array();
 
-		for (auto& value : interactionData.embeds) {
+		for (auto& value : dataPackage.embeds) {
 
 			auto fields = json::array();
 
@@ -748,23 +948,23 @@ namespace DiscordCoreInternal {
 		}
 
 		auto parseArray = json::array();
-		for (auto& value : interactionData.allowedMentions.parse) {
+		for (auto& value : dataPackage.allowedMentions.parse) {
 			parseArray.push_back(value);
 		};
 
 		auto rolesArray = json::array();
-		for (auto& value : interactionData.allowedMentions.roles) {
+		for (auto& value : dataPackage.allowedMentions.roles) {
 			rolesArray.push_back(value);
 		}
 
 		auto usersArray = json::array();
-		for (auto& value : interactionData.allowedMentions.users) {
+		for (auto& value : dataPackage.allowedMentions.users) {
 			usersArray.push_back(value);
 		}
 
 		auto componentsActionRow = json::array();
 
-		for (auto& value : interactionData.components) {
+		for (auto& value : dataPackage.components) {
 			auto components = json::array();
 
 			for (auto& valueNew : value.components) {
@@ -803,34 +1003,34 @@ namespace DiscordCoreInternal {
 			componentsActionRow.push_back(componentActionRow);
 		}
 
-		if (interactionData.content == "") {
+		if (dataPackage.content == "") {
 			json data = {
 			{"embeds", embedsArray},
 			{"allowed_mentions",
 			{{"parse", parseArray},
 	{"roles", rolesArray},
 	{"users", usersArray},
-	{"repliedUser", interactionData.allowedMentions.repliedUser}}},
+	{"repliedUser", dataPackage.allowedMentions.repliedUser}}},
 				{"components", componentsActionRow} };
 			return data.dump();
 		}
 		else {
-			json data = { {"content", interactionData.content},
+			json data = { {"content", dataPackage.content},
 				{"embeds", embedsArray},
 				{"allowed_mentions",
 				{{"parse", parseArray},
 		{"roles", rolesArray},
 		{"users", usersArray},
-		{"repliedUser", interactionData.allowedMentions.repliedUser}},
+		{"repliedUser", dataPackage.allowedMentions.repliedUser}},
 			},{"components", componentsActionRow} };
 			return data.dump();
 		};
 	}
 
-		string	getEditInteractionPayload(EditInteractionResponseData interactionData) {
+		string	getEditInteractionResponsePayload(EditInteractionResponseData dataPackage) {
 			auto embedsArray = json::array();
 
-			for (auto& value : interactionData.embeds) {
+			for (auto& value : dataPackage.embeds) {
 
 				auto fields = json::array();
 
@@ -885,23 +1085,23 @@ namespace DiscordCoreInternal {
 			}
 
 			auto parseArray = json::array();
-			for (auto& value : interactionData.allowedMentions.parse) {
+			for (auto& value : dataPackage.allowedMentions.parse) {
 				parseArray.push_back(value);
 			};
 
 			auto rolesArray = json::array();
-			for (auto& value : interactionData.allowedMentions.roles) {
+			for (auto& value : dataPackage.allowedMentions.roles) {
 				rolesArray.push_back(value);
 			}
 
 			auto usersArray = json::array();
-			for (auto& value : interactionData.allowedMentions.users) {
+			for (auto& value : dataPackage.allowedMentions.users) {
 				usersArray.push_back(value);
 			}
 
 			auto componentsActionRow = json::array();
 
-			for (auto& value : interactionData.components) {
+			for (auto& value : dataPackage.components) {
 				auto components = json::array();
 
 				for (auto& valueNew : value.components) {
@@ -940,55 +1140,55 @@ namespace DiscordCoreInternal {
 				componentsActionRow.push_back(componentActionRow);
 			}
 
-			if (interactionData.content == "") {
+			if (dataPackage.content == "") {
 				json data = { 
-					{"flags", interactionData.flags}, 
-					{"type", interactionData.type},
+					{"flags", dataPackage.flags}, 
+					{"type", dataPackage.type},
 				{"embeds", embedsArray},
 				{"allowed_mentions",
 				{{"parse", parseArray},
 		{"roles", rolesArray},
 		{"users", usersArray},
-		{"repliedUser", interactionData.allowedMentions.repliedUser}}},
+		{"repliedUser", dataPackage.allowedMentions.repliedUser}}},
 					{"components", componentsActionRow} };
 				return data.dump();
 			}
 			else {
 				json data = { 
-					{"flags", interactionData.flags},{"flags", interactionData.flags},
-					{"type", interactionData.type},
-					{"content", interactionData.content},
+					{"flags", dataPackage.flags},{"flags", dataPackage.flags},
+					{"type", dataPackage.type},
+					{"content", dataPackage.content},
 					{"embeds", embedsArray},
 					{"allowed_mentions",
 					{{"parse", parseArray},
 			{"roles", rolesArray},
 			{"users", usersArray},
-			{"repliedUser", interactionData.allowedMentions.repliedUser}},
+			{"repliedUser", dataPackage.allowedMentions.repliedUser}},
 				},{"components", componentsActionRow} };
 				return data.dump();
 			};
 		}
 
-		string getCreateInteractionPayload(CreateDeferredInteractionResponseData interactionData) {
+		string getCreateDeferredInteractionResponsePayload(CreateDeferredInteractionResponseData dataPackage) {
 
 
-			if (interactionData.content == "") {
-				json data = { {"type", interactionData.type}
+			if (dataPackage.content == "") {
+				json data = { {"type", dataPackage.type}
 				};
 				return data.dump();
 			}
 			else {
-				json data = { {"type", interactionData.type}
+				json data = { {"type", dataPackage.type}
 				};
 				return data.dump();
 			};
 		}
 
-		string getCreateInteractionPayload(CreateInteractionResponseData interactionData) {
+		string getCreateInteractionResponsePayload(CreateInteractionResponseData dataPackage) {
 
 			auto embedsArray = json::array();
 
-			for (auto& value : interactionData.data.embeds) {
+			for (auto& value : dataPackage.data.embeds) {
 
 				auto fields = json::array();
 
@@ -1043,23 +1243,23 @@ namespace DiscordCoreInternal {
 			}
 
 			auto parseArray = json::array();
-			for (auto& value : interactionData.data.allowedMentions.parse) {
+			for (auto& value : dataPackage.data.allowedMentions.parse) {
 				parseArray.push_back(value);
 			};
 
 			auto rolesArray = json::array();
-			for (auto& value : interactionData.data.allowedMentions.roles) {
+			for (auto& value : dataPackage.data.allowedMentions.roles) {
 				rolesArray.push_back(value);
 			}
 
 			auto usersArray = json::array();
-			for (auto& value : interactionData.data.allowedMentions.users) {
+			for (auto& value : dataPackage.data.allowedMentions.users) {
 				usersArray.push_back(value);
 			}
 
 			auto componentsActionRow = json::array();
 
-			for (auto& value : interactionData.data.components) {
+			for (auto& value : dataPackage.data.components) {
 				auto components = json::array();
 
 				for (auto& valueNew : value.components) {
@@ -1098,30 +1298,30 @@ namespace DiscordCoreInternal {
 				componentsActionRow.push_back(componentActionRow);
 			}
 
-			if (interactionData.content == "") {
-				json data = { {"type", interactionData.type},
+			if (dataPackage.content == "") {
+				json data = { {"type", dataPackage.type},
 					{"data",{{"embeds", embedsArray},
-					{"flags", interactionData.data.flags },
+					{"flags", dataPackage.data.flags },
 				{"allowed_mentions",
 					{{"parse", parseArray},
 			{"roles", rolesArray},
 			{"users", usersArray},
-			{"repliedUser", interactionData.data.allowedMentions.repliedUser}}},
+			{"repliedUser", dataPackage.data.allowedMentions.repliedUser}}},
 					{"components", componentsActionRow},
 					}}
 				};
 				return data.dump();
 			}
 			else {
-				json data = { {"type", interactionData.type},
+				json data = { {"type", dataPackage.type},
 					{"data",{{"embeds", embedsArray},
-					{"flags", interactionData.data.flags },
-					{"content", interactionData.data.content},
+					{"flags", dataPackage.data.flags },
+					{"content", dataPackage.data.content},
 				{"allowed_mentions",
 					{{"parse", parseArray},
 			{"roles", rolesArray},
 			{"users", usersArray},
-			{"repliedUser", interactionData.data.allowedMentions.repliedUser}}},
+			{"repliedUser", dataPackage.data.allowedMentions.repliedUser}}},
 					{"components", componentsActionRow},
 					}}
 				};
@@ -1129,8 +1329,8 @@ namespace DiscordCoreInternal {
 			};
 		 }
 
-		 string getCreateRolePayload(CreateRoleData createRoleData) {
-			 unsigned int roleColorInt = stol(createRoleData.hexColorValue, 0, 16);
+		 string getCreateRolePayload(PostRoleData dataPackage) {
+			 unsigned int roleColorInt = stol(dataPackage.hexColorValue, 0, 16);
 			 stringstream stream;
 			 stream << setbase(10) << roleColorInt;
 			 string roleColorReal = stream.str();
@@ -1138,25 +1338,25 @@ namespace DiscordCoreInternal {
 			 json data = { {"color", roleColorReal
 
 				 },
-				 {"hoist", createRoleData.hoist},{"permissions", createRoleData.permissions},
-				 {"mentionable", createRoleData.mentionable},
-				 {"name", createRoleData.name }
+				 {"hoist", dataPackage.hoist},{"permissions", dataPackage.permissions},
+				 {"mentionable", dataPackage.mentionable},
+				 {"name", dataPackage.name }
 			 };
 			 return data.dump();
 		 };
 
-		 string getEditChannelPermissionOverwritesPayload(EditChannelPermissionOverwritesData editChannelPermsOWData) {
-			 json data = { {"allow", editChannelPermsOWData.allow},
-				 {"deny", editChannelPermsOWData.deny},
-				 {"type", editChannelPermsOWData.type} };
+		 string getEditChannelPermissionOverwritesPayload(EditChannelPermissionOverwritesData dataPackage) {
+			 json data = { {"allow", dataPackage.allow},
+				 {"deny", dataPackage.deny},
+				 {"type", dataPackage.type} };
 
 			 return data.dump();
 		 }
 
-		 string getPostFollowUpMessagePayload(CreateFollowUpMessageData createFollowUpMessageData) {
+		 string getPostFollowUpMessagePayload(CreateFollowUpMessageData dataPackage) {
 			 auto embedsArray = json::array();
 
-			 for (auto& value : createFollowUpMessageData.embeds) {
+			 for (auto& value : dataPackage.embeds) {
 
 				 auto fields = json::array();
 
@@ -1211,23 +1411,23 @@ namespace DiscordCoreInternal {
 			 }
 
 			 auto parseArray = json::array();
-			 for (auto& value : createFollowUpMessageData.allowedMentions.parse) {
+			 for (auto& value : dataPackage.allowedMentions.parse) {
 				 parseArray.push_back(value);
 			 };
 
 			 auto rolesArray = json::array();
-			 for (auto& value : createFollowUpMessageData.allowedMentions.roles) {
+			 for (auto& value : dataPackage.allowedMentions.roles) {
 				 rolesArray.push_back(value);
 			 }
 
 			 auto usersArray = json::array();
-			 for (auto& value : createFollowUpMessageData.allowedMentions.users) {
+			 for (auto& value : dataPackage.allowedMentions.users) {
 				 usersArray.push_back(value);
 			 }
 
 			 auto componentsActionRow = json::array();
 
-			 for (auto& value : createFollowUpMessageData.components) {
+			 for (auto& value : dataPackage.components) {
 				 auto components = json::array();
 
 				 for (auto& valueNew : value.components) {
@@ -1266,16 +1466,16 @@ namespace DiscordCoreInternal {
 				 componentsActionRow.push_back(componentActionRow);
 			 }
 
-			 if (createFollowUpMessageData.content == "") {
+			 if (dataPackage.content == "") {
 				 json data = {
-					 {"tts", createFollowUpMessageData.tts},
-					 {"flags", createFollowUpMessageData.flags},
+					 {"tts", dataPackage.tts},
+					 {"flags", dataPackage.flags},
 				 { "embeds", embedsArray },
 				 { "allowed_mentions", {
 				 {"parse", parseArray},
 			 {"roles", rolesArray},
 			 {"users", usersArray},
-			 {"repliedUser", createFollowUpMessageData.allowedMentions.repliedUser},
+			 {"repliedUser", dataPackage.allowedMentions.repliedUser},
 
 		 } }, {"components", componentsActionRow}
 				 };
@@ -1283,15 +1483,15 @@ namespace DiscordCoreInternal {
 				 return data.dump();
 			 }
 			 else {
-				 json data = { {"content", createFollowUpMessageData.content},
-					 {"flags", createFollowUpMessageData.flags},
-					 {"tts", createFollowUpMessageData.tts},
+				 json data = { {"content", dataPackage.content},
+					 {"flags", dataPackage.flags},
+					 {"tts", dataPackage.tts},
 				 {"embeds", embedsArray},
 				 {"allowed_mentions", {
 				 {"parse", parseArray},
 			 {"roles", rolesArray},
 			 {"users", usersArray},
-			 {"repliedUser", createFollowUpMessageData.allowedMentions.repliedUser}
+			 {"repliedUser", dataPackage.allowedMentions.repliedUser}
 
 		 } }, {"components", componentsActionRow} };
 

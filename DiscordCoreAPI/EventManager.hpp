@@ -37,31 +37,19 @@ namespace DiscordCoreAPI {
 		DiscordCoreAPI::Guild guild;
 	};
 
-	struct OnInteractionCreateData {
-		DiscordCoreAPI::InteractionData interactionData;
-	};
-
-	struct OnEventCreateData {
+	struct OnInputEventCreateData {
 		DiscordCoreAPI::InputEventData eventData;
 	};
 
 	class EventManager  {
 	public:
 
-		winrt::event_token onEventCreate(winrt::delegate<OnEventCreateData> const& handler) {
-			return onEventCreationEvent.add(handler);
+		winrt::event_token onInputEventCreate(winrt::delegate<OnInputEventCreateData> const& handler) {
+			return onInputEventCreationEvent.add(handler);
 		}
 
-		void onEventCreate(winrt::event_token const& token) {
-			onEventCreationEvent.remove(token);
-		}
-
-		winrt::event_token onInteractionCreate(winrt::delegate<OnInteractionCreateData> const& handler) {
-			return onInteractionCreateEvent.add(handler);
-		}
-
-		void onInteractionCreate(winrt::event_token const& token) {
-			onInteractionCreateEvent.remove(token);
+		void onInputEventCreate(winrt::event_token const& token) {
+			onInputEventCreationEvent.remove(token);
 		}
 
 		winrt::event_token onGuildCreation(winrt::delegate<OnGuildCreationData> const& handler) {
@@ -108,11 +96,9 @@ namespace DiscordCoreAPI {
 
 		friend class DiscordCoreClient;
 
-		winrt::event<winrt::delegate<OnInteractionCreateData>> onInteractionCreateEvent;
-
 		winrt::event<winrt::delegate<OnGuildCreationData>> onGuildCreationEvent;
 
-		winrt::event<winrt::delegate<OnEventCreateData>> onEventCreationEvent;
+		winrt::event<winrt::delegate<OnInputEventCreateData>> onInputEventCreationEvent;
 
 		winrt::event <winrt::delegate<OnMessageCreationData>> onMessageCreationEvent;
 

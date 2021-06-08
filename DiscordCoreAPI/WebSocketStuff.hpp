@@ -174,7 +174,7 @@ namespace DiscordCoreInternal {
 
 		void setSocketPath(string socketPathBase){
 			std::wstringstream stream;
-			stream << DiscordCoreInternal::parseSocketPath(to_hstring(socketPathBase)).c_str();
+			stream << DiscordCoreInternal::getSocketPath(to_hstring(socketPathBase)).c_str();
 			stream << L"/?v=9&encoding=json";
 			this->socketPath = stream.str();
 		}

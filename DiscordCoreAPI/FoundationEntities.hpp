@@ -514,7 +514,7 @@ namespace  DiscordCoreInternal {
         hstring baseURL;
     };
 
-    struct DeleteInteractionData {
+    struct DeleteInteractionResponseData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         string applicationId;
@@ -549,7 +549,6 @@ namespace  DiscordCoreInternal {
     };
 
     struct ApplicationData {
-        ApplicationData() {}
         string id;
         string name;
         string icon;
@@ -959,8 +958,16 @@ namespace  DiscordCoreInternal {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         string channelId;
-        string content;
+        string finalContent;
         string requesterId;
+        DiscordCoreInternal::AllowedMentionsData allowedMentions;
+        DiscordCoreInternal::MessageReferenceData messageReference;
+        string content;
+        DiscordCoreInternal::EmbedData embed;
+        int nonce;
+        MessageData replyingToMessageData;
+        bool tts = false;
+        vector<ActionRowData> components;
     };
 
     struct PatchMessageData {
@@ -970,6 +977,12 @@ namespace  DiscordCoreInternal {
         string channelId;
         string messageId;
         string requesterId;
+        string finalContent;
+        DiscordCoreInternal::EmbedData embed;
+        int flags = 0;
+        vector<DiscordCoreInternal::AttachmentData> attachments;
+        DiscordCoreInternal::AllowedMentionsData allowedMentions;
+        vector<ActionRowData> components;
     };
 
     struct DeleteMessageData {
@@ -980,43 +993,19 @@ namespace  DiscordCoreInternal {
         string messageId;
     };
 
-    struct EditMessageData {
-        string content;
-        DiscordCoreInternal::EmbedData embed;
-        int flags = 0;
-        vector<DiscordCoreInternal::AttachmentData> attachments;
-        DiscordCoreInternal::AllowedMentionsData allowedMentions;
-        vector<ActionRowData> components;
-    };
-
-    struct CreateMessageData {
-        string content;
-        int nonce;
-        bool tts = false;
-        DiscordCoreInternal::EmbedData embed;
-        DiscordCoreInternal::AllowedMentionsData allowedMentions;
-        DiscordCoreInternal::MessageReferenceData messageReference;
-        vector<ActionRowData> components;
-    };
-
-    struct ReplyMessageData {
-        DiscordCoreInternal::AllowedMentionsData allowedMentions;
-        DiscordCoreInternal::MessageReferenceData messageReference;
-        string content;
-        string channelId;
-        DiscordCoreInternal::EmbedData embed;
-        int nonce;
-        MessageData replyingToMessageData;
-        bool tts = false;
-        vector<ActionRowData> components;
-    };
-
     struct SendDMData {
         DiscordCoreInternal::HttpAgentResources agentResources;
         DiscordCoreInternal::ThreadContext threadContext;
         string userId;
         string channelId;
+        string finalContent;
         string content;
+        int nonce;
+        bool tts = false;
+        DiscordCoreInternal::EmbedData embed;
+        DiscordCoreInternal::AllowedMentionsData allowedMentions;
+        DiscordCoreInternal::MessageReferenceData messageReference;
+        vector<ActionRowData> components;
     };
 
     struct GetGuildMemberData {
@@ -1066,6 +1055,12 @@ namespace  DiscordCoreInternal {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
         string guildId;
+        string roleId;
+        string name;
+        __int64 permissions;
+        string hexColorValue;
+        bool hoist;
+        bool mentionable;
     };
 
     struct PutRoleData {
@@ -1076,27 +1071,14 @@ namespace  DiscordCoreInternal {
         string roleId;
     };
 
-    struct UpdateRoleData {
-        string guildId;
-        string roleId;
-        string name;
-        string permissions;
-        string hexColorValue;
-        bool hoist;
-        bool mentionable;
-    };
-
     struct PatchRoleData {
         DiscordCoreInternal::HttpAgentResources agentResources;
         DiscordCoreInternal::ThreadContext threadContext;
         string guildId;
         string roleId;
         string content;
-    };
-
-    struct CreateRoleData {
         string name;
-        __int64 permissions;
+        string permissions;
         string hexColorValue;
         bool hoist;
         bool mentionable;
@@ -1234,7 +1216,6 @@ namespace  DiscordCoreInternal {
     };
 
     struct InputEventData {
-        InputEventData() {};
         InputEventData(DiscordCoreInternal::MessageData messageData, DiscordCoreInternal::InteractionData interactionData, DiscordCoreInternal::InputEventType eventType) {
             this->messageData = messageData;
             this->interactionData = interactionData;
@@ -1270,7 +1251,7 @@ namespace  DiscordCoreInternal {
                 this->interactionData.guildId = this->messageData.guildId;
             }
         }
-        DiscordCoreAPI::DiscordCoreClient* pDiscordCoreClient;
+        DiscordCoreAPI::DiscordCoreClient* discordCoreClient;
         InteractionData interactionData;
         MessageData messageData;
         InputEventType eventType;
@@ -1485,7 +1466,6 @@ namespace DiscordCoreAPI {
     };
 
     struct UserData {
-        UserData() {}
         operator DiscordCoreInternal::UserData() {
             DiscordCoreInternal::UserData newData;
             newData.avatar = this->avatar;
@@ -1688,7 +1668,6 @@ namespace DiscordCoreAPI {
     };
 
     struct EmbedData {
-        EmbedData() {}
         operator DiscordCoreInternal::EmbedData() {
             DiscordCoreInternal::EmbedData embedData;
             embedData.author = this->author;
@@ -1770,7 +1749,6 @@ namespace DiscordCoreAPI {
     };
 
     struct ActionRowData {
-        ActionRowData() {}
         operator DiscordCoreInternal::ActionRowData() {
             DiscordCoreInternal::ActionRowData newData;
             for (auto value : this->components) {
@@ -1954,7 +1932,6 @@ namespace DiscordCoreAPI {
     };
 
     struct ChannelData {
-        ChannelData() {}
         operator DiscordCoreInternal::ChannelData() {
             DiscordCoreInternal::ChannelData newData;
             newData.applicationId = this->applicationId;
@@ -2020,7 +1997,6 @@ namespace DiscordCoreAPI {
             newData.user = this->user;
             return newData;
         }
-        GuildMemberData() {}
         string guildId;
         UserData user;
         string nick;
@@ -2138,7 +2114,6 @@ namespace DiscordCoreAPI {
             newData.type = this->type;
             return newData;
         }
-        ChannelMentionData() {}
         string id;
         string guildId;
         int type;
@@ -2158,7 +2133,6 @@ namespace DiscordCoreAPI {
             newData.userId = this->userId;
             return newData;
         }
-        ReactionData() {}
         int count;
         bool me;
         EmojiData emoji;
@@ -2208,7 +2182,6 @@ namespace DiscordCoreAPI {
             newData.user = this->user;
             return newData;
         }
-        MessageInteractionData() {}
         string id;
         InteractionType type;
         string name;
@@ -2227,7 +2200,6 @@ namespace DiscordCoreAPI {
             newData.tags = this->tags;
             return newData;
         }
-        MessageStickerData() {}
         string id;
         string packId;
         string name;
@@ -2289,7 +2261,6 @@ namespace DiscordCoreAPI {
             newData.verifyKey = this->verifyKey;
             return newData;
         }
-        ApplicationData() {}
         string id;
         string name;
         string icon;
@@ -2357,7 +2328,6 @@ namespace DiscordCoreAPI {
             newData.webhookId = this->webhookId;
             return newData;
         }
-        MessageDataOld() {}
         string id;
         string channelId;
         string guildId;
@@ -2393,7 +2363,6 @@ namespace DiscordCoreAPI {
             newData.referencedMessage = this->referencedMessage;
             return newData;
         }
-        MessageData() {}
         MessageDataOld referencedMessage;
     };
 
@@ -2422,7 +2391,6 @@ namespace DiscordCoreAPI {
             newData.data = this->data;
             return newData;
         }
-        InteractionData() {}
         string id;
         string applicationId;
         InteractionType type;
@@ -2602,6 +2570,105 @@ namespace DiscordCoreAPI {
     struct InteractionResponseData {
         InteractionApplicationCommandCallbackData data;
         InteractionCallbackType type;
+    };
+
+    enum class InputEventType {
+        SLASH_COMMAND_INTERACTION = 1,
+        BUTTON_INTERACTION = 2,
+        REGULAR_MESSAGE = 3
+    };
+
+    struct InputEventData {
+        InputEventData() {}
+        InputEventData(MessageData messageData, InteractionData interactionData, InputEventType eventType) {
+            this->messageData = messageData;
+            this->interactionData = interactionData;
+            this->eventType = eventType;
+            if (this->interactionData.user.id != "") {
+                this->messageData.author = this->interactionData.user;
+            }
+            else {
+                this->interactionData.user = this->messageData.author;
+            }
+            if (this->messageData.member.user.id == "") {
+                this->messageData.member = this->interactionData.member;
+            }
+            else {
+                this->interactionData.member = this->messageData.member;
+            }
+            if (this->messageData.channelId == "") {
+                this->messageData.channelId = this->interactionData.channelId;
+            }
+            else {
+                this->interactionData.channelId = this->messageData.channelId;
+            }
+            if (this->messageData.id == "") {
+                this->messageData.id = this->interactionData.message.id;
+            }
+            else {
+                this->interactionData.message.id = this->messageData.id;
+            }
+            if (this->messageData.guildId == "") {
+                this->messageData.guildId = this->interactionData.guildId;
+            }
+            else {
+                this->interactionData.guildId = this->messageData.guildId;
+            }
+        }
+        DiscordCoreAPI::DiscordCoreClient* discordCoreClient;
+        InteractionData interactionData;
+        MessageData messageData;
+        InputEventType eventType;
+        string requesterId;
+        string getUserName() {
+            if (this->messageData.author.username == "") {
+                return this->interactionData.member.user.username;
+            }
+            else {
+                return this->messageData.author.username;
+            }
+        }
+        string getAvatar() {
+            if (this->messageData.author.getAvatarURL() == "") {
+
+                return this->interactionData.member.user.getAvatarURL();
+            }
+            else {
+                return this->messageData.author.getAvatarURL();
+            }
+        }
+        string getChannelId() {
+            if (this->interactionData.channelId == "") {
+                return this->messageData.channelId;
+            }
+            else {
+                return this->interactionData.channelId;
+            }
+        };
+        string getMessageId() {
+            if (this->messageData.id == "") {
+                return this->interactionData.message.id;
+            }
+            else {
+                return this->messageData.id;
+            }
+        }
+        string getAuthorId() {
+            if (this->messageData.author.id == "") {
+                return this->interactionData.user.id;
+            }
+            else {
+                return this->messageData.author.id;
+            }
+        }
+        string getGuildId() {
+            if (this->messageData.guildId == "") {
+                return this->interactionData.guildId;
+            }
+            else {
+                return this->messageData.guildId;
+            }
+        }
     };
 
 };

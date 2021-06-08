@@ -21,10 +21,10 @@ namespace DiscordCoreAPI {
 			this->helpDescription = "__**Balance:**__ Enter !balance or /balance to view your own balance, or !balance = @USERMENTION /balance @USERMENTION to view someone else's balances.";
 		}
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
-			Channel channel = args->eventData.pDiscordCoreClient->channels->getChannelAsync({ .channelId = args->eventData.getChannelId() }).get();
+			Channel channel = args->eventData.discordCoreClient->channels->getChannelAsync({ .channelId = args->eventData.getChannelId() }).get();
 
-			Guild guild = args->eventData.pDiscordCoreClient->guilds->getGuildAsync({ .guildId = args->eventData.getGuildId() }).get();
-			DiscordGuild discordGuild = args->eventData.pDiscordCoreClient->getDiscordGuild(guild.data);
+			Guild guild = args->eventData.discordCoreClient->guilds->getGuildAsync({ .guildId = args->eventData.getGuildId() }).get();
+			DiscordGuild discordGuild = args->eventData.discordCoreClient->getDiscordGuild(guild.data);
 
 			bool areWeInADm = areWeInADM(args->eventData, channel, discordGuild);
 
@@ -49,7 +49,7 @@ namespace DiscordCoreAPI {
 			regex mentionRegExp("<@!\\d{18,}>");
 			regex idRegExp("\\d{18,}");
 			if (args->argumentsArray.size() == 0) {
-				userID = args->eventData.pDiscordCoreClient->currentUser->data.id;
+				userID = args->eventData.discordCoreClient->currentUser->data.id;
 			}
 			else if (args->argumentsArray.at(0) != "") {
 				if (!regex_search(args->argumentsArray.at(0), mentionRegExp, regex_constants::match_flag_type::format_first_only) && !regex_search(args->argumentsArray.at(0), idRegExp, regex_constants::match_flag_type::format_first_only)) {
@@ -88,7 +88,7 @@ namespace DiscordCoreAPI {
 				userID = matchResults.str();
 			}
 
-			GuildMember guildMember = args->eventData.pDiscordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->eventData.getGuildId(), .guildMemberId = userID }).get();
+			GuildMember guildMember = args->eventData.discordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->eventData.getGuildId(), .guildMemberId = userID }).get();
 
 			if (guildMember.data.user.id == "") {
 				string msgString = "------\n**Sorry, but that user could not be found!**\n------";
@@ -122,13 +122,13 @@ namespace DiscordCoreAPI {
 				co_return;
 			}
 
-			DiscordGuildMember discordGuildMember = args->eventData.pDiscordCoreClient->getDiscordGuildMember(guildMember.data);
+			DiscordGuildMember discordGuildMember = args->eventData.discordCoreClient->getDiscordGuildMember(guildMember.data);
 
 			string msgString = "";
 			bankAmount = discordGuildMember.data.currency.bank;
 			walletAmount = discordGuildMember.data.currency.wallet;
-			msgString = "<@!" + guildMember.data.user.id + "> 's balances are:\n------\n__**Bank Balance:**__ " + to_string(bankAmount) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName +
-				"\n__**Wallet Balance:**__ " + to_string(walletAmount) + " " + args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
+			msgString = "<@!" + guildMember.data.user.id + "> 's balances are:\n------\n__**Bank Balance:**__ " + to_string(bankAmount) + " " + args->eventData.discordCoreClient->discordUser->data.currencyName +
+				"\n__**Wallet Balance:**__ " + to_string(walletAmount) + " " + args->eventData.discordCoreClient->discordUser->data.currencyName + "\n------";
 
 			EmbedData msgEmbed;
 			msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());

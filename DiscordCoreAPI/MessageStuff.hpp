@@ -23,7 +23,7 @@ namespace DiscordCoreAPI {
 	class Message {
 	public:
 		MessageData data;
-		DiscordCoreClient* coreClient{ nullptr };
+		DiscordCoreClient* discordCoreClient{ nullptr };
 
 		Message() {};
 
@@ -33,13 +33,13 @@ namespace DiscordCoreAPI {
 		friend class MessageManagerAgent;
 		friend class InteractionManager;
 
-		Message(MessageData dataNew, DiscordCoreClient* coreClientNew) {
-			this->initialize(dataNew, coreClientNew).get();
+		Message(MessageData dataNew, DiscordCoreClient* discordCoreClientNew) {
+			this->initialize(dataNew, discordCoreClientNew).get();
 		}
 
-		task<void> initialize(MessageData dataNew, DiscordCoreClient* coreClientNew) {
+		task<void> initialize(MessageData dataNew, DiscordCoreClient* discordCoreClientNew) {
 			this->data = dataNew;
-			this->coreClient = coreClientNew;
+			this->discordCoreClient = discordCoreClientNew;
 			co_return;
 		}
 
@@ -53,6 +53,8 @@ namespace DiscordCoreAPI {
 		AllowedMentionsData allowedMentions;
 		MessageData originalMessageData;
 		vector<ActionRowData> components;
+		string channelId;
+		string messageId;
 	};
 
 	struct CreateMessageData {
@@ -126,43 +128,43 @@ namespace DiscordCoreAPI {
 		friend class MessageManager;
 		friend class InteractionManager;
 
-		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestFetchBuffer;
-		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestGetBuffer;
-		static unbounded_buffer<DiscordCoreInternal::FetchMessagesData>* requestGetMultBuffer;
-		static unbounded_buffer<DiscordCoreInternal::DeleteMessagesBulkData>* requestDeleteMultBuffer;
-		static unbounded_buffer<DiscordCoreInternal::PostMessageData>* requestPostBuffer;
-		static unbounded_buffer<DiscordCoreInternal::SendDMData>* requestPostDMBuffer;
-		static unbounded_buffer<DiscordCoreInternal::PatchMessageData>* requestPatchBuffer;
-		static unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* requestDeleteBuffer;
-		static unbounded_buffer<vector<Message>>* outMultBuffer;
-		static unbounded_buffer<Message>* outBuffer;
+		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestFetchMessageBuffer;
+		static unbounded_buffer<DiscordCoreInternal::GetMessageData>* requestGetMessageBuffer;
+		static unbounded_buffer<DiscordCoreInternal::FetchMessagesData>* requestGetMultMessagesBuffer;
+		static unbounded_buffer<DiscordCoreInternal::DeleteMessagesBulkData>* requestDeleteMultMessagesBuffer;
+		static unbounded_buffer<DiscordCoreInternal::PostMessageData>* requestPostMessageBuffer;
+		static unbounded_buffer<DiscordCoreInternal::SendDMData>* requestPostDMMessageBuffer;
+		static unbounded_buffer<DiscordCoreInternal::PatchMessageData>* requestPatchMessageBuffer;
+		static unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* requestDeleteMessageBuffer;
+		static unbounded_buffer<vector<Message>>* outMultMessagesBuffer;
+		static unbounded_buffer<Message>* outMessageBuffer;
 		static concurrent_queue<Message>* messagesToInsert;
 		static overwrite_buffer<map<string, Message>> cache;
 		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreClient* coreClient{ nullptr };
+		DiscordCoreClient* discordCoreClient{ nullptr };
 
 		MessageManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* coreClientNew, Scheduler* pScheduler)
 			:agent(*pScheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->coreClient = coreClientNew;
+			this->discordCoreClient = coreClientNew;
 		}
 
 		static void initialize() {
-			MessageManagerAgent::requestGetMultBuffer = new unbounded_buffer<DiscordCoreInternal::FetchMessagesData>;
-			MessageManagerAgent::requestFetchBuffer = new unbounded_buffer<DiscordCoreInternal::GetMessageData>;
-			MessageManagerAgent::requestGetBuffer = new unbounded_buffer<DiscordCoreInternal::GetMessageData>;
-			MessageManagerAgent::requestPostBuffer = new unbounded_buffer<DiscordCoreInternal::PostMessageData>;
-			MessageManagerAgent::requestPostDMBuffer = new unbounded_buffer<DiscordCoreInternal::SendDMData>;
-			MessageManagerAgent::requestDeleteMultBuffer = new unbounded_buffer<DiscordCoreInternal::DeleteMessagesBulkData>;
-			MessageManagerAgent::requestPatchBuffer = new unbounded_buffer<DiscordCoreInternal::PatchMessageData>;
-			MessageManagerAgent::requestDeleteBuffer = new unbounded_buffer<DiscordCoreInternal::DeleteMessageData>;
+			MessageManagerAgent::requestGetMultMessagesBuffer = new unbounded_buffer<DiscordCoreInternal::FetchMessagesData>;
+			MessageManagerAgent::requestFetchMessageBuffer = new unbounded_buffer<DiscordCoreInternal::GetMessageData>;
+			MessageManagerAgent::requestGetMessageBuffer = new unbounded_buffer<DiscordCoreInternal::GetMessageData>;
+			MessageManagerAgent::requestPostMessageBuffer = new unbounded_buffer<DiscordCoreInternal::PostMessageData>;
+			MessageManagerAgent::requestPostDMMessageBuffer = new unbounded_buffer<DiscordCoreInternal::SendDMData>;
+			MessageManagerAgent::requestDeleteMultMessagesBuffer = new unbounded_buffer<DiscordCoreInternal::DeleteMessagesBulkData>;
+			MessageManagerAgent::requestPatchMessageBuffer = new unbounded_buffer<DiscordCoreInternal::PatchMessageData>;
+			MessageManagerAgent::requestDeleteMessageBuffer = new unbounded_buffer<DiscordCoreInternal::DeleteMessageData>;
 			MessageManagerAgent::messagesToInsert = new concurrent_queue<Message>;
-			MessageManagerAgent::outMultBuffer = new unbounded_buffer<vector<Message>>;
-			MessageManagerAgent::outBuffer = new unbounded_buffer<Message>;
+			MessageManagerAgent::outMultMessagesBuffer = new unbounded_buffer<vector<Message>>;
+			MessageManagerAgent::outMessageBuffer = new unbounded_buffer<Message>;
 			return;
 		}
 
@@ -173,7 +175,7 @@ namespace DiscordCoreAPI {
 			return false;
 		}
 
-		task<Message> getObjectAsync(DiscordCoreInternal::GetMessageData dataPackage) {
+		task<Message> getObjectDataAsync(DiscordCoreInternal::GetMessageData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_MESSAGE;
@@ -196,11 +198,11 @@ namespace DiscordCoreAPI {
 			}
 			MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
-			Message messageNew(messageData, this->coreClient);
+			Message messageNew(messageData, this->discordCoreClient);
 			co_return messageNew;
 		}
 
-		task<vector<Message>> getObjectAsync(DiscordCoreInternal::FetchMessagesData dataPackage) {
+		task<vector<Message>> getObjectDataAsync(DiscordCoreInternal::FetchMessagesData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::GET;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::GET_MESSAGES;
@@ -248,18 +250,18 @@ namespace DiscordCoreAPI {
 			for (auto value : returnData.data) {
 				MessageData messageData;
 				DiscordCoreInternal::parseObject(value, &messageData);
-				Message messageNew(messageData, this->coreClient);
+				Message messageNew(messageData, this->discordCoreClient);
 				messagesVector.push_back(messageNew);
 			}
 			co_return messagesVector;
 		}
 
-		task<Message> patchObjectAsync(DiscordCoreInternal::PatchMessageData dataPackage) {
+		task<Message> patchObjectDataAsync(DiscordCoreInternal::PatchMessageData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_MESSAGE;
 			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages/" + dataPackage.messageId;
-			workload.content = dataPackage.content;
+			workload.content = dataPackage.finalContent;
 			DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
 			send(requestAgent.workSubmissionBuffer, workload);
 			requestAgent.start();
@@ -278,13 +280,13 @@ namespace DiscordCoreAPI {
 			}
 			MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
-			Message messageNew(messageData, this->coreClient);
+			Message messageNew(messageData, this->discordCoreClient);
 			co_return messageNew;
 		}
 
-		task<Message> postObjectAsync(DiscordCoreInternal::PostMessageData dataPackage) {
+		task<Message> postObjectDataAsync(DiscordCoreInternal::PostMessageData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
-			workload.content = dataPackage.content;
+			workload.content = dataPackage.finalContent;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_MESSAGE;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
 			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages";
@@ -306,13 +308,13 @@ namespace DiscordCoreAPI {
 			}
 			MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
-			Message messageNew(messageData, this->coreClient);
+			Message messageNew(messageData, this->discordCoreClient);
 			co_return messageNew;
 		}
 
-		task<Message> postObjectAsync(DiscordCoreInternal::SendDMData dataPackage) {
+		task<Message> postObjectDataAsync(DiscordCoreInternal::SendDMData dataPackage) {
 			DiscordCoreInternal::HttpWorkload workload;
-			workload.content = dataPackage.content;
+			workload.content = dataPackage.finalContent;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_USER_DM;
 			workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
 			workload.relativePath = "/channels/" + dataPackage.channelId + "/messages";
@@ -334,11 +336,11 @@ namespace DiscordCoreAPI {
 			}
 			MessageData messageData;
 			DiscordCoreInternal::parseObject(returnData.data, &messageData);
-			Message messageNew(messageData, this->coreClient);
+			Message messageNew(messageData, this->discordCoreClient);
 			co_return messageNew;
 		}
 
-		task<void> onDeleteAsync(DiscordCoreInternal::DeleteMessageData dataPackage) {
+		task<void> onDeleteDataAsync(DiscordCoreInternal::DeleteMessageData dataPackage) {
 			co_await resume_foreground(*dataPackage.threadContext.threadQueue.get());
 			DiscordCoreInternal::HttpWorkload workload;
 			workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_MESSAGE;
@@ -363,18 +365,18 @@ namespace DiscordCoreAPI {
 			co_return;
 		}
 
-		task<void> deleteObjectAsync(DiscordCoreInternal::DeleteMessageData dataPackage) {
+		task<void> deleteObjectDataAsync(DiscordCoreInternal::DeleteMessageData dataPackage) {
 			if (dataPackage.timeDelay > 0) {
 				DispatcherQueueTimer timer = this->threads->at(10).threadQueue.get()->CreateTimer();
 				timer.Interval(chrono::milliseconds(dataPackage.timeDelay));
 				timer.Tick([this, dataPackage, timer](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
-					onDeleteAsync(dataPackage).get();
+					onDeleteDataAsync(dataPackage).get();
 					timer.Stop();
 					});
 				timer.Start();
 			}
 			else {
-				onDeleteAsync(dataPackage).get();
+				onDeleteDataAsync(dataPackage).get();
 			}
 			co_return;
 		}
@@ -407,63 +409,63 @@ namespace DiscordCoreAPI {
 
 		void run() {
 			try {
-				DiscordCoreInternal::PostMessageData dataPackage;
-				if (try_receive(MessageManagerAgent::requestPostBuffer, dataPackage)) {
-					Message message = this->postObjectAsync(dataPackage).get();
+				DiscordCoreInternal::PostMessageData dataPackage01;
+				if (try_receive(MessageManagerAgent::requestPostMessageBuffer, dataPackage01)) {
+					Message message = this->postObjectDataAsync(dataPackage01).get();
 					map<string, Message> cacheTemp;
 					try_receive(MessageManagerAgent::cache, cacheTemp);
 					cacheTemp.insert(make_pair(message.data.channelId + message.data.id, message));
-					send(MessageManagerAgent::outBuffer, message);
+					send(MessageManagerAgent::outMessageBuffer, message);
 					asend(MessageManagerAgent::cache, cacheTemp);
 				};
-				DiscordCoreInternal::GetMessageData dataPackageNew;;
-				if (try_receive(MessageManagerAgent::requestGetBuffer, dataPackageNew)) {
+				DiscordCoreInternal::GetMessageData dataPackage02;
+				if (try_receive(MessageManagerAgent::requestGetMessageBuffer, dataPackage02)) {
 					map<string, Message> cacheTemp;
 					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
-						if (cacheTemp.contains(dataPackageNew.channelId + dataPackageNew.messageId)) {
-							Message message = cacheTemp.at(dataPackageNew.channelId + dataPackageNew.messageId);
-							send(MessageManagerAgent::outBuffer, message);
+						if (cacheTemp.contains(dataPackage02.channelId + dataPackage02.messageId)) {
+							Message message = cacheTemp.at(dataPackage02.channelId + dataPackage02.messageId);
+							send(MessageManagerAgent::outMessageBuffer, message);
 						}
 					}
 				};
-				DiscordCoreInternal::SendDMData dataPackageNewer;
-				if (try_receive(MessageManagerAgent::requestPostDMBuffer, dataPackageNewer)) {
-					Message message = this->postObjectAsync(dataPackageNewer).get();
+				DiscordCoreInternal::SendDMData dataPackage03;
+				if (try_receive(MessageManagerAgent::requestPostDMMessageBuffer, dataPackage03)) {
+					Message message = this->postObjectDataAsync(dataPackage03).get();
 					map<string, Message> cacheTemp;
 					try_receive(MessageManagerAgent::cache, cacheTemp);
 					cacheTemp.insert(make_pair(message.data.channelId + message.data.id, message));
-					send(MessageManagerAgent::outBuffer, message);
+					send(MessageManagerAgent::outMessageBuffer, message);
 					asend(MessageManagerAgent::cache, cacheTemp);
 				};
-				DiscordCoreInternal::GetMessageData dataPackageGet;
-				if (try_receive(MessageManagerAgent::requestFetchBuffer, dataPackageGet)) {
+				DiscordCoreInternal::GetMessageData dataPackage04;
+				if (try_receive(MessageManagerAgent::requestFetchMessageBuffer, dataPackage04)) {
 					map<string, Message> cacheTemp;
 					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
-						if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.messageId)) {
-							cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.messageId);
+						if (cacheTemp.contains(dataPackage04.channelId + dataPackage04.messageId)) {
+							cacheTemp.erase(dataPackage04.channelId + dataPackage04.messageId);
 						}
 					}
-					Message message = getObjectAsync(dataPackageGet).get();
-					cacheTemp.insert(make_pair(dataPackageGet.channelId + dataPackageGet.messageId, message));
-					send(MessageManagerAgent::outBuffer, message);
+					Message message = getObjectDataAsync(dataPackage04).get();
+					cacheTemp.insert(make_pair(dataPackage04.channelId + dataPackage04.messageId, message));
+					send(MessageManagerAgent::outMessageBuffer, message);
 					asend(MessageManagerAgent::cache, cacheTemp);
 				}
-				DiscordCoreInternal::PatchMessageData dataPackageGetNew;
-				if (try_receive(MessageManagerAgent::requestPatchBuffer, dataPackageGetNew)) {
+				DiscordCoreInternal::PatchMessageData dataPackage05;
+				if (try_receive(MessageManagerAgent::requestPatchMessageBuffer, dataPackage05)) {
 					map<string, Message> cacheTemp;
 					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
-						if (cacheTemp.contains(dataPackageGet.channelId + dataPackageGet.messageId)) {
-							cacheTemp.erase(dataPackageGet.channelId + dataPackageGet.messageId);
+						if (cacheTemp.contains(dataPackage05.channelId + dataPackage05.messageId)) {
+							cacheTemp.erase(dataPackage05.channelId + dataPackage05.messageId);
 						}
 					}
-					Message message = patchObjectAsync(dataPackageGetNew).get();
-					cacheTemp.insert(make_pair(dataPackageGet.channelId + dataPackageGet.messageId, message));
-					send(MessageManagerAgent::outBuffer, message);
+					Message message = patchObjectDataAsync(dataPackage05).get();
+					cacheTemp.insert(make_pair(dataPackage05.channelId + dataPackage05.messageId, message));
+					send(MessageManagerAgent::outMessageBuffer, message);
 					asend(MessageManagerAgent::cache, cacheTemp);
 				}
-				DiscordCoreInternal::FetchMessagesData dataPackageGetMultNew;
-				if (try_receive(MessageManagerAgent::requestGetMultBuffer, dataPackageGetMultNew)) {
-					vector<Message> messages = getObjectAsync(dataPackageGetMultNew).get();
+				DiscordCoreInternal::FetchMessagesData dataPackage06;
+				if (try_receive(MessageManagerAgent::requestGetMultMessagesBuffer, dataPackage06)) {
+					vector<Message> messages = getObjectDataAsync(dataPackage06).get();
 					map<string, Message> cacheTemp;
 					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
 						for (auto value : messages) {
@@ -473,35 +475,35 @@ namespace DiscordCoreAPI {
 							cacheTemp.insert(make_pair(value.data.channelId + value.data.id, value));
 						}
 					}
-					send(MessageManagerAgent::outMultBuffer, messages);
+					send(MessageManagerAgent::outMultMessagesBuffer, messages);
 					asend(MessageManagerAgent::cache, cacheTemp);
 				}
-				DiscordCoreInternal::DeleteMessageData dataPackageDelete;
-				if (try_receive(MessageManagerAgent::requestDeleteBuffer, dataPackageDelete)) {
+				DiscordCoreInternal::DeleteMessageData dataPackage07;
+				if (try_receive(MessageManagerAgent::requestDeleteMessageBuffer, dataPackage07)) {
 					map<string, Message> cacheTemp;
 					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
-						if (cacheTemp.contains(dataPackageDelete.channelId + dataPackageDelete.messageId)) {
-							cacheTemp.erase(dataPackageDelete.channelId + dataPackageDelete.messageId);
+						if (cacheTemp.contains(dataPackage07.channelId + dataPackage07.messageId)) {
+							cacheTemp.erase(dataPackage07.channelId + dataPackage07.messageId);
 						}
 					}
-					deleteObjectAsync(dataPackageDelete).get();
+					deleteObjectDataAsync(dataPackage07).get();
 					asend(MessageManagerAgent::cache, cacheTemp);
 				}
-				DiscordCoreInternal::DeleteMessagesBulkData dataPackageDeleteMult;
-				if (try_receive(MessageManagerAgent::requestDeleteMultBuffer, dataPackageDeleteMult)) {
+				DiscordCoreInternal::DeleteMessagesBulkData dataPackage08;
+				if (try_receive(MessageManagerAgent::requestDeleteMultMessagesBuffer, dataPackage08)) {
 					map<string, Message> cacheTemp;
 					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
-						for (auto value : dataPackageDeleteMult.messageIds) {
-							if (cacheTemp.contains(dataPackageDeleteMult.channelId + value)) {
-								cacheTemp.erase(dataPackageDeleteMult.channelId + value);
+						for (auto value : dataPackage08.messageIds) {
+							if (cacheTemp.contains(dataPackage08.channelId + value)) {
+								cacheTemp.erase(dataPackage08.channelId + value);
 							}
 						}						
 					}
-					postObjectAsync(dataPackageDeleteMult).get();
+					postObjectAsync(dataPackage08).get();
 					asend(MessageManagerAgent::cache, cacheTemp);
 				}
 				MessageData messageData;
-				Message message(messageData, this->coreClient);
+				Message message(messageData, this->discordCoreClient);
 				while (MessageManagerAgent::messagesToInsert->try_pop(message)) {
 					map<string, Message> cacheTemp;
 					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
@@ -523,263 +525,259 @@ namespace DiscordCoreAPI {
 	class MessageManager {
 	public:
 
-		task<Message> replyAsync(ReplyMessageData replyMessageData) {
+		task<Message> replyAsync(ReplyMessageData dataPackage) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::PostMessageData dataPackage;
-			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.channelId = replyMessageData.channelId;
-			DiscordCoreInternal::ReplyMessageData createMessageDataNew;
-			createMessageDataNew.allowedMentions = replyMessageData.allowedMentions;
-			createMessageDataNew.channelId = replyMessageData.channelId;
-			for (auto value : replyMessageData.components) {
-				createMessageDataNew.components.push_back(value);
+			DiscordCoreInternal::PostMessageData dataPackageNew;
+			dataPackageNew.agentResources = this->agentResources;
+			dataPackageNew.threadContext = this->threads->at(3);
+			dataPackage.channelId = dataPackage.channelId;
+			dataPackageNew.allowedMentions = dataPackage.allowedMentions;
+			dataPackageNew.channelId = dataPackage.channelId;
+			for (auto value : dataPackage.components) {
+				dataPackageNew.components.push_back(value);
 			}
-			createMessageDataNew.content = replyMessageData.content;
-			createMessageDataNew.embed = replyMessageData.embed;
-			createMessageDataNew.messageReference = replyMessageData.messageReference;
-			createMessageDataNew.nonce = replyMessageData.nonce;
-			createMessageDataNew.replyingToMessageData = replyMessageData.replyingToMessageData;
-			createMessageDataNew.tts = replyMessageData.tts;
-			createMessageDataNew.content = replyMessageData.content;
-			dataPackage.content = DiscordCoreInternal::getReplyMessagePayload(createMessageDataNew);
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			send(MessageManagerAgent::requestPostBuffer, dataPackage);
-			messageManagerAgent.start();
-			agent::wait(&messageManagerAgent);
+			dataPackageNew.content = dataPackage.content;
+			dataPackageNew.embed = dataPackage.embed;
+			dataPackageNew.messageReference = dataPackage.messageReference;
+			dataPackageNew.nonce = dataPackage.nonce;
+			dataPackageNew.replyingToMessageData = dataPackage.replyingToMessageData;
+			dataPackageNew.tts = dataPackage.tts;
+			dataPackageNew.content = dataPackage.content;
+			dataPackageNew.finalContent = DiscordCoreInternal::getReplyMessagePayload(dataPackageNew);
+			MessageManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(2).scheduler);
+			send(MessageManagerAgent::requestPostMessageBuffer, dataPackageNew);
+			requestAgent.start();
+			agent::wait(&requestAgent);
 			exception error;
-			while (messageManagerAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManager::replyAsync() Error: " << error.what() << endl << endl;
 			}
 			MessageData messageData;
-			Message messageNew(messageData, this->coreClient);
-			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			Message messageNew(messageData, this->discordCoreClient);
+			try_receive(MessageManagerAgent::outMessageBuffer, messageNew);
 			co_await mainThread;
 			co_return messageNew;
 		}
 
-		task<Message> sendDMAsync(SendDMData sendDMData) {
+		task<Message> sendDMAsync(SendDMData dataPackage) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::SendDMData dataPackage;
-			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.userId = sendDMData.userId;
-			dataPackage.channelId = sendDMData.channelId;
-			DiscordCoreInternal::CreateMessageData createMessageDataNew;
-			createMessageDataNew.allowedMentions = sendDMData.messageData.allowedMentions;
-			createMessageDataNew.content = sendDMData.messageData.content;
-			for (auto value : sendDMData.messageData.components) {
-				createMessageDataNew.components.push_back(value);
+			DiscordCoreInternal::SendDMData dataPackageNew;
+			dataPackageNew.agentResources = this->agentResources;
+			dataPackageNew.threadContext = this->threads->at(3);
+			dataPackageNew.userId = dataPackage.userId;
+			dataPackageNew.channelId = dataPackage.channelId;
+			dataPackageNew.allowedMentions = dataPackage.messageData.allowedMentions;
+			dataPackageNew.content = dataPackage.messageData.content;
+			for (auto value : dataPackage.messageData.components) {
+				dataPackageNew.components.push_back(value);
 			}
-			createMessageDataNew.embed = sendDMData.messageData.embed;
-			createMessageDataNew.messageReference = sendDMData.messageData.messageReference;
-			createMessageDataNew.nonce = sendDMData.messageData.nonce;
-			createMessageDataNew.tts = sendDMData.messageData.tts;
-			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			send(MessageManagerAgent::requestPostDMBuffer, dataPackage);
-			messageManagerAgent.start();
-			agent::wait(&messageManagerAgent);
+			dataPackageNew.embed = dataPackage.messageData.embed;
+			dataPackageNew.messageReference = dataPackage.messageData.messageReference;
+			dataPackageNew.nonce = dataPackage.messageData.nonce;
+			dataPackageNew.tts = dataPackage.messageData.tts;
+			dataPackageNew.finalContent = DiscordCoreInternal::getCreateMessagePayload(dataPackageNew);
+			MessageManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(2).scheduler);
+			send(MessageManagerAgent::requestPostDMMessageBuffer, dataPackageNew);
+			requestAgent.start();
+			agent::wait(&requestAgent);
 			exception error;
-			while (messageManagerAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManager::sendDMAsync() Error: " << error.what() << endl << endl;
 			}
 			MessageData messageData;
-			Message messageNew(messageData, this->coreClient);
-			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			Message messageNew(messageData, this->discordCoreClient);
+			try_receive(MessageManagerAgent::outMessageBuffer, messageNew);
 			co_await mainThread;
 			co_return messageNew;
 		}
 
-		task<Message> createMessageAsync(CreateMessageData createMessageData) {
+		task<Message> createMessageAsync(CreateMessageData dataPackage) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::PostMessageData dataPackage;
-			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.channelId = createMessageData.channelId;
-			DiscordCoreInternal::CreateMessageData createMessageDataNew;
-			createMessageDataNew.allowedMentions = createMessageData.allowedMentions;
-			createMessageDataNew.content = createMessageData.content;
-			for (auto value : createMessageData.components) {
-				createMessageDataNew.components.push_back(value);
+			DiscordCoreInternal::PostMessageData dataPackageNew;
+			dataPackageNew.agentResources = this->agentResources;
+			dataPackageNew.threadContext = this->threads->at(3);
+			dataPackageNew.channelId = dataPackage.channelId;
+			dataPackageNew.allowedMentions = dataPackage.allowedMentions;
+			dataPackageNew.content = dataPackage.content;
+			for (auto value : dataPackage.components) {
+				dataPackageNew.components.push_back(value);
 			}
-			createMessageDataNew.embed = createMessageData.embed;
-			createMessageDataNew.messageReference = createMessageData.messageReference;
-			createMessageDataNew.nonce = createMessageData.nonce;
-			createMessageDataNew.tts = createMessageData.tts;
-			dataPackage.content = DiscordCoreInternal::getCreateMessagePayload(createMessageDataNew);
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			send(MessageManagerAgent::requestPostBuffer, dataPackage);
-			messageManagerAgent.start();
-			agent::wait(&messageManagerAgent);
+			dataPackageNew.embed = dataPackage.embed;
+			dataPackageNew.messageReference = dataPackage.messageReference;
+			dataPackageNew.nonce = dataPackage.nonce;
+			dataPackageNew.tts = dataPackage.tts;
+			dataPackageNew.finalContent = DiscordCoreInternal::getCreateMessagePayload(dataPackageNew);
+			MessageManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(2).scheduler);
+			send(MessageManagerAgent::requestPostMessageBuffer, dataPackageNew);
+			requestAgent.start();
+			agent::wait(&requestAgent);
 			exception error;
-			while (messageManagerAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManager::createMessageAsync() Error: " << error.what() << endl << endl;
 			}
 			MessageData messageData;
-			Message messageNew(messageData, this->coreClient);
-			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			Message messageNew(messageData, this->discordCoreClient);
+			try_receive(MessageManagerAgent::outMessageBuffer, messageNew);
 			co_await mainThread;
 			co_return messageNew;
 		}
 
-		task<Message> editMessageAsync(EditMessageData editMessageData, string channelId, string messageId) {
+		task<Message> editMessageAsync(EditMessageData dataPackage) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::PatchMessageData dataPackage;
-			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(7);
-			dataPackage.channelId = channelId;
-			dataPackage.messageId = messageId;
-			DiscordCoreInternal::EditMessageData editMessageDataNew;
-			editMessageDataNew.allowedMentions = editMessageData.allowedMentions;
-			for (auto value : editMessageData.attachments) {
-				editMessageDataNew.attachments.push_back(value);
+			DiscordCoreInternal::PatchMessageData dataPackageNew;
+			dataPackageNew.agentResources = this->agentResources;
+			dataPackageNew.threadContext = this->threads->at(7);
+			dataPackageNew.channelId = dataPackage.originalMessageData.channelId;
+			dataPackageNew.messageId = dataPackage.originalMessageData.id;
+			dataPackageNew.allowedMentions = dataPackage.allowedMentions;
+			for (auto value : dataPackage.attachments) {
+				dataPackageNew.attachments.push_back(value);
 			}
-			for (auto value : editMessageData.components) {
-				editMessageDataNew.components.push_back(value);
+			for (auto value : dataPackage.components) {
+				dataPackageNew.components.push_back(value);
 			}
-			editMessageDataNew.content = editMessageData.content;
-			editMessageDataNew.embed = editMessageData.embed;
-			editMessageDataNew.flags = editMessageData.flags;
-			dataPackage.content = DiscordCoreInternal::getEditMessagePayload(editMessageDataNew);
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(6).scheduler);
-			send(MessageManagerAgent::requestPatchBuffer, dataPackage);
-			messageManagerAgent.start();
-			agent::wait(&messageManagerAgent);
+			dataPackageNew.content = dataPackage.content;
+			dataPackageNew.embed = dataPackage.embed;
+			dataPackageNew.flags = dataPackage.flags;
+			dataPackageNew.finalContent = DiscordCoreInternal::getEditMessagePayload(dataPackageNew);
+			MessageManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(6).scheduler);
+			send(MessageManagerAgent::requestPatchMessageBuffer, dataPackageNew);
+			requestAgent.start();
+			agent::wait(&requestAgent);
 			exception error;
-			while (messageManagerAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManager::editMessageAsync() Error: " << error.what() << endl << endl;
 			}
 			MessageData messageData;
-			Message messageNew(messageData, this->coreClient);
-			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			Message messageNew(messageData, this->discordCoreClient);
+			try_receive(MessageManagerAgent::outMessageBuffer, messageNew);
 			co_await mainThread;
 			co_return messageNew;
 		}
 
-		task<void> deleteMessageAsync(DeleteMessageData deleteMessageData) {
+		task<void> deleteMessageAsync(DeleteMessageData dataPackage) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::DeleteMessageData dataPackage;
-			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(9);
-			dataPackage.channelId = deleteMessageData.channelId;
-			dataPackage.messageId = deleteMessageData.messageId;
-			dataPackage.timeDelay = deleteMessageData.timeDelay;
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(8).scheduler);
-			send(MessageManagerAgent::requestDeleteBuffer, dataPackage);
-			messageManagerAgent.start();
-			agent::wait(&messageManagerAgent);
+			DiscordCoreInternal::DeleteMessageData dataPackageNew;
+			dataPackageNew.agentResources = this->agentResources;
+			dataPackageNew.threadContext = this->threads->at(9);
+			dataPackageNew.channelId = dataPackage.channelId;
+			dataPackageNew.messageId = dataPackage.messageId;
+			dataPackageNew.timeDelay = dataPackage.timeDelay;
+			MessageManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(8).scheduler);
+			send(MessageManagerAgent::requestDeleteMessageBuffer, dataPackageNew);
+			requestAgent.start();
+			agent::wait(&requestAgent);
 			exception error;
-			while (messageManagerAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManager::deleteMessageAsync() Error: " << error.what() << endl << endl;
 			}
 			co_await mainThread;
 			co_return;
 		}
 
-		task<void> deleteMessasgeBulkAsync(DeleteMessagesBulkData deleteMessagesBulkData) {
-			vector<Message> messages = this->fetchMessagesAsync({ .channelId = deleteMessagesBulkData.channelId, .limit = deleteMessagesBulkData.limit, .beforeThisId = deleteMessagesBulkData.beforeThisId, .afterThisId = deleteMessagesBulkData.afterThisId, .aroundThisId = deleteMessagesBulkData.aroundThisId, }).get();
+		task<void> deleteMessasgeBulkAsync(DeleteMessagesBulkData dataPackage) {
+			vector<Message> messages = this->fetchMessagesAsync({ .channelId = dataPackage.channelId, .limit = dataPackage.limit, .beforeThisId = dataPackage.beforeThisId, .afterThisId = dataPackage.afterThisId, .aroundThisId = dataPackage.aroundThisId, }).get();
 			vector<string> messageIds;
 			for (auto value : messages) {
 				messageIds.push_back(value.data.id);
 			}
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::DeleteMessagesBulkData dataPackage;
-			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(9);
-			dataPackage.channelId = deleteMessagesBulkData.channelId;
-			dataPackage.messageIds = messageIds;
-			dataPackage.content = DiscordCoreInternal::getDeleteMessagesBulkPayload(dataPackage);
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(8).scheduler);
-			send(MessageManagerAgent::requestDeleteMultBuffer, dataPackage);
-			messageManagerAgent.start();
-			agent::wait(&messageManagerAgent);
+			DiscordCoreInternal::DeleteMessagesBulkData dataPackageNew;
+			dataPackageNew.agentResources = this->agentResources;
+			dataPackageNew.threadContext = this->threads->at(9);
+			dataPackageNew.channelId = dataPackage.channelId;
+			dataPackageNew.messageIds = messageIds;
+			dataPackageNew.content = DiscordCoreInternal::getDeleteMessagesBulkPayload(dataPackageNew);
+			MessageManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(8).scheduler);
+			send(MessageManagerAgent::requestDeleteMultMessagesBuffer, dataPackageNew);
+			requestAgent.start();
+			agent::wait(&requestAgent);
 			exception error;
-			while (messageManagerAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManager::deleteMessagesBulkAsync() Error: " << error.what() << endl << endl;
 			}
 			co_await mainThread;
 			co_return;
 		}
 
-		task<Message> getMessageAsync(GetMessageData getMessageData) {
+		task<Message> getMessageAsync(GetMessageData dataPackage) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::GetMessageData dataPackage;
-			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.channelId = getMessageData.channelId;
-			dataPackage.messageId = getMessageData.id;
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			send(MessageManagerAgent::requestGetBuffer, dataPackage);
-			messageManagerAgent.start();
-			agent::wait(&messageManagerAgent);
+			DiscordCoreInternal::GetMessageData dataPackageNew;
+			dataPackageNew.agentResources = this->agentResources;
+			dataPackageNew.threadContext = this->threads->at(3);
+			dataPackageNew.channelId = dataPackage.channelId;
+			dataPackageNew.messageId = dataPackage.id;
+			MessageManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(2).scheduler);
+			send(MessageManagerAgent::requestGetMessageBuffer, dataPackageNew);
+			requestAgent.start();
+			agent::wait(&requestAgent);
 			exception error;
-			while (messageManagerAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManager::getMessageAsync() Error: " << error.what() << endl << endl;
 			}
 			MessageData messageData;
-			Message messageNew(messageData, this->coreClient);
-			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			Message messageNew(messageData, this->discordCoreClient);
+			try_receive(MessageManagerAgent::outMessageBuffer, messageNew);
 			co_await mainThread;
 			co_return messageNew;
 		}
 
-		task<vector<Message>> fetchMessagesAsync(FetchMessagesData fetchMessagesData) {
+		task<vector<Message>> fetchMessagesAsync(FetchMessagesData dataPackage) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::FetchMessagesData dataPackage;
-			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.channelId = fetchMessagesData.channelId;
-			dataPackage.afterThisId = fetchMessagesData.afterThisId;
-			dataPackage.aroundThisId = fetchMessagesData.aroundThisId;
-			dataPackage.beforeThisId = fetchMessagesData.beforeThisId;
-			dataPackage.limit = fetchMessagesData.limit;
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			send(MessageManagerAgent::requestGetMultBuffer, dataPackage);
-			messageManagerAgent.start();
-			agent::wait(&messageManagerAgent);
+			DiscordCoreInternal::FetchMessagesData dataPackageNew;
+			dataPackageNew.agentResources = this->agentResources;
+			dataPackageNew.threadContext = this->threads->at(3);
+			dataPackageNew.channelId = dataPackage.channelId;
+			dataPackageNew.afterThisId = dataPackage.afterThisId;
+			dataPackageNew.aroundThisId = dataPackage.aroundThisId;
+			dataPackageNew.beforeThisId = dataPackage.beforeThisId;
+			dataPackageNew.limit = dataPackage.limit;
+			MessageManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(2).scheduler);
+			send(MessageManagerAgent::requestGetMultMessagesBuffer, dataPackageNew);
+			requestAgent.start();
+			agent::wait(&requestAgent);
 			exception error;
-			while (messageManagerAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManager::fetchMessagesAsync() Error: " << error.what() << endl << endl;
 			}
 			vector<Message> messageVector;
-			try_receive(MessageManagerAgent::outMultBuffer, messageVector);
+			try_receive(MessageManagerAgent::outMultMessagesBuffer, messageVector);
 			co_return messageVector;
 		}
 
-		task<Message> fetchAsync(FetchMessageData fetchMessageData) {
+		task<Message> fetchAsync(FetchMessageData dataPackage) {
 			apartment_context mainThread;
 			co_await resume_background();
-			DiscordCoreInternal::GetMessageData dataPackage;
-			dataPackage.agentResources = this->agentResources;
-			dataPackage.threadContext = this->threads->at(3);
-			dataPackage.channelId = fetchMessageData.channelId;
-			dataPackage.messageId = fetchMessageData.id;
-			MessageManagerAgent messageManagerAgent(dataPackage.agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
-			send(MessageManagerAgent::requestFetchBuffer, dataPackage);
-			messageManagerAgent.start();
-			agent::wait(&messageManagerAgent);
+			DiscordCoreInternal::GetMessageData dataPackageNew;
+			dataPackageNew.agentResources = this->agentResources;
+			dataPackageNew.threadContext = this->threads->at(3);
+			dataPackageNew.channelId = dataPackage.channelId;
+			dataPackageNew.messageId = dataPackage.id;
+			MessageManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(2).scheduler);
+			send(MessageManagerAgent::requestFetchMessageBuffer, dataPackageNew);
+			requestAgent.start();
+			agent::wait(&requestAgent);
 			exception error;
-			while (messageManagerAgent.getError(error)) {
+			while (requestAgent.getError(error)) {
 				cout << "MessageManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
 			MessageData messageData;
-			Message messageNew(messageData, this->coreClient);
-			try_receive(MessageManagerAgent::outBuffer, messageNew);
+			Message messageNew(messageData, this->discordCoreClient);
+			try_receive(MessageManagerAgent::outMessageBuffer, messageNew);
 			co_await mainThread;
 			co_return messageNew;
 		}
 
 		task<void> insertMessageAsync(Message message) {
-			MessageManagerAgent messageManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
+			MessageManagerAgent messageManagerAgent(this->agentResources, this->threads, this->discordCoreClient, this->threads->at(2).scheduler);
 			MessageManagerAgent::messagesToInsert->push(message);
 			messageManagerAgent.start();
 			agent::wait(&messageManagerAgent);
@@ -797,25 +795,25 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreClient* coreClient{ nullptr };
+		DiscordCoreClient* discordCoreClient{ nullptr };
 
-		MessageManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* coreClientNew) {
+		MessageManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* discordCoreClientNew) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->coreClient = coreClientNew;
+			this->discordCoreClient = discordCoreClientNew;
 		}
 	};
 	overwrite_buffer<map<string, Message>> MessageManagerAgent::cache;
-	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestFetchBuffer;
-	unbounded_buffer<DiscordCoreInternal::PostMessageData>* MessageManagerAgent::requestPostBuffer;
-	unbounded_buffer<DiscordCoreInternal::SendDMData>* MessageManagerAgent::requestPostDMBuffer;
-	unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* MessageManagerAgent::requestDeleteBuffer;
-	unbounded_buffer<DiscordCoreInternal::DeleteMessagesBulkData>* MessageManagerAgent::requestDeleteMultBuffer;
-	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestGetBuffer;
-	unbounded_buffer<DiscordCoreInternal::PatchMessageData>* MessageManagerAgent::requestPatchBuffer;
-	unbounded_buffer<DiscordCoreInternal::FetchMessagesData>* MessageManagerAgent::requestGetMultBuffer;
-	unbounded_buffer<vector<Message>>* MessageManagerAgent::outMultBuffer;
-	unbounded_buffer<Message>* MessageManagerAgent::outBuffer;
+	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestFetchMessageBuffer;
+	unbounded_buffer<DiscordCoreInternal::PostMessageData>* MessageManagerAgent::requestPostMessageBuffer;
+	unbounded_buffer<DiscordCoreInternal::SendDMData>* MessageManagerAgent::requestPostDMMessageBuffer;
+	unbounded_buffer<DiscordCoreInternal::DeleteMessageData>* MessageManagerAgent::requestDeleteMessageBuffer;
+	unbounded_buffer<DiscordCoreInternal::DeleteMessagesBulkData>* MessageManagerAgent::requestDeleteMultMessagesBuffer;
+	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestGetMessageBuffer;
+	unbounded_buffer<DiscordCoreInternal::PatchMessageData>* MessageManagerAgent::requestPatchMessageBuffer;
+	unbounded_buffer<DiscordCoreInternal::FetchMessagesData>* MessageManagerAgent::requestGetMultMessagesBuffer;
+	unbounded_buffer<vector<Message>>* MessageManagerAgent::outMultMessagesBuffer;
+	unbounded_buffer<Message>* MessageManagerAgent::outMessageBuffer;
 	concurrent_queue<Message>* MessageManagerAgent::messagesToInsert;
 }
 #endif

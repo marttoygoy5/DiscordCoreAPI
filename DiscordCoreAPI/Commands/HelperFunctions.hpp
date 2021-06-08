@@ -82,7 +82,7 @@ namespace DiscordCoreAPI {
                 msgEmbed.setColor(discordGuild.data.borderColor);
                 msgEmbed.setDescription(msgString);
                 msgEmbed.setTitle("__**Permissions Issue:**__");
-                DiscordCoreInternal::ReplyMessageData replyMessageData;
+                ReplyMessageData replyMessageData;
                 replyMessageData.replyingToMessageData = eventData.messageData;
                 replyMessageData.embed = msgEmbed;
                 if (eventData.eventType == InputEventType::REGULAR_MESSAGE) {
@@ -341,7 +341,7 @@ namespace DiscordCoreAPI {
                 return allPermissions();
             }
 
-            Guild guild = guildMember.coreClient->guilds->getGuildAsync({ .guildId = guildMember.data.guildId }).get();
+            Guild guild = guildMember.discordCoreClient->guilds->getGuildAsync({ .guildId = guildMember.data.guildId }).get();
 
             DiscordCoreInternal::OverWriteData overwriteEveryone = channel.data.permissionOverwrites.at(guild.data.id);
 
@@ -354,7 +354,7 @@ namespace DiscordCoreAPI {
             __int64 allow = 0;
             __int64 deny = 0;
             for (auto& role : guildMember.data.roles) {
-                Role currentRole = guildMember.coreClient->roles->getRoleAsync({ .guildId = guildMember.data.guildId, .roleId = role }).get();
+                Role currentRole = guildMember.discordCoreClient->roles->getRoleAsync({ .guildId = guildMember.data.guildId, .roleId = role }).get();
                 if (overWrites.contains(currentRole.data.id)) {
                     allow |= stoll(overWrites.at(currentRole.data.id).allow);
                     deny |= stoll(overWrites.at(currentRole.data.id).deny);
@@ -375,7 +375,7 @@ namespace DiscordCoreAPI {
 
         static string computePermissions(GuildMember guildMember, Channel channel) {
             string permissions;
-            permissions = computeBasePermissions(guildMember, *guildMember.coreClient->guilds, *guildMember.coreClient->roles);
+            permissions = computeBasePermissions(guildMember, *guildMember.discordCoreClient->guilds, *guildMember.discordCoreClient->roles);
             permissions = computeOverwrites(permissions, guildMember, channel);
             return permissions;
         }
@@ -411,7 +411,7 @@ namespace DiscordCoreAPI {
             return true;
         }
 
-        bool areWeACommander = checkForBotCommanderStatus(guildMember, *eventData.pDiscordCoreClient->discordUser);
+        bool areWeACommander = checkForBotCommanderStatus(guildMember, *eventData.discordCoreClient->discordUser);
 
         if (areWeACommander) {
             return true;
@@ -507,21 +507,24 @@ namespace DiscordCoreAPI {
                 InputEventHandler::respondToEvent(responseDataInteraction).get();
                 event01.messageData.channelId = originalEvent.getChannelId();
                 event01.messageData.id = originalEvent.getMessageId();
-                responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
+                responseDataInteraction.inputEventResponseType = InputEventResponseType::INTERACTION_RESPONSE_EDIT;
                 event01 = InputEventHandler::respondToEvent(responseDataInteraction).get();
                 event01.interactionData.applicationId = originalEvent.interactionData.applicationId;
                 event01.interactionData.token = originalEvent.interactionData.token;
             }
-
             while (doWeQuit == false) {
                 Button button(event01);
-                ButtonInteractionData buttonIntData = button.getOurButtonData(60000);
-                InputEventData newEvent;
+                ButtonInteractionData buttonIntData = button.getOurButtonData(60000).get();
                 if (button.getButtonId() == "forwards" && (newCurrentPageIndex == (messageEmbeds.size() - 1))) {
                     newCurrentPageIndex = 0;
                     EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
                     if (event01.eventType == InputEventType::REGULAR_MESSAGE) {
-                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::REGULAR_MESSAGE_EDIT;
+                        responseDataRegularMessage.inputEventResponseType = InputEventResponseType::DEFER_BUTTON_RESPONSE;
+                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
+                        responseDataRegularMessage.interactionId = buttonIntData.id;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                        responseDataRegularMessage.inputEventResponseType = InputEventResponseType::REGULAR_MESSAGE_EDIT;
                         vector<EmbedData> embeds;
                         embeds.push_back(messageEmbed);
                         responseDataRegularMessage.embeds = embeds;
@@ -529,28 +532,29 @@ namespace DiscordCoreAPI {
                         responseDataRegularMessage.channelId = event01.getChannelId();
                         responseDataRegularMessage.messageId = event01.getMessageId();
                         InputEventHandler::respondToEvent(responseDataRegularMessage).get();
-                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::DEFER_BUTTON_RESPONSE;
-                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
-                        responseDataRegularMessage.interactionId = buttonIntData.id;
-                        responseDataRegularMessage.interactionToken = buttonIntData.token;
-                        newEvent = InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                        
                     }
                     else {
+                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
+                        responseData.interactionToken = buttonIntData.token;
+                        responseData.interactionId = buttonIntData.id;
+                        InputEventHandler::respondToEvent(responseData).get();
                         responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
                         vector<EmbedData> embeds;
                         embeds.push_back(messageEmbed);
                         responseDataInteraction.embeds = embeds;
                         InputEventHandler::respondToEvent(responseDataInteraction).get();
-                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
-                        responseData.interactionToken = buttonIntData.token;
-                        responseData.interactionId = buttonIntData.id;
-                        InputEventHandler::respondToEvent(responseData).get();
                     }
                 }
                 else if (button.getButtonId() == "forwards" && (newCurrentPageIndex < messageEmbeds.size())) {
                     newCurrentPageIndex += 1;
                     EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
                     if (event01.eventType == InputEventType::REGULAR_MESSAGE) {
+                        responseDataRegularMessage.inputEventResponseType = InputEventResponseType::DEFER_BUTTON_RESPONSE;
+                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
+                        responseDataRegularMessage.interactionId = buttonIntData.id;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        InputEventHandler::respondToEvent(responseDataRegularMessage).get();
                         responseDataRegularMessage.inputEventResponseType= InputEventResponseType::REGULAR_MESSAGE_EDIT;
                         vector<EmbedData> embeds;
                         embeds.push_back(messageEmbed);
@@ -559,28 +563,28 @@ namespace DiscordCoreAPI {
                         responseDataRegularMessage.channelId = event01.getChannelId();
                         responseDataRegularMessage.messageId = event01.getMessageId();
                         InputEventHandler::respondToEvent(responseDataRegularMessage).get();
-                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::DEFER_BUTTON_RESPONSE;
-                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
-                        responseDataRegularMessage.interactionId = buttonIntData.id;
-                        responseDataRegularMessage.interactionToken = buttonIntData.token;
-                        newEvent = InputEventHandler::respondToEvent(responseDataRegularMessage).get();
                     }
                     else {
+                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
+                        responseData.interactionToken = buttonIntData.token;
+                        responseData.interactionId = buttonIntData.id;
+                        InputEventHandler::respondToEvent(responseData).get();
                         responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
                         vector<EmbedData> embeds;
                         embeds.push_back(messageEmbed);
                         responseDataInteraction.embeds = embeds;
                         InputEventHandler::respondToEvent(responseDataInteraction).get();
-                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
-                        responseData.interactionToken = buttonIntData.token;
-                        responseData.interactionId = buttonIntData.id;
-                        InputEventHandler::respondToEvent(responseData).get();
                     }
                 }
                 else if (button.getButtonId() == "backwards" && (newCurrentPageIndex > 0)) {
                     newCurrentPageIndex -= 1;
                     EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
                     if (event01.eventType == InputEventType::REGULAR_MESSAGE) {
+                        responseDataRegularMessage.inputEventResponseType = InputEventResponseType::DEFER_BUTTON_RESPONSE;
+                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
+                        responseDataRegularMessage.interactionId = buttonIntData.id;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        InputEventHandler::respondToEvent(responseDataRegularMessage).get();
                         responseDataRegularMessage.inputEventResponseType= InputEventResponseType::REGULAR_MESSAGE_EDIT;
                         vector<EmbedData> embeds;
                         embeds.push_back(messageEmbed);
@@ -589,29 +593,29 @@ namespace DiscordCoreAPI {
                         responseDataRegularMessage.channelId = event01.getChannelId();
                         responseDataRegularMessage.messageId = event01.getMessageId();
                         InputEventHandler::respondToEvent(responseDataRegularMessage).get();
-                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::DEFER_BUTTON_RESPONSE;
-                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
-                        responseDataRegularMessage.interactionId = buttonIntData.id;
-                        responseDataRegularMessage.interactionToken = buttonIntData.token;
-                        newEvent = InputEventHandler::respondToEvent(responseDataRegularMessage).get();
                     }
                     else {
-                        responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
-                        vector<EmbedData> embeds;
-                        embeds.push_back(messageEmbed);
-                        responseDataInteraction.embeds = embeds;
-                        newEvent = InputEventHandler::respondToEvent(responseDataInteraction).get();
                         InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
                         responseData.interactionToken = buttonIntData.token;
                         responseData.interactionId = buttonIntData.id;
                         InputEventHandler::respondToEvent(responseData).get();
+                        responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
+                        vector<EmbedData> embeds;
+                        embeds.push_back(messageEmbed);
+                        responseDataInteraction.embeds = embeds;
+                        InputEventHandler::respondToEvent(responseDataInteraction).get();
                     }
                 }
                 else if (button.getButtonId() == "backwards" && (newCurrentPageIndex == 0)) {
                     newCurrentPageIndex = (unsigned int)messageEmbeds.size() - 1;
                     EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
                     if(event01.eventType == InputEventType::REGULAR_MESSAGE) {
-                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::REGULAR_MESSAGE_EDIT;
+                        responseDataRegularMessage.inputEventResponseType = InputEventResponseType::DEFER_BUTTON_RESPONSE;
+                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
+                        responseDataRegularMessage.interactionId = buttonIntData.id;
+                        responseDataRegularMessage.interactionToken = buttonIntData.token;
+                        InputEventHandler::respondToEvent(responseDataRegularMessage).get();
+                        responseDataRegularMessage.inputEventResponseType = InputEventResponseType::REGULAR_MESSAGE_EDIT;
                         vector<EmbedData> embeds;
                         embeds.push_back(messageEmbed);
                         responseDataRegularMessage.embeds = embeds;
@@ -619,22 +623,17 @@ namespace DiscordCoreAPI {
                         responseDataRegularMessage.channelId = event01.getChannelId();
                         responseDataRegularMessage.messageId = event01.getMessageId();
                         InputEventHandler::respondToEvent(responseDataRegularMessage).get();
-                        responseDataRegularMessage.inputEventResponseType= InputEventResponseType::DEFER_BUTTON_RESPONSE;
-                        responseDataRegularMessage.applicationId = buttonIntData.applicationId;
-                        responseDataRegularMessage.interactionId = buttonIntData.id;
-                        responseDataRegularMessage.interactionToken = buttonIntData.token;
-                        newEvent = InputEventHandler::respondToEvent(responseDataRegularMessage).get();
                     }
                     else {
+                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
+                        responseData.interactionToken = buttonIntData.token;
+                        responseData.interactionId = buttonIntData.id;
+                        InputEventHandler::respondToEvent(responseData).get();
                         responseDataInteraction.inputEventResponseType= InputEventResponseType::INTERACTION_RESPONSE_EDIT;
                         vector<EmbedData> embeds;
                         embeds.push_back(messageEmbed);
                         responseDataInteraction.embeds = embeds;
                         InputEventHandler::respondToEvent(responseDataInteraction).get();
-                        InputEventResponseData responseData(InputEventResponseType::DEFER_BUTTON_RESPONSE);
-                        responseData.interactionToken = buttonIntData.token;
-                        responseData.interactionId = buttonIntData.id;
-                        InputEventHandler::respondToEvent(responseData).get();
                     }
                 }
                 else if (button.getButtonId() == "exit" || button.getButtonId() == "") {

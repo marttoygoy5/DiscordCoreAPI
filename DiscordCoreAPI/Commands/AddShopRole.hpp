@@ -22,12 +22,12 @@ namespace DiscordCoreAPI {
 		}
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
-				Channel channel = args->eventData.pDiscordCoreClient->channels->getChannelAsync({ .channelId = args->eventData.getChannelId() }).get();
+				Channel channel = args->eventData.discordCoreClient->channels->getChannelAsync({ .channelId = args->eventData.getChannelId() }).get();
 
-				Guild guild = args->eventData.pDiscordCoreClient->guilds->getGuildAsync({ .guildId = args->eventData.getGuildId() }).get();
+				Guild guild = args->eventData.discordCoreClient->guilds->getGuildAsync({ .guildId = args->eventData.getGuildId() }).get();
 				DiscordGuild discordGuild(guild.data);
 
-				GuildMember guildMember = args->eventData.pDiscordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->eventData.getGuildId(), .guildMemberId = args->eventData.getAuthorId() }).get();
+				GuildMember guildMember = args->eventData.discordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->eventData.getGuildId(), .guildMemberId = args->eventData.getAuthorId() }).get();
 
 				bool areWeInADm = areWeInADM(args->eventData, channel, discordGuild);
 
@@ -223,7 +223,7 @@ namespace DiscordCoreAPI {
 				createRoleData.mentionable = true;
 				createRoleData.name = roleName;
 				createRoleData.permissions = rolePermsString;
-				Role role =  args->eventData.pDiscordCoreClient->roles->createRoleAsync(createRoleData).get();
+				Role role =  args->eventData.discordCoreClient->roles->createRoleAsync(createRoleData).get();
 				if (role.data.id == "") {
 					throw exception("Role not initialized!");
 				}
@@ -236,7 +236,7 @@ namespace DiscordCoreAPI {
 				discordGuild.writeDataToDB().get();
 				string msgString = "";
 				msgString = "Nicely done! You've added a new role to the store's inventory, giving the server access to it!\nIt is as follows:\n------\n__**Role:**__ <@&" + currentRole.roleId + "> __**Cost**__ : " + to_string(roleCost) + " "
-					+  args->eventData.pDiscordCoreClient->discordUser->data.currencyName + "\n------";
+					+  args->eventData.discordCoreClient->discordUser->data.currencyName + "\n------";
 				EmbedData msgEmbed;
 				msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
 				msgEmbed.setColor(discordGuild.data.borderColor);

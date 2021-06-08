@@ -23,8 +23,8 @@ namespace DiscordCoreAPI {
 
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
-				Channel channel = args->eventData.pDiscordCoreClient->channels->getChannelAsync({ args->eventData.getChannelId() }).get();
-				Guild guild = args->eventData.pDiscordCoreClient->guilds->getGuildAsync({ args->eventData.getGuildId() }).get();
+				Channel channel = args->eventData.discordCoreClient->channels->getChannelAsync({ args->eventData.getChannelId() }).get();
+				Guild guild = args->eventData.discordCoreClient->guilds->getGuildAsync({ args->eventData.getGuildId() }).get();
 				DiscordGuild discordGuild(guild.data);
 
 				bool areWeInADm = areWeInADM(args->eventData, channel, discordGuild);
@@ -44,7 +44,7 @@ namespace DiscordCoreAPI {
 				}
 
 				InputEventData event01;
-				GuildMember botMember = args->eventData.pDiscordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->eventData.getGuildId(), .guildMemberId = args->eventData.pDiscordCoreClient->currentUser->data.id }).get();
+				GuildMember botMember = args->eventData.discordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->eventData.getGuildId(), .guildMemberId = args->eventData.discordCoreClient->currentUser->data.id }).get();
 				if (!(DiscordCoreAPI::PermissionsConverter::checkForPermission(botMember, channel, Permissions::MANAGE_MESSAGES))) {
 					string msgString = "------\n**I need the Manage Messages permission in this channel, for this command!**\n------";
 					EmbedData msgEmbed;
@@ -77,7 +77,7 @@ namespace DiscordCoreAPI {
 					co_return;
 				}
 
-				vector<Role> rolesArray = args->eventData.pDiscordCoreClient->roles->getGuildRolesAsync({ .guildId = args->eventData.getGuildId() }).get();
+				vector<Role> rolesArray = args->eventData.discordCoreClient->roles->getGuildRolesAsync({ .guildId = args->eventData.getGuildId() }).get();
 
 				for (unsigned int x = 0; x < discordGuild.data.guildShop.roles.size(); x+=1) {
 					bool isRoleFound = false;
@@ -265,14 +265,14 @@ namespace DiscordCoreAPI {
 				if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 					event01.eventType = args->eventData.eventType;
 					event01.messageData = args->eventData.messageData;
-					event01.pDiscordCoreClient = args->eventData.pDiscordCoreClient;
+					event01.discordCoreClient = args->eventData.discordCoreClient;
 					event01.requesterId = args->eventData.requesterId;
 					recurseThroughMessagePages(userID, event01,  currentPageIndex, finalMsgEmbedsArray, true).get();
 				}
 				else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 					event01.eventType = args->eventData.eventType;
 					event01.interactionData = args->eventData.interactionData;
-					event01.pDiscordCoreClient = args->eventData.pDiscordCoreClient;
+					event01.discordCoreClient = args->eventData.discordCoreClient;
 					event01.requesterId = args->eventData.requesterId;
 					event01.messageData = args->eventData.messageData;
 					recurseThroughMessagePages(userID, event01, currentPageIndex, finalMsgEmbedsArray, true).get();
