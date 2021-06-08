@@ -28,11 +28,10 @@
 #include <mongocxx/exception/exception.hpp>
 #include <bsoncxx/builder/stream/array.hpp>
 #include <bsoncxx/builder/stream/helpers.hpp>
-#include <mongocxx/exception/write_exception.hpp>
 #include <mongocxx/exception/logic_error.hpp>
 #include <bsoncxx/builder/stream/document.hpp>
+#include <mongocxx/exception/write_exception.hpp>
 #include <mongocxx/exception/bulk_write_exception.hpp>
-
 
 #include </json-develop/include/nlohmann/json.hpp>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -41,34 +40,35 @@
 #include <winrt/Windows.System.Threading.h>
 #include <winrt/Windows.Web.Http.Filters.h>
 #include <winrt/Windows.Web.Http.Headers.h>
+#include <winrt/Windows.ApplicationModel.h>
 #include <winrt/windows.storage.streams.h>
 #include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.ApplicationModel.h>
-#include <winrt/Windows.Data.Json.h>
 #include <winrt/Windows.Foundation.h>
 #include <concurrent_unordered_map.h>
+#include <winrt/Windows.Data.Json.h>
 #include <winrt/windows.ui.xaml.h>
 #include <winrt/windows.system.h>
 #include <concurrent_vector.h>
 #include <concurrent_queue.h>
 #include <DispatcherQueue.h>
+#include <winrt/base.h>
 #include <processenv.h>
 #include <consoleapi.h>
 #include <winrt/base.h>
 #include <concrtrm.h>
-#include <winrt/base.h>
 #include <pplawait.h>
+#include <functional>
 #include <windows.h>
 #include <agents.h>
 #include <iostream>
 #include <concrt.h>
 #include <sstream>
+#include <iomanip>
 #include <curl.h>
 #include <math.h>
+#include <cctype>
 #include <ppl.h>
 #include <regex>
-#include <cctype>
-#include <iomanip>
 
 using namespace winrt::Windows::Security::Cryptography::Certificates;
 using namespace winrt::Windows::Networking::Sockets;
@@ -80,7 +80,6 @@ using namespace winrt::Windows::UI::Xaml;
 using namespace bsoncxx::builder::stream;
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::System;
-using namespace winrt::Windows::Data::Json;
 using namespace concurrency;
 using namespace nlohmann;
 using namespace winrt;

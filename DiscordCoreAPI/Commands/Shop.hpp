@@ -22,6 +22,8 @@ namespace DiscordCoreAPI {
 		}
 
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
+			apartment_context mainThread;
+			co_await resume_background();
 			try {
 				Channel channel = args->eventData.discordCoreClient->channels->getChannelAsync({ args->eventData.getChannelId() }).get();
 				Guild guild = args->eventData.discordCoreClient->guilds->getGuildAsync({ args->eventData.getGuildId() }).get();
@@ -48,7 +50,7 @@ namespace DiscordCoreAPI {
 				if (!(DiscordCoreAPI::PermissionsConverter::checkForPermission(botMember, channel, Permissions::MANAGE_MESSAGES))) {
 					string msgString = "------\n**I need the Manage Messages permission in this channel, for this command!**\n------";
 					EmbedData msgEmbed;
-					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
@@ -97,7 +99,7 @@ namespace DiscordCoreAPI {
 						}
 						string msgString = "------\n**Removing guild role " + shopRole.roleName + " from guild cache!**\n------";
 						EmbedData msgEmbed;
-						msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+						msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 						msgEmbed.setColor(discordGuild.data.borderColor);
 						msgEmbed.setDescription(msgString);
 						msgEmbed.setTimeStamp(getTimeAndDate());
@@ -208,7 +210,7 @@ namespace DiscordCoreAPI {
 					rolesMsgEmbeds[x].setTitle("__**Shop Inventory(Roles) Page " + to_string(x + 1) + " of " + to_string(itemsMessageEmbeds.size() + rolesMsgEmbeds.size()) + "**__");
 					rolesMsgEmbeds[x].setDescription(rolesMsgStrings[x]);
 					rolesMsgEmbeds[x].setColor(discordGuild.data.borderColor);
-					rolesMsgEmbeds[x].setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					rolesMsgEmbeds[x].setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 				}
 
 				for (auto x = 0; x < itemsMessageEmbeds.size(); x += 1) {
@@ -216,7 +218,7 @@ namespace DiscordCoreAPI {
 					itemsMessageEmbeds[x].setTitle("__**Shop Inventory(Items) Page " + to_string(rolesMsgEmbeds.size() + x + 1) + " of " + to_string(itemsMessageEmbeds.size() + rolesMsgEmbeds.size()) + "**__:");
 					itemsMessageEmbeds[x].setDescription(itemsMsgStrings[x]);
 					itemsMessageEmbeds[x].setColor(discordGuild.data.borderColor);
-					itemsMessageEmbeds[x].setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					itemsMessageEmbeds[x].setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 				}
 
 				vector<EmbedData> finalMsgEmbedsArray;
@@ -236,7 +238,7 @@ namespace DiscordCoreAPI {
 					messageEmbed.setTimeStamp(getTimeAndDate());
 					messageEmbed.setTitle("__**Empty Inventory:**__");
 					messageEmbed.setColor(discordGuild.data.borderColor);
-					messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
 						responseData.channelId = args->eventData.messageData.channelId;
@@ -260,6 +262,8 @@ namespace DiscordCoreAPI {
 					co_return;
 				}
 
+				discordGuild.writeDataToDB().get();
+
 				unsigned int currentPageIndex = 0;
 				string userID = args->eventData.messageData.author.id;
 				if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
@@ -278,7 +282,7 @@ namespace DiscordCoreAPI {
 					recurseThroughMessagePages(userID, event01, currentPageIndex, finalMsgEmbedsArray, true).get();
 				}
 
-				discordGuild.writeDataToDB().get();
+				co_await mainThread;
 				co_return;
 			}
 			catch (exception& e) {

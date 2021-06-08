@@ -58,7 +58,7 @@ namespace DiscordCoreAPI {
 				if (args->argumentsArray.size() == 0 || !regex_search(args->argumentsArray.at(0), nameRegExp)) {
 					string msgString = "------\n**Please enter a proper role name! (!addshoprole = NAME, HEXCOLORVALIE, COST)**\n------";
 					EmbedData msgEmbed;
-					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
@@ -89,7 +89,7 @@ namespace DiscordCoreAPI {
 				if (args->argumentsArray.size() < 2 || !regex_search(args->argumentsArray.at(1), hexColorRegExp)) {
 					string msgString = "------\n**Please enter a valid hex color value! (!addshoprole = NAME, HEXCOLORVALIE, COST)**\n------";
 					EmbedData msgEmbed;
-					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
@@ -120,7 +120,7 @@ namespace DiscordCoreAPI {
 				if (args->argumentsArray.size() < 3 || !regex_search(args->argumentsArray.at(2), costRegExp) || stoll(args->argumentsArray.at(2)) <= 0) {
 					string msgString = "------\n**Please enter a valid cost value! (!addshoprole = NAME, HEXCOLORVALIE, COST)**\n------";
 					EmbedData msgEmbed;
-					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
@@ -162,7 +162,7 @@ namespace DiscordCoreAPI {
 					if (roleName == value.roleName) {
 						string msgString = "------\n**Sorry, but a role by that name already exists!**\n------";
 						EmbedData msgEmbed;
-						msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+						msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 						msgEmbed.setColor(discordGuild.data.borderColor);
 						msgEmbed.setDescription(msgString);
 						msgEmbed.setTimeStamp(getTimeAndDate());
@@ -238,7 +238,7 @@ namespace DiscordCoreAPI {
 				msgString = "Nicely done! You've added a new role to the store's inventory, giving the server access to it!\nIt is as follows:\n------\n__**Role:**__ <@&" + currentRole.roleId + "> __**Cost**__ : " + to_string(roleCost) + " "
 					+  args->eventData.discordCoreClient->discordUser->data.currencyName + "\n------";
 				EmbedData msgEmbed;
-				msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+				msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 				msgEmbed.setColor(discordGuild.data.borderColor);
 				msgEmbed.setDescription(msgString);
 				msgEmbed.setTimeStamp(getTimeAndDate());

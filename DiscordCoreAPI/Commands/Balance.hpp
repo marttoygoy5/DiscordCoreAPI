@@ -55,7 +55,7 @@ namespace DiscordCoreAPI {
 				if (!regex_search(args->argumentsArray.at(0), mentionRegExp, regex_constants::match_flag_type::format_first_only) && !regex_search(args->argumentsArray.at(0), idRegExp, regex_constants::match_flag_type::format_first_only)) {
 					string msgString = "------\n* *Please, enter a valid user mention, or enter none at all!(!balance = @USERMENTION)**\n------";
 					EmbedData msgEmbed;
-					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 					msgEmbed.setColor(discordGuild.data.borderColor);
 					msgEmbed.setDescription(msgString);
 					msgEmbed.setTimeStamp(getTimeAndDate());
@@ -93,7 +93,7 @@ namespace DiscordCoreAPI {
 			if (guildMember.data.user.id == "") {
 				string msgString = "------\n**Sorry, but that user could not be found!**\n------";
 				EmbedData msgEmbed;
-				msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+				msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 				msgEmbed.setColor(discordGuild.data.borderColor);
 				msgEmbed.setDescription(msgString);
 				msgEmbed.setTimeStamp(getTimeAndDate());
@@ -131,7 +131,7 @@ namespace DiscordCoreAPI {
 				"\n__**Wallet Balance:**__ " + to_string(walletAmount) + " " + args->eventData.discordCoreClient->discordUser->data.currencyName + "\n------";
 
 			EmbedData msgEmbed;
-			msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatar());
+			msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 			msgEmbed.setDescription(msgString);
 			msgEmbed.setColor(discordGuild.data.borderColor);
 			msgEmbed.setTimeStamp(getTimeAndDate());

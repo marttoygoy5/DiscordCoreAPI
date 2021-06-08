@@ -355,14 +355,12 @@ namespace DiscordCoreAPI {
 	class InteractionManager {
     public:
         friend class InteractionManagerAgent;
-        static unbounded_buffer<ButtonInteractionData>* buttonInteractionBuffer;
 
 		InteractionManager() {}
 
         static void initialize(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew) {
             InteractionManager::agentResources = agentResourcesNew;
             InteractionManager::threads = threadsNew;
-            InteractionManager::buttonInteractionBuffer = new unbounded_buffer<ButtonInteractionData>;
         }
 
         static task<MessageData> createDeferredInteractionResponseAsync(CreateDeferredInteractionResponseData dataPackage) {
@@ -544,7 +542,7 @@ namespace DiscordCoreAPI {
         static DiscordCoreInternal::HttpAgentResources agentResources;
         static concurrent_vector<DiscordCoreInternal::ThreadContext>* threads;
     };
-
+    
     unbounded_buffer<DiscordCoreInternal::CreateInteractionResponseData>* InteractionManagerAgent::requestPostInteractionResponseBuffer;
     unbounded_buffer<DiscordCoreInternal::EditInteractionResponseData>* InteractionManagerAgent::requestPatchInteractionResponseBuffer;
     unbounded_buffer<DiscordCoreInternal::CreateFollowUpMessageData>* InteractionManagerAgent::requestPostFollowUpMessageBuffer;
@@ -555,11 +553,16 @@ namespace DiscordCoreAPI {
     unbounded_buffer<MessageData>* InteractionManagerAgent::outInteractionResponseBuffer;
     unbounded_buffer<exception>* InteractionManagerAgent::errorBuffer;
     concurrent_vector<DiscordCoreInternal::ThreadContext>* InteractionManager::threads;
-    unbounded_buffer<ButtonInteractionData>* InteractionManager::buttonInteractionBuffer;
-    DiscordCoreInternal::HttpAgentResources InteractionManager::agentResources;    
+    DiscordCoreInternal::HttpAgentResources InteractionManager::agentResources;
 
-    struct Button {
+    struct Button : public agent{
     public:
+
+        static unbounded_buffer<ButtonInteractionData>* buttonInteractionBuffer;
+        static unbounded_buffer<ButtonInteractionData>* buttonInteractionResendBuffer;
+        string channelId;
+        string messageId;
+        string userId;
 
         Button(InputEventData dataPackage) {
             this->startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -569,6 +572,8 @@ namespace DiscordCoreAPI {
         }
 
         static void initialize(DiscordCoreClient* discordCoreClientNew) {
+            Button::buttonInteractionBuffer = new unbounded_buffer<ButtonInteractionData>;
+            Button::buttonInteractionResendBuffer = new unbounded_buffer<ButtonInteractionData>;
             Button::discordCoreClient = discordCoreClientNew;
         }
 
@@ -581,21 +586,43 @@ namespace DiscordCoreAPI {
             }
         }
 
-        task<ButtonInteractionData> getOurButtonData(unsigned long long maxWaitTimeInMs) {
-            apartment_context mainThread;
-            co_await resume_background();
-            this->startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count(); 
+        task<ButtonInteractionData> getOurButtonData(unsigned int maxWaitTimeInMsNew) {
+            this->maxTimeInMs = maxWaitTimeInMsNew;
+            start();
+            agent::wait(this);
+            co_return this->interactionData;
+        }
+
+    protected:
+        static DiscordCoreClient* discordCoreClient;
+        string buttonId = "";
+        unsigned long long startTime;
+        unsigned int maxTimeInMs;
+        bool doWeQuit = false;
+        ButtonInteractionData interactionData;
+
+        bool checkIfTimeHasPassed(unsigned long long maxWaitTimeInMs) {
+            unsigned long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            if (currentTime - this->startTime > maxWaitTimeInMs) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        void run() {
+            this->startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             while (doWeQuit == false) {
                 ButtonInteractionData buttonInteractionData;
-                if (checkIfTimeHasPassed(maxWaitTimeInMs)) {
+                if (checkIfTimeHasPassed(this->maxTimeInMs)) {
                     this->buttonId = "exit";
                     doWeQuit = true;
                 }
                 else {
-                    if (try_receive(InteractionManager::buttonInteractionBuffer, buttonInteractionData)) {
-                        if ((buttonInteractionData.channelId == this->channelId) && (buttonInteractionData.message.id == this->messageId)){
-
-                            if (this->userId != buttonInteractionData.user.id &&this->userId != buttonInteractionData.member.user.id) {                            
+                    if (try_receive(Button::buttonInteractionBuffer, buttonInteractionData)) {
+                        if (this->channelId == buttonInteractionData.channelId && this->messageId == buttonInteractionData.message.id) {
+                            if (this->userId != buttonInteractionData.user.id && this->userId != buttonInteractionData.member.user.id) {
 
                                 if (buttonInteractionData.applicationId != "") {
                                     CreateInteractionResponseData createResponseData;
@@ -611,40 +638,25 @@ namespace DiscordCoreAPI {
                                     createResponseData.data.embeds.push_back(embedData);
                                     InteractionManager::createInteractionResponseAsync(createResponseData).get();
                                 }
-                                asend(InteractionManager::buttonInteractionBuffer, buttonInteractionData);
                             }
                             else {
                                 this->buttonId = buttonInteractionData.customId;
-                                co_await mainThread;
-                                co_return buttonInteractionData;
+                                this->interactionData = buttonInteractionData;
+                                break;
                             }
                         }
+                        asend(Button::buttonInteractionBuffer, buttonInteractionData);
+                        cout << "CHANNEL ID:0101" << this->channelId << endl;
                     }
-                }                
+                }
             }
-            co_await mainThread;
-            co_return ButtonInteractionData();
+            done();
         }
 
-    protected:
-        static DiscordCoreClient* discordCoreClient;
-        string channelId;
-        string messageId;
-        string userId;
-        string buttonId = "";
-        unsigned long long startTime;
-        bool doWeQuit = false;
-        
-        bool checkIfTimeHasPassed(unsigned long long maxWaitTimeInMs) {
-            unsigned long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-            if (currentTime - this->startTime > maxWaitTimeInMs) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
     };
     DiscordCoreClient* Button::discordCoreClient;
+    unbounded_buffer<ButtonInteractionData>* Button::buttonInteractionResendBuffer;
+    unbounded_buffer<ButtonInteractionData>* Button::buttonInteractionBuffer;
+
 };
 #endif

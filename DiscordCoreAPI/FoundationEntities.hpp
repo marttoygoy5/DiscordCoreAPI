@@ -1662,6 +1662,13 @@ namespace DiscordCoreAPI {
     };
 
     struct EmbedFieldData {
+        operator DiscordCoreInternal::EmbedFieldData() {
+            DiscordCoreInternal::EmbedFieldData embedFieldData;
+            embedFieldData.Inline = this->Inline;
+            embedFieldData.name = this->name;
+            embedFieldData.value = this->value;
+            return embedFieldData;
+        }
         string name;
         string value;
         bool Inline;
@@ -1673,11 +1680,7 @@ namespace DiscordCoreAPI {
             embedData.author = this->author;
             embedData.description = this->description;
             for (auto value : this->fields) {
-                DiscordCoreInternal::EmbedFieldData field;
-                field.Inline = value.Inline;
-                field.name = value.name;
-                field.value = value.value;
-                embedData.fields.push_back(field);
+                embedData.fields.push_back(value);
             }
             embedData.footer = this->footer;
             embedData.hexColorValue = this->hexColorValue;
@@ -2620,6 +2623,30 @@ namespace DiscordCoreAPI {
         MessageData messageData;
         InputEventType eventType;
         string requesterId;
+        string getApplicationId() {
+            if (this->interactionData.applicationId == "") {
+                return this->messageData.application.id;
+            }
+            else {
+                return this->interactionData.applicationId;
+            }
+        }
+        string getInteractionToken() {
+            if (this->interactionData.token == "") {
+                return this->interactionData.token;
+            }
+            else {
+                return this->interactionData.token;
+            }
+        }
+        string getInteractionId() {
+            if (this->interactionData.id == "") {
+                return this->messageData.interaction.id;
+            }
+            else {
+                return this->interactionData.id;
+            }
+        }
         string getUserName() {
             if (this->messageData.author.username == "") {
                 return this->interactionData.member.user.username;
@@ -2628,7 +2655,7 @@ namespace DiscordCoreAPI {
                 return this->messageData.author.username;
             }
         }
-        string getAvatar() {
+        string getAvatarURL() {
             if (this->messageData.author.getAvatarURL() == "") {
 
                 return this->interactionData.member.user.getAvatarURL();

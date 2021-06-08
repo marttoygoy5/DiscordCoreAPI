@@ -34,7 +34,8 @@ namespace DiscordCoreAPI {
                 dataPackageNew.token = dataPackage.eventData.interactionData.token;
                 dataPackageNew.type = dataPackage.eventData.interactionData.type;
                 dataPackageNew.user = dataPackage.eventData.interactionData.user;
-                send(DiscordCoreAPI::InteractionManager::buttonInteractionBuffer, dataPackageNew);
+                cout << "BUTTON ID: " << dataPackageNew.customId << endl;
+                send(DiscordCoreAPI::Button::buttonInteractionBuffer, dataPackageNew);
             }
             co_await mainThread;
             co_return;
