@@ -15,12 +15,36 @@ namespace DiscordCoreAPI {
 
 	class DiscordCoreClientBase;
 
+	struct OnChannelCreationData {
+		Channel channel;
+	};
+
+	struct OnChannelUpdateData {
+		Channel channel;
+	};
+
+	struct OnChannelDeletionData {
+		Channel channel;
+	};
+
+	struct OnGuildCreationData {
+		Guild guild;
+	};
+
+	struct OnGuildUpdateData {
+		Guild guild;
+	};
+
+	struct OnGuildDeletionData {
+		Guild guild;
+	};
+
 	struct OnGuildMemberAddData {
-		DiscordCoreAPI::GuildMember guildMember;
+		GuildMember guildMember;
 	};
 
 	struct OnMessageCreationData {
-		DiscordCoreAPI::Message message;
+		Message message;
 	};
 
 	struct OnMessageDeletionData {
@@ -30,26 +54,38 @@ namespace DiscordCoreAPI {
 	};
 
 	struct OnReactionAddData {
-		DiscordCoreAPI::Reaction reaction;
-	};
-
-	struct OnGuildCreationData {
-		DiscordCoreAPI::Guild guild;
+		Reaction reaction;
 	};
 
 	struct OnInputEventCreateData {
-		DiscordCoreAPI::InputEventData eventData;
+		InputEventData eventData;
 	};
 
 	class EventManager  {
 	public:
 
-		winrt::event_token onInputEventCreate(winrt::delegate<OnInputEventCreateData> const& handler) {
-			return onInputEventCreationEvent.add(handler);
+		winrt::event_token onChannelCreation(winrt::delegate<OnChannelCreationData> const& handler) {
+			return onChannelCreationEvent.add(handler);
 		}
 
-		void onInputEventCreate(winrt::event_token const& token) {
-			onInputEventCreationEvent.remove(token);
+		void onChannelCreation(winrt::event_token const& token) {
+			onChannelCreationEvent.remove(token);
+		}
+
+		winrt::event_token onChannelUpdate(winrt::delegate<OnChannelUpdateData> const& handler) {
+			return onChannelUpdateEvent.add(handler);
+		}
+
+		void onChannelUpdate(winrt::event_token const& token) {
+			onChannelUpdateEvent.remove(token);
+		}
+
+		winrt::event_token onChannelDeletion(winrt::delegate<OnChannelDeletionData> const& handler) {
+			return onChannelDeletionEvent.add(handler);
+		}
+
+		void onChannelDeletion(winrt::event_token const& token) {
+			onChannelDeletionEvent.remove(token);
 		}
 
 		winrt::event_token onGuildCreation(winrt::delegate<OnGuildCreationData> const& handler) {
@@ -58,6 +94,30 @@ namespace DiscordCoreAPI {
 
 		void onGuildCreation(winrt::event_token const& token) {
 			onGuildCreationEvent.remove(token);
+		}
+
+		winrt::event_token onGuildUpdate(winrt::delegate<OnGuildUpdateData> const& handler) {
+			return onGuildUpdateEvent.add(handler);
+		}
+
+		void onGuildUpdate(winrt::event_token const& token) {
+			onGuildUpdateEvent.remove(token);
+		}
+
+		winrt::event_token onGuildDeletion(winrt::delegate<OnGuildDeletionData> const& handler) {
+			return onGuildDeletionEvent.add(handler);
+		}
+
+		void onGuildDeletion(winrt::event_token const& token) {
+			onGuildDeletionEvent.remove(token);
+		}
+
+		winrt::event_token onInputEventCreate(winrt::delegate<OnInputEventCreateData> const& handler) {
+			return onInputEventCreationEvent.add(handler);
+		}
+
+		void onInputEventCreate(winrt::event_token const& token) {
+			onInputEventCreationEvent.remove(token);
 		}
 
 		winrt::event_token onGuildMemberAdd(winrt::delegate<OnGuildMemberAddData> const& handler) {
@@ -96,7 +156,17 @@ namespace DiscordCoreAPI {
 
 		friend class DiscordCoreClient;
 
+		winrt::event<winrt::delegate<OnChannelCreationData>> onChannelCreationEvent;
+
+		winrt::event<winrt::delegate<OnChannelUpdateData>> onChannelUpdateEvent;
+
+		winrt::event<winrt::delegate<OnChannelDeletionData>> onChannelDeletionEvent;
+
 		winrt::event<winrt::delegate<OnGuildCreationData>> onGuildCreationEvent;
+
+		winrt::event<winrt::delegate<OnGuildUpdateData>> onGuildUpdateEvent;
+
+		winrt::event<winrt::delegate<OnGuildDeletionData>> onGuildDeletionEvent;
 
 		winrt::event<winrt::delegate<OnInputEventCreateData>> onInputEventCreationEvent;
 

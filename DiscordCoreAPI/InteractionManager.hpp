@@ -559,10 +559,6 @@ namespace DiscordCoreAPI {
     public:
 
         static unbounded_buffer<ButtonInteractionData>* buttonInteractionBuffer;
-        static unbounded_buffer<ButtonInteractionData>* buttonInteractionResendBuffer;
-        string channelId;
-        string messageId;
-        string userId;
 
         Button(InputEventData dataPackage) {
             this->startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -573,7 +569,6 @@ namespace DiscordCoreAPI {
 
         static void initialize(DiscordCoreClient* discordCoreClientNew) {
             Button::buttonInteractionBuffer = new unbounded_buffer<ButtonInteractionData>;
-            Button::buttonInteractionResendBuffer = new unbounded_buffer<ButtonInteractionData>;
             Button::discordCoreClient = discordCoreClientNew;
         }
 
@@ -595,6 +590,9 @@ namespace DiscordCoreAPI {
 
     protected:
         static DiscordCoreClient* discordCoreClient;
+        string channelId;
+        string messageId;
+        string userId;
         string buttonId = "";
         unsigned long long startTime;
         unsigned int maxTimeInMs;
@@ -655,7 +653,6 @@ namespace DiscordCoreAPI {
 
     };
     DiscordCoreClient* Button::discordCoreClient;
-    unbounded_buffer<ButtonInteractionData>* Button::buttonInteractionResendBuffer;
     unbounded_buffer<ButtonInteractionData>* Button::buttonInteractionBuffer;
 
 };

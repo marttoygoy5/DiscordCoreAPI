@@ -54,7 +54,7 @@ namespace DiscordCoreAPI {
 				cout << "Caching channels for guild: " << this->data.name << endl;
 				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
 					data.channels.at(x).guildId = this->data.id;
-					DiscordCoreInternal::ChannelData channelData = data.channels.at(x);
+					ChannelData channelData = data.channels.at(x);
 					Channel channel(channelData, this->discordCoreClient);
 					this->discordCoreClientBase->channels->insertChannelAsync(channel).get();
 				}
@@ -265,11 +265,22 @@ namespace DiscordCoreAPI {
 			GuildManagerAgent guildManagerAgent(this->agentResources, this->threads, this->discordCoreClient, this->discordCoreClientBase, this->threads->at(2).scheduler);
 			GuildManagerAgent::guildsToInsert->push(guild);
 			guildManagerAgent.start();
+			cout << guild.data.name << endl;
 			agent::wait(&guildManagerAgent);
 			exception error;
 			while (guildManagerAgent.getError(error)) {
 				cout << "GuildManager::inserGuildAsync() Error: " << error.what() << endl << endl;
 			}
+			co_return;
+		}
+
+		task<void> removeGuildAsync(string guildId) {
+			map<string, Guild> cache;
+			try_receive(GuildManagerAgent::cache, cache);
+			if (cache.contains(guildId)) {
+				cache.erase(guildId);
+			}
+			asend(GuildManagerAgent::cache, cache);
 			co_return;
 		}
 

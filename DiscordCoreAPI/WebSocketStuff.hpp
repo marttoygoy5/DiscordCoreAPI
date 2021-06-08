@@ -14,15 +14,19 @@
 namespace DiscordCoreInternal {
 
 	enum class WebSocketEventType {
-		GUILD_CREATE = 0,
-		GUILD_MEMBER_ADD = 1,
-		ROLE_UPDATE = 2,
-		MESSAGE_CREATE = 3,
-		MESSAGE_DELETE = 4,
-		CHANNEL_UPDATE = 5,
-		USER_UPDATE = 6,
-		REACTION_ADD = 7,
-		INTERACTION_CREATE = 8
+		CHANNEL_CREATE = 0,
+		CHANNEL_UPDATE = 1,
+		CHANNEL_DELETE = 2,
+		GUILD_CREATE = 3,
+		GUILD_UPDATE = 4,
+		GUILD_DELETE = 5,
+		GUILD_MEMBER_ADD = 6,
+		ROLE_UPDATE = 7,
+		MESSAGE_CREATE = 8,
+		MESSAGE_DELETE = 9,
+		USER_UPDATE = 10,
+		REACTION_ADD = 11,
+		INTERACTION_CREATE = 12
 	};
 
 	struct WebSocketWorkload {
@@ -78,10 +82,50 @@ namespace DiscordCoreInternal {
 			done();
 		}
 
+		fire_and_forget onChannelCreate(json payload) {
+			WebSocketWorkload workload;
+			workload.payLoad = payload;
+			workload.eventType = WebSocketEventType::CHANNEL_CREATE;
+			send(this->workloadTarget, workload);
+			co_return;
+		}
+
+		fire_and_forget onChannelUpdate(json payload) {
+			WebSocketWorkload workload;
+			workload.payLoad = payload;
+			workload.eventType = WebSocketEventType::CHANNEL_UPDATE;
+			send(this->workloadTarget, workload);
+			co_return;
+		}
+
+		fire_and_forget onChannelDelete(json payload) {
+			WebSocketWorkload workload;
+			workload.payLoad = payload;
+			workload.eventType = WebSocketEventType::CHANNEL_DELETE;
+			send(this->workloadTarget, workload);
+			co_return;
+		}
+
 		fire_and_forget onGuildCreate(json payload) {
 			WebSocketWorkload workload;
 			workload.payLoad = payload;
 			workload.eventType = WebSocketEventType::GUILD_CREATE;
+			send(this->workloadTarget, workload);
+			co_return;
+		}
+
+		fire_and_forget onGuildUpdate(json payload) {
+			WebSocketWorkload workload;
+			workload.payLoad = payload;
+			workload.eventType = WebSocketEventType::GUILD_UPDATE;
+			send(this->workloadTarget, workload);
+			co_return;
+		}
+
+		fire_and_forget onGuildDelete(json payload) {
+			WebSocketWorkload workload;
+			workload.payLoad = payload;
+			workload.eventType = WebSocketEventType::GUILD_DELETE;
 			send(this->workloadTarget, workload);
 			co_return;
 		}
@@ -129,16 +173,36 @@ namespace DiscordCoreInternal {
 		void onMessageReceived(json payload) {
 			try {
 
+				if (payload.at("t") == "CHANNEL_CREATE") {
+					onChannelCreate(payload.at("d"));
+				}
+				
+				if (payload.at("t") == "CHANNEL_UPDATE") {
+					onChannelUpdate(payload.at("d"));
+				}
+
+				if (payload.at("t") == "CHANNEL_DELETE") {
+					onChannelDelete(payload.at("d"));
+				}
+
+				if (payload.at("t") == "GUILD_CREATE") {
+					onGuildCreate(payload.at("d"));
+				}
+
+				if (payload.at("t") == "GUILD_UPDATE") {
+					onGuildUpdate(payload.at("d"));
+				}
+
+				if (payload.at("t") == "GUILD_DELETE") {
+					onGuildDelete(payload.at("d"));
+				}
+
 				if (payload.at("t") == "MESSAGE_CREATE") {
 					onMessageCreate(payload.at("d"));
 				}
 
 				if (payload.at("t") == "MESSAGE_DELETE") {
 					onMessageDelete(payload.at("d"));
-				}
-
-				if (payload.at("t") == "GUILD_CREATE") {
-					onGuildCreate(payload.at("d"));
 				}
 
 				if (payload.at("t") == "MESSAGE_REACTION_ADD") {

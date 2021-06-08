@@ -173,7 +173,7 @@ namespace DiscordCoreAPI {
 			co_await mainThread;
 		}
 
-		task<OnGuildCreationData> createGuild(GuildData guildData) {
+		task<Guild> createGuild(GuildData guildData) {
 			try {
 				DiscordCoreInternal::HttpAgentResources agentResources;
 				agentResources.baseURL = this->baseURL;
@@ -181,12 +181,15 @@ namespace DiscordCoreAPI {
 				Guild guild(agentResources, this->threadManager->getThreads().get(), guildData, (DiscordCoreClient*)this, this);
 				DiscordGuild discordGuild(guild.data);
 				discordGuild.writeDataToDB();
+				if (DiscordCoreClient::guildMap.contains(guild.data.id)) {
+					DiscordCoreClient::guildMap.erase(guild.data.id);
+				}
+				else {
+					this->discordUser->data.guildCount += 1;
+					this->discordUser->writeDataToDB();
+				}
 				DiscordCoreClient::guildMap.insert(make_pair(guild.data.id, discordGuild));
-				OnGuildCreationData guildCreationData(guild);
-				guildCreationData.guild = guild;
-				this->discordUser->data.guildCount += 1;
-				this->discordUser->writeDataToDB();
-				co_return guildCreationData;
+				co_return guild;
 			}
 			catch (exception error) {
 				cout << "createGuild() Error Message: " << error.what() << endl;
@@ -215,20 +218,74 @@ namespace DiscordCoreAPI {
 			catch (exception error) {
 				cout << "createReaction() Error Message: " << error.what() << endl;
 			}			
-		}
-		
+		}		
+
 		void run() {
 			try {
 				while (doWeQuit == false) {
 					DiscordCoreInternal::WebSocketWorkload workload;
 					if (try_receive(this->webSocketWorkCollectionBuffer, workload)) {
-						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_CREATE) {
+						switch (workload.eventType) {
+						case DiscordCoreInternal::WebSocketEventType::CHANNEL_CREATE:
+						{
+							ChannelData channelData;
+							DiscordCoreInternal::parseObject(workload.payLoad, &channelData);
+							Channel channel(channelData, this);
+							OnChannelCreationData channelCreationData;
+							channelCreationData.channel = channel;
+							this->eventManager->onChannelCreationEvent(channelCreationData);
+							break;
+						}
+						case DiscordCoreInternal::WebSocketEventType::CHANNEL_UPDATE:
+						{
+							Channel channel = this->channels->getChannelAsync({ .channelId = workload.payLoad.at("id") }).get();
+							DiscordCoreInternal::parseObject(workload.payLoad, &channel.data);
+							OnChannelUpdateData channelUpdateData;
+							channelUpdateData.channel = channel;
+							this->eventManager->onChannelUpdateEvent(channelUpdateData);
+							break;
+						}
+						case DiscordCoreInternal::WebSocketEventType::CHANNEL_DELETE:
+						{
+							ChannelData channelData;
+							DiscordCoreInternal::parseObject(workload.payLoad, &channelData);
+							Channel channel(channelData, this);
+							OnChannelDeletionData channelDeleteData;
+							channelDeleteData.channel = channel;
+							this->eventManager->onChannelDeletionEvent(channelDeleteData);
+							break;
+						}
+						case DiscordCoreInternal::WebSocketEventType::GUILD_CREATE:
+						{
 							GuildData guildData;
 							DiscordCoreInternal::parseObject(workload.payLoad, &guildData);
-							DiscordCoreAPI::OnGuildCreationData guildCreationData = createGuild(guildData).get();
+							Guild guild = createGuild(guildData).get();
+							DiscordCoreAPI::OnGuildCreationData guildCreationData;
+							guildCreationData.guild = guild;
 							this->eventManager->onGuildCreationEvent(guildCreationData);
+							break;
 						}
-						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE) {
+						case DiscordCoreInternal::WebSocketEventType::GUILD_UPDATE:
+						{
+							Guild guild = this->guilds->getGuildAsync({ .guildId = workload.payLoad.at("id") }).get();
+							DiscordCoreInternal::parseObject(workload.payLoad, &guild.data);
+							DiscordCoreAPI::OnGuildUpdateData guildUpdateData;
+							guildUpdateData.guild = guild;
+							this->eventManager->onGuildUpdateEvent(guildUpdateData);
+							break;
+						}
+						case DiscordCoreInternal::WebSocketEventType::GUILD_DELETE:
+						{
+							GuildData guildData;
+							DiscordCoreInternal::parseObject(workload.payLoad, &guildData);
+							Guild guild = createGuild(guildData).get();
+							DiscordCoreAPI::OnGuildDeletionData guildDeletionData;
+							guildDeletionData.guild = guild;
+							this->eventManager->onGuildDeletionEvent(guildDeletionData);
+							break;
+						}
+						case DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE:
+						{
 							MessageData messageData;
 							DiscordCoreInternal::parseObject(workload.payLoad, &messageData);
 							InputEventData eventData;
@@ -239,14 +296,18 @@ namespace DiscordCoreAPI {
 							OnInputEventCreateData eventCreationData;
 							eventCreationData.eventData = eventData;
 							this->eventManager->onInputEventCreationEvent(eventCreationData);
+							break;
 						}
-						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::REACTION_ADD) {
+						case DiscordCoreInternal::WebSocketEventType::REACTION_ADD:
+						{
 							ReactionData reactionData;
 							DiscordCoreInternal::parseObject(workload.payLoad, &reactionData);
 							OnReactionAddData reactionAddData = createReaction(reactionData).get();
 							this->eventManager->onReactionAddEvent(reactionAddData);
+							break;
 						}
-						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::INTERACTION_CREATE) {
+						case DiscordCoreInternal::WebSocketEventType::INTERACTION_CREATE:
+						{
 							InteractionData interactionData;
 							CommandData commandData;
 							DiscordCoreInternal::parseObject(workload.payLoad, &interactionData);
@@ -269,14 +330,22 @@ namespace DiscordCoreAPI {
 								eventCreationData.eventData = eventData;
 								this->eventManager->onInputEventCreationEvent(eventCreationData);
 							}
+							break;
 						}
-						if (workload.eventType == DiscordCoreInternal::WebSocketEventType::GUILD_MEMBER_ADD) {
+						case DiscordCoreInternal::WebSocketEventType::GUILD_MEMBER_ADD:
+						{
 							GuildMemberData guildMemberData;
 							DiscordCoreInternal::parseObject(workload.payLoad, &guildMemberData);
 							GuildMember guildMember(guildMemberData, this);
 							OnGuildMemberAddData guildMemberAddData;
 							guildMemberAddData.guildMember = guildMember;
 							this->eventManager->onGuildMemberAddEvent(guildMemberAddData);
+							break;
+						}
+						default:
+						{
+							break;
+						}
 						}
 					}
 				}
