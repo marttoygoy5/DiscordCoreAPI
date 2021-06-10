@@ -1,5 +1,5 @@
-# Login/Instantiation of the library.
-## Make sure you've got the dependencies installed, then create a pointer to the DiscordCoreAPI::DiscordCoreClient class, as follows!
+# Login/Instantiation of the library
+## Make sure you've got the dependencies installed, then create a pointer to the DiscordCoreAPI::DiscordCoreClient class, as follows! (Note: Don't forget to execute the agent::wait() function on it, after executing the finalSetup() function.)
 ```C++
 // Main.cpp - Main source file.
 // https://github.com/RealTimeChris
