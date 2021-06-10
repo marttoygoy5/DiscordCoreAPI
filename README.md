@@ -10,6 +10,7 @@ As a result of using the asynchronous agents library, this library has the abili
 ### A Unified "Input Event" System
 ```C++
 // Both user-messages and user-interactions are accepted via the "Input-Event" event.
+// They can all be responded to using the InputEventHandler::respondToEvent() function, or the InputEventHandler::deleteInputEventRespnose() function.
 if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 	InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
 	responseData.channelId = args->eventData.messageData.channelId;
