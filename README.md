@@ -1,5 +1,42 @@
 # DiscordCoreAPI
-My bot library/framework, written in C++ using WinRT, and a few other useful libraries!
+My bot library, written in C++ using WinRT, and a few other useful libraries!
+
+## Features
+### Concurrent Discord API Access
+As a result of using the asynchronous agents library, this library has the ability to make fully asynchronous requests to the Discord API.
+
+### Slash Commands and Buttons
+![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
+### A Unified "Input Event" System
+Both user-messages and user-interactions are accepted via the "Input-Event" event.
+They can all be responded to using the InputEventHandler::respondToEvent() function.
+```C++
+if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+	InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+	responseData.channelId = args->eventData.messageData.channelId;
+	responseData.messageId = args->eventData.messageData.id;
+	responseData.embeds.push_back(messageEmbed);
+	event01 = InputEventHandler::respondToEvent(responseData).get();
+	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+}
+else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+	InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+	responseData.applicationId = args->eventData.interactionData.applicationId;
+	responseData.embeds.push_back(messageEmbed);
+	responseData.interactionId = args->eventData.interactionData.id;
+	responseData.interactionToken = args->eventData.interactionData.token;
+	responseData.type = InteractionCallbackType::ChannelMessage;
+	event01 = InputEventHandler::respondToEvent(responseData).get();
+	event01.interactionData.applicationId = args->eventData.interactionData.applicationId;
+	event01.interactionData.token = args->eventData.interactionData.token;
+	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+}
+```
+
+## Examples/Documentation
+### [Login](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Examples/Login.md)
+### [Adding a Command](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Examples/Adding%20a%20Command.md)
+
 ## Roadmap
 Alright, so I'm currently working on getting this thing to be "useful", and here are some of the things I plan on implementing:
 
