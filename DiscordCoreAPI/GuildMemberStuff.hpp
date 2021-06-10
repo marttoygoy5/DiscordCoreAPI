@@ -142,12 +142,12 @@ namespace DiscordCoreAPI {
 							send(GuildMemberManagerAgent::outGuildMemberBuffer, GuildMember);
 						}
 					}
+					asend(GuildMemberManagerAgent::cache, cacheTemp);
 				}
 				if (try_receive(GuildMemberManagerAgent::requestFetchGuildMemberBuffer, dataPackage01)) {
 					map<string, GuildMember> cacheTemp;
 					if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage01.guildId + dataPackage01.guildMemberId)) {
-							dataPackage01.oldGuildMemberData = cacheTemp.at(dataPackage01.guildId + dataPackage01.guildMemberId).data;
 							cacheTemp.erase(dataPackage01.guildId + dataPackage01.guildMemberId);
 						}
 					}
@@ -161,6 +161,9 @@ namespace DiscordCoreAPI {
 				while (GuildMemberManagerAgent::guildMembersToInsert.try_pop(guildMember)) {
 					map<string, GuildMember> cacheTemp;
 					try_receive(GuildMemberManagerAgent::cache, cacheTemp);
+					if (cacheTemp.contains(guildMember.data.guildId + guildMember.data.user.id)) {
+						cacheTemp.erase(guildMember.data.guildId + guildMember.data.user.id);
+					}
 					cacheTemp.insert(make_pair(guildMember.data.guildId + guildMember.data.user.id, guildMember));
 					asend(GuildMemberManagerAgent::cache, cacheTemp);
 				}
@@ -230,6 +233,20 @@ namespace DiscordCoreAPI {
 			while (guildMemberManagerAgent.getError(error)) {
 				cout << "GuildMemberManager::getGuildMemberAsync() Error: " << error.what() << endl << endl;
 			}
+			co_return;
+		}
+
+		task<void> removeGuildMemberAsync(string guildId, string guildMemberId) {
+			apartment_context mainThread;
+			co_await resume_background();
+			map<string, GuildMember> cache;
+			try_receive(GuildMemberManagerAgent::cache, cache);
+			if (cache.contains(guildId + guildMemberId)) {
+				GuildMember guildMember = cache.at(guildId + guildMemberId);
+				cache.erase(guildId + guildMemberId);
+			}
+			asend(GuildMemberManagerAgent::cache, cache);
+			co_await mainThread;
 			co_return;
 		}
 

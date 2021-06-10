@@ -40,14 +40,14 @@ namespace DiscordCoreAPI {
 				BaseFunction* functionPointer{ nullptr };
 				bool messageOption = false;
 				if (commandData.eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-					functionPointer = getCommand(convertToLowerCase(commandData.eventData.messageData.content));
+					functionPointer = getCommand(convertToLowerCase(commandData.eventData.messageData.content), commandData);
 					messageOption = true;
 				}
 				else if (commandData.eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 					DiscordCoreInternal::CommandData commandDataNew;
-
 					DiscordCoreInternal::parseObject(commandData.eventData.interactionData.dataRaw, &commandDataNew);
-					functionPointer = getCommand(convertToLowerCase(commandDataNew.commandName));
+					string newCommandName = commandData.eventData.discordCoreClient->discordUser->data.prefix + commandDataNew.commandName;
+					functionPointer = getCommand(convertToLowerCase(newCommandName), commandData);
 					messageOption = false;
 				}
 
@@ -80,9 +80,10 @@ namespace DiscordCoreAPI {
 
 	protected:
 
-		static BaseFunction* getCommand(string messageContents) {
+		static BaseFunction* getCommand(string messageContents, CommandData commandData) {
 			try {
 				for (auto const& [key, value] : DiscordCoreAPI::CommandController::commands) {
+					if (messageContents[0] == commandData.eventData.discordCoreClient->discordUser->data.prefix[0])
 					if (messageContents.find(key) != string::npos) {
 						return value;
 					}

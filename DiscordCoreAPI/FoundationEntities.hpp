@@ -696,7 +696,8 @@ namespace  DiscordCoreInternal {
         PATCH_FOLLOW_UP_MESSAGE = 36,
         POST_DEFERRED_INTERACTION_RESPONSE = 37,
         GET_MESSAGES = 38,
-        DELETE_MESSAGES_BULK = 39
+        DELETE_MESSAGES_BULK = 39,
+        GET_AUDIT_LOG = 40
     };
 
     struct GetApplicationData {
@@ -848,14 +849,12 @@ namespace  DiscordCoreInternal {
     struct GetGuildData {
         ThreadContext threadContext;
         HttpAgentResources agentResources;
-        GuildData oldGuildData;
         string guildId;
     };
 
     struct FetchGuildData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
-        GuildData oldGuildData;
         string guildId;
     };
 
@@ -1011,7 +1010,6 @@ namespace  DiscordCoreInternal {
     struct GetGuildMemberData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
-        GuildMemberData oldGuildMemberData;
         string guildId;
         string guildMemberId;
     };
@@ -1368,6 +1366,53 @@ namespace  DiscordCoreInternal {
         int flags;
     };
 
+    enum class AuditLogEvent {
+        GUILD_UPDATE = 1,
+        CHANNEL_CREATE = 10,
+        CHANNEL_UPDATE = 11,
+        CHANNEL_DELETE = 12,
+        CHANNEL_OVERWRITE_CREATE = 13,
+        CHANNEL_OVERWRITE_UPDATE = 14,
+        CHANNEL_OVERWRITE_DELETE = 15,
+        MEMBER_KICK = 20,
+        MEMBER_PRUNE = 21,
+        MEMBER_BAN_ADD = 22,
+        MEMBER_BAN_REMOVE = 23,
+        MEMBER_UPDATE = 24,
+        MEMBER_ROLE_UPDATE = 25,
+        MEMBER_MOVE = 26,
+        MEMBER_DISCONNECT = 27,
+        BOT_ADD = 28,
+        ROLE_CREATE = 30,
+        ROLE_UPDATE = 31,
+        ROLE_DELETE = 32,
+        INVITE_CREATE = 40,
+        INVITE_UPDATE = 41,
+        INVITE_DELETE = 42,
+        WEBHOOK_CREATE = 50,
+        WEBHOOK_UPDATE = 51,
+        WEBHOOK_DELETE = 52,
+        EMOJI_CREATE = 60,
+        EMOJI_UPDATE = 61,
+        EMOJI_DELETE = 62,
+        MESSAGE_DELETE = 72,
+        MESSAGE_BULK_DELETE = 73,
+        MESSAGE_PIN = 74,
+        MESSAGE_UNPIN = 75,
+        INTEGRATION_CREATE = 80,
+        INTEGRATION_UPDATE = 81,
+        INTEGRATION_DELETE = 82
+    };
+
+    struct GetAuditLogData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string userId;
+        string guildId;
+        AuditLogEvent actionType;
+        unsigned int limit;
+    };
+
 }
 
 namespace DiscordCoreAPI {
@@ -1435,6 +1480,12 @@ namespace DiscordCoreAPI {
     };
 
     struct RoleTagsData {
+        operator DiscordCoreInternal::RoleTagsData() {
+            DiscordCoreInternal::RoleTagsData newData;
+            newData.botId = this->botId;
+            newData.integrationId = this->integrationId;
+            return newData;
+        }
         string integrationId;
         string botId;
     };
@@ -1450,8 +1501,7 @@ namespace DiscordCoreAPI {
             newData.name = this->name;
             newData.permissions = this->permissions;
             newData.position = this->position;
-            newData.tags.botId = this->tags.botId;
-            newData.tags.integrationId = this->tags.integrationId;
+            newData.tags = this->tags;
             return newData;
         }
         RoleTagsData tags;
@@ -1579,11 +1629,11 @@ namespace DiscordCoreAPI {
 
     struct EmbedFooterData {
         operator DiscordCoreInternal::EmbedFooterData() {
-            DiscordCoreInternal::EmbedFooterData footerData;
-            footerData.iconUrl = this->iconUrl;
-            footerData.proxyIconUrl = this->proxyIconUrl;
-            footerData.text = this->text;
-            return footerData;
+            DiscordCoreInternal::EmbedFooterData newData;
+            newData.iconUrl = this->iconUrl;
+            newData.proxyIconUrl = this->proxyIconUrl;
+            newData.text = this->text;
+            return newData;
         };
         string iconUrl;
         string text;
@@ -1592,12 +1642,12 @@ namespace DiscordCoreAPI {
 
     struct EmbedImageData {
         operator DiscordCoreInternal::EmbedImageData() {
-            DiscordCoreInternal::EmbedImageData imageData;
-            imageData.height = this->height;
-            imageData.proxyUrl = this->proxyUrl;
-            imageData.url = this->url;
-            imageData.width = this->width;
-            return imageData;
+            DiscordCoreInternal::EmbedImageData newData;
+            newData.height = this->height;
+            newData.proxyUrl = this->proxyUrl;
+            newData.url = this->url;
+            newData.width = this->width;
+            return newData;
         }
         string url;
         string proxyUrl;
@@ -1637,10 +1687,10 @@ namespace DiscordCoreAPI {
 
     struct EmbedProviderData {
         operator DiscordCoreInternal::EmbedProviderData() {
-            DiscordCoreInternal::EmbedProviderData providerData;
-            providerData.name = this->name;
-            providerData.url = this->url;
-            return providerData;
+            DiscordCoreInternal::EmbedProviderData newData;
+            newData.name = this->name;
+            newData.url = this->url;
+            return newData;
         }
         string name;
         string url;
@@ -1648,12 +1698,12 @@ namespace DiscordCoreAPI {
 
     struct EmbedAuthorData {
         operator DiscordCoreInternal::EmbedAuthorData() {
-            DiscordCoreInternal::EmbedAuthorData authorData;
-            authorData.iconUrl = this->iconUrl;
-            authorData.name = this->name;
-            authorData.proxyIconUrl = this->proxyIconUrl;
-            authorData.url = this->url;
-            return authorData;
+            DiscordCoreInternal::EmbedAuthorData newData;
+            newData.iconUrl = this->iconUrl;
+            newData.name = this->name;
+            newData.proxyIconUrl = this->proxyIconUrl;
+            newData.url = this->url;
+            return newData;
         };
         string name;
         string url;
@@ -1663,11 +1713,11 @@ namespace DiscordCoreAPI {
 
     struct EmbedFieldData {
         operator DiscordCoreInternal::EmbedFieldData() {
-            DiscordCoreInternal::EmbedFieldData embedFieldData;
-            embedFieldData.Inline = this->Inline;
-            embedFieldData.name = this->name;
-            embedFieldData.value = this->value;
-            return embedFieldData;
+            DiscordCoreInternal::EmbedFieldData newData;
+            newData.Inline = this->Inline;
+            newData.name = this->name;
+            newData.value = this->value;
+            return newData;
         }
         string name;
         string value;
@@ -1676,23 +1726,23 @@ namespace DiscordCoreAPI {
 
     struct EmbedData {
         operator DiscordCoreInternal::EmbedData() {
-            DiscordCoreInternal::EmbedData embedData;
-            embedData.author = this->author;
-            embedData.description = this->description;
+            DiscordCoreInternal::EmbedData newData;
+            newData.author = this->author;
+            newData.description = this->description;
             for (auto value : this->fields) {
-                embedData.fields.push_back(value);
+                newData.fields.push_back(value);
             }
-            embedData.footer = this->footer;
-            embedData.hexColorValue = this->hexColorValue;
-            embedData.image = this->image;
-            embedData.provider = this->provider;
-            embedData.thumbnail = this->thumbnail;
-            embedData.timestamp = this->timestamp;
-            embedData.title = this->title;
-            embedData.type = this->type;
-            embedData.url = this->url;
-            embedData.video = this->video;
-            return embedData;
+            newData.footer = this->footer;
+            newData.hexColorValue = this->hexColorValue;
+            newData.image = this->image;
+            newData.provider = this->provider;
+            newData.thumbnail = this->thumbnail;
+            newData.timestamp = this->timestamp;
+            newData.title = this->title;
+            newData.type = this->type;
+            newData.url = this->url;
+            newData.video = this->video;
+            return newData;
         };
         EmbedData setTitle(string titleNew) {
             this->title = titleNew;
@@ -1882,7 +1932,7 @@ namespace DiscordCoreAPI {
         }
         InputEventResponseData() = delete;
         InputEventResponseType inputEventResponseType;
-        InteractionCallbackType type;
+        InteractionCallbackType type = InteractionCallbackType::Pong;
         string channelId;
         string messageId;
         string interactionToken;
@@ -1891,7 +1941,7 @@ namespace DiscordCoreAPI {
         string finalContent;
         string requesterId;
         MessageReferenceData messageReference;
-        bool tts;
+        bool tts = false;
         string content;
         vector<EmbedData> embeds;
         AllowedMentionsData allowedMentions;
@@ -2073,12 +2123,7 @@ namespace DiscordCoreAPI {
     vector<DiscordCoreInternal::ApplicationCommandInteractionDataOption> convertAppCommandInteractionDataOptions(vector<ApplicationCommandInteractionDataOption> originalOptions) {
         vector<DiscordCoreInternal::ApplicationCommandInteractionDataOption> newVector;
         for (auto value : originalOptions) {
-            DiscordCoreInternal::ApplicationCommandInteractionDataOption newItem;
-            newItem.name = value.name;
-            newItem.type = (DiscordCoreInternal::ApplicationCommandOptionType)value.type;
-            newItem.valueBool = value.valueBool;
-            newItem.valueInt = value.valueInt;
-            newItem.valueString = value.valueString;
+            DiscordCoreInternal::ApplicationCommandInteractionDataOption newItem = value;
             newItem.options = convertAppCommandInteractionDataOptions(value.options);
             newVector.push_back(newItem);
         }
@@ -2358,6 +2403,21 @@ namespace DiscordCoreAPI {
         vector<MessageStickerData> stickers;
         MessageInteractionData interaction;
         vector<ActionRowData> components;
+    };
+
+    struct InviteData {
+        string channelId;
+        string code;
+        string createdAt;
+        string guildId;
+        UserData inviter;
+        unsigned int maxAge;
+        unsigned int maxUses;
+        unsigned int targetType;
+        UserData targetUser;
+        ApplicationData targetApplication;
+        bool temporary;
+        unsigned int uses;
     };
 
     struct MessageData : MessageDataOld {
@@ -2696,6 +2756,130 @@ namespace DiscordCoreAPI {
                 return this->messageData.guildId;
             }
         }
+    };
+
+    struct WebhookData {
+        string id;
+        unsigned int type;
+        string guildId;
+        string channelId;
+        UserData user;
+        string name;
+        string avatar;
+        string token;
+        string applicationId;
+        GuildData sourceGuild;
+        ChannelData sourceChannel;
+        string url;
+    };
+
+    struct AccountData {
+        string id;
+        string name;
+    };
+
+    struct IntegrationData {
+        string id;
+        string name;
+        string type;
+        bool enabled;
+        bool syncing;
+        string roleId;
+        bool enableEmoticons;
+        unsigned int expireBehavior;
+        unsigned int expireGracePeriod;
+        UserData user;
+        AccountData account;
+        string syncedAt;
+        unsigned int subscriberCount;
+        bool revoked;
+        ApplicationData application;
+    };
+
+    enum class AuditLogEvent {
+        GUILD_UPDATE = 1,
+        CHANNEL_CREATE = 10,
+        CHANNEL_UPDATE = 11,
+        CHANNEL_DELETE = 12,
+        CHANNEL_OVERWRITE_CREATE = 13,
+        CHANNEL_OVERWRITE_UPDATE = 14,
+        CHANNEL_OVERWRITE_DELETE = 15,
+        MEMBER_KICK = 20,
+        MEMBER_PRUNE = 21,
+        MEMBER_BAN_ADD = 22,
+        MEMBER_BAN_REMOVE = 23,
+        MEMBER_UPDATE = 24,
+        MEMBER_ROLE_UPDATE = 25,
+        MEMBER_MOVE = 26,
+        MEMBER_DISCONNECT = 27,
+        BOT_ADD = 28,
+        ROLE_CREATE = 30,
+        ROLE_UPDATE = 31,
+        ROLE_DELETE = 32,
+        INVITE_CREATE = 40,
+        INVITE_UPDATE = 41,
+        INVITE_DELETE = 42,
+        WEBHOOK_CREATE = 50,
+        WEBHOOK_UPDATE = 51,
+        WEBHOOK_DELETE = 52,
+        EMOJI_CREATE = 60,
+        EMOJI_UPDATE = 61,
+        EMOJI_DELETE = 62,
+        MESSAGE_DELETE = 72,
+        MESSAGE_BULK_DELETE = 73,
+        MESSAGE_PIN = 74,
+        MESSAGE_UNPIN = 75,
+        INTEGRATION_CREATE = 80,
+        INTEGRATION_UPDATE = 81,
+        INTEGRATION_DELETE = 82
+    };
+
+    struct AuditLogEntryInfoData {
+        string deleteMemberDays;
+        string membersRemoved;
+        string channelId;
+        string messageId;
+        string count;
+        string id;
+        string type;
+        string roleName;
+    };
+
+    struct AuditLogChangeData {
+        string newValueString = "";
+        string oldValueString = "";
+        string key;
+    };
+
+    struct AuditLogEntryData {
+        string targetId;
+        vector<AuditLogChangeData> changes;
+        string userId;
+        string id;
+        AuditLogEvent actionType;
+        AuditLogEntryInfoData options;
+        string reason;
+    };
+
+    struct AuditLogData {
+        auto getAuditLogData(string userIdOfChanger, AuditLogEvent auditLogType) {
+            for (auto value : this->auditLogEntries) {
+                if (value.id == userIdOfChanger && value.actionType == auditLogType) {
+                    return value;
+                }
+            }
+        }
+        auto getAuditLogData(AuditLogEvent auditLogType, string userIdOfTarget) {
+            for (auto value : this->auditLogEntries) {
+                if (value.targetId == userIdOfTarget && value.actionType == auditLogType) {
+                    return value;
+                }
+            }
+        }
+        vector<WebhookData> webhooks;
+        vector<UserData> users;
+        vector<AuditLogEntryData> auditLogEntries;
+        vector< IntegrationData> integrations;
     };
 
 };

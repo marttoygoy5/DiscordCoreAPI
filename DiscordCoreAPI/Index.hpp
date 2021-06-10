@@ -13,59 +13,103 @@
 
 namespace DiscordCoreAPI {
 
-    void onChannelCreation(DiscordCoreAPI::OnChannelCreationData dataPackage) {
+    void onChannelCreation(OnChannelCreationData dataPackage) {
         dataPackage.channel.discordCoreClient->channels->insertChannelAsync(dataPackage.channel).get();
         return;
     }
 
-    void onChannelUpdate(DiscordCoreAPI::OnChannelUpdateData dataPackage) {
-        dataPackage.channel.discordCoreClient->channels->insertChannelAsync(dataPackage.channel).get();
+    void onChannelUpdate(OnChannelUpdateData dataPackage) {
+        dataPackage.channelNew.discordCoreClient->channels->insertChannelAsync(dataPackage.channelNew).get();
         return;
     }
 
-    void onChannelDeletion(DiscordCoreAPI::OnChannelDeletionData dataPackage) {
+    void onChannelDeletion(OnChannelDeletionData dataPackage) {
         dataPackage.channel.discordCoreClient->channels->removeChannelAsync(dataPackage.channel.data.id).get();
         return;
     }
 
-    void onGuildCreated(DiscordCoreAPI::OnGuildCreationData dataPackage) {
+    void onGuildCreation(OnGuildCreationData dataPackage) {
         dataPackage.guild.discordCoreClient->guilds->insertGuildAsync(dataPackage.guild).get();
         return;
     }
 
-    void onGuildUpdate(DiscordCoreAPI::OnGuildUpdateData dataPackage) {
-        dataPackage.guild.discordCoreClient->guilds->insertGuildAsync(dataPackage.guild).get();
+    void onGuildUpdate(OnGuildUpdateData dataPackage) {
+        dataPackage.guildNew.discordCoreClient->guilds->insertGuildAsync(dataPackage.guildNew).get();
         return;
     }
 
-    void onGuildDeletion(DiscordCoreAPI::OnGuildDeletionData dataPackage) {
+    void onGuildDeletion(OnGuildDeletionData dataPackage) {
         dataPackage.guild.discordCoreClient->guilds->removeGuildAsync(dataPackage.guild.data.id).get();
         return;
     }
 
-    task<void> onInputEventCreated(DiscordCoreAPI::OnInputEventCreateData dataPackage) {
+    void onGuildMemberAdd(OnGuildMemberAddData dataPackage) {
+        dataPackage.guildMember.discordCoreClient->guildMembers->insertGuildMemberAsync(dataPackage.guildMember).get();
+        return;
+    }
+
+    void onGuildMemberRemove(OnGuildMemberRemoveData dataPackage) {
+        dataPackage.user.discordCoreClient->guildMembers->removeGuildMemberAsync(dataPackage.guildId, dataPackage.user.data.id).get();
+        return;
+    }
+
+    void onGuildMemberUpdate(OnGuildMemberUpdateData dataPackage) {
+        dataPackage.guildMemberNew.discordCoreClient->guildMembers->insertGuildMemberAsync(dataPackage.guildMemberNew).get();
+        return;
+    }
+
+    void onRoleCreation(OnRoleCreationData dataPackage) {
+        dataPackage.role.discordCoreClient->roles->insertRoleAsync(dataPackage.role).get();
+        return;
+    }
+
+    void onRoleUpdate(OnRoleUpdateData dataPackage) {
+        dataPackage.roleNew.discordCoreClient->roles->insertRoleAsync(dataPackage.roleNew).get();
+        return;
+    }
+
+    void onRoleDeletion(OnRoleDeletionData dataPackage) {
+        dataPackage.roleOld.discordCoreClient->roles->removeRoleAsync(dataPackage.roleOld.data.id).get();
+        return;
+    }
+
+    void onMessageCreation(OnMessageCreationData dataPackage) {
+        dataPackage.message.discordCoreClient->messages->insertMessageAsync(dataPackage.message).get();
+        return;
+    }
+
+    void onMessageUpdate(OnMessageUpdateData dataPackage) {
+        dataPackage.messageNew.discordCoreClient->messages->insertMessageAsync(dataPackage.messageNew).get();
+        return;
+    }
+
+    void onMessageDeletion(OnMessageDeletionData dataPackage) {
+        dataPackage.discordCoreClient->messages->removeMessageAsync(dataPackage.channelId, dataPackage.messageId).get();
+        return;
+    }
+
+    task<void> onInputEventCreation(OnInputEventCreationData dataPackage) {
         apartment_context mainThread;
         co_await resume_background();
         try {
-            if (dataPackage.eventData.eventType != DiscordCoreAPI::InputEventType::BUTTON_INTERACTION) {
+            if (dataPackage.eventData.eventType != InputEventType::BUTTON_INTERACTION) {
                 DiscordCoreAPI::CommandData commandData(dataPackage.eventData);
                 commandData.eventData = dataPackage.eventData;
                 DiscordCoreAPI::CommandController::checkForAndRunCommands(commandData);
             }
             else {
                 DiscordCoreAPI::ButtonInteractionData dataPackageNew;
-                dataPackageNew.applicationId = dataPackage.eventData.interactionData.applicationId;
+                dataPackageNew.applicationId = dataPackage.eventData.getApplicationId();
                 dataPackageNew.channelId = dataPackage.eventData.getChannelId();
                 dataPackageNew.customId = dataPackage.eventData.interactionData.customId;
                 dataPackageNew.guildId = dataPackage.eventData.getGuildId();
-                dataPackageNew.id = dataPackage.eventData.interactionData.id;
+                dataPackageNew.id = dataPackage.eventData.getInteractionId();
                 dataPackageNew.member = dataPackage.eventData.interactionData.member;
                 dataPackageNew.message = dataPackage.eventData.interactionData.message;
-                dataPackageNew.token = dataPackage.eventData.interactionData.token;
+                dataPackageNew.token = dataPackage.eventData.getInteractionToken();
                 dataPackageNew.type = dataPackage.eventData.interactionData.type;
                 dataPackageNew.user = dataPackage.eventData.interactionData.user;
-                cout << "BUTTON ID: " << dataPackageNew.customId << endl;
-                send(DiscordCoreAPI::Button::buttonInteractionBuffer, dataPackageNew);
+                send(Button::buttonInteractionBuffer, dataPackageNew);
             }
             co_await mainThread;
             co_return;
@@ -76,34 +120,45 @@ namespace DiscordCoreAPI {
         }
     }
 
-    void onReactionAdded(DiscordCoreAPI::OnReactionAddData dataPackage) {
+    void onReactionAdd(OnReactionAddData dataPackage) {
         dataPackage.reaction.discordCoreClient->reactions->insertReactionAsync(dataPackage.reaction).get();
         return;
     }
 
-    void onGuildMemberAdded(DiscordCoreAPI::OnGuildMemberAddData dataPackage) {
-        dataPackage.guildMember.discordCoreClient->guildMembers->insertGuildMemberAsync(dataPackage.guildMember).get();
-        return;
-    }
-
-    shared_ptr<DiscordCoreAPI::DiscordCoreClient> DiscordCoreClient::finalSetup(string botToken) {
-        shared_ptr<DiscordCoreAPI::DiscordCoreClient> pDiscordCoreClient = make_shared<DiscordCoreAPI::DiscordCoreClient>(to_hstring(botToken));
-        pDiscordCoreClient->login();
-        pDiscordCoreClient->eventManager->onChannelCreation(onChannelCreation);
-        pDiscordCoreClient->eventManager->onChannelUpdate(onChannelUpdate);
-        pDiscordCoreClient->eventManager->onChannelDeletion(onChannelDeletion);
-        pDiscordCoreClient->eventManager->onGuildCreation(onGuildCreated);
-        pDiscordCoreClient->eventManager->onGuildUpdate(onGuildUpdate);
-        pDiscordCoreClient->eventManager->onGuildDeletion(onGuildDeletion);
-        pDiscordCoreClient->eventManager->onInputEventCreate(onInputEventCreated);
-        pDiscordCoreClient->eventManager->onReactionAdd(onReactionAdded);
-        pDiscordCoreClient->eventManager->onGuildMemberAdd(onGuildMemberAdded);
-        DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopRole, DiscordCoreAPI::addShopRole.commandName);
-        DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopItem, DiscordCoreAPI::addShopItem.commandName);
-        DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::balance, DiscordCoreAPI::balance.commandName);
-        DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::help, DiscordCoreAPI::help.commandName);
-        DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::shop, DiscordCoreAPI::shop.commandName);        
-        return pDiscordCoreClient;
-	};
+    shared_ptr<DiscordCoreClient> DiscordCoreClient::finalSetup(string botToken) {
+        shared_ptr<DiscordCoreClient> pDiscordCoreClient{ nullptr };
+        try {
+            pDiscordCoreClient = make_shared<DiscordCoreClient>(to_hstring(botToken));
+            pDiscordCoreClient->login();
+            pDiscordCoreClient->eventManager->onChannelCreation(onChannelCreation);
+            pDiscordCoreClient->eventManager->onChannelUpdate(onChannelUpdate);
+            pDiscordCoreClient->eventManager->onChannelDeletion(onChannelDeletion);
+            pDiscordCoreClient->eventManager->onGuildCreation(onGuildCreation);
+            pDiscordCoreClient->eventManager->onGuildUpdate(onGuildUpdate);
+            pDiscordCoreClient->eventManager->onGuildDeletion(onGuildDeletion);
+            pDiscordCoreClient->eventManager->onGuildMemberAdd(onGuildMemberAdd);
+            pDiscordCoreClient->eventManager->onGuildMemberRemove(onGuildMemberRemove);
+            pDiscordCoreClient->eventManager->onGuildMemberUpdate(onGuildMemberUpdate);
+            pDiscordCoreClient->eventManager->onRoleCreation(onRoleCreation);
+            pDiscordCoreClient->eventManager->onRoleUpdate(onRoleUpdate);
+            pDiscordCoreClient->eventManager->onRoleDeletion(onRoleDeletion);
+            pDiscordCoreClient->eventManager->onMessageCreation(onMessageCreation);
+            pDiscordCoreClient->eventManager->onMessageUpdate(onMessageUpdate);
+            pDiscordCoreClient->eventManager->onMessageDeletion(onMessageDeletion);
+            pDiscordCoreClient->eventManager->onInputEventCreation(onInputEventCreation);
+            pDiscordCoreClient->eventManager->onReactionAdd(onReactionAdd);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopRole, DiscordCoreAPI::addShopRole.commandName);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopItem, DiscordCoreAPI::addShopItem.commandName);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::balance, DiscordCoreAPI::balance.commandName);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::help, DiscordCoreAPI::help.commandName);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::shop, DiscordCoreAPI::shop.commandName);
+            return pDiscordCoreClient;
+        }
+        catch (exception& e) {
+            cout << "DiscordCoreAPI::finalSetup Error: " << e.what() << endl;
+            return pDiscordCoreClient;
+        }
+    };
 }
 #endif
+

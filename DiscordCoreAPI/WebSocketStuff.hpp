@@ -20,13 +20,22 @@ namespace DiscordCoreInternal {
 		GUILD_CREATE = 3,
 		GUILD_UPDATE = 4,
 		GUILD_DELETE = 5,
-		GUILD_MEMBER_ADD = 6,
-		ROLE_UPDATE = 7,
-		MESSAGE_CREATE = 8,
-		MESSAGE_DELETE = 9,
-		USER_UPDATE = 10,
-		REACTION_ADD = 11,
-		INTERACTION_CREATE = 12
+		GUILD_BAN_ADD = 6,
+		GUILD_BAN_REMOVE = 7,
+		GUILD_MEMBER_ADD = 8,
+		GUILD_MEMBER_REMOVE = 9,
+		GUILD_MEMBER_UPDATE = 10,
+		ROLE_CREATE = 11,
+		ROLE_UPDATE = 12,
+		ROLE_DELETE = 13,
+		INVITE_CREATE = 14,
+		INVITE_DELETE = 15,
+		MESSAGE_CREATE = 16,
+		MESSAGE_UPDATE = 17,
+		MESSAGE_DELETE = 18,
+		USER_UPDATE = 19,
+		REACTION_ADD = 20,
+		INTERACTION_CREATE = 21
 	};
 
 	struct WebSocketWorkload {
@@ -82,143 +91,120 @@ namespace DiscordCoreInternal {
 			done();
 		}
 
-		fire_and_forget onChannelCreate(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::CHANNEL_CREATE;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onChannelUpdate(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::CHANNEL_UPDATE;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onChannelDelete(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::CHANNEL_DELETE;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onGuildCreate(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::GUILD_CREATE;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onGuildUpdate(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::GUILD_UPDATE;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onGuildDelete(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::GUILD_DELETE;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onMessageCreate(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::MESSAGE_CREATE;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onMessageDelete(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::MESSAGE_DELETE;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onMessageReactionAdd(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::REACTION_ADD;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onGuildMemberAdd(json payload) {
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::GUILD_MEMBER_ADD;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
-		fire_and_forget onInteractionCreate(json payload){
-			WebSocketWorkload workload;
-			workload.payLoad = payload;
-			workload.eventType = WebSocketEventType::INTERACTION_CREATE;
-			send(this->workloadTarget, workload);
-			co_return;
-		}
-
 		void onMessageReceived(json payload) {
 			try {
 
+				WebSocketWorkload workload;
+				workload.payLoad = payload.at("d");
+
 				if (payload.at("t") == "CHANNEL_CREATE") {
-					onChannelCreate(payload.at("d"));
+					workload.eventType = WebSocketEventType::CHANNEL_CREATE;
+					send(this->workloadTarget, workload);
 				}
-				
+
 				if (payload.at("t") == "CHANNEL_UPDATE") {
-					onChannelUpdate(payload.at("d"));
+					workload.eventType = WebSocketEventType::CHANNEL_UPDATE;
+					send(this->workloadTarget, workload);
 				}
 
 				if (payload.at("t") == "CHANNEL_DELETE") {
-					onChannelDelete(payload.at("d"));
+					workload.eventType = WebSocketEventType::CHANNEL_DELETE;
+					send(this->workloadTarget, workload);
 				}
 
 				if (payload.at("t") == "GUILD_CREATE") {
-					onGuildCreate(payload.at("d"));
+					workload.eventType = WebSocketEventType::GUILD_CREATE;
+					send(this->workloadTarget, workload);
 				}
 
 				if (payload.at("t") == "GUILD_UPDATE") {
-					onGuildUpdate(payload.at("d"));
+					workload.eventType = WebSocketEventType::GUILD_UPDATE;
+					send(this->workloadTarget, workload);
 				}
 
 				if (payload.at("t") == "GUILD_DELETE") {
-					onGuildDelete(payload.at("d"));
+					workload.eventType = WebSocketEventType::GUILD_DELETE;
+					send(this->workloadTarget, workload);
 				}
 
-				if (payload.at("t") == "MESSAGE_CREATE") {
-					onMessageCreate(payload.at("d"));
+				if (payload.at("t") == "GUILD_BAN_ADD") {
+					workload.eventType = WebSocketEventType::GUILD_BAN_ADD;
+					send(this->workloadTarget, workload);
 				}
 
-				if (payload.at("t") == "MESSAGE_DELETE") {
-					onMessageDelete(payload.at("d"));
-				}
-
-				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
-					onMessageReactionAdd(payload.at("d"));
+				if (payload.at("t") == "GUILD_BAN_REMOVE") {
+					workload.eventType = WebSocketEventType::GUILD_BAN_REMOVE;
+					send(this->workloadTarget, workload);
 				}
 
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
-					onGuildMemberAdd(payload.at("d"));
+					workload.eventType = WebSocketEventType::GUILD_MEMBER_ADD;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "GUILD_MEMBER_REMOVE") {
+					workload.eventType = WebSocketEventType::GUILD_MEMBER_REMOVE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "GUILD_MEMBER_UPDATE") {
+					workload.eventType = WebSocketEventType::GUILD_MEMBER_UPDATE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "GUILD_ROLE_CREATE") {
+					workload.eventType = WebSocketEventType::ROLE_CREATE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "GUILD_ROLE_UPDATE") {
+					workload.eventType = WebSocketEventType::ROLE_UPDATE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "GUILD_ROLE_DELETE") {
+					workload.eventType = WebSocketEventType::ROLE_DELETE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "INVITE_CREATE") {
+					workload.eventType = WebSocketEventType::INVITE_CREATE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "INVITE_DELETE") {
+					workload.eventType = WebSocketEventType::INVITE_DELETE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "MESSAGE_CREATE") {
+					workload.eventType = WebSocketEventType::MESSAGE_CREATE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "MESSAGE_UPDATE") {
+					workload.eventType = WebSocketEventType::MESSAGE_UPDATE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "MESSAGE_DELETE") {
+					workload.eventType = WebSocketEventType::MESSAGE_DELETE;
+					send(this->workloadTarget, workload);
+				}
+
+				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
+					workload.eventType = WebSocketEventType::REACTION_ADD;
+					send(this->workloadTarget, workload);
 				}
 
 				if (payload.at("t") == "INTERACTION_CREATE") {
-					onInteractionCreate(payload.at("d"));
+					workload.eventType = WebSocketEventType::INTERACTION_CREATE;
+					send(this->workloadTarget, workload);
 				}
 			}
 			catch (winrt::hresult_error const& ex) {
 				wcout << ex.message().c_str() << endl;
+				return;
 
 			}
 		}
@@ -252,18 +238,20 @@ namespace DiscordCoreInternal {
 
 		void terminate() {
 			done();
+			return;
 		}
 
 		~WebSocketConnectionAgent() {
 			this->cleanup();
+			return;
 		}
 
 	protected:
 		ThreadContext threadContext;
 		event_token messageReceivedToken;
 		event_token closedToken;
-		MessageWebSocket webSocket;
-		DataWriter messageWriter;
+		MessageWebSocket webSocket{ nullptr };
+		DataWriter messageWriter{ nullptr };
 		hstring socketPath = L"";
 		hstring botToken = L"";
 		hstring sessionID = L"";
@@ -280,15 +268,20 @@ namespace DiscordCoreInternal {
 		void run() {
 			try {
 				this->connect();
+				return;
 			}
 			catch (const exception& e) {
+				cout << e.what() << endl;
 				concurrency::send(errorBuffer, e);
 				this->connect();
+				return;
 			}
 			catch (hresult& e) {
+				cout << e.value << endl;
 				exception eNew(to_string(e.value).c_str());
 				concurrency::send(errorBuffer, eNew);
 				this->connect();
+				return;
 			}
 			
 		}
@@ -336,6 +329,7 @@ namespace DiscordCoreInternal {
 			}
 			catch (hresult result) {
 				cout << result.value << endl;
+				return;
 			}
 		}
 
@@ -367,10 +361,10 @@ namespace DiscordCoreInternal {
 			}
 			catch (hresult_error const& ex) {
 				wcout << ex.message().c_str() << endl;
-				return;
 			}
 
 			cout << "Send Complete" << endl;
+			return;
 		}
 
 		void OnHeartbeat(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
@@ -391,18 +385,23 @@ namespace DiscordCoreInternal {
 			}
 			catch (hresult_error error) {
 				wcout << error.message().c_str() << endl;
+				return;
 			}
 		}
 
-		void onMessageReceived(MessageWebSocket const&, MessageWebSocketMessageReceivedEventArgs const& args) {
+		void onMessageReceived(MessageWebSocket const& msgWebSocket, MessageWebSocketMessageReceivedEventArgs const& args) {
 			try {
 				DataReader dataReader{ nullptr };
 				hstring message;
-				if (args.GetDataReader() != nullptr) {
-					dataReader = args.GetDataReader();
-					dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
-					message = dataReader.ReadString(dataReader.UnconsumedBufferLength());
-				}
+				if (args.IsMessageComplete()) {
+					if (args.GetDataReader() != nullptr) {
+						dataReader = args.GetDataReader();
+						dataReader.UnicodeEncoding(UnicodeEncoding::Utf8);
+						if (dataReader.UnconsumedBufferLength() > 0) {
+							message = dataReader.ReadString(dataReader.UnconsumedBufferLength());
+						}
+					}
+				}				
 				json payload = payload.parse(message);
 
 				asend(&this->webSocketMessageTarget, payload);
@@ -464,6 +463,7 @@ namespace DiscordCoreInternal {
 			}
 			catch (hresult_error const& ex) {
 				wcout << ex.message().c_str() << endl;
+				return;
 			}
 		};
 	};

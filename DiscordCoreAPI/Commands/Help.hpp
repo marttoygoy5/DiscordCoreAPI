@@ -14,10 +14,6 @@
 
 namespace DiscordCoreAPI {
 
-	struct HelpCommandArguments : BaseFunctionArguments {
-		unsigned int inValue;
-	};
-
 	class Help : public  BaseFunction {
 	public:
 		Help() {
@@ -28,7 +24,17 @@ namespace DiscordCoreAPI {
 		virtual  task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
 
-				args->eventData.discordCoreClient->messages->deleteMessasgeBulkAsync({ .channelId = args->eventData.getChannelId(), .limit = 25, .beforeThisId = args->eventData.getMessageId() }).get();
+				task<AuditLogData> auditLogData = args->eventData.discordCoreClient->guilds->getAuditLogDataAsync({ .actionType = DiscordCoreAPI::AuditLogEvent::ROLE_UPDATE, .guildId = args->eventData.getGuildId(), .limit = 25,   .userId = args->eventData.getAuthorId() });
+
+				for (auto value : auditLogData.get().auditLogEntries) {
+					cout << "ID: " << value.id << endl;
+					cout << "TARGET ID: " << value.targetId << endl;
+					for (auto value2 : value.changes) {
+						cout << value2.newValueString << endl;
+						cout << value2.oldValueString << endl;
+					}
+				}
+				args->eventData.discordCoreClient->messages->deleteMessasgeBulkAsync({ .deletePinned = false,.channelId = args->eventData.getChannelId(),.limit = 25, .beforeThisId = args->eventData.getMessageId() }).get();
 
 				/*
 				vector<Role> guildRoles = args->coreClient->roles->getGuildRolesAsync({ .guildId = args->message.data.guildId }).get();

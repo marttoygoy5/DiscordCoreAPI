@@ -221,6 +221,7 @@ namespace DiscordCoreAPI {
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_DEFERRED_INTERACTION_RESPONSE;
             workload.content = dataPackage.content;
+            cout << "MESSAGE CONTENT: " << workload.content << endl;
             DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
             send(requestAgent.workSubmissionBuffer, workload);
             requestAgent.start();
@@ -290,7 +291,6 @@ namespace DiscordCoreAPI {
             else {
                 cout << "InteractionManagerAgent::deleteObjectDataAsync() Success 02: " << returnData.returnCode << ", " << returnData.returnMessage << endl << endl;
             }
-            cout << returnData.data << endl;
             co_return;
         }
 
@@ -644,7 +644,6 @@ namespace DiscordCoreAPI {
                             }
                         }
                         asend(Button::buttonInteractionBuffer, buttonInteractionData);
-                        cout << "CHANNEL ID:0101" << this->channelId << endl;
                     }
                 }
             }

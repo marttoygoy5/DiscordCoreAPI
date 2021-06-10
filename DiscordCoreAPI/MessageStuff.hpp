@@ -115,6 +115,7 @@ namespace DiscordCoreAPI {
 	};
 
 	struct DeleteMessagesBulkData {
+		bool deletePinned;
 		string channelId;
 		unsigned int limit;
 		string beforeThisId;
@@ -507,6 +508,9 @@ namespace DiscordCoreAPI {
 				while (MessageManagerAgent::messagesToInsert->try_pop(message)) {
 					map<string, Message> cacheTemp;
 					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+						if (cacheTemp.size() >= 1000) {
+							cacheTemp.erase(cacheTemp.end());
+						}
 						if (cacheTemp.contains(message.data.channelId + message.data.id)) {
 							cacheTemp.erase(message.data.channelId + message.data.id);
 						}
@@ -681,13 +685,20 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> deleteMessasgeBulkAsync(DeleteMessagesBulkData dataPackage) {
+			apartment_context mainThread;
+			co_await resume_background();
 			vector<Message> messages = this->fetchMessagesAsync({ .channelId = dataPackage.channelId, .limit = dataPackage.limit, .beforeThisId = dataPackage.beforeThisId, .afterThisId = dataPackage.afterThisId, .aroundThisId = dataPackage.aroundThisId, }).get();
 			vector<string> messageIds;
 			for (auto value : messages) {
-				messageIds.push_back(value.data.id);
+				if (dataPackage.deletePinned) {
+					messageIds.push_back(value.data.id);
+				}
+				else {
+					if (!value.data.pinned) {
+						messageIds.push_back(value.data.id);
+					}
+				}
 			}
-			apartment_context mainThread;
-			co_await resume_background();
 			DiscordCoreInternal::DeleteMessagesBulkData dataPackageNew;
 			dataPackageNew.agentResources = this->agentResources;
 			dataPackageNew.threadContext = this->threads->at(9);
@@ -785,6 +796,19 @@ namespace DiscordCoreAPI {
 			while (messageManagerAgent.getError(error)) {
 				cout << "MessageManager::insertMessageAsync() Error: " << error.what() << endl << endl;
 			}
+			co_return;
+		}
+
+		task<void> removeMessageAsync(string channelId, string messageId) {
+			apartment_context mainThread;
+			co_await resume_background();
+			map<string, Message> cache;;
+			try_receive(MessageManagerAgent::cache, cache);
+			if (cache.contains(channelId + messageId)) {
+				cache.erase(channelId + messageId);
+			}
+			asend(MessageManagerAgent::cache, cache);
+			co_await mainThread;
 			co_return;
 		}
 

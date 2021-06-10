@@ -21,17 +21,18 @@ namespace DiscordCoreAPI {
 
 	class Role {
 	public:
-		DiscordCoreInternal::RoleData data;
+		RoleData data;
 		DiscordCoreClient* discordCoreClient{ nullptr };
 
 		Role() {};
 
 	protected:
+		friend class DiscordCoreClient;
 		friend class RoleManager;
 		friend class RoleManagerAgent;
 		friend class Guild;
 
-		Role(DiscordCoreInternal::RoleData roleData,  DiscordCoreClient* discordCoreClientNew) {
+		Role(RoleData roleData,  DiscordCoreClient* discordCoreClientNew) {
 			this->data = roleData;
 			this->discordCoreClient = discordCoreClientNew;
 		}
@@ -199,7 +200,7 @@ namespace DiscordCoreAPI {
 				cacheTemp.insert(make_pair(newRole.data.id, newRole));
 			}
 			asend(RoleManagerAgent::cache, cacheTemp);
-			DiscordCoreInternal::RoleData roleData;
+			RoleData roleData;
 			if (cacheTemp.contains(dataPackage.roleId)) {
 				roleData = cacheTemp.at(dataPackage.roleId).data;
 				cacheTemp.erase(dataPackage.roleId);
@@ -376,7 +377,7 @@ namespace DiscordCoreAPI {
 					send(RoleManagerAgent::outRoleBuffer, role);
 					asend(cache, cacheTemp);
 				}
-				DiscordCoreInternal::RoleData dataPackage08;
+				RoleData dataPackage08;
 				Role roleNew(dataPackage08, this->discordCoreClient);
 				while (RoleManagerAgent::rolesToInsert->try_pop(roleNew)) {
 					map<string, Role> cacheTemp;
@@ -419,7 +420,7 @@ namespace DiscordCoreAPI {
 			while (requestAgent.getError(error)) {
 				cout << "RoleManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
-			DiscordCoreInternal::RoleData roleData;
+			RoleData roleData;
 			Role newRole(roleData, this->discordCoreClient);
 			try_receive(RoleManagerAgent::outRoleBuffer, newRole);
 			co_await mainThread;
@@ -446,7 +447,7 @@ namespace DiscordCoreAPI {
 			while (requestAgent.getError(error)) {
 				cout << "RoleManager::getRoleAsync() Error: " << error.what() << endl << endl;
 			}
-			DiscordCoreInternal::RoleData roleData;
+			RoleData roleData;
 			Role newRole(roleData, this->discordCoreClient);
 			try_receive(RoleManagerAgent::outRoleBuffer, newRole);
 			co_await mainThread;
@@ -475,7 +476,7 @@ namespace DiscordCoreAPI {
 			while (requestAgent.getError(error)) {
 				cout << "RoleManager::updateRoleAsync() Error: " << error.what() << endl << endl;
 			}
-			DiscordCoreInternal::RoleData roleData;
+			RoleData roleData;
 			Role newRole(roleData, this->discordCoreClient);
 			try_receive(RoleManagerAgent::outRoleBuffer, newRole);
 			co_await mainThread;
@@ -544,7 +545,7 @@ namespace DiscordCoreAPI {
 			while (requestAgent.getError(error)) {
 				cout << "RoleManager::createRoleAsync() Error: " << error.what() << endl << endl;
 			}
-			DiscordCoreInternal::RoleData roleData;
+			RoleData roleData;
 			Role newRole(roleData, this->discordCoreClient);
 			try_receive(RoleManagerAgent::outRoleBuffer, newRole);
 			co_await mainThread;
@@ -598,6 +599,20 @@ namespace DiscordCoreAPI {
 			while (roleManagerAgent.getError(error)) {
 				cout << "RoleManager::inserRoleAsync() Error: " << error.what() << endl << endl;
 			}
+			co_return;
+		}
+
+		task<void> removeRoleAsync(string roleId) {
+			apartment_context mainThread;
+			co_await resume_background();
+			map<string, Role> cache;
+			try_receive(RoleManagerAgent::cache, cache);
+			if (cache.contains(roleId)) {
+				Role role = cache.at(roleId);
+				cache.erase(roleId);
+			}
+			asend(RoleManagerAgent::cache, cache);
+			co_await mainThread;
 			co_return;
 		}
 

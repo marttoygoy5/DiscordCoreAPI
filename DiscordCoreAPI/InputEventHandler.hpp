@@ -26,6 +26,8 @@ namespace DiscordCoreAPI {
 		}
 
 		static task<InputEventData> respondToEvent(InputEventResponseData dataPackage) {
+			apartment_context mainThread;
+			co_await resume_background();
 			InputEventData dataPackageNewer;
 			if (dataPackage.inputEventResponseType == InputEventResponseType::INTERACTION_FOLLOW_UP_MESSAGE) {
 				CreateFollowUpMessageData dataPackageNew;
@@ -178,6 +180,7 @@ namespace DiscordCoreAPI {
 			dataPackageNewer.requesterId = dataPackage.requesterId;
 			dataPackageNewer.discordCoreClient = InputEventHandler::discordCoreClient;
 			}
+			co_await mainThread;
 			co_return dataPackageNewer;
 		}
 
