@@ -64,7 +64,7 @@ namespace DiscordCoreAPI {
 
 int main() {
     winrt::init_apartment();
-    string botToken = "ODQ3NzAzNTg3MzExNzE0MzM1.YLB7fA.266Cn0jiZGbti81E_j3DJ9u6aMs";
+    string botToken = "BOT_TOKEN_HERE";
     shared_ptr<DiscordCoreAPI::DiscordCoreClient> pDiscordCoreClient = DiscordCoreAPI::DiscordCoreClient::finalSetup(botToken);
     DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::test, DiscordCoreAPI::test.commandName);
     agent::wait((agent*)pDiscordCoreClient.get());
