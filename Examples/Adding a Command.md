@@ -107,3 +107,4 @@ namespace DiscordCoreAPI {
         string userName = "";
     }; 
 ```
+#### 8. Accessing command arguments is done by accessing the argumentsArray member of the BaseFunctionArguments structure that is passed through to the command, as can be seen in the first example block of code here.
