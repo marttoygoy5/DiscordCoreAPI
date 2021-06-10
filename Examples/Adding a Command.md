@@ -5,7 +5,8 @@
 #### 4. Add a virtual task<void> execute function, with the argument of type DiscordCoreAPI::BaseFunctionArguments*.
 #### 5. CONTINUED FURTHER DOWN.
 
-```C++// Test.hpp - Header for the "test" command.
+```C++
+// Test.hpp - Header for the "test" command.
 // https://github.com/RealTimeChris
 
 #pragma once
