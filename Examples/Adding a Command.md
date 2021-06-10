@@ -56,6 +56,7 @@ namespace DiscordCoreAPI {
 ```
 #### 6. Add the command to the library's command list by using the DiscordCoreAPI::CommandController::addCommand() function.
 
+```C++
 // Main.cpp - Main source file.
 // https://github.com/RealTimeChris
 
@@ -74,3 +75,4 @@ int main() {
     }
     return 1;
 }
+```
