@@ -9,25 +9,25 @@ My bot library/framework, written in C++ using WinRT, and a few other useful lib
 ```C++
 // Both user-messages and user-interactions are accepted via the "Input-Event" event.
 if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-						responseData.channelId = args->eventData.messageData.channelId;
-						responseData.messageId = args->eventData.messageData.id;
-						responseData.embeds.push_back(messageEmbed);
-						event01 = InputEventHandler::respondToEvent(responseData).get();
-						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
-					}
-					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-						responseData.applicationId = args->eventData.interactionData.applicationId;
-						responseData.embeds.push_back(messageEmbed);
-						responseData.interactionId = args->eventData.interactionData.id;
-						responseData.interactionToken = args->eventData.interactionData.token;
-						responseData.type = InteractionCallbackType::ChannelMessage;
-						event01 = InputEventHandler::respondToEvent(responseData).get();
-						event01.interactionData.applicationId = args->eventData.interactionData.applicationId;
-						event01.interactionData.token = args->eventData.interactionData.token;
-						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
-					}
+	InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+	responseData.channelId = args->eventData.messageData.channelId;
+	responseData.messageId = args->eventData.messageData.id;
+	responseData.embeds.push_back(messageEmbed);
+	event01 = InputEventHandler::respondToEvent(responseData).get();
+	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+}
+else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+	InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+	responseData.applicationId = args->eventData.interactionData.applicationId;
+	responseData.embeds.push_back(messageEmbed);
+	responseData.interactionId = args->eventData.interactionData.id;
+	responseData.interactionToken = args->eventData.interactionData.token;
+	responseData.type = InteractionCallbackType::ChannelMessage;
+	event01 = InputEventHandler::respondToEvent(responseData).get();
+	event01.interactionData.applicationId = args->eventData.interactionData.applicationId;
+	event01.interactionData.token = args->eventData.interactionData.token;
+	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+}
 ```
 
 ## Roadmap
