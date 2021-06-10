@@ -2,7 +2,7 @@
 My bot library/framework, written in C++ using WinRT, and a few other useful libraries!
 
 # Features
--Slash Commands and Buttons
+# Slash Commands and Buttons
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
 
 ## Roadmap
