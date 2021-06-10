@@ -6,6 +6,20 @@ My bot library/framework, written in C++ using WinRT, and a few other useful lib
 As a result of using the asynchronous agents library, this library has the ability to make fully asynchronous requests to the Discord API, as well as fully asynchronous reads/writes to/from the built-in MongoDB database.
 
 ### Slash Commands and Buttons
+With relatively simple interfaces for utilization!
+```C++
+CreateApplicationCommandData createBuyCommandData;
+			createBuyCommandData.defaultPermission = true;
+			createBuyCommandData.description = "Purchase an item from the guildshop.";
+			createBuyCommandData.name = "buy";
+			ApplicationCommandOptionData buyCommandOptionOne;
+			buyCommandOptionOne.name = "objectname";
+			buyCommandOptionOne.required = true;
+			buyCommandOptionOne.type = ApplicationCommandOptionType::STRING;
+			buyCommandOptionOne.description = "The item or role which you would like to purchase.";
+			createBuyCommandData.options.push_back(buyCommandOptionOne);
+			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createBuyCommandData).get();
+```
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
 ### A Unified "Input Event" System
 Both user-messages and user-interactions are accepted via the "Input-Event" event.
