@@ -4,10 +4,6 @@ My bot library/framework, written in C++ using WinRT, and a few other useful lib
 ## Features
 ### Slash Commands and Buttons
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
-```C++
-Button button(event01);
-ButtonInteractionData buttonIntData = button.getOurButtonData(60000).get();
-```
 
 ## Roadmap
 Alright, so I'm currently working on getting this thing to be "useful", and here are some of the things I plan on implementing:
