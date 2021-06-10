@@ -5,6 +5,9 @@ My bot library/framework, written in C++ using WinRT, and a few other useful lib
 ### Slash Commands and Buttons
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
 
+### Concurrent Discord API and MongoDB Access
+As a result of using the asynchronous agents library, this library has the ability to make fully asynchronous requests to the Discord API, as well as fully asynchronous reads/writes to/from the built-in MongoDB database,
+
 ### A Unified "Input Event" System
 ```C++
 // Both user-messages and user-interactions are accepted via the "Input-Event" event.
