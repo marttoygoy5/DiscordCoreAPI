@@ -76,36 +76,6 @@ int main() {
     return 1;
 }
 ```
-#### 7. NOTE: By default, the format for triggering a command is !COMMANDNAME = ARGUMENT1, ARGUMENT2, ARGUMENT3... ARGUMENTN. This prefix can be changed by changing the prefix value in DatabaseStuff.hpp, as follows:
-
-```C++
-// DatabaseStuff.hpp - Database stuff.
-// https://github.com/RealTimeChris
-
-#pragma once
-
-#ifndef _DATABASE_STUFF_
-#define _DATABASE_STUFF_
-
-#include "pch.h"
-#include "GuildStuff.hpp"
-#include "GuildMemberStuff.hpp"
-
-namespace DiscordCoreAPI {
-    
-    class DatabaseManagerAgent;
-
-    struct DiscordUserData {
-        vector<string> botCommanders = { "", "", "" };
-        string currencyName = "MBux";
-        int32_t guildCount = 0;
-        int32_t hoursOfDrugSaleCooldown = 3;
-        int32_t hoursOfDepositCooldown = 24;
-        float hoursOfRobberyCooldown = 0.100f;
-        string prefix = "!"; // HERE IS THE PREFIX VALUE TO CHANGE!
-        string userId = "";
-        string userName = "";
-    }; 
-```
+#### 7. NOTE: By default, the format for triggering a command is !COMMANDNAME = ARGUMENT1, ARGUMENT2, ARGUMENT3... ARGUMENTN. This prefix can be changed by changing the prefix value provided by your database.
 #### 8. Accessing command arguments is done by accessing the argumentsArray member of the BaseFunctionArguments structure that is passed through to the command, as can be seen in the first example block of code here.
 #### 9. Now, when someone enters !commandName or !commandName = ARGUMENT1, ARGUMENT2... ARGUMENTN, this will invoke the execution of this command, and pass in the arguments!
