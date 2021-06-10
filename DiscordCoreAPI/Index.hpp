@@ -161,4 +161,3 @@ namespace DiscordCoreAPI {
     };
 }
 #endif
-

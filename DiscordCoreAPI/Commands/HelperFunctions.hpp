@@ -29,7 +29,7 @@ namespace DiscordCoreAPI {
     bool areWeInADM(InputEventData eventData, Channel channel, DiscordGuild discordGuild) {
         auto currentChannelType = channel.data.type;
 
-        if (currentChannelType == DiscordCoreInternal::ChannelType::DM) {
+        if (currentChannelType == ChannelType::DM) {
             string msgString = "------\n**Sorry, but we can't do that in a direct message!**\n------";
             EmbedData msgEmbed;
             msgEmbed.setAuthor(eventData.messageData.interaction.user.username, eventData.messageData.author.getAvatarURL());
@@ -248,7 +248,7 @@ namespace DiscordCoreAPI {
                 sstream << "MANAGE_WEBHOOKS" << endl;
             }
             if (permissionsInteger & (1 << 30)) {
-                sstream << "MAANGE_EMOJIS" << endl;
+                sstream << "MANAGE_EMOJIS" << endl;
             }
             if (permissionsInteger & (1 << 31)) {
                 sstream << "USE_SLASH_COMMANDS" << endl;
@@ -350,7 +350,7 @@ namespace DiscordCoreAPI {
                 permissionsInt |= stoll(overwriteEveryone.allow);
             }
 
-            map<string, DiscordCoreInternal::OverWriteData> overWrites = channel.data.permissionOverwrites;
+            map<string, OverWriteData> overWrites = channel.data.permissionOverwrites;
             __int64 allow = 0;
             __int64 deny = 0;
             for (auto& role : guildMember.data.roles) {
@@ -644,7 +644,6 @@ namespace DiscordCoreAPI {
                     }
                     doWeQuit = true;
                 }
-
             }
             co_await mainThread;
             co_return;

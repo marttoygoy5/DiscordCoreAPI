@@ -322,9 +322,6 @@ namespace DiscordCoreAPI {
 							DiscordCoreInternal::parseObject(workload.payLoad, &guildMemberOld.data);
 							guildMemberUpdateData.guildMemberNew = guildMemberOld;
 							this->eventManager->onGuildMemberUpdateEvent(guildMemberUpdateData);
-							hresult hresultNew;
-							hresultNew.value = 233;
-							throw hresultNew;
 							break;
 						}
 						case DiscordCoreInternal::WebSocketEventType::ROLE_CREATE:

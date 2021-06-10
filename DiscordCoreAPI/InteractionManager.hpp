@@ -88,6 +88,7 @@ namespace DiscordCoreAPI {
     };
 
     struct ButtonInteractionData {
+        bool isItForHere;
         string token;
         string id;
         string applicationId;
@@ -559,13 +560,31 @@ namespace DiscordCoreAPI {
     public:
 
         static unbounded_buffer<ButtonInteractionData>* buttonInteractionBuffer;
+        unbounded_buffer<ButtonInteractionData>* buttonIncomingInteractionBuffer;
+        string channelId;
+        string messageId;
+        string userId;
+        string buttonId = "";
 
         Button(InputEventData dataPackage) {
             this->startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             this->channelId = dataPackage.getChannelId();
             this->messageId = dataPackage.getMessageId();
             this->userId = dataPackage.requesterId;
+            this->buttonIncomingInteractionBuffer = new unbounded_buffer<ButtonInteractionData>([this](ButtonInteractionData interactionData)->bool{
+                if (this->channelId != interactionData.channelId || this->messageId != interactionData.message.id) {
+                    return false;
+                }
+                else {
+                    return true;
+                }
+                });
+            Button::buttonInteractionBuffer->link_target(this->buttonIncomingInteractionBuffer);
         }
+
+        ~Button() {
+            Button::buttonInteractionBuffer->unlink_target(this->buttonIncomingInteractionBuffer);
+        };
 
         static void initialize(DiscordCoreClient* discordCoreClientNew) {
             Button::buttonInteractionBuffer = new unbounded_buffer<ButtonInteractionData>;
@@ -590,10 +609,6 @@ namespace DiscordCoreAPI {
 
     protected:
         static DiscordCoreClient* discordCoreClient;
-        string channelId;
-        string messageId;
-        string userId;
-        string buttonId = "";
         unsigned long long startTime;
         unsigned int maxTimeInMs;
         bool doWeQuit = false;
@@ -618,32 +633,26 @@ namespace DiscordCoreAPI {
                     doWeQuit = true;
                 }
                 else {
-                    if (try_receive(Button::buttonInteractionBuffer, buttonInteractionData)) {
-                        if (this->channelId == buttonInteractionData.channelId && this->messageId == buttonInteractionData.message.id) {
-                            if (this->userId != buttonInteractionData.user.id && this->userId != buttonInteractionData.member.user.id) {
-
-                                if (buttonInteractionData.applicationId != "") {
-                                    CreateInteractionResponseData createResponseData;
-                                    createResponseData.interactionId = buttonInteractionData.id;
-                                    createResponseData.interactionToken = buttonInteractionData.token;
-                                    createResponseData.type = InteractionCallbackType::ChannelMessageWithSource;
-                                    createResponseData.data.flags = 64;
-                                    EmbedData embedData;
-                                    embedData.setColor("FEFEFE");
-                                    embedData.setTitle("__**Button Issue**__");
-                                    embedData.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
-                                    embedData.setDescription("Sorry, but that button can only be pressed by <@!" + this->userId + ">!");
-                                    createResponseData.data.embeds.push_back(embedData);
-                                    InteractionManager::createInteractionResponseAsync(createResponseData).get();
-                                }
-                            }
-                            else {
-                                this->buttonId = buttonInteractionData.customId;
-                                this->interactionData = buttonInteractionData;
-                                break;
-                            }
+                    if (try_receive(this->buttonIncomingInteractionBuffer, buttonInteractionData)) {
+                        if (buttonInteractionData.user.id != this->userId) {
+                            CreateInteractionResponseData createResponseData;
+                            createResponseData.interactionId = buttonInteractionData.id;
+                            createResponseData.interactionToken = buttonInteractionData.token;
+                            createResponseData.type = InteractionCallbackType::ChannelMessageWithSource;
+                            createResponseData.data.flags = 64;
+                            EmbedData embedData;
+                            embedData.setColor("FEFEFE");
+                            embedData.setTitle("__**Button Issue**__");
+                            embedData.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
+                            embedData.setDescription("Sorry, but that button can only be pressed by <@!" + this->userId + ">!");
+                            createResponseData.data.embeds.push_back(embedData);
+                            InteractionManager::createInteractionResponseAsync(createResponseData).get();
                         }
-                        asend(Button::buttonInteractionBuffer, buttonInteractionData);
+                        else {
+                            this->interactionData = buttonInteractionData;
+                            this->buttonId = buttonInteractionData.customId;
+                            break;
+                        }
                     }
                 }
             }

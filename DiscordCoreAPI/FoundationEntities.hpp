@@ -2593,6 +2593,7 @@ namespace DiscordCoreAPI {
         string afkChannelID;
         string ownerID;
         vector<string> features{};
+        vector<ChannelData> threads;
         string permissions;
         bool owner = false;
         int afkTimeOut = 0;

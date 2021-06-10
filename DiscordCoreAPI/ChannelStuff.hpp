@@ -19,22 +19,23 @@ namespace DiscordCoreAPI {
 
 	class Channel {
 	public:
-		DiscordCoreInternal::ChannelData data;
+		ChannelData data;
 		DiscordCoreClient* discordCoreClient{ nullptr };
 
 		Channel() {}
 
 	protected:
+		friend class DiscordCoreClient;
 		friend class ChannelManagerAgent;
 		friend class ChannelManager;
 		friend class Guild;
 		friend class UserManagerAgent;
 
-		Channel(DiscordCoreInternal::ChannelData dataNew, DiscordCoreClient* discordCoreClientNew) {
+		Channel(ChannelData dataNew, DiscordCoreClient* discordCoreClientNew) {
 			this->initialize(dataNew, discordCoreClientNew).get();
 		}
 
-		task<void> initialize(DiscordCoreInternal::ChannelData dataNew, DiscordCoreClient* discordCoreClientNew) {
+		task<void> initialize(ChannelData dataNew, DiscordCoreClient* discordCoreClientNew) {
 			this->data = dataNew;
 			this->discordCoreClient = discordCoreClientNew;
 			co_return;
@@ -271,7 +272,7 @@ namespace DiscordCoreAPI {
 						asend(cache, cacheTemp);
 					}
 				}
-				DiscordCoreInternal::ChannelData dataPackage06;
+				ChannelData dataPackage06;
 				Channel channelNew(dataPackage06, this->discordCoreClient);
 				while (ChannelManagerAgent::channelsToInsert.try_pop(channelNew)) {
 					map<string, Channel> cacheTemp;
@@ -309,7 +310,7 @@ namespace DiscordCoreAPI {
 			while (requestAgent.getError(error)) {
 				cout << "ChannelManager::fetchAsync() Error: " << error.what() << endl << endl;
 			}
-			DiscordCoreInternal::ChannelData channelData;
+			ChannelData channelData;
 			Channel channel(channelData, this->discordCoreClient);
 			try_receive(ChannelManagerAgent::outChannelBuffer, channel);
 			co_await mainThread;
@@ -331,7 +332,7 @@ namespace DiscordCoreAPI {
 			while (requestAgent.getError(error)) {
 				cout << "ChannelManager::getChannelAsync() Error: " << error.what() << endl << endl;
 			}
-			DiscordCoreInternal::ChannelData channelData;
+			ChannelData channelData;
 			Channel channel(channelData, this->discordCoreClient);
 			try_receive(ChannelManagerAgent::outChannelBuffer, channel);
 			co_await mainThread;
@@ -353,7 +354,7 @@ namespace DiscordCoreAPI {
 			while (requestAgent.getError(error)) {
 				cout << "ChannelManager::getDMChannelAsync() Error: " << error.what() << endl << endl;
 			}
-			DiscordCoreInternal::ChannelData channelData;
+			ChannelData channelData;
 			Channel channel(channelData, this->discordCoreClient);
 			try_receive(ChannelManagerAgent::outChannelBuffer, channel);
 			co_await mainThread;
@@ -413,6 +414,20 @@ namespace DiscordCoreAPI {
 			}
 			co_return;
 		}
+
+		task<void> removeChannelAsync(string channelId) {
+			apartment_context mainThread;
+			co_await resume_background();
+			map<string, Channel> cache;;
+			try_receive(ChannelManagerAgent::cache, cache);
+			if (cache.contains(channelId)) {
+				cache.erase(channelId);
+			}
+			asend(ChannelManagerAgent::cache, cache);
+			co_await mainThread;
+			co_return;
+		}
+
 	protected:
 
 		friend class Guild;

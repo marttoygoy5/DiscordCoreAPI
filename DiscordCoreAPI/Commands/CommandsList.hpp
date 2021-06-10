@@ -15,5 +15,6 @@
 #include "Help.hpp"
 //#include "Blackjack.hpp"
 #include "Shop.hpp"
+#include "Test.hpp"
 
 #endif

@@ -113,16 +113,21 @@ namespace DiscordCoreAPI {
 							InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 						}
 						else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-							InputEventData event;
-							InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+							InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE_DEFERRED);
 							responseData.applicationId = args->eventData.interactionData.applicationId;
 							responseData.embeds.push_back(msgEmbed);
 							responseData.interactionId = args->eventData.interactionData.id;
 							responseData.interactionToken = args->eventData.interactionData.token;
-							responseData.type = InteractionCallbackType::ChannelMessage;
+							responseData.type = InteractionCallbackType::DeferredChannelMessageWithSource;
+							InputEventData event;
 							event = InputEventHandler::respondToEvent(responseData).get();
-							event.interactionData.applicationId = args->eventData.interactionData.applicationId;
-							event.interactionData.token = args->eventData.interactionData.token;
+							InputEventResponseData responseData2(InputEventResponseType::INTERACTION_RESPONSE_EPHEMERAL);
+							responseData2.applicationId = args->eventData.interactionData.applicationId;
+							responseData2.embeds.push_back(msgEmbed);
+							responseData2.interactionId = args->eventData.interactionData.id;
+							responseData2.interactionToken = args->eventData.interactionData.token;
+							responseData2.type = InteractionCallbackType::ChannelMessage;
+							event = InputEventHandler::respondToEvent(responseData2).get();
 							InputEventHandler::deleteInputEventResponse(event, 20000).get();
 						}
 						x -= 1;
@@ -287,6 +292,7 @@ namespace DiscordCoreAPI {
 			}
 			catch (exception& e) {
 				cout << "Shop::execute() Error: " << e.what() << endl << endl;
+				co_return;
 			}
 		}
 	};
