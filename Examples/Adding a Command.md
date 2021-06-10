@@ -28,7 +28,7 @@ namespace DiscordCoreAPI {
 			this->helpDescription = "__**Test:**__ Enter !test or /test to run this command!";
 		}
 	
-		virtual  task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
+		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
 				if (args->argumentsArray.at(0) == "test") {
 					task<AuditLogData> auditLogData = args->eventData.discordCoreClient->guilds->getAuditLogDataAsync({ .actionType = DiscordCoreAPI::AuditLogEvent::ROLE_UPDATE, .guildId = args->eventData.getGuildId(), .limit = 25,   .userId = args->eventData.getAuthorId() });
