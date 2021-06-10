@@ -8,6 +8,7 @@ As a result of using the asynchronous agents library, this library has the abili
 ### Slash Commands and Buttons
 With relatively simple interfaces for utilization!
 ```C++
+// For example - adding a "slash command" to the bot's application.
 CreateApplicationCommandData createBuyCommandData;
 createBuyCommandData.defaultPermission = true;
 createBuyCommandData.description = "Purchase an item from the guildshop.";
