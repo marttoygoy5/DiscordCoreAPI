@@ -54,3 +54,23 @@ namespace DiscordCoreAPI {
 }
 #endif
 ```
+#### 6. Add the command to the library's command list by using the DiscordCoreAPI::CommandController::addCommand() function.
+
+// Main.cpp - Main source file.
+// https://github.com/RealTimeChris
+
+#include "pch.h"
+#include "Index.hpp"
+
+int main() {
+    winrt::init_apartment();
+    string botToken = "ODQ3NzAzNTg3MzExNzE0MzM1.YLB7fA.266Cn0jiZGbti81E_j3DJ9u6aMs";
+    shared_ptr<DiscordCoreAPI::DiscordCoreClient> pDiscordCoreClient = DiscordCoreAPI::DiscordCoreClient::finalSetup(botToken);
+    DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::test, DiscordCoreAPI::test.commandName);
+    agent::wait((agent*)pDiscordCoreClient.get());
+    exception error;
+    while (pDiscordCoreClient.get()->getError(error)) {
+        cout << "DiscordCoreClient() Error: " << error.what() << endl << endl;
+    }
+    return 1;
+}
