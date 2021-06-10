@@ -1,5 +1,10 @@
 # DiscordCoreAPI
 My bot library/framework, written in C++ using WinRT, and a few other useful libraries!
+
+# Features
+-Slash Commands and Buttons
+![]https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
+
 ## Roadmap
 Alright, so I'm currently working on getting this thing to be "useful", and here are some of the things I plan on implementing:
 
