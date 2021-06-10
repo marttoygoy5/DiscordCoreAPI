@@ -7,20 +7,6 @@ As a result of using the asynchronous agents library, this library has the abili
 
 ### Slash Commands and Buttons
 With relatively simple interfaces for utilization!
-```C++
-// For example - adding a "slash command" to the bot's application.
-CreateApplicationCommandData createBuyCommandData;
-createBuyCommandData.defaultPermission = true;
-createBuyCommandData.description = "Purchase an item from the guildshop.";
-createBuyCommandData.name = "buy";
-ApplicationCommandOptionData buyCommandOptionOne;
-buyCommandOptionOne.name = "objectname";
-buyCommandOptionOne.required = true;
-buyCommandOptionOne.type = ApplicationCommandOptionType::STRING;
-buyCommandOptionOne.description = "The item or role which you would like to purchase.";
-createBuyCommandData.options.push_back(buyCommandOptionOne);
-args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createBuyCommandData).get();
-```
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
 ### A Unified "Input Event" System
 Both user-messages and user-interactions are accepted via the "Input-Event" event.
