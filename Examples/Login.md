@@ -13,7 +13,6 @@
 
 int main() {
     winrt::init_apartment();
-    Windows::System::AppDiagnosticInfo appDiagnosticInfo{ nullptr };
     string botToken = "ODQ3NzAzNTg3MzExNzE0MzM1.YLB7fA.OD332Lmt9wRMaTqr8IhezbUc4rM";
     shared_ptr<DiscordCoreAPI::DiscordCoreClient> pDiscordCoreClient = DiscordCoreAPI::DiscordCoreClient::finalSetup(botToken);
     agent::wait((agent*)pDiscordCoreClient.get());
