@@ -3,7 +3,8 @@
 #### 2. Create a new class, within the DiscordCoreAPI namespace, derived from the BaseFunction class.
 #### 3. Set the commandName and helpDescription members of the class.
 #### 4. Add a virtual task<void> execute function, with the argument of type DiscordCoreAPI::BaseFunctionArguments*.
-#### 5. CONTINUED FURTHER DOWN.
+#### 5. Create an instance of this new class within the DiscordCoreAPI namespace.
+#### 6. CONTINUED FURTHER DOWN.
 
 ```C++
 // Test.hpp - Header for the "test" command.
@@ -26,10 +27,9 @@ namespace DiscordCoreAPI {
 			this->commandName = "test";
 			this->helpDescription = "__**Test:**__ Enter !test or /test to run this command!";
 		}
-
+	
 		virtual  task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
-
 				if (args->argumentsArray.at(0) == "test") {
 					task<AuditLogData> auditLogData = args->eventData.discordCoreClient->guilds->getAuditLogDataAsync({ .actionType = DiscordCoreAPI::AuditLogEvent::ROLE_UPDATE, .guildId = args->eventData.getGuildId(), .limit = 25,   .userId = args->eventData.getAuthorId() });
 
@@ -43,13 +43,11 @@ namespace DiscordCoreAPI {
 					}
 					args->eventData.discordCoreClient->messages->deleteMessasgeBulkAsync({ .deletePinned = false,.channelId = args->eventData.getChannelId(),.limit = 25, .beforeThisId = args->eventData.getMessageId() }).get();
 				}
-
 				co_return;
 			}
 			catch (exception error) {
 				cout << "Help::execute() Error: " << error.what() << endl << endl;
 			}
-
 		}
 	};
 	Test test{};
