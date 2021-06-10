@@ -1,5 +1,5 @@
 # DiscordCoreAPI
-My bot library/framework, written in C++ using WinRT, and a few other useful libraries!
+My bot library, written in C++ using WinRT, and a few other useful libraries!
 
 ## Features
 ### Concurrent Discord API Access
