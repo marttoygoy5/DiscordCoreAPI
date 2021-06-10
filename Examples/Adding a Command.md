@@ -76,7 +76,7 @@ int main() {
     return 1;
 }
 ```
-#### 7. NOTE: By default, the format for triggering a command is !COMMANDNAME = ARGUMENT1, ARGUMENT2, ARGUMENT3. This prefix can be changed by changing the prefix value in DatabaseStuff.hpp, as follows:
+#### 7. NOTE: By default, the format for triggering a command is !COMMANDNAME = ARGUMENT1, ARGUMENT2, ARGUMENT3... ARGUMENTN. This prefix can be changed by changing the prefix value in DatabaseStuff.hpp, as follows:
 
 ```C++
 // DatabaseStuff.hpp - Database stuff.
