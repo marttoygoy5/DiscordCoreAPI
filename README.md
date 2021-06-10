@@ -9,7 +9,7 @@ As a result of using the asynchronous agents library, this library has the abili
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
 ### A Unified "Input Event" System
 Both user-messages and user-interactions are accepted via the "Input-Event" event.
-They can all be responded to using the InputEventHandler::respondToEvent() function, or the InputEventHandler::deleteInputEventRespnose() function.
+They can all be responded to using the InputEventHandler::respondToEvent() function, or the InputEventHandler::deleteInputEventResponse() function.
 ```C++
 if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 	InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
