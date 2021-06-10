@@ -108,3 +108,4 @@ namespace DiscordCoreAPI {
     }; 
 ```
 #### 8. Accessing command arguments is done by accessing the argumentsArray member of the BaseFunctionArguments structure that is passed through to the command, as can be seen in the first example block of code here.
+#### 9. Now, when someone enters !commandName or !commandName = ARGUMENT1, ARGUMENT2... ARGUMENTN, this will invoke the execution of this command, and pass in the arguments!
