@@ -1,4 +1,4 @@
-### **Adding a Slash Command:**
+### **Adding/Creating a Slash Command:**
 ---
 - Create a `DiscordCoreAPI::CreateApplicationCommandData` data structure.
 - For each argument, fill out an `ApplicationCommandOptionData` structure, and push it back into the options member of the `CreateApplicationCommandData` structure. (**IMPORTANT #1**: Notes on which kind of types to set can be found [here](https://discord.com/developers/docs/interactions/slash-commands#subcommands-and-subcommand-groups)) (**IMPORTANT #2**: Be sure to set the order of the arguments up to be equivalent to what they are in the normal version of the command, so that they can be parsed properly.)
