@@ -5,6 +5,8 @@ My bot library, written in C++ using WinRT, and a few other useful libraries!
 ### Concurrent Discord API Access
 As a result of using the asynchronous agents library, this library has the ability to make fully asynchronous requests to the Discord API.
 
+## [Manual/Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/User%20Manual.md)
+
 ### Slash Commands and Buttons
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
 ### A Unified "Input Event" System
@@ -32,12 +34,6 @@ else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION)
 	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 }
 ```
-
-## Examples/Documentation
-### [Login](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Examples/Login.md)
-### [Adding a Command](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Examples/Adding%20a%20Command.md)
-### [Adding a Slash Command](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Examples/Adding%20a%20Slash%20Command.md)
-
 ## Roadmap
 Alright, so I'm currently working on getting this thing to be "useful", and here are some of the things I plan on implementing:
 
