@@ -1,3 +1,7 @@
+### **Adding a Slash Command**
+#### 1. Create a "CreateApplicationCommandData" data structure.
+#### 2. For each argument, fill out an ApplicationCommandOptionData structure, and push it back into the options member of the CreateApplicationCommandData structure. (IMPORTANT: Notes on which kind of types to set can be found [here](https://discord.com/developers/docs/interactions/slash-commands#subcommands-and-subcommand-groups).
+
 ```C++
 CreateApplicationCommandData createTestCommandData;
 createTestCommandData.defaultPermission = true;
