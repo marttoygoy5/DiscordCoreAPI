@@ -2,7 +2,7 @@
 #### 1. In a new header for the command (that is stored within the Commands folder) #include the "pch.h","../DiscordCoreClient.hpp", and "Commands.hpp" files.
 #### 2. Create a new class, within the DiscordCoreAPI namespace, derived from the BaseFunction class.
 #### 3. Set the commandName and helpDescription members of the class.
-#### 4. Add a virtual task<"void"> execute function, with the argument of type DiscordCoreAPI::BaseFunctionArguments*.
+#### 4. Add a virtual task<"void"> execute function, with an argument of type DiscordCoreAPI::BaseFunctionArguments*.
 #### 5. Create an instance of this new class within the DiscordCoreAPI namespace.
 #### 6. CONTINUED FURTHER DOWN.
 
