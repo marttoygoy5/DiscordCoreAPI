@@ -463,7 +463,7 @@ namespace DiscordCoreAPI {
             component01.customId = "backwards";
             component01.disabled = false;
             component01.emoji.name = "◀️";
-            component01.label = "Back";
+            component01.label = "Prev Page.";
             component01.style = ButtonStyle::Primary;
             component01.type = ComponentType::Button;
             actionRowData.components.push_back(component01);
@@ -471,11 +471,10 @@ namespace DiscordCoreAPI {
             component02.customId = "forwards";
             component02.disabled = false;
             component02.emoji.name = "▶️";
-            component02.label = "Forward";
-            component02.style = ButtonStyle::Primary;
+            component02.label = "Next Page";
             component02.type = ComponentType::Button;
+            component02.style = ButtonStyle::Primary;
             actionRowData.components.push_back(component02);
-
             ComponentData component03;
             component03.customId = "exit";
             component03.disabled = false;
@@ -485,8 +484,8 @@ namespace DiscordCoreAPI {
             component03.style = ButtonStyle::Primary;
             actionRowData.components.push_back(component03);
             actionRowDataVector.push_back(actionRowData);
-            bool doWeQuit = false;
             InputEventData event01;
+            bool doWeQuit = false;
             InputEventResponseData responseDataRegularMessage(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
             InputEventResponseData responseDataInteraction(InputEventResponseType::INTERACTION_RESPONSE);
             if (originalEvent.eventType == InputEventType::REGULAR_MESSAGE) {
@@ -516,11 +515,11 @@ namespace DiscordCoreAPI {
             }
             while (doWeQuit == false) {
                 Button button(event01);
-                ButtonInteractionData buttonIntData = button.getOurButtonData(60000).get();
+                ButtonInteractionData buttonIntData = button.getOurButtonData(false, 60000).get();
                 if (button.getButtonId() == "forwards" && (newCurrentPageIndex == (messageEmbeds.size() - 1))) {
                     newCurrentPageIndex = 0;
                     EmbedData messageEmbed = messageEmbeds[newCurrentPageIndex];
-                    if (event01.eventType == InputEventType::REGULAR_MESSAGE) {
+                    if (event01.eventType == InputEventType::REGULAR_MESSAGE){
                         responseDataRegularMessage.inputEventResponseType = InputEventResponseType::DEFER_BUTTON_RESPONSE;
                         responseDataRegularMessage.applicationId = buttonIntData.applicationId;
                         responseDataRegularMessage.interactionId = buttonIntData.id;

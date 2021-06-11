@@ -152,6 +152,7 @@ namespace DiscordCoreAPI {
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::balance, DiscordCoreAPI::balance.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::help, DiscordCoreAPI::help.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::shop, DiscordCoreAPI::shop.commandName);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::registerSlashCommands, DiscordCoreAPI::registerSlashCommands.commandName);
             return pDiscordCoreClient;
         }
         catch (exception& e) {

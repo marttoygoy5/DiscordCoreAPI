@@ -600,8 +600,9 @@ namespace DiscordCoreAPI {
             }
         }
 
-        task<ButtonInteractionData> getOurButtonData(unsigned int maxWaitTimeInMsNew) {
+        task<ButtonInteractionData> getOurButtonData(bool getButtonDataForAllNew, unsigned int maxWaitTimeInMsNew) {
             this->maxTimeInMs = maxWaitTimeInMsNew;
+            this->getButtonDataForAll = getButtonDataForAllNew;
             start();
             agent::wait(this);
             co_return this->interactionData;
@@ -611,6 +612,7 @@ namespace DiscordCoreAPI {
         static DiscordCoreClient* discordCoreClient;
         unsigned long long startTime;
         unsigned int maxTimeInMs;
+        bool getButtonDataForAll;
         bool doWeQuit = false;
         ButtonInteractionData interactionData;
 
@@ -633,22 +635,31 @@ namespace DiscordCoreAPI {
                     doWeQuit = true;
                 }
                 else {
-                    if (try_receive(this->buttonIncomingInteractionBuffer, buttonInteractionData)) {
-                        if (buttonInteractionData.user.id != this->userId) {
-                            CreateInteractionResponseData createResponseData;
-                            createResponseData.interactionId = buttonInteractionData.id;
-                            createResponseData.interactionToken = buttonInteractionData.token;
-                            createResponseData.type = InteractionCallbackType::ChannelMessageWithSource;
-                            createResponseData.data.flags = 64;
-                            EmbedData embedData;
-                            embedData.setColor("FEFEFE");
-                            embedData.setTitle("__**Button Issue**__");
-                            embedData.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
-                            embedData.setDescription("Sorry, but that button can only be pressed by <@!" + this->userId + ">!");
-                            createResponseData.data.embeds.push_back(embedData);
-                            InteractionManager::createInteractionResponseAsync(createResponseData).get();
+                    if (this->getButtonDataForAll == false) {
+                        if (try_receive(this->buttonIncomingInteractionBuffer, buttonInteractionData)) {
+                            if (buttonInteractionData.user.id != this->userId) {
+                                CreateInteractionResponseData createResponseData;
+                                createResponseData.interactionId = buttonInteractionData.id;
+                                createResponseData.interactionToken = buttonInteractionData.token;
+                                createResponseData.type = InteractionCallbackType::ChannelMessageWithSource;
+                                createResponseData.data.flags = 64;
+                                EmbedData embedData;
+                                embedData.setColor("FEFEFE");
+                                embedData.setTitle("__**Button Issue**__");
+                                embedData.setTimeStamp(DiscordCoreAPI::getTimeAndDate());
+                                embedData.setDescription("Sorry, but that button can only be pressed by <@!" + this->userId + ">!");
+                                createResponseData.data.embeds.push_back(embedData);
+                                InteractionManager::createInteractionResponseAsync(createResponseData).get();
+                            }
+                            else {
+                                this->interactionData = buttonInteractionData;
+                                this->buttonId = buttonInteractionData.customId;
+                                break;
+                            }
                         }
-                        else {
+                    }
+                    else {
+                        if (try_receive(this->buttonIncomingInteractionBuffer, buttonInteractionData)) {
                             this->interactionData = buttonInteractionData;
                             this->buttonId = buttonInteractionData.customId;
                             break;
@@ -658,7 +669,6 @@ namespace DiscordCoreAPI {
             }
             done();
         }
-
     };
     DiscordCoreClient* Button::discordCoreClient;
     unbounded_buffer<ButtonInteractionData>* Button::buttonInteractionBuffer;

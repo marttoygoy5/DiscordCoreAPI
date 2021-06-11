@@ -16,5 +16,6 @@
 //#include "Blackjack.hpp"
 #include "Shop.hpp"
 #include "Test.hpp"
+#include "RegisterSlashCommands.hpp"
 
 #endif

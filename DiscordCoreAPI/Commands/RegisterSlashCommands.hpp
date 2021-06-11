@@ -169,16 +169,43 @@ namespace DiscordCoreAPI {
 			createBuyCommandData.options.push_back(buyCommandOptionOne);
 			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createBuyCommandData).get();
 			*/
-				
-			Guild guild = args->coreClient->guilds->getGuildAsync({ .guildId = args->message.data.guildId }).get();
+			DiscordCoreAPI::CreateApplicationCommandData createTestCommandData;
+			createTestCommandData.defaultPermission = true;
+			createTestCommandData.description = "A test command.";
+			createTestCommandData.name = "test";
+			DiscordCoreAPI::ApplicationCommandOptionData testCommandOptionOne;
+			testCommandOptionOne.name = "optionone";
+			testCommandOptionOne.required = true;
+			testCommandOptionOne.type = ApplicationCommandOptionType::STRING;
+			testCommandOptionOne.description = "The first argument to be entered.";
+			createTestCommandData.options.push_back(testCommandOptionOne);
+			args->eventData.discordCoreClient->slashCommands->createGlobalApplicationCommandAsync(createTestCommandData).get();
+
+			Guild guild = args->eventData.discordCoreClient->guilds->getGuildAsync({ .guildId = args->eventData.messageData.guildId }).get();
 			DiscordGuild discordGuild(guild.data);
 			EmbedData msgEmbed;
-			msgEmbed.setAuthor(args->message.data.author.username, args->message.data.author.getAvatarURL());
+			msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 			msgEmbed.setColor(discordGuild.data.borderColor);
 			msgEmbed.setDescription("Nicely done, you've registered some commands!");
 			msgEmbed.setTimeStamp(getTimeAndDate());
 			msgEmbed.setTitle("__**Register Slash Commands Complete:**__");
-			Message msg = args->coreClient->messages->replyAsync({ .replyingToMessageData = args->message.data, .embed = msgEmbed }).get();
+			if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+				InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
+				responseData.channelId = args->eventData.messageData.channelId;
+				responseData.messageId = args->eventData.messageData.id;
+				responseData.embeds.push_back(msgEmbed);
+				InputEventData  event01 = InputEventHandler::respondToEvent(responseData).get();
+			}
+			else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+				InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
+				responseData.applicationId = args->eventData.interactionData.applicationId;
+				responseData.embeds.push_back(msgEmbed);
+				responseData.interactionId = args->eventData.interactionData.id;
+				responseData.interactionToken = args->eventData.interactionData.token;
+				responseData.type = InteractionCallbackType::ChannelMessageWithSource;
+				InputEventData event;
+				event = InputEventHandler::respondToEvent(responseData).get();
+			}
 			co_return;
 			}
 			catch (exception& e) {

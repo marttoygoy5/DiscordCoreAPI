@@ -45,7 +45,7 @@ namespace DiscordCoreInternal {
 
 	class WebSocketReceiverAgent : public agent {
 	public:
-		WebSocketReceiverAgent(ISource<json>& pWorkloadSource, ITarget<WebSocketWorkload>& pWorkloadTarget, ThreadContext threadContextNew = {nullptr, nullptr, nullptr})
+		WebSocketReceiverAgent(ISource<json>& pWorkloadSource, ITarget<WebSocketWorkload>& pWorkloadTarget,  ThreadContext threadContextNew = {nullptr, nullptr, nullptr})
 			:workloadSource(pWorkloadSource),
 			workloadTarget(pWorkloadTarget),
 			agent(*threadContextNew.scheduler)
@@ -78,10 +78,8 @@ namespace DiscordCoreInternal {
 		void run() {
 			try {
 				while (doWeQuit == false) {
-					json payload;
-					if (try_receive(this->workloadSource, payload)) {
-						this->onMessageReceived(payload);
-					}
+					json payload = receive(this->workloadSource, INFINITE);
+					this->onMessageReceived(payload);
 				}
 			}
 			catch (const exception& e) {
@@ -89,6 +87,10 @@ namespace DiscordCoreInternal {
 				run();
 			}
 			done();
+		}
+
+		void sendWorkload(WebSocketWorkload workload) {
+			send(this->workloadTarget, workload);
 		}
 
 		void onMessageReceived(json payload) {
@@ -99,107 +101,107 @@ namespace DiscordCoreInternal {
 
 				if (payload.at("t") == "CHANNEL_CREATE") {
 					workload.eventType = WebSocketEventType::CHANNEL_CREATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "CHANNEL_UPDATE") {
 					workload.eventType = WebSocketEventType::CHANNEL_UPDATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "CHANNEL_DELETE") {
 					workload.eventType = WebSocketEventType::CHANNEL_DELETE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_CREATE") {
 					workload.eventType = WebSocketEventType::GUILD_CREATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_UPDATE") {
 					workload.eventType = WebSocketEventType::GUILD_UPDATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_DELETE") {
 					workload.eventType = WebSocketEventType::GUILD_DELETE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_BAN_ADD") {
 					workload.eventType = WebSocketEventType::GUILD_BAN_ADD;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_BAN_REMOVE") {
 					workload.eventType = WebSocketEventType::GUILD_BAN_REMOVE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_MEMBER_ADD") {
 					workload.eventType = WebSocketEventType::GUILD_MEMBER_ADD;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_MEMBER_REMOVE") {
 					workload.eventType = WebSocketEventType::GUILD_MEMBER_REMOVE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_MEMBER_UPDATE") {
 					workload.eventType = WebSocketEventType::GUILD_MEMBER_UPDATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_ROLE_CREATE") {
 					workload.eventType = WebSocketEventType::ROLE_CREATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_ROLE_UPDATE") {
 					workload.eventType = WebSocketEventType::ROLE_UPDATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "GUILD_ROLE_DELETE") {
 					workload.eventType = WebSocketEventType::ROLE_DELETE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "INVITE_CREATE") {
 					workload.eventType = WebSocketEventType::INVITE_CREATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "INVITE_DELETE") {
 					workload.eventType = WebSocketEventType::INVITE_DELETE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "MESSAGE_CREATE") {
 					workload.eventType = WebSocketEventType::MESSAGE_CREATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "MESSAGE_UPDATE") {
 					workload.eventType = WebSocketEventType::MESSAGE_UPDATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "MESSAGE_DELETE") {
 					workload.eventType = WebSocketEventType::MESSAGE_DELETE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
 					workload.eventType = WebSocketEventType::REACTION_ADD;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 
 				if (payload.at("t") == "INTERACTION_CREATE") {
 					workload.eventType = WebSocketEventType::INTERACTION_CREATE;
-					send(this->workloadTarget, workload);
+					sendWorkload(workload);
 				}
 			}
 			catch (winrt::hresult_error const& ex) {
@@ -208,7 +210,6 @@ namespace DiscordCoreInternal {
 
 			}
 		}
-
 	};
 
 	class WebSocketConnectionAgent :public agent {
@@ -458,7 +459,7 @@ namespace DiscordCoreInternal {
 				if (payload.at("op") == 11) {
 					this->didWeReceiveHeartbeatAck = true;
 				}
-				
+
 				cout << "Message received from MessageWebSocket: " << to_string(message) << endl << endl;
 			}
 			catch (hresult_error const& ex) {

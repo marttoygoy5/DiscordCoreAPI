@@ -45,7 +45,7 @@ namespace DiscordCoreAPI {
 					co_return;
 				}
 
-				bool areWeAllowed = checkIfAllowedGamingInChannel(args->eventData,  discordGuild);
+				bool areWeAllowed = checkIfAllowedGamingInChannel(args->eventData, discordGuild);
 
 				if (areWeAllowed == false) {
 					co_return;
@@ -296,16 +296,16 @@ namespace DiscordCoreAPI {
 					event.interactionData.token = args->eventData.interactionData.token;
 				}
 				co_return;
-				}
-					catch (exception& e) {
-					cout << "AddShopItem::execute() Error: " << e.what() << endl << endl;
-				}
-
 			}
-		
-		
+			catch (exception& e) {
+				cout << "AddShopItem::execute() Error: " << e.what() << endl << endl;
+			}
+
+		}
+
+
 	};
 	AddShopItem addShopItem{};
-	
+
 }
 #endif

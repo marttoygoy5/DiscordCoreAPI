@@ -126,7 +126,7 @@ namespace DiscordCoreAPI {
 							responseData2.embeds.push_back(msgEmbed);
 							responseData2.interactionId = args->eventData.interactionData.id;
 							responseData2.interactionToken = args->eventData.interactionData.token;
-							responseData2.type = InteractionCallbackType::ChannelMessage;
+							responseData2.type = InteractionCallbackType::ChannelMessageWithSource;
 							event = InputEventHandler::respondToEvent(responseData2).get();
 							InputEventHandler::deleteInputEventResponse(event, 20000).get();
 						}

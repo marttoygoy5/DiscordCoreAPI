@@ -1214,7 +1214,8 @@ namespace  DiscordCoreInternal {
     };
 
     struct InputEventData {
-        InputEventData(DiscordCoreInternal::MessageData messageData, DiscordCoreInternal::InteractionData interactionData, DiscordCoreInternal::InputEventType eventType) {
+        InputEventData() {}
+        InputEventData(MessageData messageData, InteractionData interactionData, InputEventType eventType) {
             this->messageData = messageData;
             this->interactionData = interactionData;
             this->eventType = eventType;
@@ -1254,6 +1255,30 @@ namespace  DiscordCoreInternal {
         MessageData messageData;
         InputEventType eventType;
         string requesterId;
+        string getApplicationId() {
+            if (this->interactionData.applicationId == "") {
+                return this->messageData.application.id;
+            }
+            else {
+                return this->interactionData.applicationId;
+            }
+        }
+        string getInteractionToken() {
+            if (this->interactionData.token == "") {
+                return this->interactionData.token;
+            }
+            else {
+                return this->interactionData.token;
+            }
+        }
+        string getInteractionId() {
+            if (this->interactionData.id == "") {
+                return this->messageData.interaction.id;
+            }
+            else {
+                return this->interactionData.id;
+            }
+        }
         string getUserName() {
             if (this->messageData.author.username == "") {
                 return this->interactionData.member.user.username;
@@ -1262,9 +1287,9 @@ namespace  DiscordCoreInternal {
                 return this->messageData.author.username;
             }
         }
-        string getAvatar() {
+        string getAvatarURL() {
             if (this->messageData.author.getAvatarURL() == "") {
-                
+
                 return this->interactionData.member.user.getAvatarURL();
             }
             else {
