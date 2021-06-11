@@ -1,5 +1,5 @@
 # DiscordCoreAPI
-A Discord bot library, written in C++ using WinRT, and a few other useful libraries!
+-A Discord bot library, written in C++ using WinRT, and a few other useful libraries!
 
 ## [User Manual/Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/User%20Manual.md)
 
