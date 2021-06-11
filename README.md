@@ -51,7 +51,8 @@ If you have any suggestions, feel free to let me know and I will consider taking
 
 ## Dependencies
 
-[WinRT](https://docs.microsoft.com/en-us/windows/uwp/cpp-and-winrt-apis/intro-to-using-cpp-with-winrt)  
+[WinRT](https://docs.microsoft.com/en-us/windows/uwp/cpp-and-winrt-apis/intro-to-using-cpp-with-winrt)
+(NOTE: I've got the "C++ Language Standard" setting set to "Preview - Features from the Latest C++ Working Draft (/std:c++latest)" in Visual Studio for this library!)
 
 NOTE: I installed these using the [vcpkg](https://github.com/microsoft/vcpkg) installer!
 
