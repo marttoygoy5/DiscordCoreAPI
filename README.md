@@ -1,11 +1,11 @@
 # DiscordCoreAPI
 My bot library, written in C++ using WinRT, and a few other useful libraries!
 
+## [Manual/Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/User%20Manual.md)
+
 ## Features
 ### Concurrent Discord API Access
 As a result of using the asynchronous agents library, this library has the ability to make fully asynchronous requests to the Discord API.
-
-## [Manual/Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/User%20Manual.md)
 
 ### Slash Commands and Buttons
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
