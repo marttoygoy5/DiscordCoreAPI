@@ -1,4 +1,5 @@
-### **Adding a Command**
+### **Adding a Command:**
+---
 - In a new header for the command (that is stored within the Commands folder) #include the `pch.h`,`../DiscordCoreClient.hpp`, and `Commands.hpp` files.
 - Add this header to the `Commands/CommandsList.hpp` header.
 ```cpp
