@@ -1,4 +1,5 @@
 ### **Login/Instantiation of the Library**
+---
 - Install the dependencies, and `#include Index.hpp`.
 - Create a string, with your bot's token.
 - Create a new shared pointer to an object of the `DiscordCoreAPI::DiscordCoreClient` class, by executing the `DiscordCoreClient::finalSetup()` function.
