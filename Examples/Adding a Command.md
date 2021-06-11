@@ -73,7 +73,7 @@ int main() {
     while (pDiscordCoreClient.get()->getError(error)) {
         cout << "DiscordCoreClient() Error: " << error.what() << endl << endl;
     }
-    return 1;
+    return 0;
 }
 ```
 #### 7. NOTE: By default, the format for triggering a command is !COMMANDNAME = ARGUMENT1, ARGUMENT2, ARGUMENT3... ARGUMENTN. This prefix can be changed by changing the prefix value provided by your database.
