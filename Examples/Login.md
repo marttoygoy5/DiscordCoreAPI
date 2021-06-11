@@ -1,4 +1,4 @@
-### **Login/Instantiation of the Library**
+### **Login/Instantiation of the Library:**
 ---
 - Install the dependencies, and `#include Index.hpp`.
 - Create a string, with your bot's token.
