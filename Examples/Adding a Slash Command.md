@@ -4,15 +4,15 @@
 #### 3. Run, from the DiscordCoreClient instance, the "slashCommands::createGlobalApplicationCommandAsync() function. (Note: This is done from within a command called "registerslashcommands", by default.)
 
 ```C++
-CreateApplicationCommandData createTestCommandData;
+DiscordCoreAPI::CreateApplicationCommandData createTestCommandData;
 createTestCommandData.defaultPermission = true;
 createTestCommandData.description = "A test command.";
 createTestCommandData.name = "test";
-ApplicationCommandOptionData testCommandOptionOne;
+DiscordCoreAPI::ApplicationCommandOptionData testCommandOptionOne;
 testCommandOptionOne.name = "optionone";
 testCommandOptionOne.required = true;
 testCommandOptionOne.type = ApplicationCommandOptionType::STRING;
 testCommandOptionOne.description = "The first argument to be entered.";
 createTestCommandData.options.push_back(testCommandOptionOne);
-args->eventData->discordCoreClient->slashCommands->createGlobalApplicationCommandAsync(createTestCommandData).get();
+args->eventData.discordCoreClient->slashCommands->createGlobalApplicationCommandAsync(createTestCommandData).get();
 ```
