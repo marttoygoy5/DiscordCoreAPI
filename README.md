@@ -1,7 +1,7 @@
 # DiscordCoreAPI
 - A Discord bot library, written in C++ using WinRT, and a few other useful libraries!
 
-## [User Manual/Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/User%20Manual.md)
+## [Documentation-Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Documentation-Examples.md)
 
 ## Features
 ### Concurrent Discord API Access
@@ -9,9 +9,9 @@
 
 ### Slash Commands and Buttons
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
-### A Unified "Input Event" System
+### A Unified "Input-Event" System
 - Both user-messages and user-interactions are accepted via the "Input-Event" event.
-- They can all be responded to using the InputEventHandler::respondToEvent() function.
+- They can all be responded to using the `InputEventHandler::respondToEvent()` function.
 ```C++
 if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 	InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
@@ -50,10 +50,10 @@ else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION)
 ## Roadmap
 Alright, so I'm currently working on getting this thing to be "useful", and here are some of the things I plan on implementing:
 
--Finish adding the base Discord-API data structures, along with classes to utilize/access/change their values.
+- Finish adding the base Discord-API data structures, along with classes to utilize/access/change their values.
 
--Add a "music-listening" layer, with a usable "voice channel" that includes audio encoding/decoding.
+- Add a "music-listening" layer, with a usable "voice channel" that includes audio encoding/decoding.
 
--Build a few bots with the library and document examples.
+- Build a few bots with the library and document examples.
 
 If you have any suggestions, feel free to let me know and I will consider taking you up on it! Thanks!
