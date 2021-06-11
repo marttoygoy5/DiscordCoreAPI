@@ -1,10 +1,31 @@
 ### **Adding a Command**
 #### 1. In a new header for the command (that is stored within the Commands folder) #include the "pch.h","../DiscordCoreClient.hpp", and "Commands.hpp" files.
-#### 2. Create a new class, within the DiscordCoreAPI namespace, derived from the BaseFunction class.
-#### 3. Set the commandName and helpDescription members of the class.
-#### 4. Add a virtual task<"void"> execute function, with an argument of type DiscordCoreAPI::BaseFunctionArguments*.
-#### 5. Create an instance of this new class within the DiscordCoreAPI namespace.
-#### 6. CONTINUED FURTHER DOWN.
+#### 2. Add this header to the Commands/CommandsList.hpp header.
+```C++
+// CommandsList.hpp - Commands! All of them!
+// https://github.com/RealTimeChris
+
+#pragma once
+
+#ifndef _COMMANDS_LIST_
+#define _COMMANDS_LIST_
+
+#include "Commands.hpp"
+#include "AddShopRole.hpp"
+#include "AddShopItem.hpp"
+#include "Balance.hpp"
+#include "Help.hpp"
+#include "Shop.hpp"
+#include "Test.hpp"
+#include "RegisterSlashCommands.hpp"
+
+#endif
+```
+#### 3. Create a new class, within the DiscordCoreAPI namespace, derived from the BaseFunction class.
+#### 4. Set the commandName and helpDescription members of the class.
+#### 5. Add a virtual task<"void"> execute function, with an argument of type DiscordCoreAPI::BaseFunctionArguments*.
+#### 6. Create an instance of this new class within the DiscordCoreAPI namespace.
+#### 7. CONTINUED FURTHER DOWN.
 
 ```C++
 // Test.hpp - Header for the "test" command.
@@ -54,7 +75,7 @@ namespace DiscordCoreAPI {
 }
 #endif
 ```
-#### 6. Add the command to the library's command list by using the DiscordCoreAPI::CommandController::addCommand() function.
+#### 7. Add the command to the library's command list by using the DiscordCoreAPI::CommandController::addCommand() function.
 
 ```C++
 // Main.cpp - Main source file.
@@ -76,6 +97,6 @@ int main() {
     return 0;
 }
 ```
-#### 7. NOTE: By default, the format for triggering a command is !COMMANDNAME = ARGUMENT1, ARGUMENT2, ARGUMENT3... ARGUMENTN. This prefix can be changed by changing the prefix value provided by your database.
-#### 8. Accessing command arguments is done by accessing the argumentsArray member of the BaseFunctionArguments structure that is passed through to the command, as can be seen in the first example block of code here.
-#### 9. Now, when someone enters !commandName or !commandName = ARGUMENT1, ARGUMENT2... ARGUMENTN, this will invoke the execution of this command, and pass in the arguments!
+#### 8. NOTE: By default, the format for triggering a command is !COMMANDNAME = ARGUMENT1, ARGUMENT2, ARGUMENT3... ARGUMENTN. This prefix can be changed by changing the prefix value provided by your database.
+#### 9. Accessing command arguments is done by accessing the argumentsArray member of the BaseFunctionArguments structure that is passed through to the command, as can be seen in the first example block of code here.
+#### 10. Now, when someone enters !commandName or !commandName = ARGUMENT1, ARGUMENT2... ARGUMENTN, this will invoke the execution of this command, and pass in the arguments!
