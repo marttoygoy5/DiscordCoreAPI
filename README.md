@@ -23,14 +23,12 @@ messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarU
 if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 	ReplyMessageData responseData(args->eventData);
 	responseData.embed = messageEmbed;
-	event01 = InputEventHandler::respondToEvent(responseData).get();
+	InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
 	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 }
 else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 	CreateInteractionResponseData responseData(args->eventData);
-	event01 = InputEventHandler::respondToEvent(responseData).get();
-	event01.interactionData.applicationId = args->eventData.interactionData.applicationId;
-	event01.interactionData.token = args->eventData.interactionData.token;
+	InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
 	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 }
 ```
