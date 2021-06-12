@@ -14,7 +14,7 @@
 
 int main() {
     winrt::init_apartment();
-    string botToken = "ODQ3NzAzNTg3MzExNzE0MzM1.YLB7fA.4MFZ0981CO0R2RZrfg1vF_MNv1Q";
+    string botToken = "YOUR_BOT_TOKEN_HERE";
     shared_ptr<DiscordCoreAPI::DiscordCoreClient> pDiscordCoreClient = DiscordCoreAPI::DiscordCoreClient::finalSetup(botToken);
     agent::wait((agent*)pDiscordCoreClient.get());
     exception error;
