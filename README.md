@@ -13,21 +13,21 @@
 - Both user-messages and user-interactions are accepted via the "Input-Event" event.
 - They can all be responded to using the `InputEventHandler::respondToEvent()` function.
 ```C++
+string msgString = "Sorry, but we are all out of inventory!";
+EmbedData messageEmbed;
+messageEmbed.setDescription(msgString);
+messageEmbed.setTimeStamp(getTimeAndDate());
+messageEmbed.setTitle("__**Empty Inventory:**__");
+messageEmbed.setColor(discordGuild.data.borderColor);
+messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-	InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-	responseData.channelId = args->eventData.messageData.channelId;
-	responseData.messageId = args->eventData.messageData.id;
-	responseData.embeds.push_back(messageEmbed);
+	ReplyMessageData responseData(args->eventData);
+	responseData.embed = messageEmbed;
 	event01 = InputEventHandler::respondToEvent(responseData).get();
 	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 }
 else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-	InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-	responseData.applicationId = args->eventData.interactionData.applicationId;
-	responseData.embeds.push_back(messageEmbed);
-	responseData.interactionId = args->eventData.interactionData.id;
-	responseData.interactionToken = args->eventData.interactionData.token;
-	responseData.type = InteractionCallbackType::ChannelMessage;
+	CreateInteractionResponseData responseData(args->eventData);
 	event01 = InputEventHandler::respondToEvent(responseData).get();
 	event01.interactionData.applicationId = args->eventData.interactionData.applicationId;
 	event01.interactionData.token = args->eventData.interactionData.token;
