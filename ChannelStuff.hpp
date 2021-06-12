@@ -80,10 +80,10 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::DeleteChannelPermissionOverwritesData>* requestDeleteChannelPermOWsBuffer;
 		static unbounded_buffer<Channel>* outChannelBuffer;
 		static concurrent_queue<Channel> channelsToInsert;
-		static overwrite_buffer<map<string, Channel>> cache;
+		static overwrite_buffer<map<string, Channel>> cache2;
 		unbounded_buffer<exception> errorBuffer;
 
-		DiscordCoreInternal::HttpAgentResources agentResources;
+		DiscordCoreInternal::HttpAgentResources agentResources; 
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 		DiscordCoreClient* discordCoreClient{ nullptr };
 
@@ -221,7 +221,7 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::GetChannelData dataPackage01;
 				if (try_receive(ChannelManagerAgent::requestGetChannelBuffer, dataPackage01)) {
 					map<string, Channel> cacheTemp;
-					if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
+					if (try_receive(ChannelManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage01.channelId)) {
 							Channel channel = cacheTemp.at(dataPackage01.channelId);
 							send(ChannelManagerAgent::outChannelBuffer, channel);
@@ -231,7 +231,7 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::FetchChannelData dataPackage02;
 				if (try_receive(ChannelManagerAgent::requestFetchChannelBuffer, dataPackage02)) {
 					map<string, Channel> cacheTemp;
-					if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
+					if (try_receive(ChannelManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage02.channelId)) {
 							cacheTemp.erase(dataPackage02.channelId);
 						}
@@ -239,7 +239,7 @@ namespace DiscordCoreAPI {
 					Channel channel = getObjectDataAsync(dataPackage02).get();
 					cacheTemp.insert(make_pair(dataPackage02.channelId, channel));
 					send(ChannelManagerAgent::outChannelBuffer, channel);
-					asend(cache, cacheTemp);
+					asend(cache2, cacheTemp);
 				}
 				DiscordCoreInternal::EditChannelPermissionOverwritesData dataPackage03;
 				if (try_receive(ChannelManagerAgent::requestPutChannelPermOWsBuffer, dataPackage03)) {
@@ -253,36 +253,36 @@ namespace DiscordCoreAPI {
 				if (try_receive(ChannelManagerAgent::requestGetDMChannelBuffer, dataPackage05)) {
 					Channel channel = postObjectDataAsync(dataPackage05).get();
 					map<string, Channel> cacheTemp;
-					if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
+					if (try_receive(ChannelManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(channel.data.id)) {
 							cacheTemp.erase(channel.data.id);
 							cacheTemp.insert(make_pair(channel.data.id, channel));
 							send(ChannelManagerAgent::outChannelBuffer, channel);
-							asend(cache, cacheTemp);
+							asend(cache2, cacheTemp);
 						}
 	 					else {
 							cacheTemp.insert(make_pair(channel.data.id, channel));
 							send(ChannelManagerAgent::outChannelBuffer, channel);
-							asend(cache, cacheTemp);
+							asend(cache2, cacheTemp);
 						}
 					}
 					else {
 						cacheTemp.insert(make_pair(channel.data.id, channel));
 						send(ChannelManagerAgent::outChannelBuffer, channel);
-						asend(cache, cacheTemp);
+						asend(cache2, cacheTemp);
 					}
 				}
 				ChannelData dataPackage06;
 				Channel channelNew(dataPackage06, this->discordCoreClient);
 				while (ChannelManagerAgent::channelsToInsert.try_pop(channelNew)) {
 					map<string, Channel> cacheTemp;
-					if (try_receive(ChannelManagerAgent::cache, cacheTemp)) {
+					if (try_receive(ChannelManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(channelNew.data.id)) {
 							cacheTemp.erase(channelNew.data.id);
 						}
 					}
 					cacheTemp.insert(make_pair(channelNew.data.id, channelNew));
-					asend(ChannelManagerAgent::cache, cacheTemp);
+					asend(ChannelManagerAgent::cache2, cacheTemp);
 				}
 			}
 			catch (const exception& e) {
@@ -418,12 +418,12 @@ namespace DiscordCoreAPI {
 		task<void> removeChannelAsync(string channelId) {
 			apartment_context mainThread;
 			co_await resume_background();
-			map<string, Channel> cache;;
-			try_receive(ChannelManagerAgent::cache, cache);
-			if (cache.contains(channelId)) {
-				cache.erase(channelId);
+			map<string, Channel> cache2;;
+			try_receive(ChannelManagerAgent::cache2, cache2);
+			if (cache2.contains(channelId)) {
+				cache2.erase(channelId);
 			}
-			asend(ChannelManagerAgent::cache, cache);
+			asend(ChannelManagerAgent::cache2, cache2);
 			co_await mainThread;
 			co_return;
 		}
@@ -446,8 +446,7 @@ namespace DiscordCoreAPI {
 		}
 
 	};
-
-	overwrite_buffer<map<string, Channel>> ChannelManagerAgent::cache;
+	overwrite_buffer<map<string, Channel>> ChannelManagerAgent::cache2;
 	unbounded_buffer<DiscordCoreInternal::FetchChannelData>* ChannelManagerAgent::requestFetchChannelBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetChannelData>* ChannelManagerAgent::requestGetChannelBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetDMChannelData>* ChannelManagerAgent::requestGetDMChannelBuffer;

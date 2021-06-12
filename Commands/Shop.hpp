@@ -56,24 +56,16 @@ namespace DiscordCoreAPI {
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Permissions Issue:**__");
 					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-						responseData.channelId = args->eventData.messageData.channelId;
-						responseData.messageId = args->eventData.messageData.id;
-						responseData.embeds.push_back(msgEmbed);
+						ReplyMessageData responseData(args->eventData);
+						responseData.embed = msgEmbed;;
 						event01 = InputEventHandler::respondToEvent(responseData).get();
 						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 					}
 					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 						InputEventData event;
-						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-						responseData.applicationId = args->eventData.interactionData.applicationId;
-						responseData.embeds.push_back(msgEmbed);
-						responseData.interactionId = args->eventData.interactionData.id;
-						responseData.interactionToken = args->eventData.interactionData.token;
-						responseData.type = InteractionCallbackType::ChannelMessage;
+						CreateInteractionResponseData responseData(args->eventData);
+						responseData.data.embeds.push_back(msgEmbed);
 						event = InputEventHandler::respondToEvent(responseData).get();
-						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
-						event.interactionData.token = args->eventData.interactionData.token;
 						InputEventHandler::deleteInputEventResponse(event, 20000).get();
 					}
 					co_return;
@@ -105,28 +97,16 @@ namespace DiscordCoreAPI {
 						msgEmbed.setTimeStamp(getTimeAndDate());
 						msgEmbed.setTitle("__**Removed Guild Role:**__");
 						if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-							InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-							responseData.channelId = args->eventData.messageData.channelId;
-							responseData.messageId = args->eventData.messageData.id;
-							responseData.embeds.push_back(msgEmbed);
+							ReplyMessageData responseData(args->eventData);
+							responseData.embed = msgEmbed;
 							event01 = InputEventHandler::respondToEvent(responseData).get();
 							InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 						}
 						else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-							InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE_DEFERRED);
-							responseData.applicationId = args->eventData.interactionData.applicationId;
-							responseData.embeds.push_back(msgEmbed);
-							responseData.interactionId = args->eventData.interactionData.id;
-							responseData.interactionToken = args->eventData.interactionData.token;
-							responseData.type = InteractionCallbackType::DeferredChannelMessageWithSource;
+							CreateDeferredInteractionResponseData responseData(args->eventData);
 							InputEventData event;
 							event = InputEventHandler::respondToEvent(responseData).get();
-							InputEventResponseData responseData2(InputEventResponseType::INTERACTION_RESPONSE_EPHEMERAL);
-							responseData2.applicationId = args->eventData.interactionData.applicationId;
-							responseData2.embeds.push_back(msgEmbed);
-							responseData2.interactionId = args->eventData.interactionData.id;
-							responseData2.interactionToken = args->eventData.interactionData.token;
-							responseData2.type = InteractionCallbackType::ChannelMessageWithSource;
+							CreateEphemeralInteractionResponseData responseData2(args->eventData);
 							event = InputEventHandler::respondToEvent(responseData2).get();
 							InputEventHandler::deleteInputEventResponse(event, 20000).get();
 						}
@@ -245,20 +225,13 @@ namespace DiscordCoreAPI {
 					messageEmbed.setColor(discordGuild.data.borderColor);
 					messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-						responseData.channelId = args->eventData.messageData.channelId;
-						responseData.messageId = args->eventData.messageData.id;
-						responseData.embeds.push_back(messageEmbed);
+						ReplyMessageData responseData(args->eventData);
+						responseData.embed = messageEmbed;
 						event01 = InputEventHandler::respondToEvent(responseData).get();
 						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 					}
 					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-						responseData.applicationId = args->eventData.interactionData.applicationId;
-						responseData.embeds.push_back(messageEmbed);
-						responseData.interactionId = args->eventData.interactionData.id;
-						responseData.interactionToken = args->eventData.interactionData.token;
-						responseData.type = InteractionCallbackType::ChannelMessage;
+						CreateInteractionResponseData responseData(args->eventData);
 						event01 = InputEventHandler::respondToEvent(responseData).get();
 						event01.interactionData.applicationId = args->eventData.interactionData.applicationId;
 						event01.interactionData.token = args->eventData.interactionData.token;
@@ -276,7 +249,7 @@ namespace DiscordCoreAPI {
 					event01.messageData = args->eventData.messageData;
 					event01.discordCoreClient = args->eventData.discordCoreClient;
 					event01.requesterId = args->eventData.requesterId;
-					recurseThroughMessagePages(userID, event01,  currentPageIndex, finalMsgEmbedsArray, true).get();
+					recurseThroughMessagePages(userID, args->eventData, currentPageIndex, finalMsgEmbedsArray, true).get();
 				}
 				else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 					event01.eventType = args->eventData.eventType;
@@ -284,7 +257,7 @@ namespace DiscordCoreAPI {
 					event01.discordCoreClient = args->eventData.discordCoreClient;
 					event01.requesterId = args->eventData.requesterId;
 					event01.messageData = args->eventData.messageData;
-					recurseThroughMessagePages(userID, event01, currentPageIndex, finalMsgEmbedsArray, true).get();
+					recurseThroughMessagePages(userID, args->eventData, currentPageIndex, finalMsgEmbedsArray, true).get();
 				}
 
 				co_await mainThread;

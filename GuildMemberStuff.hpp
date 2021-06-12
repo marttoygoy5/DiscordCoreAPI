@@ -75,7 +75,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::GetGuildMemberRolesData>* requestGetRolesBuffer;
 		static unbounded_buffer<GuildMember>* outGuildMemberBuffer;
 		static concurrent_queue<GuildMember> guildMembersToInsert;
-		static overwrite_buffer<map<string, GuildMember>> cache;
+		static overwrite_buffer<map<string, GuildMember>> cache2;
 		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
@@ -136,17 +136,17 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::GetGuildMemberData dataPackage01;
 				if (try_receive(GuildMemberManagerAgent::requestGetGuildMemberBuffer, dataPackage01)) {
 					map<string, GuildMember> cacheTemp;
-					if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
+					if (try_receive(GuildMemberManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage01.guildId + dataPackage01.guildMemberId)) {
 							GuildMember GuildMember = cacheTemp.at(dataPackage01.guildId + dataPackage01.guildMemberId);
 							send(GuildMemberManagerAgent::outGuildMemberBuffer, GuildMember);
 						}
 					}
-					asend(GuildMemberManagerAgent::cache, cacheTemp);
+					asend(GuildMemberManagerAgent::cache2, cacheTemp);
 				}
 				if (try_receive(GuildMemberManagerAgent::requestFetchGuildMemberBuffer, dataPackage01)) {
 					map<string, GuildMember> cacheTemp;
-					if (try_receive(GuildMemberManagerAgent::cache, cacheTemp)) {
+					if (try_receive(GuildMemberManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage01.guildId + dataPackage01.guildMemberId)) {
 							cacheTemp.erase(dataPackage01.guildId + dataPackage01.guildMemberId);
 						}
@@ -154,18 +154,18 @@ namespace DiscordCoreAPI {
 					GuildMember GuildMember = getObjectDataAsync(dataPackage01).get();
 					cacheTemp.insert(make_pair(dataPackage01.guildId + dataPackage01.guildMemberId, GuildMember));
 					send(GuildMemberManagerAgent::outGuildMemberBuffer, GuildMember);
-					asend(GuildMemberManagerAgent::cache, cacheTemp);
+					asend(GuildMemberManagerAgent::cache2, cacheTemp);
 				}
 				GuildMemberData dataPackage02;
 				GuildMember guildMember(dataPackage02, this->discordCoreClient);
 				while (GuildMemberManagerAgent::guildMembersToInsert.try_pop(guildMember)) {
 					map<string, GuildMember> cacheTemp;
-					try_receive(GuildMemberManagerAgent::cache, cacheTemp);
+					try_receive(GuildMemberManagerAgent::cache2, cacheTemp);
 					if (cacheTemp.contains(guildMember.data.guildId + guildMember.data.user.id)) {
 						cacheTemp.erase(guildMember.data.guildId + guildMember.data.user.id);
 					}
 					cacheTemp.insert(make_pair(guildMember.data.guildId + guildMember.data.user.id, guildMember));
-					asend(GuildMemberManagerAgent::cache, cacheTemp);
+					asend(GuildMemberManagerAgent::cache2, cacheTemp);
 				}
 			}
 			catch (const exception& e) {
@@ -239,13 +239,13 @@ namespace DiscordCoreAPI {
 		task<void> removeGuildMemberAsync(string guildId, string guildMemberId) {
 			apartment_context mainThread;
 			co_await resume_background();
-			map<string, GuildMember> cache;
-			try_receive(GuildMemberManagerAgent::cache, cache);
-			if (cache.contains(guildId + guildMemberId)) {
-				GuildMember guildMember = cache.at(guildId + guildMemberId);
-				cache.erase(guildId + guildMemberId);
+			map<string, GuildMember> cache2;
+			try_receive(GuildMemberManagerAgent::cache2, cache2);
+			if (cache2.contains(guildId + guildMemberId)) {
+				GuildMember guildMember = cache2.at(guildId + guildMemberId);
+				cache2.erase(guildId + guildMemberId);
 			}
-			asend(GuildMemberManagerAgent::cache, cache);
+			asend(GuildMemberManagerAgent::cache2, cache2);
 			co_await mainThread;
 			co_return;
 		}
@@ -269,6 +269,6 @@ namespace DiscordCoreAPI {
 	unbounded_buffer<DiscordCoreInternal::GetGuildMemberRolesData>* GuildMemberManagerAgent::requestGetRolesBuffer;
 	unbounded_buffer<GuildMember>* GuildMemberManagerAgent::outGuildMemberBuffer;
 	concurrent_queue<GuildMember> GuildMemberManagerAgent::guildMembersToInsert;
-	overwrite_buffer<map<string, GuildMember>> GuildMemberManagerAgent::cache;
+	overwrite_buffer<map<string, GuildMember>> GuildMemberManagerAgent::cache2;
 };
 #endif

@@ -78,7 +78,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<User>* outUserBuffer;
 		static unbounded_buffer<Application>* outApplicationBuffer;
 		static concurrent_queue<User> usersToInsert;
-		static overwrite_buffer<map<string, User>> cache;
+		static overwrite_buffer<map<string, User>> cache2;
 		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
@@ -173,7 +173,7 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::GetUserData dataPackage01;
 				if (try_receive(UserManagerAgent::requestGetUserBuffer, dataPackage01)) {
 					map<string, User> cacheTemp;
-					if (try_receive(UserManagerAgent::cache, cacheTemp)) {
+					if (try_receive(UserManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage01.userId)) {
 							User user = cacheTemp.at(dataPackage01.userId);
 							send(UserManagerAgent::outUserBuffer, user);
@@ -183,7 +183,7 @@ namespace DiscordCoreAPI {
 				DiscordCoreInternal::FetchUserData dataPackage02;
 				if (try_receive(UserManagerAgent::requestFetchUserBuffer, dataPackage02)) {
 					map<string, User> cacheTemp;
-					if (try_receive(UserManagerAgent::cache, cacheTemp)) {
+					if (try_receive(UserManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage02.userId)) {
 							cacheTemp.erase(dataPackage02.userId);
 						}
@@ -191,7 +191,7 @@ namespace DiscordCoreAPI {
 					User user = getObjectDataAsync(dataPackage02).get();
 					cacheTemp.insert(make_pair(dataPackage02.userId, user));
 					send(UserManagerAgent::outUserBuffer, user);
-					asend(UserManagerAgent::cache, cacheTemp);
+					asend(UserManagerAgent::cache2, cacheTemp);
 				}
 				DiscordCoreInternal::GetApplicationData dataPackage03;
 				if (try_receive(UserManagerAgent::requestGetApplicationBuffer, dataPackage03)) {
@@ -202,13 +202,13 @@ namespace DiscordCoreAPI {
 				User user(dataPackage04, this->discordCoreClient);
 				while (UserManagerAgent::usersToInsert.try_pop(user)) {
 					map<string, User> cacheTemp;
-					if (try_receive(UserManagerAgent::cache, cacheTemp)) {
+					if (try_receive(UserManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(user.data.id)) {
 							cacheTemp.erase(user.data.id);
 						}
 					}
 					cacheTemp.insert(make_pair(user.data.id, user));
-					asend(UserManagerAgent::cache, cacheTemp);
+					asend(UserManagerAgent::cache2, cacheTemp);
 				}
 			}
 			catch (const exception& e) {
@@ -333,7 +333,7 @@ namespace DiscordCoreAPI {
 		}
 
 	};
-	overwrite_buffer<map<string, User>> UserManagerAgent::cache;
+	overwrite_buffer<map<string, User>> UserManagerAgent::cache2;
 	unbounded_buffer<DiscordCoreInternal::FetchUserData>* UserManagerAgent::requestFetchUserBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetUserData>* UserManagerAgent::requestGetUserBuffer;
 	unbounded_buffer<DiscordCoreInternal::GetApplicationData>* UserManagerAgent::requestGetApplicationBuffer;

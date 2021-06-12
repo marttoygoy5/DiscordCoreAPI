@@ -93,12 +93,12 @@ namespace DiscordCoreAPI {
         co_await resume_background();
         try {
             if (dataPackage.eventData.eventType != InputEventType::BUTTON_INTERACTION) {
-                DiscordCoreAPI::CommandData commandData(dataPackage.eventData);
+                CommandData commandData(dataPackage.eventData);
                 commandData.eventData = dataPackage.eventData;
-                DiscordCoreAPI::CommandController::checkForAndRunCommands(commandData);
+                CommandController::checkForAndRunCommands(commandData);
             }
             else {
-                DiscordCoreAPI::ButtonInteractionData dataPackageNew;
+                ButtonInteractionData dataPackageNew;
                 dataPackageNew.applicationId = dataPackage.eventData.getApplicationId();
                 dataPackageNew.channelId = dataPackage.eventData.getChannelId();
                 dataPackageNew.customId = dataPackage.eventData.interactionData.customId;
@@ -147,12 +147,15 @@ namespace DiscordCoreAPI {
             pDiscordCoreClient->eventManager->onMessageDeletion(onMessageDeletion);
             pDiscordCoreClient->eventManager->onInputEventCreation(onInputEventCreation);
             pDiscordCoreClient->eventManager->onReactionAdd(onReactionAdd);
-            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopRole, DiscordCoreAPI::addShopRole.commandName);
+            /*
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopItem, DiscordCoreAPI::addShopItem.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::balance, DiscordCoreAPI::balance.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::help, DiscordCoreAPI::help.commandName);
-            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::shop, DiscordCoreAPI::shop.commandName);
+            */
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopRole, DiscordCoreAPI::addShopRole.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::registerSlashCommands, DiscordCoreAPI::registerSlashCommands.commandName);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::shop, DiscordCoreAPI::shop.commandName);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::test, DiscordCoreAPI::test.commandName);
             return pDiscordCoreClient;
         }
         catch (exception& e) {

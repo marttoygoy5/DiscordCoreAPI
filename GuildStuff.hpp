@@ -294,27 +294,32 @@ namespace DiscordCoreAPI {
 		}
 
 		task<AuditLogData> getAuditLogDataAsync(GetAuditLogData dataPackage) {
-			apartment_context mainThread;
-			co_await resume_background();
-			DiscordCoreInternal::GetAuditLogData dataPackageNew;
-			dataPackageNew.agentResources = this->agentResources;
-			dataPackageNew.threadContext = this->threads->at(3);
-			dataPackageNew.guildId = dataPackage.guildId;
-			dataPackageNew.actionType = (DiscordCoreInternal::AuditLogEvent)dataPackage.actionType;
-			dataPackageNew.limit = dataPackage.limit;
-			dataPackageNew.userId = dataPackage.userId;
-			GuildManagerAgent requestAgent(this->agentResources, this->threads, this->discordCoreClient, this->discordCoreClientBase, this->threads->at(2).scheduler);
-			send(GuildManagerAgent::requestGetAuditLogBuffer, dataPackageNew);
-			requestAgent.start();
-			agent::wait(&requestAgent);
-			exception error;
-			while (requestAgent.getError(error)) {
-				cout << "GuildManager::getAuditLogDataAsync() Error: " << error.what() << endl << endl;
+			try {
+				apartment_context mainThread;
+				co_await resume_background();
+				DiscordCoreInternal::GetAuditLogData dataPackageNew;
+				dataPackageNew.agentResources = this->agentResources;
+				dataPackageNew.threadContext = this->threads->at(3);
+				dataPackageNew.guildId = dataPackage.guildId;
+				dataPackageNew.actionType = (DiscordCoreInternal::AuditLogEvent)dataPackage.actionType;
+				dataPackageNew.limit = dataPackage.limit;
+				dataPackageNew.userId = dataPackage.userId;
+				GuildManagerAgent requestAgent(this->agentResources, this->threads, this->discordCoreClient, this->discordCoreClientBase, this->threads->at(2).scheduler);
+				send(GuildManagerAgent::requestGetAuditLogBuffer, dataPackageNew);
+				requestAgent.start();
+				agent::wait(&requestAgent);
+				exception error;
+				while (requestAgent.getError(error)) {
+					cout << "GuildManager::getAuditLogDataAsync() Error: " << error.what() << endl << endl;
+				}
+				AuditLogData auditLog;
+				try_receive(GuildManagerAgent::outAuditLogBuffer, auditLog);
+				co_await mainThread;
+				co_return auditLog;
 			}
-			AuditLogData auditLog;
-			try_receive(GuildManagerAgent::outAuditLogBuffer, auditLog);
-			co_await mainThread;
-			co_return auditLog;
+			catch (exception& e) {
+				cout << "GuildManager::getAuditLogDataAsync() Error: " << e.what() << endl << endl;
+			}			
 		}
 
 		task<Guild> getGuildAsync(GetGuildData dataPackage) {

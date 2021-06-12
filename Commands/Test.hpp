@@ -31,24 +31,53 @@ namespace DiscordCoreAPI {
 				msgEmbed.setTimeStamp(getTimeAndDate());
 				msgEmbed.setTitle("__**Welcome:**__");
 				if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-					InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-					responseData.channelId = args->eventData.messageData.channelId;
-					responseData.messageId = args->eventData.messageData.id;
-					responseData.embeds.push_back(msgEmbed);
-					InputEventHandler::respondToEvent(responseData).get();
+					ReplyMessageData responseData01(args->eventData);
+					responseData01.embed = msgEmbed;
+					InputEventData event01 = InputEventHandler::respondToEvent(responseData01).get();
+					cout << event01.getChannelId() << " " << event01.getMessageId() << endl;
+					EditMessageData responseData(event01);
+					msgEmbed.setDescription("NEW DESCRIPTION");
+					responseData.embed = msgEmbed;
+
+					InputEventData event03 = InputEventHandler::respondToEvent(responseData).get();
+					cout << "APP ID: " << event03.getApplicationId() << " INT TOKEN: " << event03.getInteractionToken() << endl;
+					InputEventHandler::deleteInputEventResponse(event03, 5000).get();
 				}
+				else {
+					
+					
+				}
+				GetAuditLogData dataPackage;
+				dataPackage.actionType = DiscordCoreAPI::AuditLogEvent::ROLE_UPDATE;
+				dataPackage.guildId = args->eventData.getGuildId();
+				dataPackage.limit = 25;
+				dataPackage.userId = args->eventData.getAuthorId();
+				AuditLogData auditLogData = args->eventData.discordCoreClient->guilds->getAuditLogDataAsync(dataPackage).get();
 
-				task<AuditLogData> auditLogData = args->eventData.discordCoreClient->guilds->getAuditLogDataAsync({ .actionType = DiscordCoreAPI::AuditLogEvent::ROLE_UPDATE, .guildId = args->eventData.getGuildId(), .limit = 25,   .userId = args->eventData.getAuthorId() });
+				EmbedData embed01;
+				embed01.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
+				embed01.setColor("FEFEFE");
+				embed01.setDescription("TEST DESCRIPTION!");
+				embed01.setTimeStamp(getTimeAndDate());
+				embed01.setFooter("HERE IT IS");
+				//InputEventData newData = InputEventHandler::respondToEvent(dataPackage02).get();
+				//InputEventData newData2 = InputEventHandler::respondToEvent(dataPackage02).get();
+				//newData2.interactionData.token = args->eventData.getInteractionToken();
+				//newData2.interactionData.id = args->eventData.getInteractionId();
+				//InputEventHandler::deleteInputEventResponse(newData2, 5000).get();
 
-				for (auto value : auditLogData.get().auditLogEntries) {
-					cout << "ID: " << value.id << endl;
-					cout << "TARGET ID: " << value.targetId << endl;
+				for (auto value : auditLogData.auditLogEntries) {
 					for (auto value2 : value.changes) {
 						cout << value2.newValueString << endl;
 						cout << value2.oldValueString << endl;
 					}
 				}
-				args->eventData.discordCoreClient->messages->deleteMessasgeBulkAsync({ .deletePinned = false,.channelId = args->eventData.getChannelId(),.limit = 25, .beforeThisId = args->eventData.getMessageId() }).get();
+				DeleteMessagesBulkData dataPackage2;
+				dataPackage2.deletePinned = true;
+				dataPackage2.limit = 25;
+				dataPackage2.beforeThisId = args->eventData.getMessageId();
+				dataPackage2.channelId = args->eventData.getChannelId();
+				args->eventData.discordCoreClient->messages->deleteMessasgeBulkAsync(dataPackage2).get();
 
 				co_return;
 			}

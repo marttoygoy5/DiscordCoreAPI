@@ -522,6 +522,15 @@ namespace  DiscordCoreInternal {
         unsigned int timeDelayInMs;
     };
     
+    struct DeleteFollowUpMessageData {
+        HttpAgentResources agentResources;
+        ThreadContext threadContext;
+        string applicationId;
+        string interactionToken;
+        string messageId;
+        unsigned int timeDelayInMs;
+    };
+
     struct ChannelMentionData {
         string id;
         string guildId;
@@ -697,7 +706,8 @@ namespace  DiscordCoreInternal {
         POST_DEFERRED_INTERACTION_RESPONSE = 37,
         GET_MESSAGES = 38,
         DELETE_MESSAGES_BULK = 39,
-        GET_AUDIT_LOG = 40
+        GET_AUDIT_LOG = 40,
+        DELETE_FOLLOW_UP_MESSAGE = 41
     };
 
     struct GetApplicationData {
@@ -1334,44 +1344,13 @@ namespace  DiscordCoreInternal {
         UNSET = 0,
         REGULAR_MESSAGE_RESPONSE = 1,
         REGULAR_MESSAGE_EDIT = 2,
-        REGULAR_MESSAGE_DELETE = 3,
-        INTERACTION_RESPONSE = 4,
-        INTERACTION_RESPONSE_DEFERRED = 5,
-        INTERACTION_RESPONSE_EPHEMERAL = 6,
-        INTERACTION_RESPONSE_EDIT = 7,
-        INTERACTION_RESPONSE_DELETE = 8,
-        INTERACTION_FOLLOW_UP_MESSAGE = 9,
-        INTERACTION_FOLLOW_UP_MESSAGE_EDIT = 10,
-        INTERACTION_FOLLOW_UP_MESSAGE_DELETE = 11,
-        DEFER_BUTTON_RESPONSE = 12
-    };
-
-    struct InputEventResponseData {
-        InputEventResponseData(InputEventResponseType responseType) {
-            if (responseType == InputEventResponseType::UNSET) {
-                throw exception("You forgot to set the event response type!");
-            }
-            else {
-                this->eventResponseType = responseType;
-            }
-        }
-        InputEventResponseData() = delete;
-        InputEventResponseType eventResponseType;
-        InteractionCallbackType type;
-        string channelId;
-        string messageId;
-        string interactionToken;
-        string applicationId;
-        string interactionId;
-        string finalContent;
-        string requesterId;
-        MessageReferenceData messageReference;
-        bool tts;
-        string content;
-        vector<EmbedData> embeds;
-        AllowedMentionsData allowedMentions;
-        int flags = 0;
-        vector<ActionRowData> components;
+        INTERACTION_RESPONSE = 3,
+        INTERACTION_RESPONSE_DEFERRED = 4,
+        INTERACTION_RESPONSE_EPHEMERAL = 5,
+        INTERACTION_RESPONSE_EDIT = 6,
+        INTERACTION_FOLLOW_UP_MESSAGE = 7,
+        INTERACTION_FOLLOW_UP_MESSAGE_EDIT = 8,
+        DEFER_BUTTON_RESPONSE = 9
     };
 
     struct EditFollowUpMessageData {
@@ -1843,16 +1822,13 @@ namespace DiscordCoreAPI {
         UNSET = 0,
         REGULAR_MESSAGE_RESPONSE = 1,
         REGULAR_MESSAGE_EDIT = 2,
-        REGULAR_MESSAGE_DELETE = 3,
-        INTERACTION_RESPONSE = 4,
-        INTERACTION_RESPONSE_DEFERRED = 5,
-        INTERACTION_RESPONSE_EPHEMERAL = 6,
-        INTERACTION_RESPONSE_EDIT = 7,
-        INTERACTION_RESPONSE_DELETE = 8,
-        INTERACTION_FOLLOW_UP_MESSAGE = 9,
-        INTERACTION_FOLLOW_UP_MESSAGE_EDIT = 10,
-        INTERACTION_FOLLOW_UP_MESSAGE_DELETE = 11,
-        DEFER_BUTTON_RESPONSE = 12
+        INTERACTION_RESPONSE = 3,
+        INTERACTION_RESPONSE_DEFERRED = 4,
+        INTERACTION_RESPONSE_EPHEMERAL = 5,
+        INTERACTION_RESPONSE_EDIT = 6,
+        INTERACTION_FOLLOW_UP_MESSAGE = 7,
+        INTERACTION_FOLLOW_UP_MESSAGE_EDIT = 8,
+        DEFER_BUTTON_RESPONSE = 9
     };
 
     struct AllowedMentionsData {
@@ -1918,62 +1894,6 @@ namespace DiscordCoreAPI {
         bool failIfNotExists;
     };
 
-    struct InputEventResponseData {
-        operator DiscordCoreInternal::InputEventResponseData() {
-            DiscordCoreInternal::InputEventResponseData newData((DiscordCoreInternal::InputEventResponseType)this->inputEventResponseType);
-            newData.allowedMentions = this->allowedMentions;
-            newData.applicationId = this->applicationId;
-            newData.channelId = this->channelId;
-            for (auto value : this->components) {
-                DiscordCoreInternal::ActionRowData actionRow;
-                actionRow = value;
-                newData.components.push_back(actionRow);
-            }
-            newData.content = this->content;
-            for (auto value : this->embeds) {
-                DiscordCoreInternal::EmbedData embedData;
-                embedData = value;
-                newData.embeds.push_back(embedData);
-            }
-            newData.eventResponseType = (DiscordCoreInternal::InputEventResponseType)this->inputEventResponseType;
-            newData.finalContent = this->finalContent;
-            newData.flags = this->flags;
-            newData.interactionId = this->interactionId;
-            newData.interactionToken = this->interactionToken;
-            newData.messageId = this->messageId;
-            newData.messageReference = this->messageReference;
-            newData.requesterId = this->requesterId;
-            newData.tts = this->tts;
-            newData.type = (DiscordCoreInternal::InteractionCallbackType)this->type;
-            return newData;
-        }
-        InputEventResponseData(InputEventResponseType responseType) {
-            if (responseType == InputEventResponseType::UNSET) {
-                throw exception("You forgot to set the event response type!");
-            }
-            else {
-                this->inputEventResponseType = responseType;
-            }
-        }
-        InputEventResponseData() = delete;
-        InputEventResponseType inputEventResponseType;
-        InteractionCallbackType type = InteractionCallbackType::Pong;
-        string channelId;
-        string messageId;
-        string interactionToken;
-        string applicationId;
-        string interactionId;
-        string finalContent;
-        string requesterId;
-        MessageReferenceData messageReference;
-        bool tts = false;
-        string content;
-        vector<EmbedData> embeds;
-        AllowedMentionsData allowedMentions;
-        int flags = 0;
-        vector<ActionRowData> components;
-    };
-
     enum class InteractionType {
         Ping = 1,
         ApplicationCommand = 2,
@@ -2007,6 +1927,21 @@ namespace DiscordCoreAPI {
         GUILD_PUBLIC_THREAD = 11,
         GUILD_PRIVATE_THREAD = 12,
         GUILD_STAGE_VOICE = 13
+    };
+
+    struct ThreadMetadataData {
+        bool archived;
+        string archiverId;
+        int autoArchiveDuration;
+        string archiveTimestamp;
+        bool locked;
+    };
+
+    struct ThreadMember {
+        string id;
+        string userId;
+        string joinTimestamp;
+        int flags;
     };
 
     struct ChannelData {
@@ -2058,6 +1993,10 @@ namespace DiscordCoreAPI {
         string lastPinTimestamp;
         string rtcRegion;
         int videoQualityMode;
+        int messageCount;
+        int memberCount;
+        ThreadMetadataData threadMetadata;
+        ThreadMember member;
     };
 
     struct GuildMemberData {
@@ -2477,6 +2416,15 @@ namespace DiscordCoreAPI {
             newData.channelId = this->channelId;
             newData.customId = this->customId;
             newData.data = this->data;
+            newData.dataRaw = this->dataRaw;
+            newData.guildId = this->guildId;
+            newData.id = this->id;
+            newData.member = this->member;
+            newData.message = this->message;
+            newData.token = this->token;
+            newData.type = (DiscordCoreInternal::InteractionType)this->type;
+            newData.user = this->user;
+            newData.version = this->version;
             return newData;
         }
         string id;
@@ -2704,11 +2652,12 @@ namespace DiscordCoreAPI {
                 this->interactionData.guildId = this->messageData.guildId;
             }
         }
-        DiscordCoreAPI::DiscordCoreClient* discordCoreClient;
+        DiscordCoreAPI::DiscordCoreClient* discordCoreClient{ nullptr };
         InteractionData interactionData;
         MessageData messageData;
         InputEventType eventType;
         string requesterId;
+        InputEventResponseType inputEventResponseType;
         string getApplicationId() {
             if (this->interactionData.applicationId == "") {
                 return this->messageData.application.id;
@@ -2908,6 +2857,14 @@ namespace DiscordCoreAPI {
         vector< IntegrationData> integrations;
     };
 
+    string constructStringContent(DiscordCoreInternal::CommandData commandData) {
+        string finalCommandString;
+        finalCommandString = commandData.commandName + " = ";
+        for (auto& value : commandData.optionsArgs) {
+            finalCommandString += value + ", ";
+        }
+        return finalCommandString;
+    };
 };
 
 #endif

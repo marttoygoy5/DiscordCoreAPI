@@ -24,9 +24,32 @@ namespace DiscordCoreAPI {
 		virtual  task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
 
-				task<AuditLogData> auditLogData = args->eventData.discordCoreClient->guilds->getAuditLogDataAsync({ .actionType = DiscordCoreAPI::AuditLogEvent::ROLE_UPDATE, .guildId = args->eventData.getGuildId(), .limit = 25,   .userId = args->eventData.getAuthorId() });
+				GetAuditLogData dataPackage;
+				dataPackage.actionType = DiscordCoreAPI::AuditLogEvent::ROLE_CREATE;
+				dataPackage.guildId = args->eventData.getGuildId();
+				dataPackage.limit = 25;
+				dataPackage.userId = args->eventData.getAuthorId();
+				AuditLogData auditLogData = args->eventData.discordCoreClient->guilds->getAuditLogDataAsync(dataPackage).get();
+				InputEventResponseData dataPackage02(InputEventResponseType::INTERACTION_RESPONSE_DEFERRED);
+				dataPackage02.applicationId = args->eventData.getApplicationId();
+				dataPackage02.channelId = args->eventData.getChannelId();
+				dataPackage02.interactionToken = args->eventData.getInteractionToken();
+				dataPackage02.interactionId = args->eventData.getInteractionId();
+				dataPackage02.type = InteractionCallbackType::DeferredChannelMessageWithSource;
+				EmbedData embed01;
+				embed01.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
+				embed01.setColor("FEFEFE");
+				embed01.setDescription("TEST DESCRIPTION!");
+				embed01.setTimeStamp(getTimeAndDate());
+				embed01.setFooter("HERE IT IS");
+				dataPackage02.embeds.push_back(embed01);
+				InputEventData newData = InputEventHandler::respondToEvent(dataPackage02).get();
+				dataPackage02.inputEventResponseType = InputEventResponseType::INTERACTION_FOLLOW_UP_MESSAGE;
+				dataPackage02.type = InteractionCallbackType::ChannelMessageWithSource;
+				InputEventData newData2 = InputEventHandler::respondToEvent(dataPackage02).get();
 
-				for (auto value : auditLogData.get().auditLogEntries) {
+				InputEventHandler::deleteInputEventResponse(newData2, 5000).get();
+				for (auto value : auditLogData.auditLogEntries) {
 					cout << "ID: " << value.id << endl;
 					cout << "TARGET ID: " << value.targetId << endl;
 					for (auto value2 : value.changes) {

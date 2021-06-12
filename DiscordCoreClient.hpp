@@ -384,6 +384,7 @@ namespace DiscordCoreAPI {
 						InputEventData eventData;
 						eventData.eventType = InputEventType::REGULAR_MESSAGE;
 						eventData.messageData = messageData;
+						eventData.inputEventResponseType = InputEventResponseType::REGULAR_MESSAGE_RESPONSE;
 						eventData.requesterId = messageData.author.id;
 						eventData.discordCoreClient = this;
 						OnInputEventCreationData eventCreationData;
@@ -430,15 +431,18 @@ namespace DiscordCoreAPI {
 						InputEventData eventData;
 						if (interactionData.type == InteractionType::ApplicationCommand) {
 							eventData.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
+							eventData.inputEventResponseType = InputEventResponseType::UNSET;
 							eventData.interactionData = interactionData;
 							eventData.discordCoreClient = this;
 							eventData.requesterId = interactionData.member.user.id;
 							OnInputEventCreationData eventCreationData;
 							eventCreationData.eventData = eventData;
+							cout << eventCreationData.eventData.getChannelId() << eventCreationData.eventData.getMessageId();
 							this->eventManager->onInputEventCreationEvent(eventCreationData);
 						}
 						else if (interactionData.type == InteractionType::MessageComponent) {
 							eventData.eventType = InputEventType::BUTTON_INTERACTION;
+							eventData.inputEventResponseType = InputEventResponseType::DEFER_BUTTON_RESPONSE;
 							eventData.interactionData = interactionData;
 							eventData.discordCoreClient = this;
 							eventData.requesterId = interactionData.member.user.id;

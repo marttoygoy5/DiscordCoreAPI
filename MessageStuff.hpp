@@ -46,6 +46,11 @@ namespace DiscordCoreAPI {
 	};
 
 	struct EditMessageData {
+		EditMessageData(InputEventData lastEventData) {
+			this->channelId = lastEventData.getChannelId();
+			this->messageId = lastEventData.getMessageId();
+			this->originalMessageData = lastEventData.messageData;
+		}
 		string content = "";
 		EmbedData embed;
 		int flags = 0;
@@ -53,6 +58,12 @@ namespace DiscordCoreAPI {
 		AllowedMentionsData allowedMentions;
 		MessageData originalMessageData;
 		vector<ActionRowData> components;
+	protected:
+		friend class InteractionManagerAgent;
+		friend class InteractionManager;
+		friend class InputEventHandler;
+		friend class MessageManager;
+		friend class MessageManagerAgent;
 		string channelId;
 		string messageId;
 	};
@@ -70,16 +81,26 @@ namespace DiscordCoreAPI {
 	};
 
 	struct ReplyMessageData {
+		ReplyMessageData(InputEventData lastEventData) {
+			this->channelId = lastEventData.getChannelId();
+			this->replyingToMessageData = lastEventData.messageData;
+		}
 		string content = "";
 		bool tts = false;
-		MessageData replyingToMessageData;
 		EmbedData embed;
 		AllowedMentionsData allowedMentions;
 		MessageReferenceData messageReference;
 		int nonce;
-		string channelId;
+
 		vector<ActionRowData> components;
-		bool sendEphemeral;
+	protected:
+		friend class InteractionManagerAgent;
+		friend class InteractionManager;
+		friend class InputEventHandler;
+		friend class MessageManager;
+		friend class MessageManagerAgent;
+		MessageData replyingToMessageData;
+		string channelId;
 	};
 
 	struct SendDMData {
@@ -140,7 +161,7 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<vector<Message>>* outMultMessagesBuffer;
 		static unbounded_buffer<Message>* outMessageBuffer;
 		static concurrent_queue<Message>* messagesToInsert;
-		static overwrite_buffer<map<string, Message>> cache;
+		static overwrite_buffer<map<string, Message>> cache2;
 		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
@@ -414,15 +435,15 @@ namespace DiscordCoreAPI {
 				if (try_receive(MessageManagerAgent::requestPostMessageBuffer, dataPackage01)) {
 					Message message = this->postObjectDataAsync(dataPackage01).get();
 					map<string, Message> cacheTemp;
-					try_receive(MessageManagerAgent::cache, cacheTemp);
+					try_receive(MessageManagerAgent::cache2, cacheTemp);
 					cacheTemp.insert(make_pair(message.data.channelId + message.data.id, message));
 					send(MessageManagerAgent::outMessageBuffer, message);
-					asend(MessageManagerAgent::cache, cacheTemp);
+					asend(MessageManagerAgent::cache2, cacheTemp);
 				};
 				DiscordCoreInternal::GetMessageData dataPackage02;
 				if (try_receive(MessageManagerAgent::requestGetMessageBuffer, dataPackage02)) {
 					map<string, Message> cacheTemp;
-					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (try_receive(MessageManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage02.channelId + dataPackage02.messageId)) {
 							Message message = cacheTemp.at(dataPackage02.channelId + dataPackage02.messageId);
 							send(MessageManagerAgent::outMessageBuffer, message);
@@ -433,15 +454,15 @@ namespace DiscordCoreAPI {
 				if (try_receive(MessageManagerAgent::requestPostDMMessageBuffer, dataPackage03)) {
 					Message message = this->postObjectDataAsync(dataPackage03).get();
 					map<string, Message> cacheTemp;
-					try_receive(MessageManagerAgent::cache, cacheTemp);
+					try_receive(MessageManagerAgent::cache2, cacheTemp);
 					cacheTemp.insert(make_pair(message.data.channelId + message.data.id, message));
 					send(MessageManagerAgent::outMessageBuffer, message);
-					asend(MessageManagerAgent::cache, cacheTemp);
+					asend(MessageManagerAgent::cache2, cacheTemp);
 				};
 				DiscordCoreInternal::GetMessageData dataPackage04;
 				if (try_receive(MessageManagerAgent::requestFetchMessageBuffer, dataPackage04)) {
 					map<string, Message> cacheTemp;
-					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (try_receive(MessageManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage04.channelId + dataPackage04.messageId)) {
 							cacheTemp.erase(dataPackage04.channelId + dataPackage04.messageId);
 						}
@@ -449,12 +470,12 @@ namespace DiscordCoreAPI {
 					Message message = getObjectDataAsync(dataPackage04).get();
 					cacheTemp.insert(make_pair(dataPackage04.channelId + dataPackage04.messageId, message));
 					send(MessageManagerAgent::outMessageBuffer, message);
-					asend(MessageManagerAgent::cache, cacheTemp);
+					asend(MessageManagerAgent::cache2, cacheTemp);
 				}
 				DiscordCoreInternal::PatchMessageData dataPackage05;
 				if (try_receive(MessageManagerAgent::requestPatchMessageBuffer, dataPackage05)) {
 					map<string, Message> cacheTemp;
-					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (try_receive(MessageManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage05.channelId + dataPackage05.messageId)) {
 							cacheTemp.erase(dataPackage05.channelId + dataPackage05.messageId);
 						}
@@ -462,13 +483,13 @@ namespace DiscordCoreAPI {
 					Message message = patchObjectDataAsync(dataPackage05).get();
 					cacheTemp.insert(make_pair(dataPackage05.channelId + dataPackage05.messageId, message));
 					send(MessageManagerAgent::outMessageBuffer, message);
-					asend(MessageManagerAgent::cache, cacheTemp);
+					asend(MessageManagerAgent::cache2, cacheTemp);
 				}
 				DiscordCoreInternal::FetchMessagesData dataPackage06;
 				if (try_receive(MessageManagerAgent::requestGetMultMessagesBuffer, dataPackage06)) {
 					vector<Message> messages = getObjectDataAsync(dataPackage06).get();
 					map<string, Message> cacheTemp;
-					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (try_receive(MessageManagerAgent::cache2, cacheTemp)) {
 						for (auto value : messages) {
 							if (cacheTemp.contains(value.data.channelId + value.data.id)) {
 								cacheTemp.erase(value.data.channelId + value.data.id);
@@ -477,23 +498,23 @@ namespace DiscordCoreAPI {
 						}
 					}
 					send(MessageManagerAgent::outMultMessagesBuffer, messages);
-					asend(MessageManagerAgent::cache, cacheTemp);
+					asend(MessageManagerAgent::cache2, cacheTemp);
 				}
 				DiscordCoreInternal::DeleteMessageData dataPackage07;
 				if (try_receive(MessageManagerAgent::requestDeleteMessageBuffer, dataPackage07)) {
 					map<string, Message> cacheTemp;
-					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (try_receive(MessageManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.contains(dataPackage07.channelId + dataPackage07.messageId)) {
 							cacheTemp.erase(dataPackage07.channelId + dataPackage07.messageId);
 						}
 					}
 					deleteObjectDataAsync(dataPackage07).get();
-					asend(MessageManagerAgent::cache, cacheTemp);
+					asend(MessageManagerAgent::cache2, cacheTemp);
 				}
 				DiscordCoreInternal::DeleteMessagesBulkData dataPackage08;
 				if (try_receive(MessageManagerAgent::requestDeleteMultMessagesBuffer, dataPackage08)) {
 					map<string, Message> cacheTemp;
-					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (try_receive(MessageManagerAgent::cache2, cacheTemp)) {
 						for (auto value : dataPackage08.messageIds) {
 							if (cacheTemp.contains(dataPackage08.channelId + value)) {
 								cacheTemp.erase(dataPackage08.channelId + value);
@@ -501,13 +522,13 @@ namespace DiscordCoreAPI {
 						}						
 					}
 					postObjectAsync(dataPackage08).get();
-					asend(MessageManagerAgent::cache, cacheTemp);
+					asend(MessageManagerAgent::cache2, cacheTemp);
 				}
 				MessageData messageData;
 				Message message(messageData, this->discordCoreClient);
 				while (MessageManagerAgent::messagesToInsert->try_pop(message)) {
 					map<string, Message> cacheTemp;
-					if (try_receive(MessageManagerAgent::cache, cacheTemp)) {
+					if (try_receive(MessageManagerAgent::cache2, cacheTemp)) {
 						if (cacheTemp.size() >= 1000) {
 							cacheTemp.erase(cacheTemp.end());
 						}
@@ -516,7 +537,7 @@ namespace DiscordCoreAPI {
 						}
 					}
 					cacheTemp.insert(make_pair(message.data.channelId + message.data.id, message));
-					asend(MessageManagerAgent::cache, cacheTemp);
+					asend(MessageManagerAgent::cache2, cacheTemp);
 				}
 			}
 			catch (const exception& e) {
@@ -802,12 +823,12 @@ namespace DiscordCoreAPI {
 		task<void> removeMessageAsync(string channelId, string messageId) {
 			apartment_context mainThread;
 			co_await resume_background();
-			map<string, Message> cache;;
-			try_receive(MessageManagerAgent::cache, cache);
-			if (cache.contains(channelId + messageId)) {
-				cache.erase(channelId + messageId);
+			map<string, Message> cache2;;
+			try_receive(MessageManagerAgent::cache2, cache2);
+			if (cache2.contains(channelId + messageId)) {
+				cache2.erase(channelId + messageId);
 			}
-			asend(MessageManagerAgent::cache, cache);
+			asend(MessageManagerAgent::cache2, cache2);
 			co_await mainThread;
 			co_return;
 		}
@@ -827,7 +848,7 @@ namespace DiscordCoreAPI {
 			this->discordCoreClient = discordCoreClientNew;
 		}
 	};
-	overwrite_buffer<map<string, Message>> MessageManagerAgent::cache;
+	overwrite_buffer<map<string, Message>> MessageManagerAgent::cache2;
 	unbounded_buffer<DiscordCoreInternal::GetMessageData>* MessageManagerAgent::requestFetchMessageBuffer;
 	unbounded_buffer<DiscordCoreInternal::PostMessageData>* MessageManagerAgent::requestPostMessageBuffer;
 	unbounded_buffer<DiscordCoreInternal::SendDMData>* MessageManagerAgent::requestPostDMMessageBuffer;

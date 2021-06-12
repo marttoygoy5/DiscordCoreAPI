@@ -168,7 +168,7 @@ namespace DiscordCoreAPI {
 			buyCommandOptionOne.description = "The item or role which you would like to purchase.";
 			createBuyCommandData.options.push_back(buyCommandOptionOne);
 			args->coreClient->slashCommands->createGlobalApplicationCommandAsync(createBuyCommandData).get();
-			*/
+			
 			DiscordCoreAPI::CreateApplicationCommandData createTestCommandData;
 			createTestCommandData.defaultPermission = true;
 			createTestCommandData.description = "A test command.";
@@ -180,7 +180,7 @@ namespace DiscordCoreAPI {
 			testCommandOptionOne.description = "The first argument to be entered.";
 			createTestCommandData.options.push_back(testCommandOptionOne);
 			args->eventData.discordCoreClient->slashCommands->createGlobalApplicationCommandAsync(createTestCommandData).get();
-
+			*/
 			Guild guild = args->eventData.discordCoreClient->guilds->getGuildAsync({ .guildId = args->eventData.messageData.guildId }).get();
 			DiscordGuild discordGuild(guild.data);
 			EmbedData msgEmbed;
@@ -190,19 +190,13 @@ namespace DiscordCoreAPI {
 			msgEmbed.setTimeStamp(getTimeAndDate());
 			msgEmbed.setTitle("__**Register Slash Commands Complete:**__");
 			if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-				InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-				responseData.channelId = args->eventData.messageData.channelId;
-				responseData.messageId = args->eventData.messageData.id;
-				responseData.embeds.push_back(msgEmbed);
+				ReplyMessageData responseData(args->eventData);
+				responseData.embed = msgEmbed;
 				InputEventData  event01 = InputEventHandler::respondToEvent(responseData).get();
 			}
 			else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-				InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-				responseData.applicationId = args->eventData.interactionData.applicationId;
-				responseData.embeds.push_back(msgEmbed);
-				responseData.interactionId = args->eventData.interactionData.id;
-				responseData.interactionToken = args->eventData.interactionData.token;
-				responseData.type = InteractionCallbackType::ChannelMessageWithSource;
+				CreateInteractionResponseData responseData(args->eventData);
+				responseData.data.embeds.push_back(msgEmbed);
 				InputEventData event;
 				event = InputEventHandler::respondToEvent(responseData).get();
 			}

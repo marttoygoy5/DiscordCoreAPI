@@ -489,8 +489,8 @@ namespace DiscordCoreInternal {
 		}
 
 		Uri baseURI{ nullptr };
-		hstring baseURL;
-		hstring botToken;
+		hstring baseURL = L"";
+		hstring botToken = L"";
 		HttpRequestHeaderCollection getHeaders{ nullptr };
 		HttpRequestHeaderCollection putHeaders{ nullptr };
 		HttpRequestHeaderCollection postHeaders{ nullptr };

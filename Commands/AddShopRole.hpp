@@ -64,21 +64,15 @@ namespace DiscordCoreAPI {
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
 					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-						responseData.channelId = args->eventData.messageData.channelId;
-						responseData.messageId = args->eventData.messageData.id;
-						responseData.embeds.push_back(msgEmbed);
+						ReplyMessageData responseData(args->eventData);
+						responseData.embed = msgEmbed;
 						event01 = InputEventHandler::respondToEvent(responseData).get();
 						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 					}
 					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 						InputEventData event;
-						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-						responseData.applicationId = args->eventData.interactionData.applicationId;
-						responseData.embeds.push_back(msgEmbed);
-						responseData.interactionId = args->eventData.interactionData.id;
-						responseData.interactionToken = args->eventData.interactionData.token;
-						responseData.type = InteractionCallbackType::ChannelMessage;
+						CreateInteractionResponseData responseData(args->eventData);
+						responseData.data.embeds.push_back(msgEmbed);
 						event = InputEventHandler::respondToEvent(responseData).get();
 						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
 						event.interactionData.token = args->eventData.interactionData.token;
@@ -95,21 +89,15 @@ namespace DiscordCoreAPI {
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
 					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-						responseData.channelId = args->eventData.messageData.channelId;
-						responseData.messageId = args->eventData.messageData.id;
-						responseData.embeds.push_back(msgEmbed);
+						ReplyMessageData responseData(args->eventData);
+						responseData.embed = msgEmbed;
 						event01 = InputEventHandler::respondToEvent(responseData).get();
 						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 					}
 					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 						InputEventData event;
-						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-						responseData.applicationId = args->eventData.interactionData.applicationId;
-						responseData.embeds.push_back(msgEmbed);
-						responseData.interactionId = args->eventData.interactionData.id;
-						responseData.interactionToken = args->eventData.interactionData.token;
-						responseData.type = InteractionCallbackType::ChannelMessage;
+						CreateInteractionResponseData responseData(args->eventData);
+						responseData.data.embeds.push_back(msgEmbed);
 						event = InputEventHandler::respondToEvent(responseData).get();
 						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
 						event.interactionData.token = args->eventData.interactionData.token;
@@ -126,26 +114,19 @@ namespace DiscordCoreAPI {
 					msgEmbed.setTimeStamp(getTimeAndDate());
 					msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
 					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-						InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-						responseData.channelId = args->eventData.messageData.channelId;
-						responseData.messageId = args->eventData.messageData.id;
-						responseData.embeds.push_back(msgEmbed);
-						responseData.inputEventResponseType = InputEventResponseType::REGULAR_MESSAGE_RESPONSE;
+						ReplyMessageData responseData(args->eventData);
+						responseData.embed = msgEmbed;
 						event01 = InputEventHandler::respondToEvent(responseData).get();
 						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 					}
 					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-						InputEventData event02;
-						InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-						responseData.applicationId = args->eventData.interactionData.applicationId;
-						responseData.embeds.push_back(msgEmbed);
-						responseData.interactionId = args->eventData.interactionData.id;
-						responseData.interactionToken = args->eventData.interactionData.token;
-						responseData.type = InteractionCallbackType::ChannelMessage;
-						event02 = InputEventHandler::respondToEvent(responseData).get();
-						event02.interactionData.applicationId = args->eventData.interactionData.applicationId;
-						event02.interactionData.token = args->eventData.interactionData.token;
-						InputEventHandler::deleteInputEventResponse(event02, 20000).get();
+						InputEventData event;
+						CreateInteractionResponseData responseData(args->eventData);
+						responseData.data.embeds.push_back(msgEmbed);
+						event = InputEventHandler::respondToEvent(responseData).get();
+						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
+						event.interactionData.token = args->eventData.interactionData.token;
+						InputEventHandler::deleteInputEventResponse(event, 20000).get();
 					}
 					co_return;
 				}
@@ -169,21 +150,15 @@ namespace DiscordCoreAPI {
 						msgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
 						
 						if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-							InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-							responseData.channelId = args->eventData.messageData.channelId;
-							responseData.messageId = args->eventData.messageData.id;
-							responseData.embeds.push_back(msgEmbed);
+							ReplyMessageData responseData(args->eventData);
+							responseData.embed = msgEmbed;
 							event01 = InputEventHandler::respondToEvent(responseData).get();
 							InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 						}
 						else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 							InputEventData event;
-							InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-							responseData.applicationId = args->eventData.interactionData.applicationId;
-							responseData.embeds.push_back(msgEmbed);
-							responseData.interactionId = args->eventData.interactionData.id;
-							responseData.interactionToken = args->eventData.interactionData.token;
-							responseData.type = InteractionCallbackType::ChannelMessage;
+							CreateInteractionResponseData responseData(args->eventData);
+							responseData.data.embeds.push_back(msgEmbed);
 							event = InputEventHandler::respondToEvent(responseData).get();
 							event.interactionData.applicationId = args->eventData.interactionData.applicationId;
 							event.interactionData.token = args->eventData.interactionData.token;
@@ -243,26 +218,15 @@ namespace DiscordCoreAPI {
 				msgEmbed.setDescription(msgString);
 				msgEmbed.setTimeStamp(getTimeAndDate());
 				msgEmbed.setTitle("__**New Role Added:**__");
-				InputEventData event;
 				if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-					InputEventResponseData responseData(InputEventResponseType::REGULAR_MESSAGE_RESPONSE);
-					responseData.applicationId = args->eventData.messageData.application.id;
-					responseData.channelId = args->eventData.messageData.channelId;
-					responseData.messageId = args->eventData.messageData.id;
-					responseData.embeds.push_back(msgEmbed);
-					responseData.inputEventResponseType = InputEventResponseType::REGULAR_MESSAGE_RESPONSE;
-					event = InputEventHandler::respondToEvent(responseData).get();
+					ReplyMessageData responseData(args->eventData);
+					responseData.embed = msgEmbed;
+					InputEventHandler::respondToEvent(responseData).get();
 				}
 				else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-					InputEventResponseData responseData(InputEventResponseType::INTERACTION_RESPONSE);
-					responseData.tts = true;
-					responseData.applicationId = args->eventData.interactionData.applicationId;
-					responseData.interactionToken = args->eventData.interactionData.token;
-					responseData.interactionId = args->eventData.interactionData.id;
-					responseData.embeds.push_back(msgEmbed);
-					responseData.type = InteractionCallbackType::ChannelMessageWithSource;
-					responseData.interactionId = args->eventData.interactionData.id;
-					event = InputEventHandler::respondToEvent(responseData).get();
+					CreateInteractionResponseData responseData(args->eventData);
+					responseData.data.embeds.push_back(msgEmbed);
+					InputEventHandler::respondToEvent(responseData).get();
 				}
 				co_return;
 			}
