@@ -28,6 +28,7 @@ if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 }
 else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 	CreateInteractionResponseData responseData(args->eventData);
+	responseData.data.embeds.push_back(messageEmbed);
 	InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
 	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 }
