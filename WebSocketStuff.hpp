@@ -33,9 +33,11 @@ namespace DiscordCoreInternal {
 		MESSAGE_CREATE = 16,
 		MESSAGE_UPDATE = 17,
 		MESSAGE_DELETE = 18,
-		USER_UPDATE = 19,
+		MESSAGE_DELETE_BULK = 19,
 		REACTION_ADD = 20,
-		INTERACTION_CREATE = 21
+		REACTION_REMOVE = 21,
+		USER_UPDATE = 22,
+		INTERACTION_CREATE = 23
 	};
 
 	struct WebSocketWorkload {
@@ -194,8 +196,18 @@ namespace DiscordCoreInternal {
 					sendWorkload(workload);
 				}
 
+				if (payload.at("t") == "MESSAGE_DELETE_BULK") {
+					workload.eventType = WebSocketEventType::MESSAGE_DELETE_BULK;
+					sendWorkload(workload);
+				}
+
 				if (payload.at("t") == "MESSAGE_REACTION_ADD") {
 					workload.eventType = WebSocketEventType::REACTION_ADD;
+					sendWorkload(workload);
+				}
+
+				if (payload.at("t") == "MESSAGE_REACTION_REMOVE") {
+					workload.eventType = WebSocketEventType::REACTION_REMOVE;
 					sendWorkload(workload);
 				}
 

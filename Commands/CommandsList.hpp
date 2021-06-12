@@ -10,13 +10,14 @@
 
 #include "Commands.hpp"
 /*
-#include "AddShopItem.hpp"
-#include "Balance.hpp"
 #include "Help.hpp"
 */
+#include "AddShopItem.hpp"
 #include "AddShopRole.hpp"
+#include "Balance.hpp"
+#include "RegisterSlashCommands.hpp"
 #include "Shop.hpp"
 #include "Test.hpp"
-#include "RegisterSlashCommands.hpp"
+
 
 #endif

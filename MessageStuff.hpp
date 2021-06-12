@@ -711,6 +711,9 @@ namespace DiscordCoreAPI {
 			vector<Message> messages = this->fetchMessagesAsync({ .channelId = dataPackage.channelId, .limit = dataPackage.limit, .beforeThisId = dataPackage.beforeThisId, .afterThisId = dataPackage.afterThisId, .aroundThisId = dataPackage.aroundThisId, }).get();
 			vector<string> messageIds;
 			for (auto value : messages) {
+				if (hasTimeElapsed(value.data.timestamp, 14)) {
+					continue;
+				}
 				if (dataPackage.deletePinned) {
 					messageIds.push_back(value.data.id);
 				}

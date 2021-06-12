@@ -88,6 +88,32 @@ namespace DiscordCoreAPI {
         return;
     }
 
+    void onMessageDeleteBulk(OnMessageDeleteBulkData dataPackage) {
+        for (auto value : dataPackage.ids) {
+            dataPackage.discordCoreClient->messages->removeMessageAsync(dataPackage.channelId, value).get();
+            cout << value << endl;
+        }
+        return;
+    }
+
+    void onReactionAdd(OnReactionAddData dataPackage) {
+        ReactionData reactionData;
+        reactionData.channelId = dataPackage.reactionAddData.channelId;
+        reactionData.emoji = dataPackage.reactionAddData.emoji;
+        reactionData.guildId = dataPackage.reactionAddData.guildId;
+        reactionData.member = dataPackage.reactionAddData.member;
+        reactionData.messageId = dataPackage.reactionAddData.messageId;
+        reactionData.userId = dataPackage.reactionAddData.userId;
+        Reaction reaction(reactionData, dataPackage.reactionAddData.discordCoreClient);
+        dataPackage.reactionAddData.discordCoreClient->reactions->insertReactionAsync(reaction).get();
+        return;
+    }
+
+    void onReactionRemove(OnReactionRemoveData dataPackage) {
+        dataPackage.reactionRemoveData.discordCoreClient->reactions->removeReactionAsync(dataPackage.reactionRemoveData.messageId, dataPackage.reactionRemoveData.userId, dataPackage.reactionRemoveData.emoji.name).get();
+        return;
+    }
+
     task<void> onInputEventCreation(OnInputEventCreationData dataPackage) {
         apartment_context mainThread;
         co_await resume_background();
@@ -120,11 +146,6 @@ namespace DiscordCoreAPI {
         }
     }
 
-    void onReactionAdd(OnReactionAddData dataPackage) {
-        dataPackage.reaction.discordCoreClient->reactions->insertReactionAsync(dataPackage.reaction).get();
-        return;
-    }
-
     shared_ptr<DiscordCoreClient> DiscordCoreClient::finalSetup(string botToken) {
         shared_ptr<DiscordCoreClient> pDiscordCoreClient{ nullptr };
         try {
@@ -145,14 +166,16 @@ namespace DiscordCoreAPI {
             pDiscordCoreClient->eventManager->onMessageCreation(onMessageCreation);
             pDiscordCoreClient->eventManager->onMessageUpdate(onMessageUpdate);
             pDiscordCoreClient->eventManager->onMessageDeletion(onMessageDeletion);
-            pDiscordCoreClient->eventManager->onInputEventCreation(onInputEventCreation);
+            pDiscordCoreClient->eventManager->onMessageDeleteBulk(onMessageDeleteBulk);
             pDiscordCoreClient->eventManager->onReactionAdd(onReactionAdd);
+            pDiscordCoreClient->eventManager->onReactionRemove(onReactionRemove);
+            pDiscordCoreClient->eventManager->onInputEventCreation(onInputEventCreation);
             /*
-            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopItem, DiscordCoreAPI::addShopItem.commandName);
-            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::balance, DiscordCoreAPI::balance.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::help, DiscordCoreAPI::help.commandName);
             */
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopItem, DiscordCoreAPI::addShopItem.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopRole, DiscordCoreAPI::addShopRole.commandName);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::balance, DiscordCoreAPI::balance.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::registerSlashCommands, DiscordCoreAPI::registerSlashCommands.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::shop, DiscordCoreAPI::shop.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::test, DiscordCoreAPI::test.commandName);

@@ -197,13 +197,6 @@ namespace DiscordCoreAPI {
 			co_return messageCreationData;
 		}
 
-		task<OnReactionAddData> createReaction(DiscordCoreInternal::ReactionData reactionData) {
-			Reaction reaction(reactionData, this);
-			OnReactionAddData reactionAddData(reaction);
-			reactionAddData.reaction = reaction;
-			co_return reactionAddData;
-		}
-
 		void run() {
 			try {
 				while (doWeQuit == false) {
@@ -404,9 +397,6 @@ namespace DiscordCoreAPI {
 					}
 					case DiscordCoreInternal::WebSocketEventType::MESSAGE_DELETE:
 					{
-						string Id;
-						string guildId;
-						string channelId;
 						OnMessageDeletionData messageDeletionData;
 						messageDeletionData.messageId = workload.payLoad.at("id");
 						messageDeletionData.channelId = workload.payLoad.at("channel_id");
@@ -415,12 +405,36 @@ namespace DiscordCoreAPI {
 						this->eventManager->onMessageDeletionEvent(messageDeletionData);
 						break;
 					}
+					case DiscordCoreInternal::WebSocketEventType::MESSAGE_DELETE_BULK:
+					{
+						OnMessageDeleteBulkData messageDeleteBulkData;
+						messageDeleteBulkData.channelId = workload.payLoad.at("channel_id");
+						messageDeleteBulkData.guildId = workload.payLoad.at("guild_id");
+						for (auto value : workload.payLoad.at("ids")) {
+							messageDeleteBulkData.ids.push_back(value);
+						}
+						messageDeleteBulkData.discordCoreClient = this;
+						this->eventManager->onMessageDeleteBulkEvent(messageDeleteBulkData);
+						break;
+					}
 					case DiscordCoreInternal::WebSocketEventType::REACTION_ADD:
 					{
-						ReactionData reactionData;
-						DiscordCoreInternal::parseObject(workload.payLoad, &reactionData);
-						OnReactionAddData reactionAddData = createReaction(reactionData).get();
+						ReactionAddData reactionAddDataNew;
+						DiscordCoreInternal::parseObject(workload.payLoad, &reactionAddDataNew);
+						reactionAddDataNew.discordCoreClient = this;
+						OnReactionAddData reactionAddData;
+						reactionAddData.reactionAddData = reactionAddDataNew;
 						this->eventManager->onReactionAddEvent(reactionAddData);
+						break;
+					}
+					case DiscordCoreInternal::WebSocketEventType::REACTION_REMOVE:
+					{
+						ReactionRemoveData reactionRemoveDataNew;
+						DiscordCoreInternal::parseObject(workload.payLoad, &reactionRemoveDataNew);
+						reactionRemoveDataNew.discordCoreClient = this;
+						OnReactionRemoveData reactionRemoveData;
+						reactionRemoveData.reactionRemoveData = reactionRemoveDataNew;
+						this->eventManager->onReactionRemoveEvent(reactionRemoveData);
 						break;
 					}
 					case DiscordCoreInternal::WebSocketEventType::INTERACTION_CREATE:
@@ -437,7 +451,6 @@ namespace DiscordCoreAPI {
 							eventData.requesterId = interactionData.member.user.id;
 							OnInputEventCreationData eventCreationData;
 							eventCreationData.eventData = eventData;
-							cout << eventCreationData.eventData.getChannelId() << eventCreationData.eventData.getMessageId();
 							this->eventManager->onInputEventCreationEvent(eventCreationData);
 						}
 						else if (interactionData.type == InteractionType::MessageComponent) {

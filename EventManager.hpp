@@ -99,14 +99,25 @@ namespace DiscordCoreAPI {
 	};
 
 	struct OnMessageDeletionData {
-		DiscordCoreClient* discordCoreClient;
+		DiscordCoreClient* discordCoreClient{ nullptr };
 		string messageId;
 		string channelId;
 		string guildId;
 	};
 
+	struct OnMessageDeleteBulkData {
+		DiscordCoreClient* discordCoreClient{ nullptr };
+		vector<string> ids;
+		string channelId;
+		string guildId;
+	};
+
 	struct OnReactionAddData {
-		Reaction reaction;
+		ReactionAddData reactionAddData;
+	};
+
+	struct OnReactionRemoveData {
+		ReactionRemoveData reactionRemoveData;
 	};
 
 	struct OnInputEventCreationData {
@@ -268,12 +279,12 @@ namespace DiscordCoreAPI {
 			onMessageDeletionEvent.remove(token);
 		}
 
-		event_token onInputEventCreation(delegate<OnInputEventCreationData> const& handler) {
-			return onInputEventCreationEvent.add(handler);
+		event_token onMessageDeleteBulk(delegate<OnMessageDeleteBulkData> const& handler) {
+			return onMessageDeleteBulkEvent.add(handler);
 		}
 
-		void onInputEventCreation(event_token const& token) {
-			onInputEventCreationEvent.remove(token);
+		void onMessageDeleteBulk(event_token const& token) {
+			onMessageDeleteBulkEvent.remove(token);
 		}
 
 		event_token onReactionAdd(delegate<OnReactionAddData> const& handler) {
@@ -282,6 +293,22 @@ namespace DiscordCoreAPI {
 
 		void onReactionAdd(event_token const& token) {
 			onReactionAddEvent.remove(token);
+		}
+
+		event_token onReactionRemove(delegate<OnReactionRemoveData> const& handler) {
+			return onReactionRemoveEvent.add(handler);
+		}
+
+		void onReactionRemove(event_token const& token) {
+			onReactionRemoveEvent.remove(token);
+		}
+
+		event_token onInputEventCreation(delegate<OnInputEventCreationData> const& handler) {
+			return onInputEventCreationEvent.add(handler);
+		}
+
+		void onInputEventCreation(event_token const& token) {
+			onInputEventCreationEvent.remove(token);
 		}
 
 	protected:
@@ -326,9 +353,14 @@ namespace DiscordCoreAPI {
 
 		winrt::event <delegate<OnMessageDeletionData>> onMessageDeletionEvent;
 
-		winrt::event<delegate<OnInputEventCreationData>> onInputEventCreationEvent;
+		winrt::event<delegate<OnMessageDeleteBulkData>>onMessageDeleteBulkEvent;
 
 		winrt::event <delegate<OnReactionAddData>> onReactionAddEvent;
+
+		winrt::event <delegate<OnReactionRemoveData>> onReactionRemoveEvent;
+
+		winrt::event<delegate<OnInputEventCreationData>> onInputEventCreationEvent;
+		
 	};
 }
 #endif

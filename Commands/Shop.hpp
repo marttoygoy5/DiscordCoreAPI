@@ -45,7 +45,7 @@ namespace DiscordCoreAPI {
 					co_return;
 				}
 
-				InputEventData event01;
+				
 				GuildMember botMember = args->eventData.discordCoreClient->guildMembers->getGuildMemberAsync({ .guildId = args->eventData.getGuildId(), .guildMemberId = args->eventData.discordCoreClient->currentUser->data.id }).get();
 				if (!(DiscordCoreAPI::PermissionsConverter::checkForPermission(botMember, channel, Permissions::MANAGE_MESSAGES))) {
 					string msgString = "------\n**I need the Manage Messages permission in this channel, for this command!**\n------";
@@ -57,27 +57,26 @@ namespace DiscordCoreAPI {
 					msgEmbed.setTitle("__**Permissions Issue:**__");
 					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 						ReplyMessageData responseData(args->eventData);
-						responseData.embed = msgEmbed;;
-						event01 = InputEventHandler::respondToEvent(responseData).get();
+						responseData.embed = msgEmbed;
+						InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
 						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 					}
 					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-						InputEventData event;
 						CreateInteractionResponseData responseData(args->eventData);
 						responseData.data.embeds.push_back(msgEmbed);
-						event = InputEventHandler::respondToEvent(responseData).get();
+						InputEventData event = InputEventHandler::respondToEvent(responseData).get();
 						InputEventHandler::deleteInputEventResponse(event, 20000).get();
 					}
 					co_return;
 				}
 
 				vector<Role> rolesArray = args->eventData.discordCoreClient->roles->getGuildRolesAsync({ .guildId = args->eventData.getGuildId() }).get();
-
-				for (unsigned int x = 0; x < discordGuild.data.guildShop.roles.size(); x+=1) {
+				InputEventData event02;
+				for (auto value:discordGuild.data.guildShop.roles) {
 					bool isRoleFound = false;
-					InventoryRole shopRole = discordGuild.data.guildShop.roles.at(x);
-					for (unsigned int y = 0; y< rolesArray.size(); y += 1) {
-						if (rolesArray.at(y).data.id== shopRole.roleId) {
+					InventoryRole shopRole = value;
+					for (auto value2:rolesArray) {
+						if (value2.data.id == shopRole.roleId) {
 							isRoleFound = true;
 							break;
 						}
@@ -99,18 +98,17 @@ namespace DiscordCoreAPI {
 						if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 							ReplyMessageData responseData(args->eventData);
 							responseData.embed = msgEmbed;
-							event01 = InputEventHandler::respondToEvent(responseData).get();
-							InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+							event02 = InputEventHandler::respondToEvent(responseData).get();
+							InputEventHandler::deleteInputEventResponse(event02, 20000).get();
 						}
 						else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 							CreateDeferredInteractionResponseData responseData(args->eventData);
-							InputEventData event;
-							event = InputEventHandler::respondToEvent(responseData).get();
-							CreateEphemeralInteractionResponseData responseData2(args->eventData);
-							event = InputEventHandler::respondToEvent(responseData2).get();
-							InputEventHandler::deleteInputEventResponse(event, 20000).get();
+							event02 = InputEventHandler::respondToEvent(responseData).get();
+							CreateFollowUpMessageData responseData2(args->eventData);
+							responseData2.embeds.push_back(msgEmbed);
+							event02 = InputEventHandler::respondToEvent(responseData2).get();
+							InputEventHandler::deleteInputEventResponse(event02, 20000).get();
 						}
-						x -= 1;
 					}
 				}
 				
@@ -227,14 +225,13 @@ namespace DiscordCoreAPI {
 					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 						ReplyMessageData responseData(args->eventData);
 						responseData.embed = messageEmbed;
-						event01 = InputEventHandler::respondToEvent(responseData).get();
+						InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
 						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 					}
 					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 						CreateInteractionResponseData responseData(args->eventData);
-						event01 = InputEventHandler::respondToEvent(responseData).get();
-						event01.interactionData.applicationId = args->eventData.interactionData.applicationId;
-						event01.interactionData.token = args->eventData.interactionData.token;
+						responseData.data.embeds.push_back(messageEmbed);
+						InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
 						InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 					}
 					co_return;
@@ -245,18 +242,9 @@ namespace DiscordCoreAPI {
 				unsigned int currentPageIndex = 0;
 				string userID = args->eventData.messageData.author.id;
 				if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-					event01.eventType = args->eventData.eventType;
-					event01.messageData = args->eventData.messageData;
-					event01.discordCoreClient = args->eventData.discordCoreClient;
-					event01.requesterId = args->eventData.requesterId;
 					recurseThroughMessagePages(userID, args->eventData, currentPageIndex, finalMsgEmbedsArray, true).get();
 				}
 				else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-					event01.eventType = args->eventData.eventType;
-					event01.interactionData = args->eventData.interactionData;
-					event01.discordCoreClient = args->eventData.discordCoreClient;
-					event01.requesterId = args->eventData.requesterId;
-					event01.messageData = args->eventData.messageData;
 					recurseThroughMessagePages(userID, args->eventData, currentPageIndex, finalMsgEmbedsArray, true).get();
 				}
 

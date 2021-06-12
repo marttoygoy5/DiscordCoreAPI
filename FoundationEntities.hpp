@@ -267,13 +267,13 @@ namespace  DiscordCoreInternal {
         string avatar;
         bool bot;
         bool system = false;
-        bool mfa_enabled = false;
+        bool mfaEnabled = false;
         string locale;
         bool verified = false;
         string email;
         int flags = 0;
-        int premium_type = 0;
-        int public_flags = 0;
+        int premiumType = 0;
+        int publicFlags = 0;
         string getAvatarURL() {
             if (this->avatar != "") {
                 return "https://cdn.discordapp.com/avatars/" + this->id + "/" + this->avatar;
@@ -289,8 +289,8 @@ namespace  DiscordCoreInternal {
         UserData user;
         string nick;
         vector<string> roles;
-        string joined_at;
-        string premium_since;
+        string joinedAt;
+        string premiumSince;
         bool deaf;
         bool mute;
         bool pending;
@@ -1420,7 +1420,51 @@ namespace  DiscordCoreInternal {
 }
 
 namespace DiscordCoreAPI {
+
     class DiscordCoreClient;
+
+    string constructStringContent(DiscordCoreInternal::CommandData commandData) {
+        string finalCommandString;
+        finalCommandString = commandData.commandName + " = ";
+        for (auto& value : commandData.optionsArgs) {
+            finalCommandString += value + ", ";
+        }
+        return finalCommandString;
+    };
+
+    long long convertTimestampToInteger(string timeStamp) {
+        CTime timeValue = CTime::CTime(stoi(timeStamp.substr(0, 4)), stoi(timeStamp.substr(5, 6)), stoi(timeStamp.substr(8, 9)),
+            stoi(timeStamp.substr(11, 12)), stoi(timeStamp.substr(14, 15)), stoi(timeStamp.substr(17, 18)));
+        return timeValue.GetTime();
+    }
+
+    bool hasTimeElapsed(string timeStamp, long long days = 0, long long hours = 0, long long minutes = 0) {
+        long long startTime = convertTimestampToInteger(timeStamp);
+        long long currentTime = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now().time_since_epoch()).count();
+        long long secondsPerMinute = 60;
+        long long secondsPerHour = secondsPerMinute * 60;
+        long long secondsPerDay = secondsPerHour * 24;
+        long long targetElapsedTime = (days * secondsPerDay) + (hours * secondsPerHour) + (minutes * secondsPerMinute);
+        long long actualElapsedTime = currentTime - startTime;
+        if (actualElapsedTime < 0) {
+            actualElapsedTime = 0;
+        }
+        if (actualElapsedTime >= targetElapsedTime) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    string getTimeAndDate() {
+        const std::time_t now = std::time(nullptr);
+        char charArray[32];
+        std::tm time;
+        localtime_s(&time, &now);
+        strftime(charArray, 32, "%F %R", &time);
+        return charArray;
+    }
 
     enum class Permissions :__int64 {
         CREATE_INSTANT_INVITE = (1 << 0),
@@ -1460,15 +1504,6 @@ namespace DiscordCoreAPI {
         USE_PUBLIC_THREADS = (1ull << 34),
         USE_PRIVATE_THREADS = (1ull << 35)
     };
-
-    string getTimeAndDate() {
-        const std::time_t now = std::time(nullptr);
-        char charArray[32];
-        std::tm time;
-        localtime_s(&time, &now);
-        strftime(charArray, 32, "%F %R", &time);
-        return charArray;
-    }
 
     enum class ComponentType {
         ActionRow = 1,
@@ -1529,9 +1564,9 @@ namespace DiscordCoreAPI {
             newData.flags = this->flags;
             newData.id = this->id;
             newData.locale = this->locale;
-            newData.mfa_enabled = this->mfa_enabled;
-            newData.premium_type = this->premium_type;
-            newData.public_flags = this->public_flags;
+            newData.mfaEnabled = this->mfaEnabled;
+            newData.premiumType = this->premiumType;
+            newData.publicFlags = this->publicFlags;
             newData.system = this->system;
             newData.username = this->username;
             newData.verified = this->verified;
@@ -1543,13 +1578,13 @@ namespace DiscordCoreAPI {
         string avatar;
         bool bot;
         bool system = false;
-        bool mfa_enabled = false;
+        bool mfaEnabled = false;
         string locale;
         bool verified = false;
         string email;
         int flags = 0;
-        int premium_type = 0;
-        int public_flags = 0;
+        int premiumType = 0;
+        int publicFlags = 0;
         string getAvatarURL() {
             if (this->avatar != "") {
                 return "https://cdn.discordapp.com/avatars/" + this->id + "/" + this->avatar;
@@ -2004,12 +2039,12 @@ namespace DiscordCoreAPI {
             DiscordCoreInternal::GuildMemberData newData;
             newData.deaf = this->deaf;
             newData.guildId = this->guildId;
-            newData.joined_at = this->joined_at;
+            newData.joinedAt = this->joinedAt;
             newData.mute = this->mute;
             newData.nick = this->nick;
             newData.pending = this->pending;
             newData.permissions = this->permissions;
-            newData.premium_since = this->premium_since;
+            newData.premiumSince = this->premiumSince;
             newData.roles = this->roles;
             newData.user = this->user;
             return newData;
@@ -2018,8 +2053,8 @@ namespace DiscordCoreAPI {
         UserData user;
         string nick;
         vector<string> roles;
-        string joined_at;
-        string premium_since;
+        string joinedAt;
+        string premiumSince;
         bool deaf;
         bool mute;
         bool pending;
@@ -2595,18 +2630,39 @@ namespace DiscordCoreAPI {
         vector<ChannelData> channels{};
     };
 
-    struct ReactionAddEventData {
-        string userId;
+    struct ReactionAddData {
+        DiscordCoreClient* discordCoreClient{ nullptr };
+        GuildMemberData member;
         string channelId;
         string messageId;
-        string guildId;
-        GuildMemberData member;
         EmojiData emoji;
+        string guildId;
+        string userId;
+    };
+
+    struct ReactionRemoveData {
+        DiscordCoreClient* discordCoreClient{ nullptr };
+        string channelId;
+        string messageId;
+        EmojiData emoji;
+        string guildId;
+        string userId;
     };
 
     struct InteractionResponseData {
         InteractionApplicationCommandCallbackData data;
         InteractionCallbackType type;
+    };
+
+    struct InteractionPackageData {
+        string applicationId;
+        string interactionId;
+        string interactionToken;
+    };
+
+    struct MessagePackageData {
+        string channelId;
+        string messageId;
     };
 
     enum class InputEventType {
@@ -2651,6 +2707,9 @@ namespace DiscordCoreAPI {
             else {
                 this->interactionData.guildId = this->messageData.guildId;
             }
+            if (this->interactionData.id == "") {
+                this->interactionData.id = this->messageData.interaction.id;
+            }
         }
         DiscordCoreAPI::DiscordCoreClient* discordCoreClient{ nullptr };
         InteractionData interactionData;
@@ -2667,15 +2726,10 @@ namespace DiscordCoreAPI {
             }
         }
         string getInteractionToken() {
-            if (this->interactionData.token == "") {
-                return this->interactionData.token;
-            }
-            else {
-                return this->interactionData.token;
-            }
+            return this->interactionData.token;
         }
         string getInteractionId() {
-            if (this->interactionData.id == "") {
+            if (this->interactionData.id== "") {
                 return this->messageData.interaction.id;
             }
             else {
@@ -2854,16 +2908,7 @@ namespace DiscordCoreAPI {
         vector<WebhookData> webhooks;
         vector<UserData> users;
         vector<AuditLogEntryData> auditLogEntries;
-        vector< IntegrationData> integrations;
-    };
-
-    string constructStringContent(DiscordCoreInternal::CommandData commandData) {
-        string finalCommandString;
-        finalCommandString = commandData.commandName + " = ";
-        for (auto& value : commandData.optionsArgs) {
-            finalCommandString += value + ", ";
-        }
-        return finalCommandString;
+        vector<IntegrationData> integrations;
     };
 };
 

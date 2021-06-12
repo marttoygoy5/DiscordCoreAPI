@@ -29,12 +29,13 @@ namespace DiscordCoreAPI {
 			apartment_context mainThread;
 			co_await resume_background();
 			MessageData messageData = InputEventHandler::interactions->createFollowUpMessageAsync(dataPackage).get();
-			InputEventData dataPackageNewer = dataPackage.lastEventData;
+			InputEventData dataPackageNewer;
 			dataPackageNewer.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
 			dataPackageNewer.messageData = messageData;
-			dataPackageNewer.requesterId = dataPackage.lastEventData.requesterId;
-			dataPackageNewer.discordCoreClient = dataPackage.lastEventData.discordCoreClient;
 			dataPackageNewer.inputEventResponseType = InputEventResponseType::INTERACTION_FOLLOW_UP_MESSAGE;
+			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
+			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
+			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}
@@ -44,12 +45,13 @@ namespace DiscordCoreAPI {
 			co_await resume_background();
 			MessageData messageData = InputEventHandler::interactions->editFollowUpMessageAsync(dataPackage).get();
 			InputEventData dataPackageNewer;
-			dataPackageNewer = dataPackage.lastEventData;
 			dataPackageNewer.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
 			dataPackageNewer.messageData = messageData;
-			dataPackageNewer.requesterId = dataPackage.lastEventData.requesterId;
 			dataPackageNewer.discordCoreClient = InputEventHandler::discordCoreClient;
 			dataPackageNewer.inputEventResponseType = InputEventResponseType::INTERACTION_FOLLOW_UP_MESSAGE_EDIT;
+			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
+			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
+			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}		
@@ -59,9 +61,11 @@ namespace DiscordCoreAPI {
 			co_await resume_background();
 			InputEventHandler::interactions->createInteractionResponseAsync(dataPackage).get();
 			InputEventData dataPackageNewer;
-			dataPackageNewer.interactionData = dataPackage.interactionData;
 			dataPackageNewer.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
 			dataPackageNewer.inputEventResponseType = InputEventResponseType::INTERACTION_RESPONSE;
+			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
+			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
+			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}
@@ -70,9 +74,12 @@ namespace DiscordCoreAPI {
 			apartment_context mainThread;
 			co_await resume_background();
 			InputEventHandler::interactions->createDeferredInteractionResponseAsync(dataPackage).get();
-			InputEventData dataPackageNewer = dataPackage.lastEventData;
+			InputEventData dataPackageNewer;
 			dataPackageNewer.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
 			dataPackageNewer.inputEventResponseType = InputEventResponseType::INTERACTION_RESPONSE_DEFERRED;
+			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
+			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
+			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}
@@ -83,11 +90,12 @@ namespace DiscordCoreAPI {
 			MessageData messageData = InputEventHandler::interactions->editInteractionResponseAsync(dataPackage).get();
 			InputEventData dataPackageNewer;
 			dataPackageNewer.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
-			dataPackageNewer.interactionData = dataPackage.interactionData;
 			dataPackageNewer.messageData = messageData;
 			dataPackageNewer.discordCoreClient = InputEventHandler::discordCoreClient;
 			dataPackageNewer.inputEventResponseType = InputEventResponseType::INTERACTION_RESPONSE_EDIT;
-			dataPackageNewer.requesterId = dataPackage.interactionData.user.id;
+			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
+			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
+			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}
@@ -95,18 +103,23 @@ namespace DiscordCoreAPI {
 		static task<InputEventData> respondToEvent(CreateEphemeralInteractionResponseData dataPackage) {
 			apartment_context mainThread;
 			co_await resume_background();
-			CreateInteractionResponseData newData(dataPackage.interactionData);
+			InteractionPackageData interactionPackage;
+			interactionPackage.applicationId = dataPackage.interactionPackage.applicationId;
+			interactionPackage.interactionId = dataPackage.interactionPackage.interactionId;
+			interactionPackage.interactionToken = dataPackage.interactionPackage.interactionToken;
+			CreateInteractionResponseData newData(interactionPackage);
 			newData.data = dataPackage.data;
 			newData.data.flags = 64;
-			newData.interactionId = dataPackage.interactionId;
-			newData.interactionToken = dataPackage.interactionToken;
-			newData.interactionData = dataPackage.interactionData;
+			newData.interactionPackage.interactionId = dataPackage.interactionPackage.interactionId;
+			newData.interactionPackage.interactionToken = dataPackage.interactionPackage.interactionToken;
 			newData.type = dataPackage.type;
 			InputEventHandler::interactions->createInteractionResponseAsync(newData).get();
 			InputEventData dataPackageNewer;
-			dataPackageNewer.interactionData = dataPackage.interactionData;
 			dataPackageNewer.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
 			dataPackageNewer.inputEventResponseType = InputEventResponseType::INTERACTION_RESPONSE_EPHEMERAL;
+			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
+			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
+			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}
@@ -140,11 +153,14 @@ namespace DiscordCoreAPI {
 			apartment_context mainThread;
 			co_await resume_background();
 			ButtonInteractionData newData;
-			newData.token = dataPackage.interactionToken;
-			newData.id = dataPackage.interactionId;
+			newData.token = dataPackage.interactionPackage.interactionToken;
+			newData.id = dataPackage.interactionPackage.interactionId;
+			newData.applicationId = dataPackage.interactionPackage.applicationId;
 			newData.type = InteractionType::MessageComponent;
 			CreateInteractionResponseData dataPackageNew(newData);
-			dataPackageNew.interactionId = dataPackage.interactionId;
+			dataPackageNew.interactionPackage.interactionId = dataPackage.interactionPackage.interactionId;
+			dataPackageNew.interactionPackage.applicationId = dataPackage.interactionPackage.applicationId;
+			dataPackageNew.interactionPackage.interactionToken = dataPackage.interactionPackage.interactionToken;
 			dataPackageNew.type = InteractionCallbackType::DeferredUpdateMessage;
 			InputEventHandler::interactions->createInteractionResponseAsync(dataPackageNew).get();
 			co_await mainThread;

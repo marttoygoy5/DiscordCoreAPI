@@ -26,15 +26,15 @@ namespace DiscordCoreAPI {
 
 		Reaction() {};
 
-	protected:
-		friend class DiscordCoreClient;
-		friend class ReactionManager;
-		friend class  ReactionManagerAgent;
-
 		Reaction(DiscordCoreInternal::ReactionData reactionData, DiscordCoreClient* discordCoreClientNew) {
 			this->data = reactionData;
 			this->discordCoreClient = discordCoreClientNew;
 		}
+
+	protected:
+		friend class DiscordCoreClient;
+		friend class ReactionManager;
+		friend class  ReactionManagerAgent;
 	};
 
 	struct CreateReactionData {
@@ -416,6 +416,19 @@ namespace DiscordCoreAPI {
 			while (reactionManagerAgent.getError(error)) {
 				cout << "ReactionManager::insertReactionAsync() Error: " << error.what() << endl << endl;
 			}
+			co_return;
+		}
+
+		task<void> removeReactionAsync(string messageId, string userId, string emojiName) {
+			apartment_context mainThread;
+			co_await resume_background();
+			map<string, Reaction> cache;
+			try_receive(ReactionManagerAgent::cache, cache);
+			if (cache.contains(messageId + userId +emojiName)) {
+				cache.erase(messageId + userId + emojiName);
+			}
+			asend(ReactionManagerAgent::cache, cache);
+			co_await mainThread;
 			co_return;
 		}
 
