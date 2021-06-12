@@ -8,7 +8,7 @@
 #ifndef _CHANNEL_STUFF_
 #define _CHANNEL_STUFF_
 
-#include "pch.h"
+#include "./pch.h"
 #include "FoundationEntities.hpp"
 #include "MessageStuff.hpp"
 #include "HttpStuff.hpp"

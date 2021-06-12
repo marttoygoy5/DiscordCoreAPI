@@ -91,7 +91,6 @@ namespace DiscordCoreAPI {
     void onMessageDeleteBulk(OnMessageDeleteBulkData dataPackage) {
         for (auto value : dataPackage.ids) {
             dataPackage.discordCoreClient->messages->removeMessageAsync(dataPackage.channelId, value).get();
-            cout << value << endl;
         }
         return;
     }

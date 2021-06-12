@@ -52,6 +52,7 @@ namespace DiscordCoreAPI {
 			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
 			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
 			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
+			dataPackageNewer.requesterId = dataPackage.requesterId;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}		
@@ -66,6 +67,7 @@ namespace DiscordCoreAPI {
 			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
 			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
 			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
+			dataPackageNewer.requesterId = dataPackage.requesterId;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}
@@ -80,6 +82,7 @@ namespace DiscordCoreAPI {
 			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
 			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
 			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
+			dataPackageNewer.requesterId = dataPackage.requesterId;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}
@@ -96,6 +99,7 @@ namespace DiscordCoreAPI {
 			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
 			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
 			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
+			dataPackageNewer.requesterId = dataPackage.requesterId;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}
@@ -120,6 +124,7 @@ namespace DiscordCoreAPI {
 			dataPackageNewer.interactionData.applicationId = dataPackage.interactionPackage.applicationId;
 			dataPackageNewer.interactionData.id = dataPackage.interactionPackage.interactionId;
 			dataPackageNewer.interactionData.token = dataPackage.interactionPackage.interactionToken;
+			dataPackageNewer.requesterId = dataPackage.requesterId;
 			co_await mainThread;
 			co_return dataPackageNewer;
 		}

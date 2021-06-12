@@ -94,6 +94,7 @@ namespace DiscordCoreAPI {
             this->components = dataPackage.messageData.components;
             this->content = dataPackage.messageData.content;
             this->embeds = dataPackage.messageData.embeds;
+            this->requesterId = dataPackage.requesterId;
         }
         string content;
         string username;
@@ -103,6 +104,7 @@ namespace DiscordCoreAPI {
         DiscordCoreInternal::AllowedMentionsData allowedMentions;
         vector<ActionRowData> components;
         int flags;
+        string requesterId;
     protected:
         friend class InteractionManagerAgent;
         friend class InteractionManager;
@@ -123,8 +125,10 @@ namespace DiscordCoreAPI {
             this->interactionPackage.interactionId = dataPackage.getInteractionId();
             this->interactionPackage.interactionToken = dataPackage.getInteractionToken();
             this->type = InteractionCallbackType::ChannelMessageWithSource;
+            this->requesterId = dataPackage.requesterId;
         }
         InteractionApplicationCommandCallbackData data;
+        string requesterId;
     protected:
         friend class InteractionManagerAgent;
         friend class InteractionManager;
@@ -148,8 +152,10 @@ namespace DiscordCoreAPI {
             this->interactionPackage.interactionId = dataPackage.getInteractionId();
             this->interactionPackage.interactionToken = dataPackage.getInteractionToken();
             this->type = InteractionCallbackType::ChannelMessageWithSource;
+            this->requesterId = dataPackage.requesterId;
         }
         InteractionApplicationCommandCallbackData data;
+        string requesterId;
     protected:
         CreateInteractionResponseData(InteractionData dataPackage) {
             this->interactionPackage.applicationId = dataPackage.applicationId;
@@ -170,7 +176,9 @@ namespace DiscordCoreAPI {
             this->interactionPackage.interactionToken = dataPackage.getInteractionToken();
             this->interactionPackage.interactionId = dataPackage.getInteractionId();
             this->type = InteractionCallbackType::DeferredChannelMessageWithSource;
+            this->requesterId = dataPackage.requesterId;
         }
+        string requesterId;
     protected:
         friend class InteractionManagerAgent;
         friend class InteractionManager;
@@ -185,6 +193,7 @@ namespace DiscordCoreAPI {
             this->interactionPackage.interactionId = dataPackage.getInteractionId();
             this->interactionPackage.applicationId = dataPackage.getApplicationId();
             this->type = InteractionCallbackType::UpdateMessage;
+            this->requesterId = dataPackage.requesterId;
         }
         string content;
         vector<EmbedData> embeds;
@@ -192,6 +201,7 @@ namespace DiscordCoreAPI {
         vector<AttachmentData> attachments;
         vector<ActionRowData>components;
         int flags;
+        string requesterId;
     protected:
         friend class InteractionManagerAgent;
         friend class InteractionManager;
