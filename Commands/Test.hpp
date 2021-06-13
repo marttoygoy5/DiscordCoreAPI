@@ -126,6 +126,15 @@ namespace DiscordCoreAPI {
 						*/
 					}
 				}
+				string permissionString;
+				vector<Permissions> permisVector;
+				permisVector.push_back(Permissions::ADD_REACTIONS);
+				permisVector.push_back(Permissions::ATTACH_FILES);
+				permissionString = DiscordCoreAPI::PermissionsConverter::addPermissionsToString(permissionString, permisVector);
+				DiscordCoreAPI::PermissionsConverter::displayPermissions(permissionString);
+				permisVector.erase(permisVector.begin() + 1);
+				permissionString = DiscordCoreAPI::PermissionsConverter::removePermissionsFromString(permissionString, permisVector);
+				DiscordCoreAPI::PermissionsConverter::displayPermissions(permissionString);
 				DeleteMessagesBulkData deleteData;
 				deleteData.beforeThisId = args->eventData.getMessageId();
 				deleteData.channelId = args->eventData.getChannelId();

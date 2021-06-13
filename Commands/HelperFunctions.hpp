@@ -25,7 +25,7 @@ namespace DiscordCoreAPI {
         }
         return newString;
     }
-    
+
     bool areWeInADM(InputEventData eventData, Channel channel, DiscordGuild discordGuild) {
         auto currentChannelType = channel.data.type;
 
@@ -114,21 +114,21 @@ namespace DiscordCoreAPI {
                 originalPermissionString = "0";
             }
             __int64 permissionsInteger = stoll(originalPermissionString);
-            for (unsigned int x = 0; x < permissionsToAdd.size(); x += 1) {
-                permissionsInteger = permissionsInteger | (__int64)permissionsToAdd.at(x);
+            for (auto value:permissionsToAdd) {
+                permissionsInteger |= (__int64)value;
             }
             stringstream sstream;
             sstream << permissionsInteger;
             return sstream.str();
         }
 
-        static string removePermissionsFromString(string originalPermissionString, DiscordCoreInternal::Permissions permissionsToRemove[], int quantityOfPermsToRemove) {
+        static string removePermissionsFromString(string originalPermissionString, vector<Permissions> permissionsToRemove) {
             if (originalPermissionString == "") {
                 originalPermissionString = "0";
             }
             __int64 permissionsInteger = stoll(originalPermissionString);
-            for (unsigned int x = 0; x < (unsigned int)quantityOfPermsToRemove; x += 1) {
-                permissionsInteger = permissionsInteger & ~(__int64)permissionsToRemove[x];
+            for (auto value: permissionsToRemove) {
+                permissionsInteger &= ~(__int64)value;
             }
             stringstream sstream;
             sstream << permissionsInteger;
@@ -252,7 +252,7 @@ namespace DiscordCoreAPI {
             cout << "PERMISSIONS: " << endl << sstream.str() << endl;
         }
 
-        static string allPermissions() {
+        static string getAllPermissions() {
             __int64 allPerms;
             allPerms = allPerms | (__int64)DiscordCoreInternal::Permissions::ADD_REACTIONS;
             allPerms = allPerms | (__int64)DiscordCoreInternal::Permissions::ADMINISTRATOR;
@@ -299,7 +299,7 @@ namespace DiscordCoreAPI {
             Guild guild = guilds.getGuildAsync({ guildMember.data.guildId }).get();
 
             if (guild.data.ownerID == guildMember.data.user.id) {
-                return allPermissions();
+                return getAllPermissions();
             }
 
             Role everyone = roles.getRoleAsync({ .guildId = guild.data.id, .roleId = guild.data.id }).get();
@@ -312,7 +312,7 @@ namespace DiscordCoreAPI {
             }
 
             if ((permissionsInt & (__int64)DiscordCoreInternal::Permissions::ADMINISTRATOR) == (__int64)DiscordCoreInternal::Permissions::ADMINISTRATOR) {
-                return allPermissions();
+                return getAllPermissions();
             }
             stringstream stream;
             stream << permissionsInt;
@@ -322,7 +322,7 @@ namespace DiscordCoreAPI {
         static string  computeOverwrites(string basePermissions, GuildMember guildMember, Channel channel) {
             __int64 permissionsInt = stoll(basePermissions);
             if ((permissionsInt & (__int64)DiscordCoreInternal::Permissions::ADMINISTRATOR) == (__int64)DiscordCoreInternal::Permissions::ADMINISTRATOR) {
-                return allPermissions();
+                return getAllPermissions();
             }
 
             Guild guild = guildMember.discordCoreClient->guilds->getGuildAsync({ .guildId = guildMember.data.guildId }).get();
@@ -344,6 +344,7 @@ namespace DiscordCoreAPI {
                     deny |= stoll(overWrites.at(currentRole.data.id).deny);
                 }
             }
+            
             permissionsInt &= ~deny;
             permissionsInt |= allow;
 

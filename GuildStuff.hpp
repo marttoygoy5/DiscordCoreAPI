@@ -51,15 +51,15 @@ namespace DiscordCoreAPI {
 			try {
 				cout << "Caching guild: " << this->data.name << endl;
 				cout << "Caching channels for guild: " << this->data.name << endl;
-				for (unsigned int x = 0; x < data.channels.size(); x += 1) {
-					data.channels.at(x).guildId = this->data.id;
-					ChannelData channelData = data.channels.at(x);
+				for (auto value:data.channels) {
+					value.guildId = this->data.id;
+					ChannelData channelData = value;
 					Channel channel(channelData, this->discordCoreClient);
 					this->discordCoreClientBase->channels->insertChannelAsync(channel).get();
 				}
 				cout << "Caching guild members for guild: " << this->data.name << endl;
-				for (unsigned int x = 0; x < data.members.size(); x += 1) {
-					GuildMemberData guildMemberData = data.members.at(x);
+				for (auto value:data.members) {
+					GuildMemberData guildMemberData = value;
 					guildMemberData.guildId = this->data.id;
 					DiscordGuildMember discordGuildMember(guildMemberData);
 					discordGuildMember.writeDataToDB();
@@ -68,14 +68,14 @@ namespace DiscordCoreAPI {
 					this->discordCoreClientBase->guildMembers->insertGuildMemberAsync(guildMember).get();
 				}
 				cout << "Caching roles for guild: " << this->data.name << endl;
-				for (auto const& [key, value] : data.roles) {
+				for (auto const& value : data.roles) {
 					RoleData roleData = value;
 					Role role(roleData, this->discordCoreClient);
 					this->discordCoreClientBase->roles->insertRoleAsync(role).get();
 				}
 				cout << "Caching users for guild: " << this->data.name << endl << endl;
-				for (unsigned int x = 0; x < data.members.size(); x += 1) {
-					DiscordCoreInternal::UserData userData = data.members.at(x).user;
+				for (auto value : data.members) {
+					DiscordCoreInternal::UserData userData = value.user;
 					User user(userData, this->discordCoreClient);
 					this->discordCoreClientBase->users->insertUserAsync(user).get();
 				}

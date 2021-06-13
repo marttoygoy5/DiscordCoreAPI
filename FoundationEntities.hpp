@@ -1993,7 +1993,7 @@ namespace DiscordCoreAPI {
             newData.nsfw = this->nsfw;
             newData.ownerId = this->ownerId;
             newData.parentId = this->parentId;
-            for (auto [key, value] : this->permissionOverwrites) {
+            for (auto [key,value]: this->permissionOverwrites) {
                 newData.permissionOverwrites.insert(make_pair(key, value));
             }
             newData.position = this->position;
@@ -2610,7 +2610,7 @@ namespace DiscordCoreAPI {
         DefaultMessageNotificationLevel defaultMessageNotifications = DefaultMessageNotificationLevel::ALL_MESSAGES;
         ExplicitContentFilterLevel explicitContentFilter = ExplicitContentFilterLevel::DISABLED;
         vector<EmojiData> emoji{};
-        map<string, RoleData> roles{};
+        vector<RoleData> roles{};
         int systemChannelFlags = 0;
         MFALevel mfaLevel = MFALevel::NONE;
         bool large = false;

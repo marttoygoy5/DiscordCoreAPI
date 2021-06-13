@@ -49,7 +49,7 @@ namespace DiscordCoreAPI {
 			regex mentionRegExp("<@!\\d{18,}>");
 			regex idRegExp("\\d{18,}");
 			if (args->argumentsArray.size() == 0) {
-				userID = args->eventData.discordCoreClient->currentUser->data.id;
+				userID = args->eventData.getAuthorId();
 			}
 			else if (args->argumentsArray.at(0) != "") {
 				if (!regex_search(args->argumentsArray.at(0), mentionRegExp, regex_constants::match_flag_type::format_first_only) && !regex_search(args->argumentsArray.at(0), idRegExp, regex_constants::match_flag_type::format_first_only)) {
