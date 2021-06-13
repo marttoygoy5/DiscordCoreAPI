@@ -92,7 +92,7 @@ namespace DiscordCoreAPI {
 			while (this->pWebSocketReceiverAgent->getError(error)) {
 				cout << "DiscordCoreClient::terminate() Error 01: " << error.what() << endl << endl;
 			}
-			this->pWebSocketConnectionAgent->terminate();
+			this->pWebSocketConnectionAgent->~WebSocketConnectionAgent();
 			agent::wait(this->pWebSocketConnectionAgent);
 			while (this->pWebSocketReceiverAgent->getError(error)) {
 				cout << "DiscordCoreClient::terminate() Error 02: " << error.what() << endl << endl;
@@ -108,7 +108,7 @@ namespace DiscordCoreAPI {
 		unbounded_buffer<json> webSocketIncWorkloadBuffer;
 		unbounded_buffer<DiscordCoreInternal::WebSocketWorkload> webSocketWorkCollectionBuffer;
 		unbounded_buffer<exception> errorBuffer;
-		
+
 		void login() {
 			this->initialize(this->botToken).get();
 			this->pWebSocketReceiverAgent->start();
@@ -366,6 +366,34 @@ namespace DiscordCoreAPI {
 						this->eventManager->onInviteDeletionEvent(inviteDeletionData);
 						break;
 					}
+					case DiscordCoreInternal::WebSocketEventType::INTERACTION_CREATE:
+					{
+						InteractionData interactionData;
+						CommandData commandData;
+						DiscordCoreInternal::parseObject(workload.payLoad, &interactionData);
+						InputEventData eventData;
+						if (interactionData.type == InteractionType::ApplicationCommand) {
+							eventData.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
+							eventData.inputEventResponseType = InputEventResponseType::UNSET;
+							eventData.interactionData = interactionData;
+							eventData.discordCoreClient = this;
+							eventData.requesterId = interactionData.member.user.id;
+							OnInteractionCreationData eventCreationData;
+							eventCreationData.eventData = eventData;
+							this->eventManager->onInteractionCreationEvent(eventCreationData);
+						}
+						else if (interactionData.type == InteractionType::MessageComponent) {
+							eventData.eventType = InputEventType::BUTTON_INTERACTION;
+							eventData.inputEventResponseType = InputEventResponseType::DEFER_BUTTON_RESPONSE;
+							eventData.interactionData = interactionData;
+							eventData.discordCoreClient = this;
+							eventData.requesterId = interactionData.member.user.id;
+							OnInteractionCreationData eventCreationData;
+							eventCreationData.eventData = eventData;
+							this->eventManager->onInteractionCreationEvent(eventCreationData);
+						}
+						break;
+					}
 					case DiscordCoreInternal::WebSocketEventType::MESSAGE_CREATE:
 					{
 						MessageData messageData;
@@ -380,9 +408,9 @@ namespace DiscordCoreAPI {
 						eventData.inputEventResponseType = InputEventResponseType::REGULAR_MESSAGE_RESPONSE;
 						eventData.requesterId = messageData.author.id;
 						eventData.discordCoreClient = this;
-						OnInputEventCreationData eventCreationData;
+						OnInteractionCreationData eventCreationData;
 						eventCreationData.eventData = eventData;
-						this->eventManager->onInputEventCreationEvent(eventCreationData);
+						this->eventManager->onInteractionCreationEvent(eventCreationData);
 						break;
 					}
 					case DiscordCoreInternal::WebSocketEventType::MESSAGE_UPDATE:
@@ -437,32 +465,76 @@ namespace DiscordCoreAPI {
 						this->eventManager->onReactionRemoveEvent(reactionRemoveData);
 						break;
 					}
-					case DiscordCoreInternal::WebSocketEventType::INTERACTION_CREATE:
+					case DiscordCoreInternal::WebSocketEventType::REACTION_REMOVE_ALL:
 					{
-						InteractionData interactionData;
-						CommandData commandData;
-						DiscordCoreInternal::parseObject(workload.payLoad, &interactionData);
-						InputEventData eventData;
-						if (interactionData.type == InteractionType::ApplicationCommand) {
-							eventData.eventType = InputEventType::SLASH_COMMAND_INTERACTION;
-							eventData.inputEventResponseType = InputEventResponseType::UNSET;
-							eventData.interactionData = interactionData;
-							eventData.discordCoreClient = this;
-							eventData.requesterId = interactionData.member.user.id;
-							OnInputEventCreationData eventCreationData;
-							eventCreationData.eventData = eventData;
-							this->eventManager->onInputEventCreationEvent(eventCreationData);
-						}
-						else if (interactionData.type == InteractionType::MessageComponent) {
-							eventData.eventType = InputEventType::BUTTON_INTERACTION;
-							eventData.inputEventResponseType = InputEventResponseType::DEFER_BUTTON_RESPONSE;
-							eventData.interactionData = interactionData;
-							eventData.discordCoreClient = this;
-							eventData.requesterId = interactionData.member.user.id;
-							OnInputEventCreationData eventCreationData;
-							eventCreationData.eventData = eventData;
-							this->eventManager->onInputEventCreationEvent(eventCreationData);
-						}
+						OnReactionRemoveAllData reactionRemoveAllData;
+						reactionRemoveAllData.channelId = workload.payLoad.at("channel_id");
+						reactionRemoveAllData.guildId = workload.payLoad.at("guild_id");
+						reactionRemoveAllData.messageId = workload.payLoad.at("message_id");
+						reactionRemoveAllData.discordCoreClient = this;
+						this->eventManager->onReactionRemoveAllEvent(reactionRemoveAllData);
+						break;
+					}
+					case DiscordCoreInternal::WebSocketEventType::REACTION_REMOVE_EMOJI:
+					{
+						OnReactionRemoveEmojiData reactionRemoveEmojiData;
+						reactionRemoveEmojiData.channelId = workload.payLoad.at("channel_id");
+						reactionRemoveEmojiData.guildId = workload.payLoad.at("guild_id");
+						reactionRemoveEmojiData.messageId = workload.payLoad.at("message_id");
+						EmojiData emojiData;
+						DiscordCoreInternal::parseObject(workload.payLoad.at("emoji"), &emojiData);
+						reactionRemoveEmojiData.discordCoreClient = this;
+						reactionRemoveEmojiData.emoji = emojiData;
+						this->eventManager->onReactionRemoveEmojiEvent(reactionRemoveEmojiData);
+						break;
+					}
+					case DiscordCoreInternal::WebSocketEventType::PRESENCE_UPDATE:
+					{
+						OnPresenceUpdateData presenceUpdateData;
+						PresenceUpdateData newData;
+						DiscordCoreInternal::parseObject(workload.payLoad, &newData);
+						presenceUpdateData.presenceData = newData;
+						this->eventManager->onPresenceUpdateEvent(presenceUpdateData);
+						break;
+					}
+					case DiscordCoreInternal::WebSocketEventType::TYPING_START:
+					{
+						OnTypingStartData typingStartData;
+						TypingStartData newData;
+						DiscordCoreInternal::parseObject(workload.payLoad, &newData);
+						typingStartData.typingStartData = newData;
+						this->eventManager->onTypingStartEvent(typingStartData);
+						break;
+					}
+					case DiscordCoreInternal::WebSocketEventType::USER_UPDATE:
+					{
+						OnUserUpdateData userUpdateData;
+						UserData newData;
+						DiscordCoreInternal::parseObject(workload.payLoad, &newData);
+						User userOld = this->users->getUserAsync({ .userId = newData.id }).get();
+						User userNew(newData, this);
+						this->users->insertUserAsync(userNew).get();
+						userUpdateData.userNew = userNew;
+						userUpdateData.userOld = userOld;
+						this->eventManager->onUserUpdateEvent(userUpdateData);
+						break;
+					}
+					case DiscordCoreInternal::WebSocketEventType::VOICE_STATE_UPDATE:
+					{
+						OnVoiceStateUpdateData voiceStateUpdateData;
+						VoiceStateData newData;
+						DiscordCoreInternal::parseObject(workload.payLoad, &newData);
+						voiceStateUpdateData.voiceStateData = newData;
+						this->eventManager->onVoiceStateUpdateEvent(voiceStateUpdateData);
+						break;
+					}
+					case DiscordCoreInternal::WebSocketEventType::VOICE_SERVER_UPDATE:
+					{
+						OnVoiceServerUpdateData voiceServerUpdateData;
+						voiceServerUpdateData.token = workload.payLoad.at("token");
+						voiceServerUpdateData.guildId = workload.payLoad.at("guild_id");
+						voiceServerUpdateData.endpoint = workload.payLoad.at("endpoint");
+						this->eventManager->onVoiceServerUpdateEvent(voiceServerUpdateData);
 						break;
 					}
 					default:

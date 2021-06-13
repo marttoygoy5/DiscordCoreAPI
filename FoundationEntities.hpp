@@ -2910,6 +2910,14 @@ namespace DiscordCoreAPI {
         vector<AuditLogEntryData> auditLogEntries;
         vector<IntegrationData> integrations;
     };
+
+    struct TypingStartData {
+        string channelId;
+        string guildId;
+        string userId;
+        int timestamp;
+        GuildMemberData member;
+    };
 };
 
 #endif

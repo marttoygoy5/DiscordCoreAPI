@@ -89,9 +89,9 @@ namespace DiscordCoreAPI {
 					else if(args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION){
 						msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 						msgEmbed.setColor("FEFEFE");
-						msgEmbed.setDescription("READY TO GO! AWAY!");
+						msgEmbed.setDescription(args->argumentsArray.at(0));
 						msgEmbed.setTimeStamp(getTimeAndDate());
-						msgEmbed.setTitle("__**Welcome:**__");
+						msgEmbed.setTitle("__**Welcome to &:**__");
 						CreateDeferredInteractionResponseData newData01(args->eventData);
 						auto newEvent = InputEventHandler::respondToEvent(newData01).get();
 						CreateFollowUpMessageData newData(newEvent);
@@ -102,8 +102,28 @@ namespace DiscordCoreAPI {
 						msgEmbed.setColor("000000");
 						embeds.push_back(msgEmbed);
 						newData02.embeds = embeds;
-						newEvent = InputEventHandler::respondToEvent(newData02).get();
-						InputEventHandler::deleteInputEventResponse(newEvent, 5000).get();
+						//newEvent = InputEventHandler::respondToEvent(newData02).get();
+						///InputEventHandler::deleteInputEventResponse(newEvent, 5000).get();
+					}
+					else if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+						msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
+						msgEmbed.setColor("FEFEFE");
+						msgEmbed.setDescription(args->argumentsArray.at(0));
+						msgEmbed.setTimeStamp(getTimeAndDate());
+						msgEmbed.setTitle("__**Welcome to &:**__");
+						ReplyMessageData newData01(args->eventData);
+						newData01.embed = msgEmbed;
+						auto newEvent = InputEventHandler::respondToEvent(newData01).get();
+						/*
+						CreateFollowUpMessageData newData(newEvent);
+						newData.embeds.push_back(msgEmbed);
+						newEvent = InputEventHandler::respondToEvent(newData).get();
+						vector<EmbedData> embeds;
+						EditFollowUpMessageData newData02(newEvent);
+						msgEmbed.setColor("000000");
+						embeds.push_back(msgEmbed);
+						newData02.embeds = embeds;
+						*/
 					}
 				}
 				DeleteMessagesBulkData deleteData;

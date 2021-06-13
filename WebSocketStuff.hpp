@@ -36,8 +36,14 @@ namespace DiscordCoreInternal {
 		MESSAGE_DELETE_BULK = 19,
 		REACTION_ADD = 20,
 		REACTION_REMOVE = 21,
-		USER_UPDATE = 22,
-		INTERACTION_CREATE = 23
+		REACTION_REMOVE_ALL = 22,
+		REACTION_REMOVE_EMOJI = 23,
+		PRESENCE_UPDATE = 24,
+		TYPING_START = 25,
+		USER_UPDATE = 26,
+		VOICE_STATE_UPDATE = 27,
+		VOICE_SERVER_UPDATE = 28,
+		INTERACTION_CREATE = 29
 	};
 
 	struct WebSocketWorkload {
@@ -181,6 +187,11 @@ namespace DiscordCoreInternal {
 					sendWorkload(workload);
 				}
 
+				if (payload.at("t") == "INTERACTION_CREATE") {
+					workload.eventType = WebSocketEventType::INTERACTION_CREATE;
+					sendWorkload(workload);
+				}
+
 				if (payload.at("t") == "MESSAGE_CREATE") {
 					workload.eventType = WebSocketEventType::MESSAGE_CREATE;
 					sendWorkload(workload);
@@ -211,8 +222,38 @@ namespace DiscordCoreInternal {
 					sendWorkload(workload);
 				}
 
-				if (payload.at("t") == "INTERACTION_CREATE") {
-					workload.eventType = WebSocketEventType::INTERACTION_CREATE;
+				if (payload.at("t") == "MESSAGE_REACTION_REMOVE_ALL") {
+					workload.eventType = WebSocketEventType::REACTION_REMOVE_ALL;
+					sendWorkload(workload);
+				}
+
+				if (payload.at("t") == "MESSAGE_REACTION_REMOVE_EMOJI") {
+					workload.eventType = WebSocketEventType::REACTION_REMOVE_EMOJI;
+					sendWorkload(workload);
+				}
+
+				if (payload.at("t") == "PRESENCE_UPDATE") {
+					workload.eventType = WebSocketEventType::PRESENCE_UPDATE;
+					sendWorkload(workload);
+				}
+
+				if (payload.at("t") == "TYPING_START") {
+					workload.eventType = WebSocketEventType::TYPING_START;
+					sendWorkload(workload);
+				}
+
+				if (payload.at("t") == "USER_UPDATE") {
+					workload.eventType = WebSocketEventType::USER_UPDATE;
+					sendWorkload(workload);
+				}
+
+				if (payload.at("t") == "VOICE_STATE_UPDATE") {
+					workload.eventType = WebSocketEventType::VOICE_STATE_UPDATE;
+					sendWorkload(workload);
+				}
+
+				if (payload.at("t") == "VOICE_SERVER_UPDATE") {
+					workload.eventType = WebSocketEventType::VOICE_SERVER_UPDATE;
 					sendWorkload(workload);
 				}
 			}
@@ -247,11 +288,6 @@ namespace DiscordCoreInternal {
 				return true;
 			}
 			return false;
-		}
-
-		void terminate() {
-			done();
-			return;
 		}
 
 		~WebSocketConnectionAgent() {
@@ -300,7 +336,7 @@ namespace DiscordCoreInternal {
 		}
 
 		void cleanup() {
-			this->terminate();
+			done();
 
 			if (this->messageWriter != nullptr) {
 				this->messageWriter.DetachStream();

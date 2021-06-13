@@ -73,6 +73,38 @@ namespace DiscordCoreAPI {
         return;
     }
 
+    task<void> onInteractionCreation(OnInteractionCreationData dataPackage) {
+        apartment_context mainThread;
+        co_await resume_background();
+        try {
+            if (dataPackage.eventData.eventType != InputEventType::BUTTON_INTERACTION) {
+                CommandData commandData(dataPackage.eventData);
+                commandData.eventData = dataPackage.eventData;
+                CommandController::checkForAndRunCommands(commandData);
+            }
+            else {
+                ButtonInteractionData dataPackageNew;
+                dataPackageNew.applicationId = dataPackage.eventData.getApplicationId();
+                dataPackageNew.channelId = dataPackage.eventData.getChannelId();
+                dataPackageNew.customId = dataPackage.eventData.interactionData.customId;
+                dataPackageNew.guildId = dataPackage.eventData.getGuildId();
+                dataPackageNew.id = dataPackage.eventData.getInteractionId();
+                dataPackageNew.member = dataPackage.eventData.interactionData.member;
+                dataPackageNew.message = dataPackage.eventData.interactionData.message;
+                dataPackageNew.token = dataPackage.eventData.getInteractionToken();
+                dataPackageNew.type = dataPackage.eventData.interactionData.type;
+                dataPackageNew.user = dataPackage.eventData.interactionData.user;
+                send(Button::buttonInteractionBuffer, dataPackageNew);
+            }
+            co_await mainThread;
+            co_return;
+        }
+        catch (exception& e) {
+            cout << "onMessageCreated() Error: " << e.what() << endl << endl;
+            co_return;
+        }
+    }
+
     void onMessageCreation(OnMessageCreationData dataPackage) {
         dataPackage.message.discordCoreClient->messages->insertMessageAsync(dataPackage.message).get();
         return;
@@ -113,36 +145,30 @@ namespace DiscordCoreAPI {
         return;
     }
 
-    task<void> onInputEventCreation(OnInputEventCreationData dataPackage) {
-        apartment_context mainThread;
-        co_await resume_background();
-        try {
-            if (dataPackage.eventData.eventType != InputEventType::BUTTON_INTERACTION) {
-                CommandData commandData(dataPackage.eventData);
-                commandData.eventData = dataPackage.eventData;
-                CommandController::checkForAndRunCommands(commandData);
+    void onReactionRemoveAll(OnReactionRemoveAllData dataPackage) {
+        map<string, Reaction> reactionMap;
+        if (try_receive(DiscordCoreAPI::ReactionManagerAgent::cache, reactionMap)) {
+            for (auto [key, value] : reactionMap) {
+                if (key.find(dataPackage.messageId) != string::npos) {
+                    reactionMap.erase(key);
+                }
             }
-            else {
-                ButtonInteractionData dataPackageNew;
-                dataPackageNew.applicationId = dataPackage.eventData.getApplicationId();
-                dataPackageNew.channelId = dataPackage.eventData.getChannelId();
-                dataPackageNew.customId = dataPackage.eventData.interactionData.customId;
-                dataPackageNew.guildId = dataPackage.eventData.getGuildId();
-                dataPackageNew.id = dataPackage.eventData.getInteractionId();
-                dataPackageNew.member = dataPackage.eventData.interactionData.member;
-                dataPackageNew.message = dataPackage.eventData.interactionData.message;
-                dataPackageNew.token = dataPackage.eventData.getInteractionToken();
-                dataPackageNew.type = dataPackage.eventData.interactionData.type;
-                dataPackageNew.user = dataPackage.eventData.interactionData.user;
-                send(Button::buttonInteractionBuffer, dataPackageNew);
+            asend(DiscordCoreAPI::ReactionManagerAgent::cache, reactionMap);
+        }
+        return;
+    }
+
+    void onReactionRemoveEmoji(OnReactionRemoveEmojiData dataPackage) {
+        map<string, Reaction> reactionMap;
+        if (try_receive(DiscordCoreAPI::ReactionManagerAgent::cache, reactionMap)) {
+            for (auto [key, value] : reactionMap) {
+                if (key.find(dataPackage.messageId) != string::npos && key.find(dataPackage.emoji.name) != string::npos) {
+                    reactionMap.erase(key);
+                }
             }
-            co_await mainThread;
-            co_return;
+            asend(DiscordCoreAPI::ReactionManagerAgent::cache, reactionMap);
         }
-        catch (exception& e) {
-            cout << "onMessageCreated() Error: " << e.what() << endl << endl;
-            co_return;
-        }
+        return;
     }
 
     shared_ptr<DiscordCoreClient> DiscordCoreClient::finalSetup(string botToken) {
@@ -162,13 +188,15 @@ namespace DiscordCoreAPI {
             pDiscordCoreClient->eventManager->onRoleCreation(onRoleCreation);
             pDiscordCoreClient->eventManager->onRoleUpdate(onRoleUpdate);
             pDiscordCoreClient->eventManager->onRoleDeletion(onRoleDeletion);
+            pDiscordCoreClient->eventManager->onInteractionCreation(onInteractionCreation);
             pDiscordCoreClient->eventManager->onMessageCreation(onMessageCreation);
             pDiscordCoreClient->eventManager->onMessageUpdate(onMessageUpdate);
             pDiscordCoreClient->eventManager->onMessageDeletion(onMessageDeletion);
             pDiscordCoreClient->eventManager->onMessageDeleteBulk(onMessageDeleteBulk);
             pDiscordCoreClient->eventManager->onReactionAdd(onReactionAdd);
             pDiscordCoreClient->eventManager->onReactionRemove(onReactionRemove);
-            pDiscordCoreClient->eventManager->onInputEventCreation(onInputEventCreation);
+            pDiscordCoreClient->eventManager->onReactionRemoveAll(onReactionRemoveAll);
+            pDiscordCoreClient->eventManager->onReactionRemoveEmoji(onReactionRemoveEmoji);
             /*
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::help, DiscordCoreAPI::help.commandName);
             */

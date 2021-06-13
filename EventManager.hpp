@@ -89,6 +89,10 @@ namespace DiscordCoreAPI {
 		string code;
 	};
 
+	struct OnInteractionCreationData {
+		InputEventData eventData;
+	};
+
 	struct OnMessageCreationData {
 		Message message;
 	};
@@ -120,8 +124,42 @@ namespace DiscordCoreAPI {
 		ReactionRemoveData reactionRemoveData;
 	};
 
-	struct OnInputEventCreationData {
-		InputEventData eventData;
+	struct OnReactionRemoveAllData {
+		DiscordCoreClient* discordCoreClient{ nullptr };
+		string channelId;
+		string messageId;
+		string guildId;
+	};
+
+	struct OnReactionRemoveEmojiData {
+		DiscordCoreClient* discordCoreClient{ nullptr };
+		string channelId;
+		string guildId;
+		string messageId;
+		EmojiData emoji;
+	};
+
+	struct OnPresenceUpdateData {
+		PresenceUpdateData presenceData;
+	};
+
+	struct OnTypingStartData {
+		TypingStartData typingStartData;
+	};
+
+	struct OnUserUpdateData {
+		User userOld;
+		User userNew;
+	};
+
+	struct OnVoiceStateUpdateData{
+		VoiceStateData voiceStateData;
+	};
+
+	struct OnVoiceServerUpdateData {
+		string token;
+		string guildId;
+		string endpoint;
 	};
 
 	class EventManager  {
@@ -303,12 +341,68 @@ namespace DiscordCoreAPI {
 			onReactionRemoveEvent.remove(token);
 		}
 
-		event_token onInputEventCreation(delegate<OnInputEventCreationData> const& handler) {
-			return onInputEventCreationEvent.add(handler);
+		event_token onReactionRemoveAll(delegate<OnReactionRemoveAllData> const& handler) {
+			return onReactionRemoveAllEvent.add(handler);
 		}
 
-		void onInputEventCreation(event_token const& token) {
-			onInputEventCreationEvent.remove(token);
+		void onReactionRemoveAll(event_token const& token) {
+			onReactionRemoveAllEvent.remove(token);
+		}
+
+		event_token onReactionRemoveEmoji(delegate<OnReactionRemoveEmojiData> const& handler) {
+			return onReactionRemoveEmojiEvent.add(handler);
+		}
+
+		void onReactionRemoveEmoji(event_token const& token) {
+			onReactionRemoveEmojiEvent.remove(token);
+		}
+
+		event_token onPresenceUpdate(delegate<OnPresenceUpdateData> const& handler) {
+			return onPresenceUpdateEvent.add(handler);
+		}
+
+		void onPresenceUpdate(event_token const& token) {
+			onPresenceUpdateEvent.remove(token);
+		}
+
+		event_token onTypingStart(delegate<OnTypingStartData> const& handler) {
+			return onTypingStartEvent.add(handler);
+		}
+
+		void onTypingStar(event_token const& token) {
+			onTypingStartEvent.remove(token);
+		}
+
+		event_token onUserUpdate(delegate<OnUserUpdateData> const& handler) {
+			return onUserUpdateEvent.add(handler);
+		}
+
+		void onUserUpdate(event_token const& token) {
+			onUserUpdateEvent.remove(token);
+		}
+
+		event_token onVoiceStateUpdate(delegate<OnVoiceStateUpdateData> const& handler) {
+			return onVoiceStateUpdateEvent.add(handler);
+		}
+
+		void onVoiceStateUpdate(event_token const& token) {
+			onVoiceStateUpdateEvent.remove(token);
+		}
+
+		event_token onVoiceServerUpdate(delegate<OnVoiceServerUpdateData> const& handler) {
+			return onVoiceServerUpdateEvent.add(handler);
+		}
+
+		void onVoiceServerUpdate(event_token const& token) {
+			onVoiceServerUpdateEvent.remove(token);
+		}
+
+		event_token onInteractionCreation(delegate<OnInteractionCreationData> const& handler) {
+			return onInteractionCreationEvent.add(handler);
+		}
+
+		void onInteractionCreation(event_token const& token) {
+			onInteractionCreationEvent.remove(token);
 		}
 
 	protected:
@@ -359,7 +453,21 @@ namespace DiscordCoreAPI {
 
 		winrt::event <delegate<OnReactionRemoveData>> onReactionRemoveEvent;
 
-		winrt::event<delegate<OnInputEventCreationData>> onInputEventCreationEvent;
+		winrt::event <delegate<OnReactionRemoveAllData>> onReactionRemoveAllEvent;
+
+		winrt::event <delegate<OnReactionRemoveEmojiData>> onReactionRemoveEmojiEvent;
+
+		winrt::event <delegate<OnPresenceUpdateData>> onPresenceUpdateEvent;
+
+		winrt::event <delegate<OnTypingStartData>> onTypingStartEvent;
+
+		winrt::event <delegate<OnUserUpdateData>> onUserUpdateEvent;
+
+		winrt::event <delegate<OnVoiceStateUpdateData>> onVoiceStateUpdateEvent;
+
+		winrt::event <delegate<OnVoiceServerUpdateData>> onVoiceServerUpdateEvent;
+
+		winrt::event<delegate<OnInteractionCreationData>> onInteractionCreationEvent;
 		
 	};
 }

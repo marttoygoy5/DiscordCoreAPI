@@ -533,9 +533,7 @@ namespace DiscordCoreAPI {
             co_await resume_background();
             DiscordCoreInternal::CreateDeferredInteractionResponseData dataPackageNew;
             dataPackageNew.interactionId = dataPackage.interactionPackage.interactionId;
-            cout << "INTID:" << dataPackage.interactionPackage.interactionId << endl;
             dataPackageNew.interactionToken = dataPackage.interactionPackage.interactionToken;
-            cout << "INTTOKEN:" << dataPackage.interactionPackage.interactionToken << endl;
             dataPackageNew.type = (DiscordCoreInternal::InteractionCallbackType)dataPackage.type;
             dataPackageNew.agentResources = InteractionManager::agentResources;
             dataPackageNew.threadContext = InteractionManager::threads->at(6);

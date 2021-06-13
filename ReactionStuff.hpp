@@ -79,6 +79,8 @@ namespace DiscordCoreAPI {
 	};
 
 	class ReactionManagerAgent : public agent {
+	public:
+		static overwrite_buffer<map<string, Reaction>> cache;
 	protected:
 		friend class DiscordCoreClient;
 		friend class ReactionManager;
@@ -88,7 +90,6 @@ namespace DiscordCoreAPI {
 		static unbounded_buffer<DiscordCoreInternal::GetReactionData>* requestGetReactionBuffer;
 		static unbounded_buffer<Reaction>* outReactionBuffer;
 		static concurrent_queue<Reaction> reactionsToInsert;
-		static overwrite_buffer<map<string, Reaction>> cache;
 		unbounded_buffer<exception> errorBuffer;
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
