@@ -521,7 +521,7 @@ namespace  DiscordCoreInternal {
         string interactionToken;
         unsigned int timeDelayInMs;
     };
-    
+
     struct DeleteFollowUpMessageData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
@@ -625,7 +625,7 @@ namespace  DiscordCoreInternal {
     };
 
     enum class MessageType {
-        DEFAULT	= 0,
+        DEFAULT = 0,
         RECIPIENT_ADD = 1,
         RECIPIENT_REMOVE = 2,
         CALL = 3,
@@ -714,7 +714,7 @@ namespace  DiscordCoreInternal {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
     };
-    
+
     struct EditInteractionResponseData {
         ThreadContext threadContext;
         HttpAgentResources agentResources;
@@ -729,7 +729,7 @@ namespace  DiscordCoreInternal {
         InteractionCallbackType type;
         string interactionToken;
     };
-    
+
     struct InteractionResponseData {
         InteractionApplicationCommandCallbackData data;
         InteractionCallbackType type;
@@ -955,7 +955,7 @@ namespace  DiscordCoreInternal {
         string userId;
         GetUserDataType userType;
     };
-    
+
     struct FetchUserData {
         HttpAgentResources agentResources;
         ThreadContext threadContext;
@@ -1455,6 +1455,51 @@ namespace DiscordCoreAPI {
         else {
             return false;
         }
+    }
+
+    task<void> executeFunctionAfterTimePeriod(function<void()> const& lambda, unsigned int timeDelay) {
+        apartment_context mainThread;
+        co_await resume_background();
+        if (timeDelay > 0) {
+            DispatcherQueueOptions options{
+                sizeof(DispatcherQueueOptions),
+                DQTYPE_THREAD_DEDICATED,
+                DQTAT_COM_ASTA
+            };
+            ABI::Windows::System::IDispatcherQueueController* ptrNew{ nullptr };
+            check_hresult(CreateDispatcherQueueController(options, &ptrNew));
+            DispatcherQueueController queueController = { ptrNew, take_ownership_from_abi };
+            DispatcherQueue threadQueue = queueController.DispatcherQueue();
+            DispatcherQueueTimer timer = threadQueue.CreateTimer();
+            timer.Interval(chrono::milliseconds(timeDelay));
+            timer.Tick([timer, lambda](winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args) {
+                lambda();
+                timer.Stop();
+                return;
+                });
+            timer.Start();
+        }
+        else {
+            lambda();
+        }
+        co_await mainThread;
+        co_return;
+    }
+
+    task<Scheduler*> getThreadScheduler() {
+        co_await resume_background();
+        SchedulerPolicy policy;
+        policy.SetConcurrencyLimits(1, 1);
+        policy.SetPolicyValue(PolicyElementKey::ContextPriority, THREAD_PRIORITY_ABOVE_NORMAL);
+        policy.SetPolicyValue(PolicyElementKey::DynamicProgressFeedback, ProgressFeedbackEnabled);
+        policy.SetPolicyValue(PolicyElementKey::LocalContextCacheSize, 1);
+        policy.SetPolicyValue(PolicyElementKey::SchedulerKind, ThreadScheduler);
+        policy.SetPolicyValue(PolicyElementKey::SchedulingProtocol, EnhanceForwardProgress);
+        policy.SetPolicyValue(PolicyElementKey::TargetOversubscriptionFactor, 1);
+        policy.SetPolicyValue(PolicyElementKey::WinRTInitialization, InitializeWinRTAsMTA);
+        Scheduler* newScheduler = Scheduler::Create(policy);
+        newScheduler->Attach();
+        co_return newScheduler;
     }
 
     string getTimeAndDate() {
@@ -1993,7 +2038,7 @@ namespace DiscordCoreAPI {
             newData.nsfw = this->nsfw;
             newData.ownerId = this->ownerId;
             newData.parentId = this->parentId;
-            for (auto [key,value]: this->permissionOverwrites) {
+            for (auto [key, value] : this->permissionOverwrites) {
                 newData.permissionOverwrites.insert(make_pair(key, value));
             }
             newData.position = this->position;
@@ -2729,7 +2774,7 @@ namespace DiscordCoreAPI {
             return this->interactionData.token;
         }
         string getInteractionId() {
-            if (this->interactionData.id== "") {
+            if (this->interactionData.id == "") {
                 return this->messageData.interaction.id;
             }
             else {

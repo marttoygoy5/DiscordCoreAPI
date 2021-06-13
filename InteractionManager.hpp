@@ -268,7 +268,7 @@ namespace DiscordCoreAPI {
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_FOLLOW_UP_MESSAGE;
             workload.content = dataPackage.finalContent;
-            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, getThreadScheduler().get());
             send(requestAgent.workSubmissionBuffer, workload);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -295,7 +295,7 @@ namespace DiscordCoreAPI {
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::PATCH;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::PATCH_INTERACTION_RESPONSE;
             workload.content = dataPackage.finalContent;
-            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, getThreadScheduler().get());
             send(requestAgent.workSubmissionBuffer, workload);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -322,7 +322,7 @@ namespace DiscordCoreAPI {
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_INTERACTION_RESPONSE;
             workload.content = dataPackage.content;
-            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, getThreadScheduler().get());
             send(requestAgent.workSubmissionBuffer, workload);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -347,7 +347,7 @@ namespace DiscordCoreAPI {
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_DEFERRED_INTERACTION_RESPONSE;
             workload.content = dataPackage.content;
-            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, getThreadScheduler().get());
             send(requestAgent.workSubmissionBuffer, workload);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -372,7 +372,7 @@ namespace DiscordCoreAPI {
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::POST;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::POST_FOLLOW_UP_MESSAGE;
             workload.content = DiscordCoreInternal::getPostFollowUpMessagePayload(dataPackage);
-            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, getThreadScheduler().get());
             send(requestAgent.workSubmissionBuffer, workload);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -398,7 +398,7 @@ namespace DiscordCoreAPI {
             workload.relativePath = "/webhooks/" + dataPackage.applicationId + "/" + dataPackage.interactionToken + "/messages/@original";
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_INTERACTION;
-            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, getThreadScheduler().get());
             send(requestAgent.workSubmissionBuffer, workload);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -438,7 +438,7 @@ namespace DiscordCoreAPI {
             workload.relativePath = "/webhooks/" + dataPackage.applicationId + "/" + dataPackage.interactionToken + "/messages/" + dataPackage.messageId;
             workload.workloadClass = DiscordCoreInternal::HttpWorkloadClass::DELETED;
             workload.workloadType = DiscordCoreInternal::HttpWorkloadType::DELETE_FOLLOW_UP_MESSAGE;
-            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, dataPackage.threadContext.scheduler);
+            DiscordCoreInternal::HttpRequestAgent requestAgent(dataPackage.agentResources, getThreadScheduler().get());
             send(requestAgent.workSubmissionBuffer, workload);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -538,7 +538,7 @@ namespace DiscordCoreAPI {
             dataPackageNew.agentResources = InteractionManager::agentResources;
             dataPackageNew.threadContext = InteractionManager::threads->at(6);
             dataPackageNew.content = DiscordCoreInternal::getCreateDeferredInteractionResponsePayload(dataPackageNew);
-            InteractionManagerAgent requestAgent(InteractionManager::threads->at(5).scheduler);
+            InteractionManagerAgent requestAgent(getThreadScheduler().get());
             send(InteractionManagerAgent::requestPostDeferredInteractionResponseBuffer, dataPackageNew);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -561,7 +561,7 @@ namespace DiscordCoreAPI {
             dataPackageNew.type = (DiscordCoreInternal::InteractionCallbackType)dataPackage.type;
             dataPackageNew.threadContext = InteractionManager::threads->at(6);
             dataPackageNew.content = DiscordCoreInternal::getCreateInteractionResponsePayload(dataPackageNew);
-            InteractionManagerAgent requestAgent(InteractionManager::threads->at(5).scheduler);
+            InteractionManagerAgent requestAgent(getThreadScheduler().get());
             send(InteractionManagerAgent::requestPostInteractionResponseBuffer, dataPackageNew);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -595,7 +595,7 @@ namespace DiscordCoreAPI {
             dataPackageNew.threadContext = InteractionManager::threads->at(4);
             dataPackageNew.type = (DiscordCoreInternal::InteractionCallbackType)dataPackage.type;
             dataPackageNew.finalContent = DiscordCoreInternal::getEditInteractionResponsePayload(dataPackageNew);
-            InteractionManagerAgent requestAgent(InteractionManager::threads->at(3).scheduler);
+            InteractionManagerAgent requestAgent(getThreadScheduler().get());
             send(InteractionManagerAgent::requestPatchInteractionResponseBuffer, dataPackageNew);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -618,7 +618,7 @@ namespace DiscordCoreAPI {
             dataPackageNew.applicationId = dataPackage.interactionPackage.applicationId;;
             dataPackageNew.interactionToken = dataPackage.interactionPackage.interactionToken;
             dataPackageNew.timeDelayInMs = dataPackage.timeDelay;
-            InteractionManagerAgent requestAgent(InteractionManager::threads->at(7).scheduler);
+            InteractionManagerAgent requestAgent(getThreadScheduler().get());
             send(InteractionManagerAgent::requestDeleteInteractionResponseBuffer, dataPackageNew);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -651,7 +651,7 @@ namespace DiscordCoreAPI {
             dataPackageNew.interactionToken = dataPackage.interactionPackage.interactionToken;
             dataPackageNew.tts = dataPackage.tts;
             dataPackageNew.username = dataPackage.username;
-            InteractionManagerAgent requestAgent(InteractionManager::threads->at(5).scheduler);
+            InteractionManagerAgent requestAgent(getThreadScheduler().get());
             send(InteractionManagerAgent::requestPostFollowUpMessageBuffer, dataPackageNew);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -675,7 +675,7 @@ namespace DiscordCoreAPI {
             dataPackageNew.interactionToken = dataPackage.interactionPackage.interactionToken;
             dataPackageNew.timeDelayInMs = dataPackage.timeDelay;
             dataPackageNew.messageId = dataPackage.messagePackage.messageId;
-            InteractionManagerAgent requestAgent(InteractionManager::threads->at(7).scheduler);
+            InteractionManagerAgent requestAgent(getThreadScheduler().get());
             send(InteractionManagerAgent::requestDeleteFollowUpMessageBuffer, dataPackageNew);
             requestAgent.start();
             agent::wait(&requestAgent);
@@ -710,7 +710,7 @@ namespace DiscordCoreAPI {
             dataPackageNew.tts = dataPackage.tts;
             dataPackageNew.username = dataPackage.username;
             dataPackageNew.finalContent = DiscordCoreInternal::getEditFollowUpMessagePayload(dataPackageNew);
-            InteractionManagerAgent requestAgent(InteractionManager::threads->at(3).scheduler);
+            InteractionManagerAgent requestAgent(getThreadScheduler().get());
             send(InteractionManagerAgent::requestPatchFollowUpMessageBuffer, dataPackageNew);
             requestAgent.start();
             agent::wait(&requestAgent);

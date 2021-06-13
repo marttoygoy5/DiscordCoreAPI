@@ -162,7 +162,7 @@ namespace DiscordCoreAPI {
 			this->channels = new ChannelManager(agentResources, this->threadManager->getThreads().get(), this);
 			this->guilds = new GuildManager(agentResources, this->threadManager->getThreads().get(), (DiscordCoreClient*)this, this);
 			this->currentUser = new User(this->users->fetchCurrentUserAsync().get().data, this);
-			this->slashCommands = new SlashCommandManager(agentResources, this->threadManager->getThreads().get(), this->currentUser->data.id);
+			this->slashCommands = new SlashCommandManager(agentResources, this->threadManager->getThreads().get(),this->currentUser->data.id);
 			DatabaseManagerAgent::initialize(this->currentUser->data.id, this->threadManager->getThreads().get()->at(10).scheduler);
 			Button::initialize(this);
 			this->discordUser = new DiscordUser(this->currentUser->data.username, this->currentUser->data.id);
