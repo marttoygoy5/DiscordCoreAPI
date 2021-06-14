@@ -140,6 +140,11 @@ namespace DiscordCoreAPI {
                 permissionString = "0";
             }
             __int64 permissionsInteger = stoll(permissionString);
+            if (permissionsInteger & 1 << 3) {
+                for (unsigned int x = 0; x < 37; x += 1) {
+                    permissionsInteger |= 1 << x;
+                }
+            }
             stringstream sstream;
             if (permissionsInteger & (1 << 0)) {
                 sstream << "CREATE_INSTANT_INVITE" << endl;

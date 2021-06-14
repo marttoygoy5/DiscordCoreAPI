@@ -129,17 +129,22 @@ namespace DiscordCoreAPI {
 				string permissionString;
 				vector<Permissions> permisVector;
 				permisVector.push_back(Permissions::ADD_REACTIONS);
+				permisVector.push_back(Permissions::CONNECT);
 				permisVector.push_back(Permissions::ATTACH_FILES);
+				permisVector.push_back(Permissions::ADMINISTRATOR);
 				permissionString = DiscordCoreAPI::PermissionsConverter::addPermissionsToString(permissionString, permisVector);
 				DiscordCoreAPI::PermissionsConverter::displayPermissions(permissionString);
-				permisVector.erase(permisVector.begin() + 1);
+				permisVector.erase(permisVector.begin(), permisVector.begin() + 2);
+				for (auto value : permisVector) {
+					cout << "VALUE: " << to_string((int)value) << endl;
+				}
 				permissionString = DiscordCoreAPI::PermissionsConverter::removePermissionsFromString(permissionString, permisVector);
 				DiscordCoreAPI::PermissionsConverter::displayPermissions(permissionString);
 				DeleteMessagesBulkData deleteData;
 				deleteData.beforeThisId = args->eventData.getMessageId();
 				deleteData.channelId = args->eventData.getChannelId();
-				deleteData.deletePinned = false;
 				deleteData.limit = 100;
+				deleteData.deletePinned = false;
 				args->eventData.discordCoreClient->messages->deleteMessasgeBulkAsync(deleteData).get();
 
 				co_return;
