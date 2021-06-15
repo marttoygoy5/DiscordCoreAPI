@@ -18,7 +18,7 @@
 ```
 - Create a new class, within the `DiscordCoreAPI` namespace, derived from the `BaseFunction` class.
 - Set the `commandName` and `helpDescription` members of the class.
-- Add a `virtual task<void> execute()` function, with an argument of type `DiscordCoreAPI::BaseFunctionArguments*`.
+- Add a `virtual task<void> execute()` function with an argument of type `DiscordCoreAPI::BaseFunctionArguments*`.
 - Create an instance of this new class within the `DiscordCoreAPI` namespace.
 - CONTINUED FURTHER DOWN.
 
@@ -114,5 +114,5 @@ int main() {
 }
 ```
 - NOTE: By default, the format for triggering a command is `!COMMANDNAME = ARGUMENT1, ARGUMENT2, ARGUMENT3... ARGUMENT-N`. This prefix can be changed by changing the prefix value provided by your database.
-- Accessing command arguments is done by accessing the `argumentsArray` member of the `BaseFunctionArguments` structure that is passed through to the command, as can be seen in the first example block of code here.
-- Now, when someone enters `!commandName` or `!commandName = ARGUMENT1, ARGUMENT2... ARGUMENT-N`, this will invoke the execution of this command, and pass in the arguments! So, as for the example in the code here, this means that typing in `!test = test` into a Discord server that is shared with the bot, will result in the audit log data being printed out into the console, as well as some messages being bulk-deleted.
+- Accessing command arguments is done by accessing the `argumentsArray` member of the `BaseFunctionArguments` structure that is passed through to the command – as can be seen in the first example block of code here.
+- Now, when someone enters `!commandName` or `!commandName = ARGUMENT1, ARGUMENT2... ARGUMENT-N`, this will invoke the execution of this command and pass in the arguments! So, as for the example in the code here, this means that typing in `!test = test` into a Discord server that is shared with the bot will result in the audit log data being printed out into the console – as well as some messages being bulk-deleted.
