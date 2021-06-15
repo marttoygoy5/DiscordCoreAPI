@@ -15,14 +15,12 @@
 
 namespace DiscordCoreAPI {
 
-	class ChannelManager;
-
 	class Channel {
 	public:
 		ChannelData data;
 		DiscordCoreClient* discordCoreClient{ nullptr };
 
-		Channel() {}
+		Channel() {};
 
 	protected:
 		friend class DiscordCoreClient;

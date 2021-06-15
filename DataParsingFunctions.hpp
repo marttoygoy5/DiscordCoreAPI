@@ -158,7 +158,7 @@ namespace DiscordCoreInternal {
 
         if (jsonObjectData.contains("position") && !jsonObjectData.at("position").is_null()) {
             channelData.position = jsonObjectData.at("position").get<int>();
-        }        
+        }
 
         if (jsonObjectData.contains("permission_overwrites") && !jsonObjectData.at("permission_overwrites").is_null()) {
             map<string, DiscordCoreAPI::OverWriteData> newMap;
@@ -249,15 +249,11 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("thread_metadata") && !jsonObjectData.at("thread_metadata").is_null()) {
-            DiscordCoreAPI::ThreadMetadataData newValue = channelData.threadMetadata;
-            parseObject(jsonObjectData.at("thread_metadata"), &newValue);
-            channelData.threadMetadata = newValue;
+            parseObject(jsonObjectData.at("thread_metadata"), &channelData.threadMetadata);
         }
 
-        if (jsonObjectData.contains("thread_metadata") && !jsonObjectData.at("thread_metadata").is_null()) {
-            DiscordCoreAPI::ThreadMember newValue = channelData.member;
-            parseObject(jsonObjectData.at("thread_metadata"), &newValue);
-            channelData.member = newValue;
+        if (jsonObjectData.contains("thread_metadata") && !jsonObjectData.at("thread_metadata").is_null()){
+            parseObject(jsonObjectData.at("thread_metadata"), &channelData.member);
         }
 
         *pDataStructure = channelData;
@@ -313,9 +309,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("tags") && !jsonObjectData.at("tags").is_null()) {
-            DiscordCoreAPI::RoleTagsData newValue = roleData.tags;
-            parseObject(jsonObjectData.at("tags"), &newValue);
-            roleData.tags = newValue;
+            parseObject(jsonObjectData.at("tags"), &roleData.tags);
         }
 
         *pDataStructure = roleData;
@@ -325,9 +319,7 @@ namespace DiscordCoreInternal {
         DiscordCoreAPI::GuildMemberData guildMemberData = *pDataStructure;
 
         if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("user"), &newValue);
-            guildMemberData.user = newValue;
+            parseObject(jsonObjectData.at("user"), &guildMemberData.user);
         }
 
         if (jsonObjectData.contains("nick") && !jsonObjectData.at("nick").is_null()) {
@@ -337,7 +329,7 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
             vector<string> newArray;
             for (auto newValue: jsonObjectData.at("roles")) {
-                newArray.push_back(newValue);
+                newArray.push_back(newValue.get<string>());
             }
             guildMemberData.roles = newArray;
         }
@@ -395,9 +387,7 @@ namespace DiscordCoreInternal {
         }
         
         if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("user"), &newValue);
-            emojiData.user = newValue;
+            parseObject(jsonObjectData.at("user"), &emojiData.user);
         }
         
         if (jsonObjectData.contains("require_colons") && !jsonObjectData.at("require_colons").is_null()) {
@@ -435,9 +425,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("guild_member") && !jsonObjectData.at("guild_member").is_null()) {
-            DiscordCoreAPI::GuildMemberData newValue;
-            parseObject(jsonObjectData.at("guild_member"), &newValue);
-            voiceStateData.guildMember = newValue;
+            parseObject(jsonObjectData.at("guild_member"), &voiceStateData.guildMember);
         }
 
         if (jsonObjectData.contains("session_id") && !jsonObjectData.at("session_id").is_null()) {
@@ -487,11 +475,9 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("size") && !jsonObjectData.at("size").is_null()) {
-            int size[2];
-            size[0] = jsonObjectData.at("size").at(0);
-            size[1] = jsonObjectData.at("size").at(1);
-            partyData.size[0] = size[0];
-            partyData.size[1] = size[1];
+            partyData.size.resize(2);
+            partyData.size[0] = jsonObjectData.at("size").at(0).get<int>();
+            partyData.size[1] = jsonObjectData.at("size").at(1).get<int>();
         }
 
         *pDataStructure = partyData;
@@ -604,9 +590,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("timestamps") && !jsonObjectData.at("timestamps").is_null()) {
-            DiscordCoreAPI::TimestampData newValue;
-            parseObject(jsonObjectData.at("timestamps"), &newValue);
-            activityData.timestamps = newValue;
+            parseObject(jsonObjectData.at("timestamps"), &activityData.timestamps);
         }
 
         if (jsonObjectData.contains("application_id") && !jsonObjectData.at("application_id").is_null()) {
@@ -622,27 +606,19 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("emoji") && !jsonObjectData.at("emoji").is_null()) {
-            DiscordCoreAPI::EmojiData newValue = activityData.emoji;
-            parseObject(jsonObjectData.at("emoji"), &newValue);
-            activityData.emoji = newValue;
+            parseObject(jsonObjectData.at("emoji"), &activityData.emoji);
         }
 
         if (jsonObjectData.contains("party") && !jsonObjectData.at("party").is_null()) {
-            DiscordCoreAPI::PartyData newValue;
-            parseObject(jsonObjectData.at("party"), &newValue);
-            activityData.party = newValue;
+            parseObject(jsonObjectData.at("party"), &activityData.party);
         }
 
         if (jsonObjectData.contains("assets") && !jsonObjectData.at("assets").is_null()) {
-            DiscordCoreAPI::AssetsData newValue;
-            parseObject(jsonObjectData.at("assets"), &newValue);
-            activityData.assets = newValue;
+            parseObject(jsonObjectData.at("assets"), &activityData.assets);
         }
 
         if (jsonObjectData.contains("secrets") && !jsonObjectData.at("secrets").is_null()) {
-            DiscordCoreAPI::SecretsData newValue;
-            parseObject(jsonObjectData.at("secrets"), &newValue);
-            activityData.secrets = newValue;
+            parseObject(jsonObjectData.at("secrets"), &activityData.secrets);
         }
 
         if (jsonObjectData.contains("instance") && !jsonObjectData.at("instance").is_null()) {
@@ -670,9 +646,7 @@ namespace DiscordCoreInternal {
         DiscordCoreAPI::PresenceUpdateData presenceUpdateData = *pDataStructure;
 
         if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("user"), &newValue);
-            presenceUpdateData.user = newValue;
+            parseObject(jsonObjectData.at("user"), &presenceUpdateData.user);
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
@@ -694,9 +668,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("client_status") && !jsonObjectData.at("client_status").is_null()) {
-            DiscordCoreAPI::ClientStatusData newValue;
-            parseObject(jsonObjectData.at("client_status"), &newValue);
-            presenceUpdateData.clientStatus = newValue;
+            parseObject(jsonObjectData.at("client_status"), &presenceUpdateData.clientStatus);
         }
 
         *pDataStructure = presenceUpdateData;
@@ -842,7 +814,7 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("features") && !jsonObjectData.at("features").is_null()) {
             vector<string> newVector;
             for (auto newValue : jsonObjectData.at("features")) {
-                newVector.push_back(newValue);
+                newVector.push_back(newValue.get<string>());
             }
             guildData.features = newVector;
         }
@@ -994,9 +966,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("welcome_screen") && !jsonObjectData.at("welcome_screen").is_null()) {
-            DiscordCoreAPI::WelcomeScreenData newValue = guildData.welcomeScreen;
-            parseObject(jsonObjectData.at("welcome_screen"), &newValue);
-            guildData.welcomeScreen = newValue;
+            parseObject(jsonObjectData.at("welcome_screen"), &guildData.welcomeScreen);
         }
 
         *pDataStructure = guildData;
@@ -1230,39 +1200,27 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("footer") && !jsonObjectData.at("footer").is_null()) {
-            DiscordCoreAPI::EmbedFooterData newValue;
-            parseObject(jsonObjectData.at("footer"), &newValue);
-            embedData.footer = newValue;
+            parseObject(jsonObjectData.at("footer"), &embedData.footer);
         }
 
         if (jsonObjectData.contains("image") && !jsonObjectData.at("image").is_null()) {
-            DiscordCoreAPI::EmbedImageData newValue;
-            parseObject(jsonObjectData.at("image"), &newValue);
-            embedData.image = newValue;
+            parseObject(jsonObjectData.at("image"), &embedData.image);
         }
 
         if (jsonObjectData.contains("provider") && !jsonObjectData.at("provider").is_null()) {
-            DiscordCoreAPI::EmbedProviderData newValue;
-            parseObject(jsonObjectData.at("provider"), &newValue);
-            embedData.provider = newValue;
+            parseObject(jsonObjectData.at("provider"), &embedData.provider);
         }
 
         if (jsonObjectData.contains("thumbnail") && !jsonObjectData.at("thumbnail").is_null()) {
-            DiscordCoreAPI::EmbedThumbnailData newValue;
-            parseObject(jsonObjectData.at("thumbnail"), &newValue);
-            embedData.thumbnail = newValue;
+            parseObject(jsonObjectData.at("thumbnail"), &embedData.thumbnail);
         }
 
         if (jsonObjectData.contains("video") && !jsonObjectData.at("video").is_null()) {
-            DiscordCoreAPI::EmbedVideoData newValue;
-            parseObject(jsonObjectData.at("video"), &newValue);
-            embedData.video = newValue;
+            parseObject(jsonObjectData.at("video"), &embedData.video);
         }
 
         if (jsonObjectData.contains("author") && !jsonObjectData.at("author").is_null()) {
-            DiscordCoreAPI::EmbedAuthorData newValue;
-            parseObject(jsonObjectData.at("author"), &newValue);
-            embedData.author = newValue;
+            parseObject(jsonObjectData.at("author"), &embedData.author);
         }
 
         if (jsonObjectData.contains("fields") && !jsonObjectData.at("fields").is_null()) {
@@ -1290,9 +1248,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("emoji") && !jsonObjectData.at("emoji").is_null()) {
-            DiscordCoreAPI::EmojiData newValue;
-            parseObject(jsonObjectData.at("emoji"), &newValue);
-            reactionData.emoji = newValue;
+            parseObject(jsonObjectData.at("emoji"), &reactionData.emoji);
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
@@ -1312,9 +1268,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
-            DiscordCoreAPI::GuildMemberData newValue;
-            parseObject(jsonObjectData.at("member"), &newValue);
-            reactionData.member = newValue;
+            parseObject(jsonObjectData.at("member"), &reactionData.member);
         }
 
         *pDataStructure = reactionData;
@@ -1348,15 +1302,13 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("permissions") && !jsonObjectData.at("permissions").is_null()) {
             vector<string> newVector;
             for (auto newValue : jsonObjectData.at("permissions")) {
-                newVector.push_back(newValue);
+                newVector.push_back(newValue.get<string>());
             }
             teamMemberObjectData.permissions = newVector;
         }
 
         if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("user"), &newValue);
-            teamMemberObjectData.user = newValue;
+            parseObject(jsonObjectData.at("user"), &teamMemberObjectData.user);
         }
 
         *pDataStructure = teamMemberObjectData;
@@ -1412,7 +1364,7 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("rpc_origins") && !jsonObjectData.at("rpc_origins").is_null()) {
             vector<string> newVector;
             for (auto newValue: jsonObjectData.at("rpc_origins")) {
-                newVector.push_back(newValue);
+                newVector.push_back(newValue.get<string>());
             }
             applicationData.rpcOrigins = newVector;
         }
@@ -1434,9 +1386,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("owner") && !jsonObjectData.at("owner").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("owner"), &newValue);
-            applicationData.owner = newValue;
+            parseObject(jsonObjectData.at("owner"), &applicationData.owner);
         }
 
         if (jsonObjectData.contains("summary") && !jsonObjectData.at("summary").is_null()) {
@@ -1448,9 +1398,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("team") && !jsonObjectData.at("team").is_null()) {
-            DiscordCoreAPI::TeamObjectData newValue;
-            parseObject(jsonObjectData.at("team"), &newValue);
-            applicationData.team = newValue;
+            parseObject(jsonObjectData.at("team"), &applicationData.team);
         }
 
         if (jsonObjectData.contains("guild_id") && !jsonObjectData.at("guild_id").is_null()) {
@@ -1598,7 +1546,7 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("parse") && !jsonObjectData.at("parse").is_null()) {
             vector<string> newVector;
             for (auto newValue: jsonObjectData.at("parse")) {
-                newVector.push_back(newValue);
+                newVector.push_back(newValue.get<string>());
             }
             allowedMentionsData.parse = newVector;
         }
@@ -1606,7 +1554,7 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("roles") && !jsonObjectData.at("roles").is_null()) {
             vector<string> newVector;
             for (auto newValue: jsonObjectData.at("roles")) {
-                newVector.push_back(newValue);
+                newVector.push_back(newValue.get<string>());
             }
             allowedMentionsData.roles = newVector;
         }
@@ -1614,7 +1562,7 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("users") && !jsonObjectData.at("users").is_null()) {
             vector<string> newVector;
             for (auto newValue: jsonObjectData.at("users")) {
-                newVector.push_back(newValue);
+                newVector.push_back(newValue.get<string>());
             }
             allowedMentionsData.users = newVector;
         }
@@ -1652,9 +1600,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("allowed_mentions") && !jsonObjectData.at("allowed_mentions").is_null()) {
-            DiscordCoreAPI::AllowedMentionsData newValue;
-            parseObject(jsonObjectData.at("allowed_mentions"), &newValue);
-            interactionAppCommandCallbackData.allowedMentions = newValue;
+            parseObject(jsonObjectData.at("allowed_mentions"), &interactionAppCommandCallbackData.allowedMentions);
         }
 
         *pDataStructure = interactionAppCommandCallbackData;
@@ -1668,9 +1614,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("data") && !jsonObjectData.at("data").is_null()) {
-            DiscordCoreAPI::InteractionApplicationCommandCallbackData newValue;
-            parseObject(jsonObjectData.at("data"), &newValue);
-            interactionData.data = newValue;
+            parseObject(jsonObjectData.at("data"), &interactionData.data);
         }
 
         *pDataStructure = interactionData;
@@ -1696,15 +1640,11 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
-            DiscordCoreAPI::GuildMemberData newValue;
-            parseObject(jsonObjectData.at("member"), &newValue);
-            reactionAddData.member = newValue;
+            parseObject(jsonObjectData.at("member"), &reactionAddData.member);
         }
 
         if (jsonObjectData.contains("emoji") && !jsonObjectData.at("emoji").is_null()) {
-            DiscordCoreAPI::EmojiData newValue;
-            parseObject(jsonObjectData.at("emoji"), &newValue);
-            reactionAddData.emoji = newValue;
+            parseObject(jsonObjectData.at("emoji"), &reactionAddData.emoji);
         }
 
         *pDataStructure = reactionAddData;
@@ -1735,9 +1675,7 @@ namespace DiscordCoreInternal {
                 }
 
                 if (newValue.contains("emoji") && !newValue.at("emoji").is_null()) {
-                    DiscordCoreAPI::EmojiData newData02;
-                    parseObject(newValue.at("emoji"), &newData02);
-                    newData.emoji = newData02;
+                    parseObject(newValue.at("emoji"), &newData.emoji);
                 }
 
                 if (newValue.contains("url") && !newValue.at("url").is_null()) {
@@ -1771,9 +1709,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("user"), &newValue);
-            messageInteractionData.user = newValue;
+            parseObject(jsonObjectData.at("user"), &messageInteractionData.user);
         }
 
         *pDataStructure = messageInteractionData;
@@ -1799,15 +1735,11 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("author") && !jsonObjectData.at("author").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("author"), &newValue);
-            messageData.author = newValue;
+            parseObject(jsonObjectData.at("author"), &messageData.author);
         }
 
         if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
-            DiscordCoreAPI::GuildMemberData newValue;
-            parseObject(jsonObjectData.at("member"), &newValue);
-            messageData.member = newValue;
+            parseObject(jsonObjectData.at("member"), &messageData.member);
         }
 
         if (jsonObjectData.contains("timestamp") && !jsonObjectData.at("timestamp").is_null()) {
@@ -1839,7 +1771,7 @@ namespace DiscordCoreInternal {
         if (jsonObjectData.contains("mention_roles") && !jsonObjectData.at("mention_roles").is_null()) {
             vector<string> newVector;
             for (auto newValue: jsonObjectData.at("mention_roles")) {
-                newVector.push_back(newValue);
+                newVector.push_back(newValue.get<string>());
             }
             messageData.mentionRoles = newVector;
         }
@@ -1901,21 +1833,15 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("activity") && !jsonObjectData.at("activity").is_null()) {
-            DiscordCoreAPI::MessageActivityData newValue;
-            parseObject(jsonObjectData.at("activity"), &newValue);
-            messageData.activity = newValue;
+            parseObject(jsonObjectData.at("activity"), &messageData.activity);
         }
 
         if (jsonObjectData.contains("application") && !jsonObjectData.at("application").is_null()) {
-            DiscordCoreAPI::ApplicationData newValue;
-            parseObject(jsonObjectData.at("application"), &newValue);
-            messageData.application = newValue;
+            parseObject(jsonObjectData.at("application"), &messageData.application);
         }
 
         if (jsonObjectData.contains("message_reference") && !jsonObjectData.at("message_reference").is_null()) {
-            DiscordCoreAPI::MessageReferenceData newValue;
-            parseObject(jsonObjectData.at("message_reference"), &newValue);
-            messageData.messageReference = newValue;
+            parseObject(jsonObjectData.at("message_reference"), &messageData.messageReference);
         }
 
         if (jsonObjectData.contains("flags") && !jsonObjectData.at("flags").is_null()) {
@@ -1933,9 +1859,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("interaction") && !jsonObjectData.at("interaction").is_null()) {
-            DiscordCoreAPI::MessageInteractionData newValue;
-            parseObject(jsonObjectData.at("interaction"), &newValue);
-            messageData.interaction = newValue;
+            parseObject(jsonObjectData.at("interaction"), &messageData.interaction);
         }
 
         if (jsonObjectData.contains("components") && !jsonObjectData.at("components").is_null()) {
@@ -2110,7 +2034,7 @@ namespace DiscordCoreInternal {
             if (newValue.contains("users") && !newValue.at("users").is_null()) {
                 auto newMap = newValue.at("users").get<map<string, json>>();
                 map<string, DiscordCoreAPI::UserData> newerMap;
-                for (const auto& [key, newValue] : newMap) {
+                for (const auto& [key, newValue] : newMap){
                     DiscordCoreAPI::UserData newData;
                     parseObject(newValue, &newData);
                     newerMap.insert(make_pair(key, newData));
@@ -2191,36 +2115,30 @@ namespace DiscordCoreInternal {
         DiscordCoreAPI::InteractionData interactionData = *pDataStructure;
 
         if (jsonObjectData.contains("data") && !jsonObjectData.at("data").is_null()) {
-            DiscordCoreAPI::ApplicationCommandInteractionData newValue;
-            parseObject(jsonObjectData.at("data"), &newValue);
-            interactionData.data = newValue;
+            parseObject(jsonObjectData.at("data"), &interactionData.data);
             if (jsonObjectData.at("data").contains("custom_id") && !jsonObjectData.at("data").at("custom_id").is_null()) {
                 interactionData.customId = jsonObjectData.at("data").at("custom_id").get<string>();
             }
         }
 
         if (jsonObjectData.contains("data") && !jsonObjectData.at("data").is_null()) {
-            interactionData.dataRaw = jsonObjectData.at("data");
+            interactionData.dataRaw = jsonObjectData.at("data").get<json>();
         }
 
         if (jsonObjectData.contains("type") && !jsonObjectData.at("type").is_null()) {
             interactionData.type = jsonObjectData.at("type").get<DiscordCoreAPI::InteractionType>();
-        }        
+        }
 
         if (jsonObjectData.contains("token") && !jsonObjectData.at("token").is_null()) {
             interactionData.token = jsonObjectData.at("token").get<string>();
         }
 
         if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
-            DiscordCoreAPI::GuildMemberData newValue;
-            parseObject(jsonObjectData.at("member"), &newValue);
-            interactionData.member = newValue;
+            parseObject(jsonObjectData.at("member"), &interactionData.member);
             interactionData.user = interactionData.member.user;
         }
         else if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("user"), &newValue);
-            interactionData.user = newValue;
+            parseObject(jsonObjectData.at("user"), &interactionData.user);
         }
         
         if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
@@ -2232,9 +2150,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("message") && !jsonObjectData.at("message").is_null()) {
-            DiscordCoreAPI::MessageData newValue;
-            parseObject(jsonObjectData.at("message"), &newValue);
-            interactionData.message = newValue;
+            parseObject(jsonObjectData.at("message"), &interactionData.message);
         }
 
         if (jsonObjectData.contains("version") && !jsonObjectData.at("version").is_null()) {
@@ -2273,9 +2189,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("emoji") && !jsonObjectData.at("emoji").is_null()) {
-            DiscordCoreAPI::EmojiData newData;
-            parseObject(jsonObjectData.at("emoji"), &newData);
-            reactionRemoveData.emoji = newData;
+            parseObject(jsonObjectData.at("emoji"), &reactionRemoveData.emoji);
         }
 
         *pDataStructure = reactionRemoveData;
@@ -2301,9 +2215,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("channel_id") && !jsonObjectData.at("channel_id").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("user"), &newValue);
-            webhookData.user = newValue;
+            parseObject(jsonObjectData.at("user"), &webhookData.user);
         }
 
         if (jsonObjectData.contains("name") && !jsonObjectData.at("name").is_null()) {
@@ -2323,15 +2235,11 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("source_guild") && !jsonObjectData.at("source_guild").is_null()) {
-            DiscordCoreAPI::GuildData newValue;
-            parseObject(jsonObjectData.at("source_guild"), &newValue);
-            webhookData.sourceGuild = newValue;
+            parseObject(jsonObjectData.at("source_guild"), &webhookData.sourceGuild);
         }
 
-        if (jsonObjectData.contains("source_channel") && !jsonObjectData.at("source_channel").is_null()) {
-            DiscordCoreAPI::ChannelData newValue;
-            parseObject(jsonObjectData.at("source_channel"), &newValue);
-            webhookData.sourceChannel = newValue;
+        if (jsonObjectData.contains("source_channel") && !jsonObjectData.at("source_channel").is_null()){
+            parseObject(jsonObjectData.at("source_channel"), &webhookData.sourceChannel);
         }
 
         if (jsonObjectData.contains("url") && !jsonObjectData.at("url").is_null()) {
@@ -2427,9 +2335,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("options") && !jsonObjectData.at("options").is_null()) {
-            DiscordCoreAPI::AuditLogEntryInfoData newValue;
-            parseObject(jsonObjectData.at("options"), &newValue);
-            entryData.options = newValue;
+            parseObject(jsonObjectData.at("options"), &entryData.options);
         }
 
         if (jsonObjectData.contains("reason") && !jsonObjectData.at("reason").is_null()) {
@@ -2493,15 +2399,11 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("user") && !jsonObjectData.at("user").is_null()) {
-            DiscordCoreAPI::UserData newValue;
-            parseObject(jsonObjectData.at("user"), &newValue);
-            integrationData.user = newValue;
+            parseObject(jsonObjectData.at("user"), &integrationData.user);
         }
 
         if (jsonObjectData.contains("account") && !jsonObjectData.at("account").is_null()) {
-            DiscordCoreAPI::AccountData newValue;
-            parseObject(jsonObjectData.at("account"), &newValue);
-            integrationData.account = newValue;
+            parseObject(jsonObjectData.at("account"), &integrationData.account);
         }
 
         if (jsonObjectData.contains("synced_at") && !jsonObjectData.at("synced_at").is_null()) {
@@ -2517,9 +2419,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("application") && !jsonObjectData.at("application").is_null()) {
-            DiscordCoreAPI::ApplicationData newValue;
-            parseObject(jsonObjectData.at("application"), &newValue);
-            integrationData.application = newValue;
+            parseObject(jsonObjectData.at("application"), &integrationData.application);
         }
 
         *pDataStructure = integrationData;
@@ -2583,9 +2483,7 @@ namespace DiscordCoreInternal {
         }
 
         if (jsonObjectData.contains("member") && !jsonObjectData.at("member").is_null()) {
-            DiscordCoreAPI::GuildMemberData newData;
-            parseObject(jsonObjectData.at("member"), &newData);
-            typingStartData.member = newData;
+            parseObject(jsonObjectData.at("member"), &typingStartData.member);
         }
 
         if (jsonObjectData.contains("user_id") && !jsonObjectData.at("user_id").is_null()) {

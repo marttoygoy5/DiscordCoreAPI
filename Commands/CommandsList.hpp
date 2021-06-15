@@ -9,12 +9,10 @@
 #define _COMMANDS_LIST_
 
 #include "Commands.hpp"
-/*
-#include "Help.hpp"
-*/
 #include "AddShopItem.hpp"
 #include "AddShopRole.hpp"
 #include "Balance.hpp"
+#include "Help.hpp"
 #include "RegisterSlashCommands.hpp"
 #include "Shop.hpp"
 #include "Test.hpp"

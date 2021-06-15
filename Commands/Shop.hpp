@@ -18,7 +18,7 @@ namespace DiscordCoreAPI {
 	public:
 		Shop() {
 			this->commandName = "shop";
-			this->helpDescription = "__**Shop:**__ Enter !shop or /shop!";
+			this->helpDescription = "__**Shop Usage:**__ Enter !shop or /shop!";
 		}
 
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {

@@ -18,7 +18,7 @@ namespace DiscordCoreAPI {
 	public:
 		AddShopItem() {
 			this->commandName = "addshopitem";
-			this->helpDescription = "__**Add Shop Item:**__ Enter !addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI, or /addshopitem ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI.";
+			this->helpDescription = "__**Add Shop Item Usage:**__ Enter !addshopitem = ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI, or /addshopitem ITEMNAME, SELFMOD, OPPMOD, ITEMCOST, EMOJI.";
 		}
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {

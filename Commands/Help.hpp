@@ -18,46 +18,119 @@ namespace DiscordCoreAPI {
 	public:
 		Help() {
 			this->commandName = "help";
-			this->helpDescription = "__**Help:**__ Enter !help or /help for help!";
+			this->helpDescription = "__**Help Usage:**__ Enter !help or /help for help!";
 		}
 
 		virtual  task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {
+				Channel channel = args->eventData.discordCoreClient->channels->getChannelAsync({ .channelId = args->eventData.getChannelId() }).get();
 
-				GetAuditLogData dataPackage;
-				dataPackage.actionType = DiscordCoreAPI::AuditLogEvent::ROLE_CREATE;
-				dataPackage.guildId = args->eventData.getGuildId();
-				dataPackage.limit = 25;
-				dataPackage.userId = args->eventData.getAuthorId();
-				AuditLogData auditLogData = args->eventData.discordCoreClient->guilds->getAuditLogDataAsync(dataPackage).get();
-				InputEventResponseData dataPackage02(InputEventResponseType::INTERACTION_RESPONSE_DEFERRED);
-				dataPackage02.applicationId = args->eventData.getApplicationId();
-				dataPackage02.channelId = args->eventData.getChannelId();
-				dataPackage02.interactionToken = args->eventData.getInteractionToken();
-				dataPackage02.interactionId = args->eventData.getInteractionId();
-				dataPackage02.type = InteractionCallbackType::DeferredChannelMessageWithSource;
-				EmbedData embed01;
-				embed01.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
-				embed01.setColor("FEFEFE");
-				embed01.setDescription("TEST DESCRIPTION!");
-				embed01.setTimeStamp(getTimeAndDate());
-				embed01.setFooter("HERE IT IS");
-				dataPackage02.embeds.push_back(embed01);
-				InputEventData newData = InputEventHandler::respondToEvent(dataPackage02).get();
-				dataPackage02.inputEventResponseType = InputEventResponseType::INTERACTION_FOLLOW_UP_MESSAGE;
-				dataPackage02.type = InteractionCallbackType::ChannelMessageWithSource;
-				InputEventData newData2 = InputEventHandler::respondToEvent(dataPackage02).get();
+				if (channel.data.type != ChannelType::DM) {
+					InputEventHandler::deleteInputEventResponse(args->eventData).get();
+				}
 
-				InputEventHandler::deleteInputEventResponse(newData2, 5000).get();
-				for (auto value : auditLogData.auditLogEntries) {
-					cout << "ID: " << value.id << endl;
-					cout << "TARGET ID: " << value.targetId << endl;
-					for (auto value2 : value.changes) {
-						cout << value2.newValueString << endl;
-						cout << value2.oldValueString << endl;
+				Guild guild = args->eventData.discordCoreClient->guilds->getGuildAsync({ .guildId = args->eventData.getGuildId() }).get();
+				DiscordGuild discordGuild(guild.data);
+
+				EmbedData errorMsgEmbed;
+				errorMsgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
+				errorMsgEmbed.setColor(discordGuild.data.borderColor);
+				errorMsgEmbed.setTimeStamp(getTimeAndDate());
+
+				if (args->argumentsArray.size() == 0){
+					string msgString = "------\n**Please enter a proper bot-username! (!help = BOTUSERNAME)**\n------";
+					errorMsgEmbed.setDescription(msgString);
+					errorMsgEmbed.setTitle("__**Missing Or Invalid Arguments:**__");
+					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+						InputEventData event;
+						ReplyMessageData responseData(args->eventData);
+						responseData.embed = errorMsgEmbed;
+						event = InputEventHandler::respondToEvent(responseData).get();
+						InputEventHandler::deleteInputEventResponse(event, 20000).get();
+					}
+					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+						InputEventData event;
+						CreateInteractionResponseData responseData(args->eventData);
+						responseData.data.embeds.push_back(errorMsgEmbed);
+						event = InputEventHandler::respondToEvent(responseData).get();
+						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
+						event.interactionData.token = args->eventData.interactionData.token;
+						InputEventHandler::deleteInputEventResponse(event, 20000).get();
+					}
+					co_return;
+				}
+				else if (args->argumentsArray.size() == 1) {
+					if (args->argumentsArray.at(0) != args->eventData.discordCoreClient->currentUser->data.username) {
+						cout << args->eventData.discordCoreClient->currentUser->data.username << endl;
+						co_return;
+					}
+					EmbedData msgEmbed;
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
+					msgEmbed.setColor(discordGuild.data.borderColor);
+					msgEmbed.setTimeStamp(getTimeAndDate());
+
+					msgEmbed.setTitle("__**" + args->eventData.discordCoreClient->currentUser->data.username + " Help:**__");
+
+					string msgString = "__**Help Usage:**__ Enter !help = BOTUSERNAME, COMMANDNAME, where the command names are as follows:\n";
+					for (auto value : CommandController::commands) {
+						msgString += value.first;
+						if (value != *CommandController::commands.end()) {
+							msgString += ", ";
+						}
+					}
+					msgEmbed.setDescription(msgString);
+
+					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+						InputEventData event;
+						ReplyMessageData responseData(args->eventData);
+						responseData.embed = msgEmbed;
+						event = InputEventHandler::respondToEvent(responseData).get();
+					}
+					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+						InputEventData event;
+						CreateInteractionResponseData responseData(args->eventData);
+						responseData.data.embeds.push_back(msgEmbed);
+						event = InputEventHandler::respondToEvent(responseData).get();
+						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
+						event.interactionData.token = args->eventData.interactionData.token;
 					}
 				}
-				args->eventData.discordCoreClient->messages->deleteMessasgeBulkAsync({ .deletePinned = false,.channelId = args->eventData.getChannelId(),.limit = 25, .beforeThisId = args->eventData.getMessageId() }).get();
+				else if (args->argumentsArray.size() == 2) {
+					if (args->argumentsArray.at(0) != args->eventData.discordCoreClient->currentUser->data.username) {
+						cout << args->eventData.discordCoreClient->currentUser->data.username << endl;
+						co_return;
+					}
+					EmbedData msgEmbed;
+					msgEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
+					msgEmbed.setColor(discordGuild.data.borderColor);
+					msgEmbed.setTimeStamp(getTimeAndDate());
+
+					msgEmbed.setTitle("__**" + args->eventData.discordCoreClient->currentUser->data.username + " Help:**__");
+
+					string msgString;
+					if (CommandController::commands.contains(args->argumentsArray.at(1))) {
+						msgString = CommandController::commands.at(args->argumentsArray.at(1))->helpDescription;
+					}
+					else {
+						msgString = "Sorry, but that command was not found!";
+					}
+					msgEmbed.setDescription(msgString);
+
+					if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+						InputEventData event;
+						ReplyMessageData responseData(args->eventData);
+						responseData.embed = msgEmbed;
+						event = InputEventHandler::respondToEvent(responseData).get();
+					}
+					else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+						InputEventData event;
+						CreateInteractionResponseData responseData(args->eventData);
+						responseData.data.embeds.push_back(msgEmbed);
+						event = InputEventHandler::respondToEvent(responseData).get();
+						event.interactionData.applicationId = args->eventData.interactionData.applicationId;
+						event.interactionData.token = args->eventData.interactionData.token;
+					}
+				}
 
 				co_return;
 			}

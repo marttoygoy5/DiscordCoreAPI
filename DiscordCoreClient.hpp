@@ -43,6 +43,7 @@ namespace DiscordCoreAPI {
 		EventManager* eventManager{ nullptr };
 		DiscordCoreInternal::ThreadManager* threadManager{ nullptr };
 		DiscordUser* discordUser{ nullptr };
+
 		DiscordCoreClient(hstring botTokenNew) {
 			this->botToken = botTokenNew;
 		}
@@ -56,8 +57,8 @@ namespace DiscordCoreAPI {
 				return discordGuild;
 			}
 			else {
-				(*guildCursor).second.getDataFromDB().get();
-				return (*guildCursor).second;
+				guildCursor->second.getDataFromDB().get();
+				return guildCursor->second;
 			}
 		}
 
@@ -70,8 +71,8 @@ namespace DiscordCoreAPI {
 				return discordGuildMember;
 			}
 			else {
-				(*guildMemberCursor).second.getDataFromDB().get();
-				return (*guildMemberCursor).second;
+				guildMemberCursor->second.getDataFromDB().get();
+				return guildMemberCursor->second;
 			}
 		}
 
@@ -181,20 +182,15 @@ namespace DiscordCoreAPI {
 			discordGuild.writeDataToDB();
 			if (DiscordCoreClient::guildMap.contains(guild.data.id)) {
 				DiscordCoreClient::guildMap.erase(guild.data.id);
+				this->discordUser->data.guildCount -= 1;
+				this->discordUser->writeDataToDB();
 			}
 			else {
 				this->discordUser->data.guildCount += 1;
 				this->discordUser->writeDataToDB();
+				DiscordCoreClient::guildMap.insert(make_pair(guild.data.id, discordGuild));
 			}
-			DiscordCoreClient::guildMap.insert(make_pair(guild.data.id, discordGuild));
 			co_return guild;
-		}
-
-		task<OnMessageCreationData> createMessage(MessageData messageData) {
-			Message message(messageData, this);
-			OnMessageCreationData messageCreationData(message);
-			messageCreationData.message = message;
-			co_return messageCreationData;
 		}
 
 		void run() {

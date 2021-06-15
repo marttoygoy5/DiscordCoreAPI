@@ -20,22 +20,19 @@
 
 namespace DiscordCoreAPI {
 
-	class GuildManager;
-
-	class DiscordCoreClient;
-
 	class Guild {
 	public:
-
 		GuildData data;
 		DiscordCoreClientBase* discordCoreClientBase{ nullptr };
 		DiscordCoreClient* discordCoreClient{ nullptr };
+
 		Guild() {};
 
 	protected:
 		friend class GuildManagerAgent;
 		friend class DiscordCoreClient;
 		friend class GuildManager;
+
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
 

@@ -311,7 +311,7 @@ namespace  DiscordCoreInternal {
 
     struct PartyData {
         string id;
-        int size[2]{};
+        vector<int> size{};
     };
 
     struct AssetsData {
@@ -1650,9 +1650,7 @@ namespace DiscordCoreAPI {
             newData.name = this->name;
             newData.requireColons = this->requireColons;
             for (auto value : this->roles) {
-                DiscordCoreInternal::RoleData roleData;
-                roleData = value;
-                newData.roles.push_back(roleData);
+                newData.roles.push_back(value);
             }
             newData.user = this->user;
             return newData;
@@ -2182,9 +2180,7 @@ namespace DiscordCoreAPI {
             newData.id = this->id;
             newData.name = this->name;
             for (auto value : this->options) {
-                DiscordCoreInternal::ApplicationCommandInteractionDataOption newOption;
-                newOption = value;
-                newData.options.push_back(newOption);
+                newData.options.push_back(value);
             }
             newData.resolved = this->resolved;
             return newData;
@@ -2524,7 +2520,7 @@ namespace DiscordCoreAPI {
 
     struct PartyData {
         string id;
-        int size[2]{};
+        vector<int> size{};
     };
 
     struct AssetsData {

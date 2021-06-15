@@ -16,10 +16,6 @@
 
 namespace DiscordCoreAPI {
 
-	class MessageManager;
-
-	class DiscordCoreClient;
-
 	class Message {
 	public:
 		MessageData data;
@@ -82,7 +78,6 @@ namespace DiscordCoreAPI {
 
 	struct ReplyMessageData {
 		ReplyMessageData(InputEventData lastEventData) {
-			this->channelId = lastEventData.getChannelId();
 			this->replyingToMessageData = lastEventData.messageData;
 		}
 		string content = "";
@@ -100,7 +95,6 @@ namespace DiscordCoreAPI {
 		friend class MessageManager;
 		friend class MessageManagerAgent;
 		MessageData replyingToMessageData;
-		string channelId;
 	};
 
 	struct SendDMData {
@@ -130,9 +124,15 @@ namespace DiscordCoreAPI {
 	};
 
 	struct DeleteMessageData {
+		DeleteMessageData(InputEventData dataPackage) {
+			this->channelId = dataPackage.getChannelId();
+			this->messageId = dataPackage.getMessageId();
+		}
+		unsigned int timeDelay = 0;
+	protected:
+		friend class MessageManager;
 		string channelId;
 		string messageId;
-		unsigned int timeDelay = 0;
 	};
 
 	struct DeleteMessagesBulkData {
@@ -519,7 +519,7 @@ namespace DiscordCoreAPI {
 							if (cacheTemp.contains(dataPackage08.channelId + value)) {
 								cacheTemp.erase(dataPackage08.channelId + value);
 							}
-						}						
+						}
 					}
 					postObjectAsync(dataPackage08).get();
 					asend(MessageManagerAgent::cache2, cacheTemp);
@@ -556,9 +556,8 @@ namespace DiscordCoreAPI {
 			DiscordCoreInternal::PostMessageData dataPackageNew;
 			dataPackageNew.agentResources = this->agentResources;
 			dataPackageNew.threadContext = this->threads->at(3);
-			dataPackage.channelId = dataPackage.channelId;
 			dataPackageNew.allowedMentions = dataPackage.allowedMentions;
-			dataPackageNew.channelId = dataPackage.channelId;
+			dataPackageNew.channelId = dataPackage.replyingToMessageData.channelId;
 			for (auto value : dataPackage.components) {
 				dataPackageNew.components.push_back(value);
 			}

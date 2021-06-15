@@ -13,10 +13,6 @@
 #include "DataParsingFunctions.hpp"
 
 namespace DiscordCoreAPI {
-	
-	class UserManager;
-
-	class DiscordCoreClient;
 
 	class Application {
 	public:

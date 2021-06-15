@@ -174,7 +174,9 @@ namespace DiscordCoreAPI {
 
 		static task<void> deleteInputEventResponse(InputEventData dataPackage, unsigned int timeDelayNew = 0) {
 			if ((dataPackage.inputEventResponseType == InputEventResponseType::REGULAR_MESSAGE_RESPONSE)|| (dataPackage.inputEventResponseType == InputEventResponseType::REGULAR_MESSAGE_EDIT)) {
-				InputEventHandler::messages->deleteMessageAsync({ .channelId = dataPackage.getChannelId(),.messageId = dataPackage.getMessageId(), .timeDelay = timeDelayNew }).get();
+				DeleteMessageData deleteData(dataPackage);
+				deleteData.timeDelay = timeDelayNew;
+				InputEventHandler::messages->deleteMessageAsync(deleteData).get();
 			}
 			else if (dataPackage.inputEventResponseType == InputEventResponseType::INTERACTION_FOLLOW_UP_MESSAGE || dataPackage.inputEventResponseType == InputEventResponseType::INTERACTION_FOLLOW_UP_MESSAGE_EDIT){
 				DeleteFollowUpMessageData dataPackageNewer(dataPackage);

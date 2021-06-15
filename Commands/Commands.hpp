@@ -35,19 +35,19 @@ namespace DiscordCoreAPI {
 			DiscordCoreAPI::CommandController::commands.insert(make_pair(newFunction->commandName, newFunction));
 		}
 
-		static void checkForAndRunCommands(CommandData commandData) {
+		static void checkForAndRunCommand(CommandData commandData) {
 			try {
 				BaseFunction* functionPointer{ nullptr };
 				bool messageOption = false;
 				if (commandData.eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-					functionPointer = getCommand(convertToLowerCase(commandData.eventData.messageData.content), commandData);
+					functionPointer = CommandController::getCommand(convertToLowerCase(commandData.eventData.messageData.content), commandData);
 					messageOption = true;
 				}
 				else if (commandData.eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
 					DiscordCoreInternal::CommandData commandDataNew;
 					DiscordCoreInternal::parseObject(commandData.eventData.interactionData.dataRaw, &commandDataNew);
 					string newCommandName = commandData.eventData.discordCoreClient->discordUser->data.prefix + commandDataNew.commandName;
-					functionPointer = getCommand(convertToLowerCase(newCommandName), commandData);
+					functionPointer = CommandController::getCommand(convertToLowerCase(newCommandName), commandData);
 					messageOption = false;
 				}
 
@@ -58,7 +58,7 @@ namespace DiscordCoreAPI {
 				BaseFunctionArguments args(commandData.eventData);
 
 				if (messageOption == true) {
-					args.argumentsArray = parseArguments(commandData.eventData.messageData.content);
+					args.argumentsArray = CommandController::parseArguments(commandData.eventData.messageData.content);
 					args.eventData.messageData = commandData.eventData.messageData;
 				}
 				else if (messageOption == false) {
@@ -82,13 +82,17 @@ namespace DiscordCoreAPI {
 
 		static BaseFunction* getCommand(string messageContents, CommandData commandData) {
 			try {
+				unsigned int currentPosition = INFINITE;
+				BaseFunction* lowestValue{ nullptr };
 				for (auto const& [key, value] : DiscordCoreAPI::CommandController::commands) {
-					if (messageContents[0] == commandData.eventData.discordCoreClient->discordUser->data.prefix[0])
-					if (messageContents.find(key) != string::npos) {
-						return value;
+					if (messageContents[0] == commandData.eventData.discordCoreClient->discordUser->data.prefix[0]) {
+						if (messageContents.find(key) != string::npos && messageContents.find(key) < currentPosition) {
+							currentPosition = messageContents.find(key);
+							lowestValue = value;
+						}
 					}
 				}
-				return nullptr;
+				return lowestValue;
 			}
 			catch (exception& e) {
 				cout << "CommandController::getCommand() Error: " << e.what() << endl << endl;

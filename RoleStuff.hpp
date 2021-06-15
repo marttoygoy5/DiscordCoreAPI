@@ -15,10 +15,6 @@
 
 namespace DiscordCoreAPI {
 
-	class RoleManager;
-
-	class DiscorddiscordCoreClient;
-
 	class Role {
 	public:
 		RoleData data;

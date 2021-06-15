@@ -18,7 +18,7 @@ namespace DiscordCoreAPI {
 	public:
 		Test() {
 			this->commandName = "test";
-			this->helpDescription = "__**Test:**__ Enter !test or /test to run this command!";
+			this->helpDescription = "__**Test Usage:**__ Enter !test or /test to run this command!";
 		}
 
 		virtual  task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {

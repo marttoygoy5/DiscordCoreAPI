@@ -18,7 +18,7 @@ namespace DiscordCoreAPI {
 	public:
 		Balance() {
 			this->commandName = "balance";
-			this->helpDescription = "__**Balance:**__ Enter !balance or /balance to view your own balance, or !balance = @USERMENTION /balance @USERMENTION to view someone else's balances.";
+			this->helpDescription = "__**Balance Usage:**__ Enter !balance or /balance to view your own balance, or !balance = @USERMENTION /balance @USERMENTION to view someone else's balances.";
 		}
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			Channel channel = args->eventData.discordCoreClient->channels->getChannelAsync({ .channelId = args->eventData.getChannelId() }).get();

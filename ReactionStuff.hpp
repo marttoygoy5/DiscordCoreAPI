@@ -13,10 +13,6 @@
 #include "FoundationEntities.hpp"
 
 namespace DiscordCoreAPI {
-	
-	class ReactionManager;
-
-	class DiscordCoreClient;
 
 	class Reaction {
 	public:
@@ -65,7 +61,7 @@ namespace DiscordCoreAPI {
 		string emojiName;
 		string emojiId;
 	};
-
+	
 	struct DeleteReactionsByEmojiData {
 		string channelId;
 		string messageId;
@@ -94,13 +90,13 @@ namespace DiscordCoreAPI {
 
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreClient* coreClient{ nullptr };
+		DiscordCoreClient* discordCoreClient{ nullptr };
 
 		ReactionManagerAgent(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* coreClientNew, Scheduler* pScheduler)
 			:agent(*pScheduler) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->coreClient = coreClientNew;
+			this->discordCoreClient = coreClientNew;
 		}
 
 		static void initialize() {
@@ -141,7 +137,7 @@ namespace DiscordCoreAPI {
 			}
 			ReactionData reactionData;
 			DiscordCoreInternal::parseObject(returnData.data, &reactionData);
-			Reaction reaction(reactionData, this->coreClient);
+			Reaction reaction(reactionData, this->discordCoreClient);
 			co_return reaction;
 		}
 
@@ -202,7 +198,7 @@ namespace DiscordCoreAPI {
 					}
 				}
 				DiscordCoreInternal::ReactionData dataPackage04;
-				Reaction reaction(dataPackage04, this->coreClient);
+				Reaction reaction(dataPackage04, this->discordCoreClient);
 				while (ReactionManagerAgent::reactionsToInsert.try_pop(reaction)) {
 					map<string, Reaction> cacheTemp;
 					if (try_receive(ReactionManagerAgent::cache, cacheTemp)) {
@@ -245,7 +241,7 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			dataPackageNew.emoji = output;
-			ReactionManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->coreClient, this->threads->at(4).scheduler);
+			ReactionManagerAgent requestAgent(dataPackageNew.agentResources, this->threads, this->discordCoreClient, this->threads->at(4).scheduler);
 			send(ReactionManagerAgent::requestPutReactionBuffer, dataPackageNew);
 			requestAgent.start();
 			agent::wait(&requestAgent);
@@ -254,7 +250,7 @@ namespace DiscordCoreAPI {
 				cout << "ReactionManager::createReactionAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::ReactionData reactionData;
-			Reaction reaction(reactionData, this->coreClient);
+			Reaction reaction(reactionData, this->discordCoreClient);
 			try_receive(ReactionManagerAgent::outReactionBuffer, reaction);
 			co_await mainThread;
 			co_return reaction;
@@ -268,7 +264,7 @@ namespace DiscordCoreAPI {
 			dataPackageNew.messageId = dataPackage.messageId;
 			dataPackageNew.emojiName = dataPackage.emojiName;
 			dataPackageNew.userId = dataPackage.userId;
-			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
+			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->discordCoreClient, this->threads->at(2).scheduler);
 			send(ReactionManagerAgent::requestGetReactionBuffer, dataPackageNew);
 			requestAgent.start();
 			agent::wait(&requestAgent);
@@ -277,7 +273,7 @@ namespace DiscordCoreAPI {
 				cout << "ReactionManager::getReactionAsync() Error: " << error.what() << endl << endl;
 			}
 			DiscordCoreInternal::ReactionData reactionData;
-			Reaction reaction(reactionData, this->coreClient);
+			Reaction reaction(reactionData, this->discordCoreClient);
 			try_receive(ReactionManagerAgent::outReactionBuffer, reaction);
 			co_await mainThread;
 			co_return reaction;
@@ -307,7 +303,7 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			dataPackageNew.encodedEmoji = output;
-			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(8).scheduler);
+			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->discordCoreClient, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteReactionBuffer, dataPackageNew);
 			requestAgent.start();
 			agent::wait(&requestAgent);
@@ -341,7 +337,7 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			dataPackageNew.encodedEmoji = output;
-			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(8).scheduler);
+			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->discordCoreClient, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteReactionBuffer, dataPackageNew);
 			requestAgent.start();
 			agent::wait(&requestAgent);
@@ -375,7 +371,7 @@ namespace DiscordCoreAPI {
 				output = curl_easy_escape(curl, emoji.c_str(), 0);
 			}
 			dataPackageNew.encodedEmoji = output;
-			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(8).scheduler);
+			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->discordCoreClient, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteReactionBuffer, dataPackageNew);
 			requestAgent.start();
 			agent::wait(&requestAgent);
@@ -396,7 +392,7 @@ namespace DiscordCoreAPI {
 			dataPackageNew.channelId = dataPackage.channelId;
 			dataPackageNew.messageId = dataPackage.messageId;
 			dataPackageNew.deletionType = DiscordCoreInternal::ReactionDeletionType::ALL_DELETE;
-			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(8).scheduler);
+			ReactionManagerAgent requestAgent(this->agentResources, this->threads, this->discordCoreClient, this->threads->at(8).scheduler);
 			send(ReactionManagerAgent::requestDeleteReactionBuffer, dataPackageNew);
 			requestAgent.start();
 			agent::wait(&requestAgent);
@@ -409,7 +405,7 @@ namespace DiscordCoreAPI {
 		}
 
 		task<void> insertReactionAsync(Reaction reaction) {
-			ReactionManagerAgent reactionManagerAgent(this->agentResources, this->threads, this->coreClient, this->threads->at(2).scheduler);
+			ReactionManagerAgent reactionManagerAgent(this->agentResources, this->threads, this->discordCoreClient, this->threads->at(2).scheduler);
 			ReactionManagerAgent::reactionsToInsert.push(reaction);
 			reactionManagerAgent.start();
 			agent::wait(&reactionManagerAgent);
@@ -439,12 +435,12 @@ namespace DiscordCoreAPI {
 		friend class DiscordCoreClient;
 		DiscordCoreInternal::HttpAgentResources agentResources;
 		concurrent_vector<DiscordCoreInternal::ThreadContext>* threads{ nullptr };
-		DiscordCoreClient* coreClient{ nullptr };
+		DiscordCoreClient* discordCoreClient{ nullptr };
 
-		ReactionManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* coreClientNew) {
+		ReactionManager(DiscordCoreInternal::HttpAgentResources agentResourcesNew, concurrent_vector<DiscordCoreInternal::ThreadContext>* threadsNew, DiscordCoreClient* discordCoreClientNew) {
 			this->agentResources = agentResourcesNew;
 			this->threads = threadsNew;
-			this->coreClient = coreClientNew;
+			this->discordCoreClient = discordCoreClientNew;
 		}
 	};
 	unbounded_buffer<DiscordCoreInternal::PutReactionData>* ReactionManagerAgent::requestPutReactionBuffer;

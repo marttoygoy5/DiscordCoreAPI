@@ -1171,17 +1171,9 @@ namespace DiscordCoreInternal {
 
 		string getCreateDeferredInteractionResponsePayload(CreateDeferredInteractionResponseData dataPackage) {
 
-
-			if (dataPackage.content == "") {
-				json data = { {"type", dataPackage.type}
-				};
-				return data.dump();
-			}
-			else {
-				json data = { {"type", dataPackage.type}
-				};
-				return data.dump();
+			json data = { {"type", dataPackage.type}
 			};
+			return data.dump();
 		}
 
 		string getCreateInteractionResponsePayload(CreateInteractionResponseData dataPackage) {

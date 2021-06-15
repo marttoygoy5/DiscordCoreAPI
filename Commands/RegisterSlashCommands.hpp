@@ -18,6 +18,7 @@ namespace DiscordCoreAPI {
 	public:
 		RegisterSlashCommands() {
 			this->commandName = "registerslashcommands";
+			this->helpDescription = "__**Register Slash Commands Usage:**__ !registerslashcommands or /registerslashcommands!";
 		}
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try{

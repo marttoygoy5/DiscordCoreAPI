@@ -18,7 +18,7 @@ namespace DiscordCoreAPI {
 	public:
 		AddShopRole() {
 			this->commandName = "addshoprole";
-			this->helpDescription = "__**Add Shop Role:**__ Enter !addshoprole = NAME, HEXCOLORVALUE, COST or /addshoprole NAME, HEXCOLORVALUE, COST.";
+			this->helpDescription = "__**Add Shop Role Usage:**__ Enter !addshoprole = NAME, HEXCOLORVALUE, COST or /addshoprole NAME, HEXCOLORVALUE, COST.";
 		}
 		virtual task<void> execute(DiscordCoreAPI::BaseFunctionArguments* args) {
 			try {

@@ -80,7 +80,7 @@ namespace DiscordCoreAPI {
             if (dataPackage.eventData.eventType != InputEventType::BUTTON_INTERACTION) {
                 CommandData commandData(dataPackage.eventData);
                 commandData.eventData = dataPackage.eventData;
-                CommandController::checkForAndRunCommands(commandData);
+                CommandController::checkForAndRunCommand(commandData);
             }
             else {
                 ButtonInteractionData dataPackageNew;
@@ -192,17 +192,15 @@ namespace DiscordCoreAPI {
             pDiscordCoreClient->eventManager->onMessageCreation(onMessageCreation);
             pDiscordCoreClient->eventManager->onMessageUpdate(onMessageUpdate);
             pDiscordCoreClient->eventManager->onMessageDeletion(onMessageDeletion);
+            pDiscordCoreClient->eventManager->onReactionRemoveAll(onReactionRemoveAll);
             pDiscordCoreClient->eventManager->onMessageDeleteBulk(onMessageDeleteBulk);
             pDiscordCoreClient->eventManager->onReactionAdd(onReactionAdd);
             pDiscordCoreClient->eventManager->onReactionRemove(onReactionRemove);
-            pDiscordCoreClient->eventManager->onReactionRemoveAll(onReactionRemoveAll);
             pDiscordCoreClient->eventManager->onReactionRemoveEmoji(onReactionRemoveEmoji);
-            /*
-            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::help, DiscordCoreAPI::help.commandName);
-            */
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopItem, DiscordCoreAPI::addShopItem.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::addShopRole, DiscordCoreAPI::addShopRole.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::balance, DiscordCoreAPI::balance.commandName);
+            DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::help, DiscordCoreAPI::help.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::registerSlashCommands, DiscordCoreAPI::registerSlashCommands.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::shop, DiscordCoreAPI::shop.commandName);
             DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::test, DiscordCoreAPI::test.commandName);
