@@ -1,7 +1,7 @@
 # DiscordCoreAPI
-- A Discord bot library, written in C++ using WinRT, and a few other useful libraries!
+- A Discord library for creating bots, written in C++, using WinRT and a few other useful libraries. 
 
-## [Documentation-Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Documentation-Examples.md)
+## [Documentation Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Documentation-Examples.md)
 
 ## Features
 ### Concurrent Discord API Access
@@ -10,7 +10,7 @@
 ### Slash Commands and Buttons
 ![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/Screenshot%20(53).png?raw=true)
 ### A Unified "Input-Event" System
-- Both user-messages and user-interactions are accepted via the `onInputEventCreation` event.
+- Both user messages and user interactions are accepted via the `onInputEventCreation` event.
 - They can all be responded to using the `InputEventHandler::respondToEvent()` function.
 ```C++
 string msgString = "Sorry, but we are all out of inventory!";
@@ -36,9 +36,9 @@ else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION)
 ## Dependencies
 
 - [WinRT](https://docs.microsoft.com/en-us/windows/uwp/cpp-and-winrt-apis/intro-to-using-cpp-with-winrt)
-(NOTE: I've got the "C++ Language Standard" setting set to "Preview - Features from the Latest C++ Working Draft (/std:c++latest)" in Visual Studio for this library!)
+(*Note*: The "C++ Language Standard" setting, by default, is set to "Preview – Features from the Latest C++ Working Draft (/std:c++latest)" in Visual Studio for this library.)
 
-- NOTE: I installed these using the [vcpkg](https://github.com/microsoft/vcpkg) installer!
+- NOTE: I installed these using the [vcpkg](https://github.com/microsoft/vcpkg) installer.
  
 - [Nlohmann Json](https://github.com/nlohmann/json)
 
@@ -47,12 +47,12 @@ else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION)
 - [LibCurl](https://github.com/curl/curl)
 
 ## Roadmap
-Alright, so I'm currently working on getting this thing to be "useful", and here are some of the things I plan on implementing:
+I am currently working on getting this thing to be "useful", and here are some of the things I plan on implementing:
 
 - Finish adding the base Discord-API data structures, along with classes to utilize/access/change their values.
 
-- Add a "music-listening" layer, with a usable "voice channel" that includes audio encoding/decoding.
+- Add a "music-listening" layer with a usable "voice channel" that includes audio encoding/decoding.
 
 - Build a few bots with the library and document examples.
 
-If you have any suggestions, feel free to let me know and I will consider taking you up on it! Thanks!
+If you have any suggestions, feel free to let me know, and I will consider taking you up on it. Thanks!
