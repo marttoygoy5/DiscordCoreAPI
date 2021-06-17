@@ -1,5 +1,5 @@
 # DiscordCoreAPI
-![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/TheLogo.png?raw=true)
+![](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/TheLogo.png?raw=true | width = 300)
 - A Discord library for creating bots, written in C++, using WinRT and a few other useful libraries. 
 
 ## [Documentation Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Documentation-Examples.md)
