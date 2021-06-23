@@ -36,8 +36,8 @@ else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION)
 }
 ```
 ## Important Settings
-- The "C++ Language Standard" setting, by default, is set to "Preview – Features from the Latest C++ Working Draft (/std:c++latest)" in Visual Studio for this library.
-- The Solution Property -> Linker -> System -> Stack Reserver Size is set to 4194304.
+- Under Solution Properties -> General -> C++ Langeuage Standard, is set to "Preview – Features from the Latest C++ Working Draft (/std:c++latest)".
+- Under Solution Properties -> Linker -> System -> Stack Reserver Size is set to 4194304.
 
 ## Dependencies
 - [WinRT](https://docs.microsoft.com/en-us/windows/uwp/cpp-and-winrt-apis/intro-to-using-cpp-with-winrt)
