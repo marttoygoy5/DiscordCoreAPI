@@ -15,24 +15,28 @@
 - Both user messages and user interactions are accepted via the `onInputEventCreation` event.
 - They can all be responded to using the `InputEventHandler::respondToEvent()` function.
 ```C++
-string msgString = "Sorry, but we are all out of inventory!";
-EmbedData messageEmbed;
-messageEmbed.setDescription(msgString);
-messageEmbed.setTimeStamp(getTimeAndDate());
-messageEmbed.setTitle("__**Empty Inventory:**__");
-messageEmbed.setColor(discordGuild.data.borderColor);
-messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
-if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
-	ReplyMessageData responseData(args->eventData);
-	responseData.embed = messageEmbed;
-	InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
-	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
-}
-else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
-	CreateInteractionResponseData responseData(args->eventData);
-	responseData.data.embeds.push_back(messageEmbed);
-	InputEventData event01 = InputEventHandler::respondToEvent(responseData).get();
-	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
+if (rolesMsgEmbeds.size()==  0 && itemsMessageEmbeds.size()== 0) {
+	string msgString = "Sorry, but we are all out of inventory!";
+	EmbedData messageEmbed;
+	messageEmbed.setDescription(msgString);
+	messageEmbed.setTimeStamp(getTimeAndDate());
+	messageEmbed.setTitle("__**Empty Inventory:**__");
+	messageEmbed.setColor(discordGuild.data.borderColor);
+	messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
+	if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
+		ReplyMessageData responseData(args->eventData);
+		responseData.embeds.push_back(messageEmbed);
+		InputEventData event01 = InputEventManager::respondToEvent(responseData).get();
+		InputEventManager::deleteInputEventResponse(event01, 20000).get();
+	}
+	else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION) {
+		CreateInteractionResponseData responseData(args->eventData);
+		responseData.data.embeds.push_back(messageEmbed);
+		InputEventData event01 = InputEventManager::respondToEvent(responseData).get();
+		InputEventManager::deleteInputEventResponse(event01, 20000).get();
+	}
+	co_await mainThread;
+	co_return;
 }
 ```
 ## Important Settings
