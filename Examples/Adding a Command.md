@@ -101,16 +101,16 @@ namespace DiscordCoreAPI {
 #include "./DiscordCoreAPI/Index.hpp"
 
 int main() {
-    winrt::init_apartment();
-    string botToken = "YOUR_BOT_TOKEN_HERE";
-    shared_ptr<DiscordCoreAPI::DiscordCoreClient> pDiscordCoreClient = DiscordCoreAPI::DiscordCoreClient::finalSetup(botToken);
-    DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::test, DiscordCoreAPI::test.commandName);
-    agent::wait((agent*)pDiscordCoreClient.get());
-    exception error;
-    while (pDiscordCoreClient.get()->getError(error)) {
-        cout << "DiscordCoreClient() Error: " << error.what() << endl << endl;
-    }
-    return 0;
+	winrt::init_apartment();
+	string botToken = "YOUR_BOT_TOKEN_HERE";
+	shared_ptr<DiscordCoreAPI::DiscordCoreClient> pDiscordCoreClient = DiscordCoreAPI::DiscordCoreClient::finalSetup(botToken);
+   	DiscordCoreAPI::CommandController::addCommand(&DiscordCoreAPI::test, DiscordCoreAPI::test.commandName);
+    	agent::wait((agent*)pDiscordCoreClient.get());
+    	exception error;
+    	while (pDiscordCoreClient.get()->getError(error)) {
+	        cout << "DiscordCoreClient() Error: " << error.what() << endl << endl;
+    	}
+    	return 0;
 }
 ```
 - NOTE: By default, the format for triggering a command is `!COMMANDNAME = ARGUMENT1, ARGUMENT2, ARGUMENT3... ARGUMENT-N`. This prefix can be changed by changing the prefix value provided by your database.
