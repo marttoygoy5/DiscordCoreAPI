@@ -31,9 +31,7 @@
 #ifndef _TEST_
 #define _TEST_
 
-#include "../pch.h"
 #include "../DiscordCoreClient.hpp"
-#include "Commands.hpp"
 
 namespace DiscordCoreAPI {
 
