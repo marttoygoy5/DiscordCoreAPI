@@ -21,11 +21,11 @@
 if (rolesMsgEmbeds.size() == 0 && itemsMessageEmbeds.size() == 0) {
 	string msgString = "Sorry, but we are all out of inventory!";
 	EmbedData messageEmbed;
+	messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
+	messageEmbed.setColor(discordGuild.data.borderColor);
 	messageEmbed.setDescription(msgString);
 	messageEmbed.setTimeStamp(getTimeAndDate());
 	messageEmbed.setTitle("__**Empty Inventory:**__");
-	messageEmbed.setColor(discordGuild.data.borderColor);
-	messageEmbed.setAuthor(args->eventData.getUserName(), args->eventData.getAvatarURL());
 	if (args->eventData.eventType == InputEventType::REGULAR_MESSAGE) {
 		ReplyMessageData responseData(args->eventData);
 		responseData.embeds.push_back(messageEmbed);
