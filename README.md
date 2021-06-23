@@ -35,10 +35,12 @@ else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION)
 	InputEventHandler::deleteInputEventResponse(event01, 20000).get();
 }
 ```
-## Dependencies
+## Important Settings
+- The "C++ Language Standard" setting, by default, is set to "Preview – Features from the Latest C++ Working Draft (/std:c++latest)" in Visual Studio for this library.
+- The Solution Property -> Linker -> System -> Stack Reserver Size is set to 4194304.
 
+## Dependencies
 - [WinRT](https://docs.microsoft.com/en-us/windows/uwp/cpp-and-winrt-apis/intro-to-using-cpp-with-winrt)
-(*Note*: The "C++ Language Standard" setting, by default, is set to "Preview – Features from the Latest C++ Working Draft (/std:c++latest)" in Visual Studio for this library.)
 
 - NOTE: I installed these using the [vcpkg](https://github.com/microsoft/vcpkg) installer.
  
