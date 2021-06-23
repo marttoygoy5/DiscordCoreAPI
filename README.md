@@ -36,7 +36,7 @@ else if (args->eventData.eventType == InputEventType::SLASH_COMMAND_INTERACTION)
 }
 ```
 ## Important Settings
-- Under Solution Properties -> General -> C++ Langeuage Standard, is set to "Preview – Features from the Latest C++ Working Draft (/std:c++latest)".
+- Under Solution Properties -> General -> C++ Language Standard, is set to "Preview – Features from the Latest C++ Working Draft (/std:c++latest)".
 - Under Solution Properties -> Linker -> System -> Stack Reserver Size is set to 4194304.
 
 ## Dependencies
