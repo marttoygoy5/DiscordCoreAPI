@@ -1,5 +1,8 @@
 # DiscordCoreAPI
+<p align="center">
  <img src="https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/images/TheLogo.png?raw=true"  width="600">
+</p>
+ 
  
 ## A Discord library for creating bots, written in C++, using WinRT and a few other useful libraries.
 
