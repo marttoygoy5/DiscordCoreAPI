@@ -3,7 +3,7 @@
  
 ## A Discord library for creating bots, written in C++, using WinRT and a few other useful libraries.
 
-## [Documentation Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Documentation-Examples.md)
+## [Documentation / Examples](https://github.com/RealTimeChris/DiscordCoreAPI/blob/main/Documentation-Examples.md)
 
 ## Features
 ### Concurrent Discord API Access
